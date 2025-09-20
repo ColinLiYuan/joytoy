@@ -45,7 +45,7 @@ export default function ProductLayout({
             ]
         };
 
-        // 根据当前路径判断哪个一级分类应该激活
+        // 根据当前路径判断哪个一级分类应该激活1
         const getActiveCategory = () => {
             if (!isClient) return '';
 
