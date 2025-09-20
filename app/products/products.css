@@ -214,17 +214,25 @@
     font-weight: 600;
 }
 
-.product-rating {
-    color: #f39c12;
-    margin-bottom: 10px;
-    display: flex;
-    align-items: center;
+.product-description {
+    color: #666;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin-bottom: 15px;
 }
 
-.product-rating span {
-    color: var(--light-text);
-    margin-left: 5px;
+.product-specs {
+    margin-bottom: 15px;
+}
+
+.spec-item {
     font-size: 0.9rem;
+    color: #555;
+    margin-bottom: 5px;
+}
+
+.spec-item strong {
+    color: #333;
 }
 
 .product-price {
@@ -237,24 +245,6 @@
     font-size: 1.3rem;
     font-weight: 700;
     color: var(--primary-color);
-}
-
-.original-price {
-    font-size: 1rem;
-    text-decoration: line-through;
-    color: var(--light-text);
-    margin-left: 10px;
-}
-
-.discount {
-    color: var(--accent-color);
-    font-weight: 600;
-    margin-left: 10px;
-}
-
-.product-actions {
-    display: flex;
-    gap: 10px;
 }
 
 /* Responsive Styles */
