@@ -51,7 +51,7 @@ export default function ProductLayout({
 
             if (pathname.includes('realistic-dildos') || pathname.includes('fairy-dildos')) {
                 return 'women';
-            } else if (pathname.includes('pocket-pussy' || pathname.includes('sex-doll'))) {
+            } else if (pathname.includes('pocket-pussy') || pathname.includes('sex-doll')) {
                 return 'men';
             }
 
