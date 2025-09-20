@@ -31,9 +31,7 @@ export default function ProductLayout({
     function CategorySidebar() {
         const categories = [
             { name: 'Women', icon: 'fas fa-blender' },
-            { name: 'Men', icon: 'fas fa-blender' },
-            { name: 'Full Doll', icon: 'fas fa-blender' },
-            { name: 'Dildos', icon: 'fas fa-fan' },
+            { name: 'Men', icon: 'fas fa-blender' }
         ]
 
         const allSubCategories = {
@@ -53,10 +51,8 @@ export default function ProductLayout({
 
             if (pathname.includes('realistic-dildos') || pathname.includes('fairy-dildos')) {
                 return 'women';
-            } else if (pathname.includes('full-doll')) {
+            } else if (pathname.includes('pocket-pussy' || pathname.includes('sex-doll'))) {
                 return 'men';
-            } else if (pathname.includes('pocket-pussy'|| pathname.includes('sex-doll'))) {
-                return 'dildos';
             }
 
             return '';
