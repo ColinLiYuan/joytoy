@@ -18,7 +18,7 @@ export default function Navigation() {
 
                     <ul className="nav-menu">
                         <li className="nav-item"><Link href="/home" className="nav-link"><p>Home</p></Link></li>
-                        <li className="nav-item"><Link href="/products" className="nav-link"><p>Products</p></Link></li>
+                        <li className="nav-item"><Link href="/collections" className="nav-link"><p>Products</p></Link></li>
                         <li className="nav-item"><Link href="/about" className="nav-link"><p>About</p></Link></li>
                         <li className="nav-item"><Link href="/contact" className="nav-link"><p>Contact</p></Link></li>
                     </ul>
