@@ -2,21 +2,26 @@
 
 import { usePathname } from 'next/navigation'
 import './products.css'
+import { useEffect, useState } from 'react'
 
 export default function ProductLayout({
                                           children,
                                       }: {
-                                          children: React.ReactNode
-                                      }
-) {
+    children: React.ReactNode
+}) {
     const pathname = usePathname()
+    const [isClient, setIsClient] = useState(false)
+    const [expandedCategory, setExpandedCategory] = useState<string | null>(null)
+
+    useEffect(() => {
+        setIsClient(true)
+    }, [])
 
     return (
         <section id="about">
             <div className="product-container">
                 <CategorySidebar />
                 <div className="main-content">
-                    <SubCategoryNav />
                     {children}
                 </div>
             </div>
@@ -25,40 +30,20 @@ export default function ProductLayout({
 
     function CategorySidebar() {
         const categories = [
-            { name: 'Molds', icon: 'fas fa-blender', slug: 'silicone-vagina-molds' },
-            { name: 'Dildos', icon: 'fas fa-fan', slug: 'dildos' },
+            { name: 'Vagina Molds', icon: 'fas fa-blender' },
+            { name: 'Full Doll', icon: 'fas fa-blender' },
+            { name: 'Dildos', icon: 'fas fa-fan' },
         ]
 
-        return (
-            <aside className="category-sidebar">
-                <div className="category-header">
-                    <i className="fas fa-list"></i>
-                    <h2>Product Categories</h2>
-                </div>
-                <ul className="category-list">
-                    {categories.map((category) => (
-                        <li key={category.name} className="category-item">
-                            <a
-                                href={`/products/${category.slug}`}
-                                className="category-link"
-                            >
-                                <i className={category.icon}></i>
-                                {category.name}
-                                {/*<span className="category-count">{category.count}</span>*/}
-                            </a>
-                        </li>
-                    ))}
-                </ul>
-            </aside>
-        );
-    }
-
-    function SubCategoryNav() {
-        // 所有子分类定义
         const allSubCategories = {
-            'molds': [
-                { name: 'silicone-vagina', slug: 'silicone-vagina-molds' },
-                { name: 'tpe-vagina', slug: 'tpe-vagina-molds' }
+            'vagina-molds': [
+                { name: 'Silicone Vagina', slug: 'silicone-vagina-molds' },
+                { name: 'TPE Vagina', slug: 'tpe-vagina-molds' }
+            ],
+            'full-doll': [
+                { name: 'All TPE Vagina', slug: 'tpe-vagina-molds' },
+                { name: 'Standard', slug: 'tpe-vagina-molds/standard' },
+                { name: 'Premium', slug: 'tpe-vagina-molds/premium' }
             ],
             'dildos': [
                 { name: 'All Dildos', slug: 'dildos' },
@@ -69,61 +54,91 @@ export default function ProductLayout({
             ]
         };
 
-        // 高级模糊匹配获取当前分类
-        const getCurrentCategory = () => {
-            const pathSegments = pathname.split('/').filter(segment => segment);
-            if (pathSegments.length < 2) return '';
+        // 根据当前路径判断哪个一级分类应该激活
+        const getActiveCategory = () => {
+            if (!isClient) return '';
 
-            // 获取 products 后面的路径部分
-            const productsIndex = pathSegments.indexOf('products');
-            if (productsIndex === -1 || productsIndex === pathSegments.length - 1) {
-                return '';
+            if (pathname.includes('silicone-vagina-molds') || pathname.includes('tpe-vagina-molds')) {
+                return 'vagina-molds';
+            } else if (pathname.includes('full-doll')) {
+                return 'full-doll';
+            } else if (pathname.includes('dildos')) {
+                return 'dildos';
             }
 
-            const categorySegment = pathSegments[productsIndex + 1];
-
-            // 精确匹配
-            if (allSubCategories.hasOwnProperty(categorySegment)) {
-                return categorySegment;
-            }
-
-            // 模糊匹配 - 检查是否包含已知分类关键词
-            const knownCategories = Object.keys(allSubCategories).filter(key => key !== 'default');
-            for (const category of knownCategories) {
-                // 检查当前路径段是否包含分类名，或者分类名是否包含当前路径段
-                if (categorySegment.includes(category) || category.includes(categorySegment)) {
-                    return category;
-                }
-            }
-
-            return 'default';
+            return '';
         };
 
-        const currentCategory = getCurrentCategory();
-        if (currentCategory === '') return null;
-        const currentSubCategories = allSubCategories[currentCategory as keyof typeof allSubCategories];
+        const activeCategory = getActiveCategory();
+
+        // 处理分类点击事件（移动设备）
+        const handleCategoryClick = (categorySlug: string) => {
+            if (expandedCategory === categorySlug) {
+                setExpandedCategory(null);
+            } else {
+                setExpandedCategory(categorySlug);
+            }
+        };
 
         return (
-            <nav className="subcategory-nav">
-                <ul className="subcategory-list">
-                    {currentSubCategories.map((subCategory) => {
-                        // 模糊匹配判断当前活动子分类
-                        const isActive = pathname.includes(subCategory.slug) ||
-                            subCategory.slug.includes(pathname.split('/').pop() || '');
+            <aside className="category-sidebar">
+                <div className="category-header">
+                    <i className="fas fa-list"></i>
+                    <h2>Product Categories</h2>
+                </div>
+                <ul className="category-list">
+                    {categories.map((category) => {
+                        const categorySlug = category.name.toLowerCase().replace(/\s+/g, '-');
+                        const isActive = isClient && activeCategory === categorySlug;
+                        const isExpanded = expandedCategory === categorySlug;
+                        const subCategories = allSubCategories[categorySlug as keyof typeof allSubCategories] || [];
 
                         return (
-                            <li key={subCategory.slug} className="subcategory-item">
-                                <a
-                                    href={`/products/${subCategory.slug}`}
-                                    className={`subcategory-link ${isActive ? 'active' : ''}`}
+                            <li
+                                key={category.name}
+                                className={`category-item ${isActive ? 'active' : ''}`}
+                                onMouseEnter={() => setExpandedCategory(categorySlug)}
+                                onMouseLeave={() => setExpandedCategory(null)}
+                            >
+                                <div
+                                    className="category-link"
+                                    onClick={() => handleCategoryClick(categorySlug)}
                                 >
-                                    {subCategory.name}
-                                </a>
+                                    <i className={category.icon}></i>
+                                    {category.name}
+                                    {/* 只在移动设备显示切换按钮 */}
+                                    {subCategories.length > 0 && (
+                                        <span className="mobile-toggle">
+                      {isExpanded ? '−' : '+'}
+                    </span>
+                                    )}
+                                </div>
+
+                                {subCategories.length > 0 && (
+                                    <div className={`subcategory-dropdown ${isExpanded ? 'expanded' : ''}`}>
+                                        <ul className="subcategory-list">
+                                            {subCategories.map((subCategory) => {
+                                                const isSubActive = isClient && pathname.includes(subCategory.slug);
+
+                                                return (
+                                                    <li key={subCategory.slug} className="subcategory-item">
+                                                        <a
+                                                            href={`/products/${subCategory.slug}`}
+                                                            className={`subcategory-link ${isSubActive ? 'active' : ''}`}
+                                                        >
+                                                            {subCategory.name}
+                                                        </a>
+                                                    </li>
+                                                );
+                                            })}
+                                        </ul>
+                                    </div>
+                                )}
                             </li>
                         );
                     })}
                 </ul>
-            </nav>
+            </aside>
         );
     }
 }

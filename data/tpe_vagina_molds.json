@@ -1,0 +1,18 @@
+{
+  "products": [
+    {
+      "id": 1,
+      "badge": "Best Seller",
+      "image": "vagina_tpe_660.jpg",
+      "alt": "Vagina Mold",
+      "category": "PTE Molds",
+      "title": "Premium Silicone Vagina Mold - Professional Grade",
+      "description": "High-quality medical grade silicone mold for professional use. Durable and detailed reproduction.",
+      "material": "Medical Grade Silicone",
+      "size": "13.5*9.5*14cm",
+      "weight": "660g - 3600g",
+      "currentPrice": "USD 59.00",
+      "minOrder": "1 units"
+    }
+  ]
+}
