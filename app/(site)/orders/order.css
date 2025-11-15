@@ -1,0 +1,86 @@
+/* app/orders/orders.css */
+/* 订单页面专用样式 */
+
+.order-status-progress {
+    display: flex;
+    justify-content: space-between;
+    position: relative;
+    margin: 2rem 0;
+}
+
+.order-status-progress::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: #e5e7eb;
+    transform: translateY(-50%);
+    z-index: 1;
+}
+
+.order-status-step {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.order-status-step.completed .step-icon {
+    background: #2563eb;
+    color: white;
+    border-color: #2563eb;
+}
+
+.order-status-step.current .step-icon {
+    background: #2563eb;
+    color: white;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+}
+
+.order-status-step .step-icon {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    background: #f3f4f6;
+    border: 2px solid #d1d5db;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+/* 打印样式 */
+@media print {
+    .no-print {
+        display: none !important;
+    }
+
+    .bg-gray-50 {
+        background: white !important;
+    }
+
+    .shadow-sm {
+        box-shadow: none !important;
+    }
+
+    .border {
+        border: 1px solid #e5e7eb !important;
+    }
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .order-status-progress {
+        margin: 1rem 0;
+    }
+
+    .order-status-step .step-label {
+        font-size: 0.75rem;
+    }
+}
