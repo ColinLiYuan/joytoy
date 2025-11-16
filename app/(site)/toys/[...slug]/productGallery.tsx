@@ -13,6 +13,7 @@ import {
 import 'react-medium-image-zoom/dist/styles.css';
 import { getProductImageUrl } from '@/lib/image-utils';
 import { Z_INDEX } from '@/lib/constants/z-index';
+import Image from 'next/image';
 
 interface GalleryImage {
     url: string;
@@ -113,12 +114,13 @@ export default function ProductGallery({ images, productTitle, baseUrl = '' }: P
             <div className="relative p-4 sm:p-6 md:p-8 flex flex-col gap-5 w-full max-w-full overflow-hidden">
                 <div className="flex-1 w-full">
                     <div className="rounded-xl overflow-hidden shadow-lg relative aspect-square bg-gray-50 flex items-center justify-center w-full max-w-full">
-                        <img
+                        <Image
                             src="/images/placeholder.jpg"
                             alt="No image available"
                             width={600}
                             height={600}
                             className="w-full h-full object-contain max-w-full max-h-full"
+                            priority
                         />
                     </div>
                 </div>
@@ -156,7 +158,7 @@ export default function ProductGallery({ images, productTitle, baseUrl = '' }: P
                                     }`}
                                     onClick={() => handleThumbnailClick(index)}
                                 >
-                                    <img
+                                    <Image
                                         src={getProductImageUrl(baseUrl, image.url)}
                                         alt={image.alt || `Thumbnail ${index + 1}`}
                                         width={80}
@@ -182,12 +184,13 @@ export default function ProductGallery({ images, productTitle, baseUrl = '' }: P
                     <div className="rounded-xl overflow-hidden shadow-lg relative aspect-square bg-gray-50 flex items-center justify-center w-full max-w-full">
                         {images[activeImageIndex] && (
                             <Zoom>
-                                <img
+                                <Image
                                     src={mainImageUrl}
                                     alt={images[activeImageIndex].alt || productTitle}
                                     width={600}
                                     height={600}
                                     className="w-full h-full object-contain max-w-full max-h-full"
+                                    priority={activeImageIndex === 0}
                                 />
                             </Zoom>
                         )}
@@ -255,7 +258,7 @@ export default function ProductGallery({ images, productTitle, baseUrl = '' }: P
                                             }`}
                                             onClick={() => handleThumbnailClick(index)}
                                         >
-                                            <img
+                                            <Image
                                                 src={getProductImageUrl(baseUrl, image.url)}
                                                 alt={image.alt || `Thumbnail ${index + 1}`}
                                                 width={64}
