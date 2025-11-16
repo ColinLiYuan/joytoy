@@ -1,7 +1,6 @@
 // lib/api-utils.ts
 import { BACKEND_CONFIG, SERVER_CONFIG } from '@/lib/api-config';
 import { FrontApiResponse } from '@/types/api';
-import { logger } from '@/lib/file-logger';
 
 interface RequestOptions extends RequestInit {
     timeout?: number;
@@ -39,11 +38,6 @@ export async function proxyRequest(
         ...headers,
     };
 
-    // logger.info('proxyRequest 完整URL:', { url });
-    // logger.info('环境变量检查:', {
-    //     backendUrl: process.env.NEXT_PUBLIC_BACKEND_URL
-    // });
-
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeout);
 
@@ -55,8 +49,6 @@ export async function proxyRequest(
         });
 
         clearTimeout(timeoutId);
-
-        // logger.info('proxyRequest 响应状态:', { status: response.status, ok: response.ok });
 
         if (!response.ok) {
             // 克隆响应来处理错误，避免消耗原始响应体
@@ -74,10 +66,7 @@ export async function proxyRequest(
                 }
             }
 
-            logger.error('proxyRequest HTTP错误:', {
-                status: response.status,
-                errorData
-            });
+            process.stdout.write('proxyRequest HTTP错误: ${errorData}');
 
             throw new ApiError(
                 response.status,
@@ -86,18 +75,17 @@ export async function proxyRequest(
             );
         }
 
-        // logger.info('proxyRequest 请求成功');
         return response;
     } catch (error) {
         clearTimeout(timeoutId);
 
         // 安全地处理错误信息
         const errorMessage = error instanceof Error ? error.message : String(error);
-        logger.error('proxyRequest 捕获错误:', { error: errorMessage });
+        process.stdout.write('proxyRequest 捕获错误: ${ error: errorMessage }\n');
 
         // 重试逻辑
         if (retry > 0 && shouldRetry(error)) {
-            logger.warn(`API调用失败，重试中... (剩余 ${retry} 次)`);
+            process.stdout.write('apiGet 捕获错误: ${ error: errorMessage } API调用失败，重试中... 剩余 ${retry} 次\n');
             return proxyRequest(endpoint, {
                 ...options,
                 retry: retry - 1,
@@ -207,24 +195,18 @@ export async function apiGet<T>(
     options?: RequestOptions
 ): Promise<FrontApiResponse<T>> {
     try {
-        // logger.info('apiGet 开始调用', { endpoint });
-        // logger.info('前端serverURL:', { baseURL: SERVER_CONFIG.baseURL });
-        // logger.info('后端基础URL:', { baseURL: BACKEND_CONFIG.baseURL });
-
         const response = await proxyRequest(endpoint, {
             method: 'GET',
             ...options,
         });
 
-        // logger.info('apiGet 响应状态:', { status: response.status });
         const result = await handleApiResponse<T>(response);
-        // logger.info('apiGet 处理结果:', { success: result.success });
 
         return result;
     } catch (error) {
         // 安全地处理 error 对象
         const errorMessage = error instanceof Error ? error.message : String(error);
-        logger.error('apiGet 捕获错误:', { error: errorMessage });
+        process.stdout.write('apiGet 捕获错误:  ${ error: errorMessage }\n');
 
         return {
             success: false,
