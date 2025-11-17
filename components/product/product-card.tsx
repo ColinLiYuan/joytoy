@@ -5,11 +5,11 @@ import Link from 'next/link';
 import { useState, useEffect, useRef } from 'react';
 import { ProductResponse, ProductSku } from '@/types/product';
 import { getProductImageUrl } from '@/lib/image-utils';
-import { getProductColor } from '@/lib/product-utils';
 import { wishlistService } from '@/services/wishlistService';
 import { useAuth } from '@/contexts/authContext';
 import { useToast } from '@/contexts/toastContext';
 import { useCartStore } from '@/stores/useCartStore';
+import Image from 'next/image';
 
 interface ProductCardProps {
     product: ProductResponse;
@@ -259,7 +259,7 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
     const canGoNext = currentImageIndex < allImages.length - 1;
 
     return (
-        <div className="bg-white rounded-xl overflow-hidden shadow-sm relative flex flex-col h-full">
+        <div className="overflow-hidden shadow-sm relative flex flex-col h-full">
             {/* 收藏按钮 */}
             <div className="absolute top-3 right-3 z-20">
                 <button
@@ -290,7 +290,7 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
 
             {/* 产品图片区域 - 统一使用点击按钮切换 */}
             <div
-                className="h-48 md:h-64 overflow-hidden relative"
+                className="aspect-[6/7] overflow-hidden relative"
                 ref={imageContainerRef}
             >
                 <div className="relative w-full h-full">
@@ -301,12 +301,14 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
                         {allImages.map((image, index) => (
                             <div key={index} className="flex-shrink-0 w-full h-full">
                                 <Link href={productDetailPath} className="cursor-pointer block w-full h-full">
-                                    <img
+                                    <Image
                                         src={getProductImageUrl(product.baseUrl, image.url)}
                                         alt={image.alt || product.title}
-                                        width={400}
-                                        height={400}
+                                        width={350}
+                                        height={300}
                                         className="w-full h-full object-cover bg-slate-50"
+                                        placeholder="blur"
+                                        blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
                                     />
                                 </Link>
                             </div>

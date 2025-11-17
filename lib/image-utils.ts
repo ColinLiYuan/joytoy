@@ -31,5 +31,10 @@ export const getProductImageUrl = (baseUrl: string | undefined, imagePath: strin
     if (!baseUrl || !imagePath) return '/images/placeholder.jpg';
 
     const fullUrl = `${baseUrl}/${imagePath}`;
-    return getSafeImageUrl(fullUrl);
+    const url = getSafeImageUrl(fullUrl);
+
+    if (process.env.NODE_ENV === 'development') {
+        console.log('getProductImageUrl called with:', { baseUrl, imagePath, result: url });
+    }
+    return url;
 };

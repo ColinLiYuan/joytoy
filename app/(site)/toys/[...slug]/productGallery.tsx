@@ -1,8 +1,7 @@
 // productGallery.tsx
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
-import Zoom from 'react-medium-image-zoom';
+import { useState, useRef } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
     faChevronLeft,
@@ -30,6 +29,7 @@ export default function ProductGallery({ images, productTitle, baseUrl = '' }: P
     const [activeImageIndex, setActiveImageIndex] = useState(0);
     const [thumbnailScrollPosition, setThumbnailScrollPosition] = useState(0);
     const thumbnailContainerRef = useRef<HTMLDivElement>(null);
+    const currentImage = images[activeImageIndex];
 
     // 计算是否到达边界
     const isFirstImage = activeImageIndex === 0;
@@ -113,13 +113,14 @@ export default function ProductGallery({ images, productTitle, baseUrl = '' }: P
         return (
             <div className="relative p-4 sm:p-6 md:p-8 flex flex-col gap-5 w-full max-w-full overflow-hidden">
                 <div className="flex-1 w-full">
-                    <div className="rounded-xl overflow-hidden shadow-lg relative aspect-square bg-gray-50 flex items-center justify-center w-full max-w-full">
+                    {/* 使用 6:7 比例的占位图 */}
+                    <div className="overflow-hidden shadow-lg relative aspect-[6/7] bg-gray-50 flex items-center justify-center w-full max-w-full">
                         <Image
                             src="/images/placeholder.jpg"
                             alt="No image available"
-                            width={600}
-                            height={600}
-                            className="w-full h-full object-contain max-w-full max-h-full"
+                            width={350}
+                            height={408}
+                            className="w-full h-full object-cover bg-slate-50"
                             priority
                         />
                     </div>
@@ -151,7 +152,7 @@ export default function ProductGallery({ images, productTitle, baseUrl = '' }: P
                             {images.map((image, index) => (
                                 <div
                                     key={index}
-                                    className={`w-20 h-20 rounded-lg overflow-hidden cursor-pointer border-2 transition-all duration-300 flex-shrink-0 relative bg-gray-50 ${
+                                    className={`w-20 h-[93px] rounded-lg overflow-hidden cursor-pointer border-2 transition-all duration-300 flex-shrink-0 relative bg-gray-50 ${
                                         index === activeImageIndex
                                             ? 'border-blue-500 scale-105 shadow-lg shadow-blue-500/30'
                                             : 'border-transparent hover:scale-105 hover:shadow-lg'
@@ -162,8 +163,8 @@ export default function ProductGallery({ images, productTitle, baseUrl = '' }: P
                                         src={getProductImageUrl(baseUrl, image.url)}
                                         alt={image.alt || `Thumbnail ${index + 1}`}
                                         width={80}
-                                        height={80}
-                                        className="w-full h-full object-cover"
+                                        height={93}
+                                        className="w-full h-full object-cover bg-slate-50"
                                     />
                                 </div>
                             ))}
@@ -179,20 +180,19 @@ export default function ProductGallery({ images, productTitle, baseUrl = '' }: P
                     </div>
                 )}
 
-                {/* 主图区域 */}
+                {/* 主图区域 - 使用 6:7 比例 */}
                 <div className="flex-1 w-full">
-                    <div className="rounded-xl overflow-hidden shadow-lg relative aspect-square bg-gray-50 flex items-center justify-center w-full max-w-full">
-                        {images[activeImageIndex] && (
-                            <Zoom>
-                                <Image
-                                    src={mainImageUrl}
-                                    alt={images[activeImageIndex].alt || productTitle}
-                                    width={600}
-                                    height={600}
-                                    className="w-full h-full object-contain max-w-full max-h-full"
-                                    priority={activeImageIndex === 0}
-                                />
-                            </Zoom>
+                    <div className="overflow-hidden shadow-lg relative aspect-[6/7] bg-gray-50 flex items-center justify-center w-full max-w-full">
+                        {mainImageUrl && mainImageUrl !== '' && images[activeImageIndex] && (
+                            <Image
+                                src={mainImageUrl}
+                                alt={images[activeImageIndex].alt || productTitle}
+                                width={600}
+                                height={700}
+                                className="w-full h-full object-cover bg-slate-50"
+                                priority={activeImageIndex === 0}
+                                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
+                            />
                         )}
 
                         {images.length > 1 && (
@@ -251,7 +251,7 @@ export default function ProductGallery({ images, productTitle, baseUrl = '' }: P
                                     {images.map((image, index) => (
                                         <div
                                             key={index}
-                                            className={`w-16 h-16 rounded-lg overflow-hidden cursor-pointer border-2 transition-all duration-300 flex-shrink-0 relative bg-gray-50 ${
+                                            className={`w-16 h-[75px] rounded-lg overflow-hidden cursor-pointer border-2 transition-all duration-300 flex-shrink-0 relative bg-gray-50 ${
                                                 index === activeImageIndex
                                                     ? 'border-blue-500 scale-105 shadow-lg shadow-blue-500/30'
                                                     : 'border-transparent hover:scale-105 hover:shadow-lg'
@@ -262,8 +262,8 @@ export default function ProductGallery({ images, productTitle, baseUrl = '' }: P
                                                 src={getProductImageUrl(baseUrl, image.url)}
                                                 alt={image.alt || `Thumbnail ${index + 1}`}
                                                 width={64}
-                                                height={64}
-                                                className="w-full h-full object-cover"
+                                                height={75}
+                                                className="w-full h-full object-cover bg-slate-50"
                                             />
                                         </div>
                                     ))}
