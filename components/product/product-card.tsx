@@ -290,7 +290,7 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
 
             {/* 产品图片区域 - 统一使用点击按钮切换 */}
             <div
-                className="aspect-[6/7] overflow-hidden relative"
+                className="aspect-[1/1] overflow-hidden relative"
                 ref={imageContainerRef}
             >
                 <div className="relative w-full h-full">
@@ -304,7 +304,7 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
                                     <Image
                                         src={getProductImageUrl(product.baseUrl, image.url)}
                                         alt={image.alt || product.title}
-                                        width={350}
+                                        width={300}
                                         height={300}
                                         className="w-full h-full object-cover bg-slate-50"
                                         placeholder="blur"

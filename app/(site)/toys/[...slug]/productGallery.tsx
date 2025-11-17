@@ -113,13 +113,12 @@ export default function ProductGallery({ images, productTitle, baseUrl = '' }: P
         return (
             <div className="relative p-4 sm:p-6 md:p-8 flex flex-col gap-5 w-full max-w-full overflow-hidden">
                 <div className="flex-1 w-full">
-                    {/* 使用 6:7 比例的占位图 */}
-                    <div className="overflow-hidden shadow-lg relative aspect-[6/7] bg-gray-50 flex items-center justify-center w-full max-w-full">
+                    <div className="overflow-hidden shadow-lg relative aspect-[1/1] bg-gray-50 flex items-center justify-center w-full max-w-full">
                         <Image
                             src="/images/placeholder.jpg"
                             alt="No image available"
                             width={350}
-                            height={408}
+                            height={350}
                             className="w-full h-full object-cover bg-slate-50"
                             priority
                         />
@@ -163,7 +162,7 @@ export default function ProductGallery({ images, productTitle, baseUrl = '' }: P
                                         src={getProductImageUrl(baseUrl, image.url)}
                                         alt={image.alt || `Thumbnail ${index + 1}`}
                                         width={80}
-                                        height={93}
+                                        height={80}
                                         className="w-full h-full object-cover bg-slate-50"
                                     />
                                 </div>
@@ -180,15 +179,14 @@ export default function ProductGallery({ images, productTitle, baseUrl = '' }: P
                     </div>
                 )}
 
-                {/* 主图区域 - 使用 6:7 比例 */}
                 <div className="flex-1 w-full">
-                    <div className="overflow-hidden shadow-lg relative aspect-[6/7] bg-gray-50 flex items-center justify-center w-full max-w-full">
+                    <div className="overflow-hidden shadow-lg relative aspect-[1/1] bg-gray-50 flex items-center justify-center w-full max-w-full">
                         {mainImageUrl && mainImageUrl !== '' && images[activeImageIndex] && (
                             <Image
                                 src={mainImageUrl}
                                 alt={images[activeImageIndex].alt || productTitle}
                                 width={600}
-                                height={700}
+                                height={600}
                                 className="w-full h-full object-cover bg-slate-50"
                                 priority={activeImageIndex === 0}
                                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
@@ -262,7 +260,7 @@ export default function ProductGallery({ images, productTitle, baseUrl = '' }: P
                                                 src={getProductImageUrl(baseUrl, image.url)}
                                                 alt={image.alt || `Thumbnail ${index + 1}`}
                                                 width={64}
-                                                height={75}
+                                                height={64}
                                                 className="w-full h-full object-cover bg-slate-50"
                                             />
                                         </div>
