@@ -10,6 +10,7 @@ import { useAuth } from '@/contexts/authContext';
 import { useToast } from '@/contexts/toastContext';
 import { useCartStore } from '@/stores/useCartStore';
 import Image from 'next/image';
+import { getMappedColor, getColorDisplayText } from '@/lib/constants/color-map';
 
 interface ProductCardProps {
     product: ProductResponse;
@@ -26,9 +27,15 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
     const { isLoggedIn, openAuthModal, userInfo } = useAuth();
     const { showToast } = useToast();
 
-    // 移除触摸滑动相关状态
-    const [isAnimating, setIsAnimating] = useState(false);
+    // 修复：初始化为 true 确保首次切换有动画
+    const [isAnimating, setIsAnimating] = useState(true);
     const imageContainerRef = useRef<HTMLDivElement>(null);
+
+    // 添加悬停相关状态
+    const [isHovered, setIsHovered] = useState(false);
+    const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const hasAutoSwitchedRef = useRef(false); // 记录是否已经自动切换过
+    const hasManualSwitchRef = useRef(false); // 记录是否手动切换过
 
     // 使用 Zustand store
     const addItemToCart = useCartStore(state => state.addItemToCart);
@@ -61,9 +68,36 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
         }
     }, [product.productSkus]);
 
+    // 鼠标悬停处理 - 只在第一次悬停时自动切换
+    useEffect(() => {
+        if (isHovered && allImages.length > 1 && !hasAutoSwitchedRef.current && !hasManualSwitchRef.current) {
+            // 鼠标悬停时，如果有下一张图片就切换到下一张，但只在第一次悬停时切换
+            const nextIndex = currentImageIndex + 1;
+            if (nextIndex < allImages.length) {
+                hoverTimeoutRef.current = setTimeout(() => {
+                    setIsAnimating(true);
+                    setCurrentImageIndex(nextIndex);
+                    hasAutoSwitchedRef.current = true; // 标记已经自动切换过
+                    setTimeout(() => setIsAnimating(false), 300);
+                }, 300); // 悬停 300ms 后切换
+            }
+        }
+
+        return () => {
+            if (hoverTimeoutRef.current) {
+                clearTimeout(hoverTimeoutRef.current);
+            }
+        };
+    }, [isHovered, currentImageIndex, allImages.length]);
+
     // 获取可用库存
     const getAvailableStock = (sku: ProductSku): number => {
         return (sku.stock || 0) - (sku.lockedStock || 0);
+    };
+
+    // 获取颜色显示值
+    const getColorValue = (color: string): string => {
+        return getMappedColor(color);
     };
 
     // 处理 SKU 选择
@@ -85,6 +119,7 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
         if (currentImageIndex < allImages.length - 1) {
             setIsAnimating(true);
             setCurrentImageIndex(prev => prev + 1);
+            hasManualSwitchRef.current = true; // 标记为手动切换
             setTimeout(() => setIsAnimating(false), 300);
         }
     };
@@ -97,6 +132,7 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
         if (currentImageIndex > 0) {
             setIsAnimating(true);
             setCurrentImageIndex(prev => prev - 1);
+            hasManualSwitchRef.current = true; // 标记为手动切换
             setTimeout(() => setIsAnimating(false), 300);
         }
     };
@@ -109,8 +145,32 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
         if (index !== currentImageIndex) {
             setIsAnimating(true);
             setCurrentImageIndex(index);
+            hasManualSwitchRef.current = true; // 标记为手动切换
             setTimeout(() => setIsAnimating(false), 300);
         }
+    };
+
+    // 鼠标进入处理
+    const handleMouseEnter = () => {
+        setIsHovered(true);
+    };
+
+    // 鼠标离开处理 - 只有在自动切换且没有手动切换的情况下才回到第一张
+    const handleMouseLeave = () => {
+        setIsHovered(false);
+        if (hoverTimeoutRef.current) {
+            clearTimeout(hoverTimeoutRef.current);
+        }
+
+        // 只有在自动切换过且没有手动切换的情况下，才回到第一张图片
+        if (hasAutoSwitchedRef.current && !hasManualSwitchRef.current && currentImageIndex !== 0) {
+            setIsAnimating(true);
+            setCurrentImageIndex(0);
+            setTimeout(() => setIsAnimating(false), 300);
+        }
+
+        // 重置自动切换状态，为下一次悬停做准备
+        hasAutoSwitchedRef.current = false;
     };
 
     // 计算图片容器的变换样式
@@ -259,7 +319,11 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
     const canGoNext = currentImageIndex < allImages.length - 1;
 
     return (
-        <div className="overflow-hidden shadow-sm relative flex flex-col h-full">
+        <div
+            className="overflow-hidden shadow-sm relative flex flex-col h-full"
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
+        >
             {/* 收藏按钮 */}
             <div className="absolute top-3 right-3 z-20">
                 <button
@@ -319,34 +383,50 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
                 {/* 左右切换按钮 - 所有设备都显示 */}
                 {allImages.length > 1 && (
                     <>
-                        {/* 左侧切换按钮 */}
+                        {/* 左侧切换按钮 - 修复：确保按钮显示和箭头居中 */}
                         <button
-                            className={`absolute left-2 top-1/2 transform -translate-y-1/2 w-8 h-8 bg-white/80 backdrop-blur-sm rounded-full items-center justify-center shadow-sm ${
+                            className={`absolute left-2 top-1/2 transform -translate-y-1/2 w-8 h-8 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center shadow-sm z-10 ${
                                 canGoPrevious
-                                    ? 'cursor-pointer text-gray-700'
+                                    ? 'cursor-pointer text-gray-700 hover:bg-white hover:shadow-md'
                                     : 'cursor-not-allowed text-gray-300 opacity-50'
                             }`}
                             onClick={prevImage}
                             disabled={!canGoPrevious}
                             aria-label="Previous image"
                         >
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            {/* 修复：确保箭头居中显示 */}
+                            <svg
+                                width="16"
+                                height="16"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                            >
                                 <path d="M15 18l-6-6 6-6"/>
                             </svg>
                         </button>
 
-                        {/* 右侧切换按钮 */}
+                        {/* 右侧切换按钮 - 修复：确保按钮显示和箭头居中 */}
                         <button
-                            className={`absolute right-2 top-1/2 transform -translate-y-1/2 w-8 h-8 bg-white/80 backdrop-blur-sm rounded-full items-center justify-center shadow-sm ${
+                            className={`absolute right-2 top-1/2 transform -translate-y-1/2 w-8 h-8 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center shadow-sm z-10 ${
                                 canGoNext
-                                    ? 'cursor-pointer text-gray-700'
+                                    ? 'cursor-pointer text-gray-700 hover:bg-white hover:shadow-md'
                                     : 'cursor-not-allowed text-gray-300 opacity-50'
                             }`}
                             onClick={nextImage}
                             disabled={!canGoNext}
                             aria-label="Next image"
                         >
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            {/* 修复：确保箭头居中显示 */}
+                            <svg
+                                width="16"
+                                height="16"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                            >
                                 <path d="M9 18l6-6-6-6"/>
                             </svg>
                         </button>
@@ -364,7 +444,7 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
 
                 {/* 图片指示器 - 底部居中 */}
                 {allImages.length > 1 && (
-                    <div className="absolute bottom-3 left-1/2 transform -translate-x-1/2 flex gap-2">
+                    <div className="absolute bottom-3 left-1/2 transform -translate-x-1/2 flex gap-2 z-10">
                         {allImages.map((_, index) => (
                             <button
                                 key={index}
@@ -401,6 +481,7 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
                                 const availableStock = getAvailableStock(sku);
                                 const isSelected = selectedSku?.id === sku.id;
                                 const isOutOfStock = availableStock <= 0;
+                                const colorValue = getColorValue(sku.color || '#ccc');
 
                                 return (
                                     <button
@@ -412,7 +493,7 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
                                                 ? 'border-gray-300 opacity-40 cursor-not-allowed'
                                                 : 'border-gray-200 cursor-pointer'
                                         }`}
-                                        style={{ backgroundColor: sku.color || '#ccc' }}
+                                        style={{ backgroundColor: colorValue }}
                                         onClick={(e) => handleSkuSelect(sku, e)}
                                         disabled={isOutOfStock}
                                         title={isOutOfStock ? 'Out of stock' : `${sku.color} (Stock: ${availableStock})`}
@@ -430,7 +511,7 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
                         {/* 显示选中的颜色和库存信息 */}
                         {selectedSku && (
                             <div className="mt-1 text-xs text-gray-500">
-                                <span className="font-medium">{selectedSku.color}</span>
+                                <span className="font-medium">{getColorDisplayText(selectedSku.color)}</span>
                                 {getAvailableStock(selectedSku) <= 0 && (
                                     <span className="text-red-500 ml-1">• Out of Stock</span>
                                 )}

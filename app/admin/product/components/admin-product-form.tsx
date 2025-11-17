@@ -31,7 +31,7 @@ export default function AdminProductForm() {
     const productId = params.id as string;
 
     const [product, setProduct] = useState<AdminProductResponse>({
-        id: 0,
+        id: undefined,
         slug: '',
         title: '',
         originalPrice: 0,

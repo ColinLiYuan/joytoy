@@ -20,7 +20,7 @@ export default async function SiteLayout({
     } catch (error) {
         console.error('Failed to load categories:', error);
         rootsData = [];
-    } 
+    }
 
     // 环境判断
     const gaId = process.env.NODE_ENV === 'production' ? 'G-X0CTZ0DD1Q' : '';
