@@ -14,14 +14,12 @@ interface ProductBreadProps {
     pathname: string;
 }
 
-// 🎯 在组件外部定义常量，避免重复计算
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://mythtoy.com';
 
 export default function CollectionBread({
                                             currentCategory,
                                             pathname
                                         }: ProductBreadProps) {
-    // 简化的面包屑生成
     const generateBreadcrumbs = (): Breadcrumb[] => {
         if (!pathname || pathname === '/') {
             return [{ name: 'Home', path: '/' }];
@@ -69,7 +67,6 @@ export default function CollectionBread({
 
     const breadcrumbs = generateBreadcrumbs();
 
-    // 🎯 优化：使用环境变量，但提供回退
     const structuredData = {
         '@context': 'https://schema.org',
         '@type': 'BreadcrumbList',
@@ -84,7 +81,7 @@ export default function CollectionBread({
     };
 
     return (
-        <div className="flex flex-col gap-2 py-4 md:py-3">
+        <div className="flex flex-col gap-2 py-4 md:py-3 breadcrumb">
             <script
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
@@ -93,7 +90,7 @@ export default function CollectionBread({
 
             <div className="w-full">
                 <nav
-                    className="flex items-center flex-wrap gap-1 text-sm text-slate-500"
+                    className="flex items-center flex-wrap gap-1 text-sm"
                     aria-label="Breadcrumb"
                     itemScope
                     itemType="https://schema.org/BreadcrumbList"
@@ -109,14 +106,14 @@ export default function CollectionBread({
                             {item.path ? (
                                 <Link
                                     href={item.path}
-                                    className="text-slate-500 hover:text-slate-700 hover:bg-slate-50 transition-all duration-300 px-1.5 py-0.5 rounded no-underline"
+                                    className="px-1.5 py-0.5 rounded-md no-underline breadcrumb-link transition-all duration-200"
                                     itemProp="item"
                                 >
                                     <span itemProp="name">{item.name}</span>
                                 </Link>
                             ) : (
                                 <span
-                                    className="text-slate-700 font-medium px-1.5 py-0.5"
+                                    className="px-1.5 py-0.5 rounded-md cursor-default breadcrumb-current"
                                     aria-current="page"
                                     itemProp="name"
                                 >
@@ -125,8 +122,8 @@ export default function CollectionBread({
                             )}
                             <meta itemProp="position" content={`${index + 1}`} />
                             {index < breadcrumbs.length - 1 && (
-                                <span className="text-slate-300 font-light text-xs">/</span>
-                                )}
+                                <span className="breadcrumb-separator text-xs mx-1">/</span>
+                            )}
                         </span>
                     ))}
                 </nav>
@@ -135,13 +132,13 @@ export default function CollectionBread({
             {currentCategory && (
                 <div className="w-full text-left min-w-0 pt-1">
                     <h1
-                        className="text-2xl md:text-xl font-semibold text-gray-600 mb-3 md:mb-1 leading-tight"
+                        className="text-2xl md:text-xl font-medium mb-3 md:mb-1 leading-tight breadcrumb-title"
                         itemProp="name"
                     >
                         {currentCategory.name}
                     </h1>
                     {currentCategory.description && (
-                        <p className="text-base md:text-sm text-slate-500 leading-relaxed m-0 pt-0.5">
+                        <p className="text-base md:text-sm leading-relaxed m-0 pt-0.5 breadcrumb-description">
                             {currentCategory.description}
                         </p>
                     )}

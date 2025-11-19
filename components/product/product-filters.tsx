@@ -90,7 +90,7 @@ export default function ProductFilters({ filters, onFiltersChange, availableFilt
     );
 
     return (
-        <div className="flex flex-col gap-0">
+        <div className="flex flex-col gap-0 product-filters">
             {/* 价格范围 */}
             <div className="pb-0 mb-0 border-b border-gray-200 last:border-b-0">
                 <div
@@ -98,7 +98,7 @@ export default function ProductFilters({ filters, onFiltersChange, availableFilt
                     onClick={() => toggleGroup('price')}
                     aria-expanded={expandedGroups.price}
                 >
-                    <h4 className="flex items-center gap-2 m-0 text-base font-semibold text-gray-800">
+                    <h4 className="flex items-center gap-2 m-0 text-base font-semibold text-gray-800 filter-group-header">
                         Price Range
                     </h4>
                     <CollapseIcon isExpanded={expandedGroups.price} />
@@ -106,7 +106,7 @@ export default function ProductFilters({ filters, onFiltersChange, availableFilt
                 {expandedGroups.price && (
                     <div className="flex flex-col gap-1 animate-slideDown">
                         {PRICE_RANGES.map(range => (
-                            <div key={range.label} className="flex items-center gap-2 cursor-pointer py-0.5 px-1.5 transition-colors duration-200 rounded hover:bg-slate-50">
+                            <div key={range.label} className="flex items-center gap-2 cursor-pointer py-0.5 px-1.5 transition-colors duration-200 rounded hover:bg-slate-50 filter-option">
                                 <input
                                     type="radio"
                                     name="priceRange"
@@ -114,7 +114,7 @@ export default function ProductFilters({ filters, onFiltersChange, availableFilt
                                     id={`price-${range.label}`}
                                     checked={filters.priceRange?.[0] === range.min && filters.priceRange?.[1] === range.max}
                                     onChange={() => handlePriceRangeChange(range)}
-                                    className="w-4 h-4 rounded cursor-pointer transition-all duration-200 checked:bg-[var(--primary-color)] checked:border-[var(--primary-color)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)]/20"
+                                    className="w-4 h-4 rounded cursor-pointer transition-all duration-200"
                                 />
                                 <label
                                     htmlFor={`price-${range.label}`}
@@ -135,7 +135,7 @@ export default function ProductFilters({ filters, onFiltersChange, availableFilt
                     onClick={() => toggleGroup('features')}
                     aria-expanded={expandedGroups.features}
                 >
-                    <h4 className="flex items-center gap-2 m-0 text-base font-semibold text-gray-800">
+                    <h4 className="flex items-center gap-2 m-0 text-base font-semibold text-gray-800 filter-group-header">
                         Features
                     </h4>
                     <CollapseIcon isExpanded={expandedGroups.features} />
@@ -143,7 +143,7 @@ export default function ProductFilters({ filters, onFiltersChange, availableFilt
                 {expandedGroups.features && (
                     <div className="flex flex-col gap-1 animate-slideDown">
                         {availableFilters.features.map(feature => (
-                            <div key={feature} className="flex items-center gap-2 cursor-pointer py-0.5 px-1.5 transition-colors duration-200 rounded hover:bg-slate-50">
+                            <div key={feature} className="flex items-center gap-2 cursor-pointer py-0.5 px-1.5 transition-colors duration-200 rounded hover:bg-slate-50 filter-option">
                                 <input
                                     type="checkbox"
                                     name="features"
@@ -151,7 +151,7 @@ export default function ProductFilters({ filters, onFiltersChange, availableFilt
                                     id={`features-${feature}`}
                                     checked={filters.features.includes(feature)}
                                     onChange={() => handleMultiSelectChange('features', feature)}
-                                    className="w-4 h-4 rounded cursor-pointer transition-all duration-200 checked:bg-[var(--primary-color)] checked:border-[var(--primary-color)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)]/20"
+                                    className="w-4 h-4 rounded cursor-pointer transition-all duration-200"
                                 />
                                 <label
                                     htmlFor={`features-${feature}`}
@@ -172,7 +172,7 @@ export default function ProductFilters({ filters, onFiltersChange, availableFilt
                     onClick={() => toggleGroup('materials')}
                     aria-expanded={expandedGroups.materials}
                 >
-                    <h4 className="flex items-center gap-2 m-0 text-base font-semibold text-gray-800">
+                    <h4 className="flex items-center gap-2 m-0 text-base font-semibold text-gray-800 filter-group-header">
                         Materials
                     </h4>
                     <CollapseIcon isExpanded={expandedGroups.materials} />
@@ -180,7 +180,7 @@ export default function ProductFilters({ filters, onFiltersChange, availableFilt
                 {expandedGroups.materials && (
                     <div className="flex flex-col gap-1 animate-slideDown">
                         {availableFilters.materials.map(material => (
-                            <div key={material} className="flex items-center gap-2 cursor-pointer py-0.5 px-1.5 transition-colors duration-200 rounded hover:bg-slate-50">
+                            <div key={material} className="flex items-center gap-2 cursor-pointer py-0.5 px-1.5 transition-colors duration-200 rounded hover:bg-slate-50 filter-option">
                                 <input
                                     type="checkbox"
                                     name="materials"
@@ -188,7 +188,7 @@ export default function ProductFilters({ filters, onFiltersChange, availableFilt
                                     id={`materials-${material}`}
                                     checked={filters.materials.includes(material)}
                                     onChange={() => handleMultiSelectChange('materials', material)}
-                                    className="w-4 h-4 rounded cursor-pointer transition-all duration-200 checked:bg-[var(--primary-color)] checked:border-[var(--primary-color)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)]/20"
+                                    className="w-4 h-4 rounded cursor-pointer transition-all duration-200"
                                 />
                                 <label
                                     htmlFor={`materials-${material}`}
@@ -209,7 +209,7 @@ export default function ProductFilters({ filters, onFiltersChange, availableFilt
                     onClick={() => toggleGroup('colors')}
                     aria-expanded={expandedGroups.colors}
                 >
-                    <h4 className="flex items-center gap-2 m-0 text-base font-semibold text-gray-800">
+                    <h4 className="flex items-center gap-2 m-0 text-base font-semibold text-gray-800 filter-group-header">
                         Colors
                     </h4>
                     <CollapseIcon isExpanded={expandedGroups.colors} />
@@ -217,7 +217,7 @@ export default function ProductFilters({ filters, onFiltersChange, availableFilt
                 {expandedGroups.colors && (
                     <div className="flex flex-col gap-1 animate-slideDown">
                         {availableFilters.colors.map(color => (
-                            <div key={color} className="flex items-center gap-2 cursor-pointer py-0.5 px-1.5 transition-colors duration-200 rounded hover:bg-slate-50">
+                            <div key={color} className="flex items-center gap-2 cursor-pointer py-0.5 px-1.5 transition-colors duration-200 rounded hover:bg-slate-50 filter-option">
                                 <input
                                     type="checkbox"
                                     name="colors"
@@ -225,7 +225,7 @@ export default function ProductFilters({ filters, onFiltersChange, availableFilt
                                     id={`colors-${color}`}
                                     checked={filters.colors.includes(color)}
                                     onChange={() => handleMultiSelectChange('colors', color)}
-                                    className="w-4 h-4 rounded cursor-pointer transition-all duration-200 checked:bg-[var(--primary-color)] checked:border-[var(--primary-color)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)]/20"
+                                    className="w-4 h-4 rounded cursor-pointer transition-all duration-200"
                                 />
                                 <label
                                     htmlFor={`colors-${color}`}

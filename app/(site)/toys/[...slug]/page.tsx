@@ -136,15 +136,21 @@ export default async function ProductDetail({ params }: PageProps) {
         product
     );
 
-    // 准备相册图片数据
+    // 准备相册图片数据 - 在服务端预先计算完整URL
     const getGalleryImages = () => {
         if (!product) return [];
 
         // 检查是否有图库图片
         const hasGallery = !!(product.galleries && product.galleries.length > 0);
         const displayImages = hasGallery ?
-            product.galleries! :
-            [{ url: product.image, alt: product.title }];
+            product.galleries!.map(gallery => ({
+                url: getProductImageUrl(product!.baseUrl, gallery.url),
+                alt: gallery.alt || product.title
+            })) :
+            [{
+                url: getProductImageUrl(product.baseUrl, product.image),
+                alt: product.title
+            }];
 
         return displayImages;
     };
@@ -193,7 +199,7 @@ export default async function ProductDetail({ params }: PageProps) {
 
     return (
         <div className="min-h-screen">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="max-w-7xl mx-auto px-4 py-6">
                 <ProductDetailClient
                     product={product}
                     breadcrumbs={breadcrumbs}
