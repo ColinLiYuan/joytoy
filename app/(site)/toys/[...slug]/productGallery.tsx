@@ -12,6 +12,7 @@ interface GalleryImage {
 interface ProductGalleryProps {
     images: GalleryImage[];
     productTitle: string;
+    baseUrl: string;
 }
 
 export default function ProductGallery({ images, productTitle }: ProductGalleryProps) {
