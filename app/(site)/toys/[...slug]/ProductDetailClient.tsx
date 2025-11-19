@@ -9,6 +9,7 @@ import { useAuth } from '@/contexts/authContext';
 import { useCartStore } from '@/stores/useCartStore';
 import ProductGallery from './productGallery';
 import { getProductImageUrl } from '@/lib/image-utils';
+import ProductBreadcrumb from '@/components/product/product-breadcrumb'; // 导入新组件
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCartPlus } from '@fortawesome/free-solid-svg-icons';
@@ -141,32 +142,14 @@ export default function ProductDetailClient({
     };
 
     return (
-        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 overflow-x-hidden">
-            {/* 面包屑导航 */}
-            <nav className="mb-6 sm:mb-8 text-sm text-gray-600 flex items-center flex-wrap gap-2 break-words">
-                {breadcrumbs.map((item, index) => (
-                    <span key={index} className="flex items-center">
-                        {item.path ? (
-                            <Link
-                                href={item.path}
-                                className="text-blue-600 hover:text-blue-800 transition-colors duration-300 hover:underline"
-                            >
-                                {item.name}
-                            </Link>
-                        ) : (
-                            <span className="text-gray-600">{item.name}</span>
-                        )}
-                        {index < breadcrumbs.length - 1 && (
-                            <span className="mx-1">/</span>
-                        )}
-                    </span>
-                ))}
-            </nav>
+        <div className="w-full max-w-7xl mx-auto overflow-x-hidden">
+            {/* 使用独立的 ProductBreadcrumb 组件 */}
+            <ProductBreadcrumb breadcrumbs={breadcrumbs} />
 
             {/* 主要内容区域 */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-10 mb-12 lg:mb-16 rounded-xl overflow-hidden">
                 {/* 相册区域 */}
-                <div className="flex flex-col gap-6 w-full overflow-hidden p-4 sm:p-6">
+                <div className="flex flex-col gap-6 w-full overflow-hidden py-6 sm:py-4">
                     <ProductGallery
                         images={galleryImages}
                         productTitle={product.title}
@@ -175,7 +158,7 @@ export default function ProductDetailClient({
 
                     {/* 产品描述 */}
                     {description && (
-                        <div className="p-4 sm:p-6 rounded-lg w-full">
+                        <div className="rounded-lg w-full product-detail-section">
                             <h3 className="mb-4 sm:mb-5 text-lg sm:text-xl font-semibold text-gray-900 pb-3 border-b-2 border-gray-100">
                                 Description
                             </h3>
@@ -198,7 +181,7 @@ export default function ProductDetailClient({
                     </h1>
 
                     {/* 价格区域 */}
-                    <div className="flex flex-col gap-4 mb-6 p-4 sm:p-5 rounded-lg w-full">
+                    <div className="flex flex-col gap-4 mb-6 p-4 sm:p-5 rounded-lg w-full product-detail-section">
                         <div className="flex items-center gap-3 mb-3">
                             <span className="text-2xl lg:text-3xl font-bold text-red-600 font-inter tracking-tight">
                                 ${product.currentPrice}
@@ -212,7 +195,7 @@ export default function ProductDetailClient({
 
                         {/* SKU 选择区域 */}
                         {product.productSkus && product.productSkus.length > 0 && (
-                            <div className="mb-4 p-4 rounded-lg border border-gray-200">
+                            <div className="mb-4 p-4 rounded-lg border border-gray-200 product-detail-section">
                                 <h3 className="mb-3 text-lg font-semibold text-gray-900">
                                     Available Options
                                 </h3>
@@ -276,7 +259,7 @@ export default function ProductDetailClient({
                         {/* 添加到购物车按钮 */}
                         <div className="w-full">
                             <button
-                                className="w-full bg-gradient-to-br from-blue-600 to-blue-800 text-white py-3 sm:py-4 px-6 rounded-lg font-semibold flex items-center justify-center gap-3 transition-all duration-300 hover:from-blue-700 hover:to-blue-900 hover:-translate-y-0.5 hover:shadow-lg shadow-blue-500/30 disabled:bg-gray-500 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none disabled:opacity-70"
+                                className="w-full product-detail-button text-white py-3 sm:py-4 px-6 rounded-lg font-semibold flex items-center justify-center gap-3 hover:shadow-lg shadow-blue-500/30 disabled:bg-gray-500 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none disabled:opacity-70"
                                 onClick={handleAddToCart}
                                 disabled={addingToCart || loading || !selectedSku || getAvailableStock(selectedSku) <= 0}
                             >
@@ -291,7 +274,7 @@ export default function ProductDetailClient({
 
                     {/* 规格表格 */}
                     {specifications.length > 0 && (
-                        <div className="mb-6 p-4 sm:p-6 rounded-lg shadow-sm w-full">
+                        <div className="mb-6 p-4 sm:p-6 rounded-lg shadow-sm w-full specifications-container">
                             <h3 className="mb-4 sm:mb-5 text-lg sm:text-xl font-semibold text-gray-900 pb-3 border-b-2 border-gray-100">
                                 Specifications
                             </h3>
@@ -299,7 +282,7 @@ export default function ProductDetailClient({
                                 {specifications.map((spec, index) => (
                                     <div
                                         key={index}
-                                        className="flex flex-col sm:flex-row sm:items-center p-3 sm:p-4 border-b border-gray-200 transition-colors duration-300 hover:bg-gray-100 last:border-b-0"
+                                        className="flex flex-col sm:flex-row sm:items-center p-3 sm:p-4 border-b border-gray-200 specification-item last:border-b-0"
                                     >
                                         <div className="font-semibold text-gray-700 capitalize break-words flex-shrink-0 w-full sm:w-40 sm:pr-4 mb-1 sm:mb-0">
                                             {spec.specKey?.replace(/_/g, ' ').replace(/\b\w/g, (char: string) => char.toUpperCase())}
@@ -315,14 +298,14 @@ export default function ProductDetailClient({
 
                     {/* 产品特性展示 */}
                     {features.length > 0 && (
-                        <div className="p-4 sm:p-6 rounded-lg shadow-sm w-full">
+                        <div className="p-4 sm:p-6 rounded-lg shadow-sm w-full product-detail-section">
                             <h3 className="mb-4 sm:mb-5 text-lg sm:text-xl font-semibold text-gray-900 pb-3 border-b-2 border-gray-100">
                                 Product Features
                             </h3>
                             <div className="flex flex-col gap-3">
                                 {features.map((feature, index) => (
                                     <div key={index} className="flex items-start gap-3 py-1 sm:py-2">
-                                        <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0" />
+                                        <div className="w-2 h-2 rounded-full mt-2 flex-shrink-0 feature-bullet" />
                                         <span className="text-gray-700 leading-relaxed break-words">
                                             {feature}
                                         </span>

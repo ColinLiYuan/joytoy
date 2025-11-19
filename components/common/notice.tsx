@@ -54,7 +54,7 @@ export default function Notice({ onCloseMenu }: PromotionBarProps) {
 
     return (
         <div
-            className="bg-[var(--notice-color)] text-white py-2 overflow-hidden static cursor-pointer relative"
+            className="bg-[var(--notice-color)] text-white py-2 overflow-hidden static cursor-pointer relative notice-bar"
             style={{ zIndex: Z_INDEX.NAVIGATION }} // 在最外层容器设置 z-index
         >
             <div className="flex items-center justify-center relative">
@@ -80,7 +80,7 @@ export default function Notice({ onCloseMenu }: PromotionBarProps) {
                         >
                             <Link
                                 href={promotion.link}
-                                className="block w-full text-white no-underline py-1 transition-all duration-300 font-semibold hover:text-gray-200 hover:bg-white/10 hover:rounded"
+                                className="block w-full text-white no-underline py-1"
                                 onClick={handlePromotionClick}
                             >
                                 {promotion.text}

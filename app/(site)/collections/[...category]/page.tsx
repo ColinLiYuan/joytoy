@@ -61,12 +61,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     }
 
     return {
-        title: 'Myth Toy - 高品质玩具',
-        description: '探索 Myth Toy 的高品质玩具收藏',
+        title: 'Myth Toy - toys from china',
+        description: 'source factory supplies',
         robots: 'index, follow',
         openGraph: {
             title: 'Myth Toy',
-            description: '探索 Myth Toy 的高品质玩具收藏',
+            description: 'source factory supplies',
             type: 'website',
             siteName: 'Myth Toy',
         },

@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { ProductResponse, ProductSku } from '@/types/product';
 import { getProductImageUrl } from '@/lib/image-utils';
 import { wishlistService } from '@/services/wishlistService';
@@ -24,28 +24,69 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
     const [addingToCart, setAddingToCart] = useState(false);
     const [selectedSku, setSelectedSku] = useState<ProductSku | null>(null);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
+    const [addedToCart, setAddedToCart] = useState(false);
+
+    // 移动端滑动相关状态
+    const [isDragging, setIsDragging] = useState(false);
+    const [currentTranslate, setCurrentTranslate] = useState(0);
+    const [isMobile, setIsMobile] = useState(false);
+    const [isMounted, setIsMounted] = useState(false);
+
+    const dragStartX = useRef(0);
+    const dragCurrentX = useRef(0);
+    const dragStartTime = useRef(0);
+    const dragEndTime = useRef(0);
+    const prevTranslate = useRef(0);
+    const isClickRef = useRef(true);
+
     const { isLoggedIn, openAuthModal, userInfo } = useAuth();
     const { showToast } = useToast();
 
-    // 修复：初始化为 true 确保首次切换有动画
     const [isAnimating, setIsAnimating] = useState(true);
     const imageContainerRef = useRef<HTMLDivElement>(null);
 
     // 添加悬停相关状态
     const [isHovered, setIsHovered] = useState(false);
     const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-    const hasAutoSwitchedRef = useRef(false); // 记录是否已经自动切换过
-    const hasManualSwitchRef = useRef(false); // 记录是否手动切换过
+    const hasAutoSwitchedRef = useRef(false);
+    const hasManualSwitchRef = useRef(false);
 
     // 使用 Zustand store
     const addItemToCart = useCartStore(state => state.addItemToCart);
     const loading = useCartStore(state => state.loading);
 
-    // 获取所有图片（主图 + 相册图）
-    const allImages = [
-        { url: product.image, alt: product.title },
-        ...(product.galleries || [])
-    ];
+    // 使用 useMemo 缓存所有图片的完整 URL - 修复重复调用问题
+    const allImages = useMemo(() => {
+        const mainImage = {
+            url: getProductImageUrl(product.baseUrl, product.image),
+            alt: product.title
+        };
+
+        const galleryImages = (product.galleries || []).map(gallery => ({
+            ...gallery,
+            url: getProductImageUrl(product.baseUrl, gallery.url)
+        }));
+
+        return [mainImage, ...galleryImages];
+    }, [product.baseUrl, product.image, product.title, product.galleries]);
+
+    // 缓存主图 URL（用于购物车）
+    const mainImageUrl = useMemo(() => {
+        return getProductImageUrl(product.baseUrl, product.image);
+    }, [product.baseUrl, product.image]);
+
+    // 初始化设备检测和挂载状态
+    useEffect(() => {
+        setIsMounted(true);
+        setIsMobile(window.innerWidth < 768);
+
+        const handleResize = () => {
+            setIsMobile(window.innerWidth < 768);
+        };
+
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     // 初始化收藏状态
     useEffect(() => {
@@ -55,31 +96,30 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
     // 初始化选中的 SKU
     useEffect(() => {
         if (product.productSkus && product.productSkus.length > 0) {
-            // 找到第一个有库存的 SKU
             const availableSku = product.productSkus.find(sku =>
                 getAvailableStock(sku) > 0
             );
             if (availableSku) {
                 setSelectedSku(availableSku);
             } else {
-                // 如果都没有库存，选择第一个（但会禁用）
                 setSelectedSku(product.productSkus[0]);
             }
         }
     }, [product.productSkus]);
 
-    // 鼠标悬停处理 - 只在第一次悬停时自动切换
+    // 鼠标悬停处理 - 只在桌面端生效
     useEffect(() => {
+        if (!isMounted || isMobile) return;
+
         if (isHovered && allImages.length > 1 && !hasAutoSwitchedRef.current && !hasManualSwitchRef.current) {
-            // 鼠标悬停时，如果有下一张图片就切换到下一张，但只在第一次悬停时切换
             const nextIndex = currentImageIndex + 1;
             if (nextIndex < allImages.length) {
                 hoverTimeoutRef.current = setTimeout(() => {
                     setIsAnimating(true);
                     setCurrentImageIndex(nextIndex);
-                    hasAutoSwitchedRef.current = true; // 标记已经自动切换过
+                    hasAutoSwitchedRef.current = true;
                     setTimeout(() => setIsAnimating(false), 300);
-                }, 300); // 悬停 300ms 后切换
+                }, 300);
             }
         }
 
@@ -88,7 +128,7 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
                 clearTimeout(hoverTimeoutRef.current);
             }
         };
-    }, [isHovered, currentImageIndex, allImages.length]);
+    }, [isHovered, currentImageIndex, allImages.length, isMounted, isMobile]);
 
     // 获取可用库存
     const getAvailableStock = (sku: ProductSku): number => {
@@ -111,7 +151,7 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
         }
     };
 
-    // 切换到下一张图片
+    // 桌面端：切换到下一张图片
     const nextImage = (e: React.MouseEvent) => {
         e?.preventDefault();
         e?.stopPropagation();
@@ -119,12 +159,12 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
         if (currentImageIndex < allImages.length - 1) {
             setIsAnimating(true);
             setCurrentImageIndex(prev => prev + 1);
-            hasManualSwitchRef.current = true; // 标记为手动切换
+            hasManualSwitchRef.current = true;
             setTimeout(() => setIsAnimating(false), 300);
         }
     };
 
-    // 切换到上一张图片
+    // 桌面端：切换到上一张图片
     const prevImage = (e: React.MouseEvent) => {
         e?.preventDefault();
         e?.stopPropagation();
@@ -132,76 +172,225 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
         if (currentImageIndex > 0) {
             setIsAnimating(true);
             setCurrentImageIndex(prev => prev - 1);
-            hasManualSwitchRef.current = true; // 标记为手动切换
+            hasManualSwitchRef.current = true;
             setTimeout(() => setIsAnimating(false), 300);
         }
     };
 
     // 跳转到指定图片
-    const goToImage = (index: number, e: React.MouseEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
+    const goToImage = (index: number, e?: React.MouseEvent) => {
+        e?.preventDefault();
+        e?.stopPropagation();
 
         if (index !== currentImageIndex) {
             setIsAnimating(true);
             setCurrentImageIndex(index);
-            hasManualSwitchRef.current = true; // 标记为手动切换
+            setCurrentTranslate(-index * 100);
+            hasManualSwitchRef.current = true;
             setTimeout(() => setIsAnimating(false), 300);
         }
     };
 
     // 鼠标进入处理
     const handleMouseEnter = () => {
+        if (!isMounted || isMobile) return;
         setIsHovered(true);
     };
 
-    // 鼠标离开处理 - 只有在自动切换且没有手动切换的情况下才回到第一张
+    // 鼠标离开处理
     const handleMouseLeave = () => {
+        if (!isMounted || isMobile) return;
         setIsHovered(false);
         if (hoverTimeoutRef.current) {
             clearTimeout(hoverTimeoutRef.current);
         }
 
-        // 只有在自动切换过且没有手动切换的情况下，才回到第一张图片
         if (hasAutoSwitchedRef.current && !hasManualSwitchRef.current && currentImageIndex !== 0) {
             setIsAnimating(true);
             setCurrentImageIndex(0);
             setTimeout(() => setIsAnimating(false), 300);
         }
 
-        // 重置自动切换状态，为下一次悬停做准备
         hasAutoSwitchedRef.current = false;
     };
 
-    // 计算图片容器的变换样式
+    // ========== 移动端滑动逻辑 ==========
+    const getCssVariable = (variableName: string, defaultValue: string): number => {
+        if (!isMounted) return parseFloat(defaultValue);
+
+        const value = getComputedStyle(document.documentElement)
+            .getPropertyValue(variableName)
+            .trim();
+
+        return parseFloat(value || defaultValue);
+    };
+
+    // 触摸开始
+    const handleTouchStart = (clientX: number) => {
+        if (!isMounted || !isMobile) return;
+        setIsDragging(true);
+        isClickRef.current = true;
+        dragStartX.current = clientX;
+        dragCurrentX.current = clientX;
+        dragStartTime.current = Date.now();
+        prevTranslate.current = currentTranslate;
+    };
+
+    // 触摸移动
+    const handleTouchMove = (clientX: number) => {
+        if (!isMounted || !isMobile || !isDragging) return;
+        dragCurrentX.current = clientX;
+
+        const diff = clientX - dragStartX.current;
+
+        // 如果移动距离超过阈值，认为是拖动而不是点击
+        if (Math.abs(diff) > 10) {
+            isClickRef.current = false;
+        }
+
+        // 使用全局变量控制灵敏度
+        const sensitivity = getCssVariable('--gallery-sensitivity', '0.8');
+
+        let newTranslate = prevTranslate.current + (diff / window.innerWidth) * 100 * sensitivity;
+
+        // 边界限制
+        const maxTranslate = 0;
+        const minTranslate = -(allImages.length - 1) * 100;
+
+        // 使用全局变量控制边界弹性
+        const boundaryElasticity = getCssVariable('--gallery-boundary-elasticity', '0.3');
+
+        if (newTranslate > maxTranslate) {
+            newTranslate = maxTranslate + (newTranslate - maxTranslate) * boundaryElasticity;
+        } else if (newTranslate < minTranslate) {
+            newTranslate = minTranslate + (newTranslate - minTranslate) * boundaryElasticity;
+        }
+
+        setCurrentTranslate(newTranslate);
+    };
+
+    // 触摸结束
+    const handleTouchEnd = () => {
+        if (!isMounted || !isMobile || !isDragging) return;
+        setIsDragging(false);
+
+        // 如果是点击，不处理滑动逻辑
+        if (isClickRef.current) {
+            return;
+        }
+
+        dragEndTime.current = Date.now();
+
+        const diff = dragCurrentX.current - dragStartX.current;
+        const timeDiff = Math.max(1, dragEndTime.current - dragStartTime.current);
+
+        // 计算滑动速度
+        const speed = Math.abs(diff) / (timeDiff / 1000);
+
+        // 使用全局变量控制距离阈值
+        const distanceThreshold = getCssVariable('--gallery-distance-threshold', '0.25');
+        const screenThreshold = window.innerWidth * distanceThreshold;
+
+        let slidesToMove = 0;
+
+        // 基本规则：滑动距离超过阈值时切换一张
+        if (Math.abs(diff) > screenThreshold) {
+            slidesToMove = 1;
+        }
+
+        // 使用全局变量控制速度阈值
+        const minSpeed = getCssVariable('--gallery-min-speed', '600');
+        const speedRatio = getCssVariable('--gallery-speed-ratio', '300');
+
+        // 根据速度增加额外的切换数量
+        if (speed > minSpeed) {
+            const extraSlides = Math.floor((speed - minSpeed) / speedRatio);
+            slidesToMove += extraSlides;
+        }
+
+        // 限制跳转数量
+        slidesToMove = Math.min(slidesToMove, allImages.length - 1);
+
+        let targetIndex;
+        if (diff > 0) {
+            targetIndex = Math.max(0, currentImageIndex - slidesToMove);
+        } else {
+            targetIndex = Math.min(allImages.length - 1, currentImageIndex + slidesToMove);
+        }
+
+        setCurrentImageIndex(targetIndex);
+        setCurrentTranslate(-targetIndex * 100);
+    };
+
+    // 移动端触摸事件
+    const handleTouchStartEvent = (e: React.TouchEvent) => {
+        handleTouchStart(e.touches[0].clientX);
+    };
+
+    const handleTouchMoveEvent = (e: React.TouchEvent) => {
+        if (!isDragging) return;
+        handleTouchMove(e.touches[0].clientX);
+    };
+
+    const handleTouchEndEvent = (e: React.TouchEvent) => {
+        if (!isDragging) return;
+        handleTouchEnd();
+    };
+
+    // 获取全局动画时长
+    const transitionDuration = getCssVariable('--gallery-transition-duration', '300');
+
+    // 修复：统一的样式计算函数，避免 hydration 不匹配
     const getImageContainerStyle = () => {
-        return {
-            transform: `translateX(-${currentImageIndex * 100}%)`,
-            transition: isAnimating ? 'transform 0.3s ease-out' : 'none'
-        };
+        // 服务端渲染时返回简单的样式，避免 hydration 不匹配
+        if (!isMounted) {
+            return {
+                transform: `translateX(-${currentImageIndex * 100}%)`,
+                transition: 'transform 0.3s ease-out'
+            };
+        }
+
+        // 客户端渲染时根据设备类型返回不同样式
+        if (isMobile) {
+            return {
+                transform: `translateX(${currentTranslate}%)`,
+                transition: isDragging ? 'none' : `transform ${transitionDuration}ms ease-out`
+            };
+        } else {
+            return {
+                transform: `translateX(-${currentImageIndex * 100}%)`,
+                transition: isAnimating ? 'transform 0.3s ease-out' : 'none'
+            };
+        }
+    };
+
+    // 处理图片点击 - 进入详情页
+    const handleImageClick = (e: React.MouseEvent) => {
+        // 如果正在拖动，阻止点击事件
+        if (isDragging) {
+            e.preventDefault();
+            e.stopPropagation();
+            return;
+        }
+        // 否则让 Link 组件正常处理导航
     };
 
     const handleToggleFavorite = async (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
 
-        // 检查登录状态
         if (!isLoggedIn) {
-            // 未登录，打开登录模态框
             openAuthModal('login', {
                 onSuccess: () => {
-                    // 登录成功后自动执行收藏操作
                     executeToggleFavorite();
                 }
             });
             return;
         }
 
-        // 已登录，直接执行收藏操作
         await executeToggleFavorite();
     };
 
-    // 实际的收藏操作
     const executeToggleFavorite = async () => {
         if (isLoading) return;
 
@@ -217,7 +406,6 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
             }
 
             if (newFavoritedState) {
-                // 添加收藏
                 await wishlistService.addItemToWishlist({
                     userId: userInfo.id,
                     productId: product.id,
@@ -227,21 +415,18 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
                     slug: product.slug
                 });
             } else {
-                // 移除收藏
                 await wishlistService.removeItemFromWishlist({
                     userId: userInfo.id,
                     productId: product.id
                 });
             }
 
-            // 通知父组件更新数据
             if (onWishlistUpdate) {
                 onWishlistUpdate();
             }
 
         } catch (error) {
             console.error('Toggle favorite failed:', error);
-            // 操作失败，回滚状态
             setIsFavorited(!isFavorited);
             showToast('error', 'Add Failed', 'Failed to add product to wishlist. Please try again.');
         } finally {
@@ -249,7 +434,6 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
         }
     };
 
-    // 添加到购物车函数
     const handleAddToCart = async (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
@@ -260,15 +444,17 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
             if (!isLoggedIn) {
                 openAuthModal('login', {
                     onSuccess: () => {
-                        // 登录成功后自动执行添加到购物车操作
                         executeAddToCart();
                     }
                 });
                 return;
             }
 
-            // 已登录，直接添加到购物车
             await executeAddToCart();
+            setAddedToCart(true);
+            setTimeout(() => {
+                setAddedToCart(false);
+            }, 2000);
 
         } catch (error) {
             console.error('Failed to add product to cart:', error);
@@ -278,35 +464,30 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
         }
     };
 
-    // 提取添加到购物车的实际逻辑
     const executeAddToCart = async () => {
         if (!selectedSku) {
             showToast('error', 'Selection Required', 'Please select a color option.');
             return;
         }
 
-        // 检查库存
         const availableStock = getAvailableStock(selectedSku);
         if (availableStock <= 0) {
             showToast('error', 'Out of Stock', 'This product is currently out of stock.');
             return;
         }
 
-        // 构建符合后端要求的请求对象，使用 SKU 信息
         const addToCartRequest = {
             productId: product.id,
             productTitle: product.title,
-            productSku: selectedSku.sku, // 使用选中的 SKU
-            productImage: getProductImageUrl(product.baseUrl, product.image),
+            productSku: selectedSku.sku,
+            productImage: mainImageUrl,  // 使用缓存的 URL
             unitPrice: product.currentPrice,
             quantity: 1,
-            color: selectedSku.color // 使用 SKU 的颜色
+            color: selectedSku.color
         };
 
-        // 使用 Zustand store 添加商品
         await addItemToCart(addToCartRequest);
 
-        // 显示成功提示
         const colorText = selectedSku.color ? ` (${selectedSku.color})` : '';
         showToast('success', 'Added to Cart', `${product.title}${colorText} has been added to your cart!`);
     };
@@ -320,42 +501,26 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
 
     return (
         <div
-            className="overflow-hidden shadow-sm relative flex flex-col h-full"
+            className="overflow-hidden shadow-md relative flex flex-col h-full bg-white product-card"
+            style={{
+                borderRadius: 'var(--radius-lg)',
+                border: '1px solid var(--border-light)'
+            }}
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
         >
-            {/* 收藏按钮 */}
-            <div className="absolute top-3 right-3 z-20">
-                <button
-                    className={`flex items-center justify-center w-9 h-9 rounded-full bg-white/90 backdrop-blur-sm relative cursor-pointer
-        ${isFavorited ? 'text-red-500' : 'text-gray-400'} 
-        ${isLoading ? 'opacity-70 pointer-events-none' : ''}`}
-                    onClick={handleToggleFavorite}
-                    disabled={isLoading}
-                    aria-label={isFavorited ? 'Remove from wishlist' : 'Add to wishlist'}
-                >
-                    <svg
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        fill={isFavorited ? "currentColor" : "none"}
-                        stroke="currentColor"
-                        strokeWidth="2"
-                    >
-                        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-                    </svg>
-                    {isLoading && (
-                        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-                            <div className="w-4 h-4 border-2 border-transparent border-t-current rounded-full animate-spin"></div>
-                        </div>
-                    )}
-                </button>
-            </div>
-
-            {/* 产品图片区域 - 统一使用点击按钮切换 */}
+            {/* 产品图片区域 */}
             <div
-                className="aspect-[1/1] overflow-hidden relative"
+                className="aspect-[1/1] overflow-hidden relative bg-gray-50"
+                style={{
+                    borderTopLeftRadius: 'var(--radius-lg)',
+                    borderTopRightRadius: 'var(--radius-lg)'
+                }}
                 ref={imageContainerRef}
+                // 移动端触摸事件
+                onTouchStart={handleTouchStartEvent}
+                onTouchMove={handleTouchMoveEvent}
+                onTouchEnd={handleTouchEndEvent}
             >
                 <div className="relative w-full h-full">
                     <div
@@ -364,13 +529,17 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
                     >
                         {allImages.map((image, index) => (
                             <div key={index} className="flex-shrink-0 w-full h-full">
-                                <Link href={productDetailPath} className="cursor-pointer block w-full h-full">
+                                <Link
+                                    href={productDetailPath}
+                                    className="cursor-pointer block w-full h-full"
+                                    onClick={handleImageClick}
+                                >
                                     <Image
-                                        src={getProductImageUrl(product.baseUrl, image.url)}
+                                        src={image.url}  // 直接使用缓存的完整 URL
                                         alt={image.alt || product.title}
                                         width={300}
                                         height={300}
-                                        className="w-full h-full object-cover bg-slate-50"
+                                        className="w-full h-full object-cover"
                                         placeholder="blur"
                                         blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
                                     />
@@ -380,21 +549,22 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
                     </div>
                 </div>
 
-                {/* 左右切换按钮 - 所有设备都显示 */}
-                {allImages.length > 1 && (
+                {/* 桌面端：左右切换按钮 - 只在悬停时显示 */}
+                {allImages.length > 1 && isHovered && isMounted && !isMobile && (
                     <>
-                        {/* 左侧切换按钮 - 修复：确保按钮显示和箭头居中 */}
                         <button
-                            className={`absolute left-2 top-1/2 transform -translate-y-1/2 w-8 h-8 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center shadow-sm z-10 ${
+                            className={`absolute left-2 top-1/2 transform -translate-y-1/2 w-8 h-8 bg-white/95 backdrop-blur-sm flex items-center justify-center shadow-sm border border-gray-200 z-10 transition-all duration-200 ${
                                 canGoPrevious
                                     ? 'cursor-pointer text-gray-700 hover:bg-white hover:shadow-md'
                                     : 'cursor-not-allowed text-gray-300 opacity-50'
                             }`}
+                            style={{
+                                borderRadius: 'var(--radius-full)'
+                            }}
                             onClick={prevImage}
                             disabled={!canGoPrevious}
                             aria-label="Previous image"
                         >
-                            {/* 修复：确保箭头居中显示 */}
                             <svg
                                 width="16"
                                 height="16"
@@ -407,18 +577,19 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
                             </svg>
                         </button>
 
-                        {/* 右侧切换按钮 - 修复：确保按钮显示和箭头居中 */}
                         <button
-                            className={`absolute right-2 top-1/2 transform -translate-y-1/2 w-8 h-8 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center shadow-sm z-10 ${
+                            className={`absolute right-2 top-1/2 transform -translate-y-1/2 w-8 h-8 bg-white/95 backdrop-blur-sm flex items-center justify-center shadow-sm border border-gray-200 z-10 transition-all duration-200 ${
                                 canGoNext
                                     ? 'cursor-pointer text-gray-700 hover:bg-white hover:shadow-md'
                                     : 'cursor-not-allowed text-gray-300 opacity-50'
                             }`}
+                            style={{
+                                borderRadius: 'var(--radius-full)'
+                            }}
                             onClick={nextImage}
                             disabled={!canGoNext}
                             aria-label="Next image"
                         >
-                            {/* 修复：确保箭头居中显示 */}
                             <svg
                                 width="16"
                                 height="16"
@@ -436,23 +607,31 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
                 {/* 图片计数器 */}
                 {allImages.length > 1 && (
                     <div className="absolute top-3 left-3 z-10">
-                        <div className="px-2 py-1 bg-black/50 text-white text-xs rounded-full backdrop-blur-sm">
+                        <div
+                            className="px-2 py-1 bg-black/50 text-white text-xs backdrop-blur-sm"
+                            style={{
+                                borderRadius: 'var(--radius-full)'
+                            }}
+                        >
                             {currentImageIndex + 1} / {allImages.length}
                         </div>
                     </div>
                 )}
 
-                {/* 图片指示器 - 底部居中 */}
+                {/* 图片指示器 - 底部居中 (桌面端和移动端都显示) */}
                 {allImages.length > 1 && (
                     <div className="absolute bottom-3 left-1/2 transform -translate-x-1/2 flex gap-2 z-10">
                         {allImages.map((_, index) => (
                             <button
                                 key={index}
-                                className={`w-3 h-3 rounded-full border-2 cursor-pointer ${
+                                className={`w-2 h-2 transition-all cursor-pointer ${
                                     index === currentImageIndex
-                                        ? 'bg-gray-700 border-gray-700'  // 选中状态：浅灰色
-                                        : 'bg-gray-200 border-gray-200'  // 未选中状态：更浅的灰色
+                                        ? 'bg-white scale-125'
+                                        : 'bg-white/60'
                                 }`}
+                                style={{
+                                    borderRadius: 'var(--radius-full)'
+                                }}
                                 onClick={(e) => goToImage(index, e)}
                                 aria-label={`Go to image ${index + 1}`}
                             />
@@ -462,21 +641,29 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
             </div>
 
             {/* 产品信息 */}
-            <div className="p-3 md:p-4 flex flex-col flex-grow">
-                {/* 产品标题 - 响应式字体大小 */}
-                <div className="text-sm md:text-base font-medium leading-tight mb-2 text-gray-900 line-clamp-2 h-12 md:h-14 overflow-hidden">
+            <div
+                className="p-4 flex flex-col flex-grow bg-white"
+                style={{
+                    borderBottomLeftRadius: 'var(--radius-lg)',
+                    borderBottomRightRadius: 'var(--radius-lg)'
+                }}
+            >
+                {/* 产品标题 */}
+                <div className="mb-3">
                     <Link
                         href={productDetailPath}
-                        className="text-inherit no-underline cursor-pointer"
+                        className="group cursor-pointer"
                     >
-                        {product.title}
+                        <h3 className="text-lg font-semibold text-gray-900 leading-tight line-clamp-2 group-hover:text-gray-700 transition-colors product-title">
+                            {product.title}
+                        </h3>
                     </Link>
                 </div>
 
-                {/* 颜色选择区域 */}
+                {/* 颜色选择区域 + 收藏按钮 */}
                 {product.productSkus && product.productSkus.length > 0 && (
-                    <div className="mb-3">
-                        <div className="flex flex-wrap gap-1">
+                    <div className="mb-4 flex items-center justify-between">
+                        <div className="flex flex-wrap gap-2">
                             {product.productSkus.map((sku, index) => {
                                 const availableStock = getAvailableStock(sku);
                                 const isSelected = selectedSku?.id === sku.id;
@@ -486,14 +673,18 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
                                 return (
                                     <button
                                         key={sku.id}
-                                        className={`w-6 h-6 rounded-full border-2 relative
+                                        className={`w-6 h-6 relative transition-all
                                             ${isSelected
-                                            ? 'border-blue-500'
+                                            ? 'border-blue-500 scale-110'
                                             : isOutOfStock
                                                 ? 'border-gray-300 opacity-40 cursor-not-allowed'
-                                                : 'border-gray-200 cursor-pointer'
+                                                : 'border-gray-200 cursor-pointer hover:scale-105'
                                         }`}
-                                        style={{ backgroundColor: colorValue }}
+                                        style={{
+                                            backgroundColor: colorValue,
+                                            borderRadius: 'var(--radius-full)',
+                                            border: `2px solid ${isSelected ? '#3b82f6' : isOutOfStock ? '#d1d5db' : '#e5e7eb'}`
+                                        }}
                                         onClick={(e) => handleSkuSelect(sku, e)}
                                         disabled={isOutOfStock}
                                         title={isOutOfStock ? 'Out of stock' : `${sku.color} (Stock: ${availableStock})`}
@@ -508,61 +699,118 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
                             })}
                         </div>
 
-                        {/* 显示选中的颜色和库存信息 */}
-                        {selectedSku && (
-                            <div className="mt-1 text-xs text-gray-500">
-                                <span className="font-medium">{getColorDisplayText(selectedSku.color)}</span>
-                                {getAvailableStock(selectedSku) <= 0 && (
-                                    <span className="text-red-500 ml-1">• Out of Stock</span>
-                                )}
-                            </div>
-                        )}
+                        {/* 收藏按钮 */}
+                        <button
+                            className={`flex items-center justify-center w-8 h-8 bg-white relative cursor-pointer border shadow-sm
+                                ${isFavorited ? 'text-red-500' : 'text-gray-400'} 
+                                ${isLoading ? 'opacity-70 pointer-events-none' : ''}
+                                hover:shadow-md transition-all`}
+                            style={{
+                                borderRadius: 'var(--radius-full)',
+                                border: '1px solid var(--border-medium)'
+                            }}
+                            onClick={handleToggleFavorite}
+                            disabled={isLoading}
+                            aria-label={isFavorited ? 'Remove from wishlist' : 'Add to wishlist'}
+                        >
+                            <svg
+                                width="16"
+                                height="16"
+                                viewBox="0 0 24 24"
+                                fill={isFavorited ? "currentColor" : "none"}
+                                stroke="currentColor"
+                                strokeWidth="2"
+                            >
+                                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                            </svg>
+                            {isLoading && (
+                                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                                    <div className="w-3 h-3 border-2 border-transparent border-t-current rounded-full animate-spin"></div>
+                                </div>
+                            )}
+                        </button>
                     </div>
                 )}
 
                 {/* 价格和操作区域 */}
-                <div className="mb-4 md:mb-5 pt-2 flex justify-between items-center mt-auto">
-                    {/* 价格容器 - 响应式字体大小 */}
-                    <div className="flex items-center gap-1 md:gap-2">
+                <div className="flex justify-between items-center mt-auto pt-3 border-t border-gray-100">
+                    {/* 价格容器 */}
+                    <div className="flex items-baseline gap-2">
                         {product.originalPrice > product.currentPrice && (
-                            <span className="text-xs md:text-sm text-gray-500 line-through font-normal">
+                            <span className="text-sm text-gray-500 line-through font-normal">
                                 ${product.originalPrice}
                             </span>
                         )}
-                        <span className="text-lg md:text-xl font-semibold text-red-600 font-['Inter'] tracking-tight">
+                        <span className="text-xl font-bold product-price">
                             ${product.currentPrice}
                         </span>
                     </div>
 
-                    {/* 购物车按钮 - 响应式大小 */}
+                    {/* 购物车按钮 */}
                     <button
-                        className={`flex items-center justify-center w-8 h-8 md:w-9 md:h-9 rounded-full relative
+                        className={`flex items-center justify-center relative transition-all
                             ${!hasAvailableStock || !selectedSku || addingToCart || loading
-                            ? 'bg-gray-200 text-gray-400 opacity-70 pointer-events-none cursor-not-allowed'
-                            : 'bg-white/90 backdrop-blur-sm text-gray-600 cursor-pointer'
+                            ? 'bg-gray-200 text-gray-400 cursor-not-allowed opacity-70'
+                            : addedToCart
+                                ? 'bg-green-500 text-white cursor-default'
+                                : 'bg-blue-600 text-white cursor-pointer hover:bg-blue-700'
+                        }
+                        ${addedToCart
+                            ? 'w-10 h-10 md:w-10 md:h-10'
+                            : 'px-4 py-2 md:px-4 md:py-2'
                         }`}
+                        style={{
+                            borderRadius: 'var(--radius-lg)'
+                        }}
                         onClick={handleAddToCart}
-                        disabled={!hasAvailableStock || !selectedSku || addingToCart || loading}
+                        disabled={(!hasAvailableStock || !selectedSku || addingToCart || loading) && !addedToCart}
                         aria-label={!hasAvailableStock ? "Out of stock" : "Add to cart"}
-                        title={!hasAvailableStock ? "Out of stock" : "Add to cart"}
                     >
-                        <svg
-                            width="16"
-                            height="16"
-                            className="md:w-[18px] md:h-[18px]"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                        >
-                            <circle cx="9" cy="21" r="1"></circle>
-                            <circle cx="20" cy="21" r="1"></circle>
-                            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
-                        </svg>
-                        {addingToCart && (
-                            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-                                <div className="w-3 h-3 md:w-4 md:h-4 border-2 border-transparent border-t-current rounded-full animate-spin"></div>
-                            </div>
+                        {addingToCart ? (
+                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        ) : addedToCart ? (
+                            <svg
+                                width="20"
+                                height="20"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="3"
+                            >
+                                <path d="M20 6L9 17l-5-5"/>
+                            </svg>
+                        ) : (
+                            <>
+                                <div className="md:hidden">
+                                    <svg
+                                        width="20"
+                                        height="20"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                    >
+                                        <circle cx="9" cy="21" r="1"></circle>
+                                        <circle cx="20" cy="21" r="1"></circle>
+                                        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                                    </svg>
+                                </div>
+                                <div className="hidden md:flex items-center gap-2">
+                                    <svg
+                                        width="16"
+                                        height="16"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                    >
+                                        <circle cx="9" cy="21" r="1"></circle>
+                                        <circle cx="20" cy="21" r="1"></circle>
+                                        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                                    </svg>
+                                    <span className="text-sm font-medium">Add to Cart</span>
+                                </div>
+                            </>
                         )}
                     </button>
                 </div>

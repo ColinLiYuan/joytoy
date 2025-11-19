@@ -1,17 +1,7 @@
 // productGallery.tsx
 'use client';
 
-import { useState, useRef } from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import {
-    faChevronLeft,
-    faChevronRight,
-    faChevronUp,
-    faChevronDown,
-} from '@fortawesome/free-solid-svg-icons';
-import 'react-medium-image-zoom/dist/styles.css';
-import { getProductImageUrl } from '@/lib/image-utils';
-import { Z_INDEX } from '@/lib/constants/z-index';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 
 interface GalleryImage {
@@ -22,104 +12,191 @@ interface GalleryImage {
 interface ProductGalleryProps {
     images: GalleryImage[];
     productTitle: string;
-    baseUrl?: string;
 }
 
-export default function ProductGallery({ images, productTitle, baseUrl = '' }: ProductGalleryProps) {
+export default function ProductGallery({ images, productTitle }: ProductGalleryProps) {
     const [activeImageIndex, setActiveImageIndex] = useState(0);
-    const [thumbnailScrollPosition, setThumbnailScrollPosition] = useState(0);
-    const thumbnailContainerRef = useRef<HTMLDivElement>(null);
-    const currentImage = images[activeImageIndex];
+    const [isDragging, setIsDragging] = useState(false);
+    const [currentTranslate, setCurrentTranslate] = useState(0);
+    const [isClient, setIsClient] = useState(false);
 
-    // 计算是否到达边界
-    const isFirstImage = activeImageIndex === 0;
-    const isLastImage = activeImageIndex === images.length - 1;
+    const dragStartX = useRef(0);
+    const dragCurrentX = useRef(0);
+    const dragStartTime = useRef(0);
+    const dragEndTime = useRef(0);
+    const prevTranslate = useRef(0);
 
-    // 缩略图导航函数
-    const scrollThumbnailsUp = () => {
-        if (thumbnailContainerRef.current) {
-            const scrollAmount = 100;
-            thumbnailContainerRef.current.scrollTop -= scrollAmount;
-            setThumbnailScrollPosition(thumbnailContainerRef.current.scrollTop);
+    // 修复水合不匹配：在客户端渲染后才设置状态
+    useEffect(() => {
+        setIsClient(true);
+    }, []);
+
+    // 使用 useMemo 缓存处理后的图片数据，避免重复渲染
+    const processedImages = useMemo(() => {
+        return images.map((image, index) => ({
+            ...image,
+            alt: image.alt || `${productTitle} - Image ${index + 1}`
+        }));
+    }, [images, productTitle]);
+
+    // 获取全局CSS变量值 - 添加客户端检查
+    const getCssVariable = (variableName: string, defaultValue: string): number => {
+        if (!isClient) return parseFloat(defaultValue);
+
+        const value = getComputedStyle(document.documentElement)
+            .getPropertyValue(variableName)
+            .trim();
+
+        return parseFloat(value || defaultValue);
+    };
+
+    // 触摸开始
+    const handleTouchStart = (clientX: number) => {
+        setIsDragging(true);
+        dragStartX.current = clientX;
+        dragCurrentX.current = clientX;
+        dragStartTime.current = Date.now();
+        prevTranslate.current = currentTranslate;
+    };
+
+    // 触摸移动
+    const handleTouchMove = (clientX: number) => {
+        if (!isDragging) return;
+        dragCurrentX.current = clientX;
+
+        const diff = clientX - dragStartX.current;
+
+        // 使用全局变量控制灵敏度
+        const sensitivity = isClient ? getCssVariable('--gallery-sensitivity', '0.8') : 0.8;
+
+        let newTranslate = prevTranslate.current + (diff / window.innerWidth) * 100 * sensitivity;
+
+        // 边界限制
+        const maxTranslate = 0;
+        const minTranslate = -(processedImages.length - 1) * 100;
+
+        // 使用全局变量控制边界弹性
+        const boundaryElasticity = isClient ? getCssVariable('--gallery-boundary-elasticity', '0.3') : 0.3;
+
+        if (newTranslate > maxTranslate) {
+            newTranslate = maxTranslate + (newTranslate - maxTranslate) * boundaryElasticity;
+        } else if (newTranslate < minTranslate) {
+            newTranslate = minTranslate + (newTranslate - minTranslate) * boundaryElasticity;
+        }
+
+        setCurrentTranslate(newTranslate);
+    };
+
+    // 触摸结束
+    const handleTouchEnd = () => {
+        if (!isDragging) return;
+        setIsDragging(false);
+        dragEndTime.current = Date.now();
+
+        const diff = dragCurrentX.current - dragStartX.current;
+        const timeDiff = Math.max(1, dragEndTime.current - dragStartTime.current);
+
+        // 计算滑动速度
+        const speed = Math.abs(diff) / (timeDiff / 1000);
+
+        // 使用全局变量控制距离阈值
+        const distanceThreshold = isClient ? getCssVariable('--gallery-distance-threshold', '0.25') : 0.25;
+        const screenThreshold = isClient ? window.innerWidth * distanceThreshold : 100;
+
+        let slidesToMove = 0;
+
+        // 基本规则：滑动距离超过阈值时切换一张
+        if (Math.abs(diff) > screenThreshold) {
+            slidesToMove = 1;
+        }
+
+        // 使用全局变量控制速度阈值
+        const minSpeed = isClient ? getCssVariable('--gallery-min-speed', '600') : 600;
+        const speedRatio = isClient ? getCssVariable('--gallery-speed-ratio', '300') : 300;
+
+        // 根据速度增加额外的切换数量
+        if (speed > minSpeed) {
+            const extraSlides = Math.floor((speed - minSpeed) / speedRatio);
+            slidesToMove += extraSlides;
+        }
+
+        // 限制跳转数量
+        slidesToMove = Math.min(slidesToMove, processedImages.length - 1);
+
+        let targetIndex;
+        if (diff > 0) {
+            targetIndex = Math.max(0, activeImageIndex - slidesToMove);
+        } else {
+            targetIndex = Math.min(processedImages.length - 1, activeImageIndex + slidesToMove);
+        }
+
+        setActiveImageIndex(targetIndex);
+        setCurrentTranslate(-targetIndex * 100);
+    };
+
+    // 鼠标事件处理（用于桌面测试）
+    const handleMouseDown = (e: React.MouseEvent) => {
+        e.preventDefault();
+        handleTouchStart(e.clientX);
+    };
+
+    const handleMouseMove = (e: React.MouseEvent) => {
+        if (!isDragging) return;
+        e.preventDefault();
+        handleTouchMove(e.clientX);
+    };
+
+    const handleMouseUp = (e: React.MouseEvent) => {
+        if (!isDragging) return;
+        e.preventDefault();
+        handleTouchEnd();
+    };
+
+    const handleMouseLeave = (e: React.MouseEvent) => {
+        if (isDragging) {
+            e.preventDefault();
+            handleTouchEnd();
         }
     };
 
-    const scrollThumbnailsDown = () => {
-        if (thumbnailContainerRef.current) {
-            const scrollAmount = 100;
-            thumbnailContainerRef.current.scrollTop += scrollAmount;
-            setThumbnailScrollPosition(thumbnailContainerRef.current.scrollTop);
-        }
+    // 触摸事件
+    const handleTouchStartEvent = (e: React.TouchEvent) => {
+        e.preventDefault();
+        handleTouchStart(e.touches[0].clientX);
     };
 
-    // 移动端横向滚动函数
-    const scrollThumbnailsLeft = () => {
-        if (thumbnailContainerRef.current) {
-            const scrollAmount = 100;
-            thumbnailContainerRef.current.scrollLeft -= scrollAmount;
-            setThumbnailScrollPosition(thumbnailContainerRef.current.scrollLeft);
-        }
+    const handleTouchMoveEvent = (e: React.TouchEvent) => {
+        if (!isDragging) return;
+        e.preventDefault();
+        handleTouchMove(e.touches[0].clientX);
     };
 
-    const scrollThumbnailsRight = () => {
-        if (thumbnailContainerRef.current) {
-            const scrollAmount = 100;
-            thumbnailContainerRef.current.scrollLeft += scrollAmount;
-            setThumbnailScrollPosition(thumbnailContainerRef.current.scrollLeft);
-        }
+    const handleTouchEndEvent = (e: React.TouchEvent) => {
+        if (!isDragging) return;
+        e.preventDefault();
+        handleTouchEnd();
     };
 
     const handleThumbnailClick = (index: number) => {
         setActiveImageIndex(index);
-
-        // 滚动到选中的缩略图
-        if (thumbnailContainerRef.current) {
-            const thumbnailElement = thumbnailContainerRef.current.children[index];
-            if (thumbnailElement) {
-                // 移动端：横向滚动
-                if (window.innerWidth < 768) {
-                    const containerWidth = thumbnailContainerRef.current.clientWidth;
-                    const elementOffset = (thumbnailElement as HTMLElement).offsetLeft;
-                    const elementWidth = (thumbnailElement as HTMLElement).clientWidth;
-                    thumbnailContainerRef.current.scrollLeft = elementOffset - (containerWidth - elementWidth) / 2;
-                    setThumbnailScrollPosition(thumbnailContainerRef.current.scrollLeft);
-                }
-                // PC端：纵向滚动
-                else {
-                    const containerHeight = thumbnailContainerRef.current.clientHeight;
-                    const elementOffset = (thumbnailElement as HTMLElement).offsetTop;
-                    const elementHeight = (thumbnailElement as HTMLElement).clientHeight;
-                    thumbnailContainerRef.current.scrollTop = elementOffset - (containerHeight - elementHeight) / 2;
-                    setThumbnailScrollPosition(thumbnailContainerRef.current.scrollTop);
-                }
-            }
-        }
+        setCurrentTranslate(-index * 100);
     };
 
-    const handlePrevClick = () => {
-        if (!isFirstImage) {
-            setActiveImageIndex(prev => prev - 1);
-        }
-    };
-
-    const handleNextClick = () => {
-        if (!isLastImage) {
-            setActiveImageIndex(prev => prev + 1);
-        }
-    };
+    // 获取全局动画时长 - 修复水合不匹配
+    const transitionDuration = isClient ? getCssVariable('--gallery-transition-duration', '300') : 300;
 
     // 检查是否有图片
-    if (!images || images.length === 0) {
+    if (!processedImages || processedImages.length === 0) {
         return (
-            <div className="relative p-4 sm:p-6 md:p-8 flex flex-col gap-5 w-full max-w-full overflow-hidden">
+            <div className="relative flex flex-row gap-4 w-full max-w-full overflow-hidden">
                 <div className="flex-1 w-full">
-                    <div className="overflow-hidden shadow-lg relative aspect-[1/1] bg-gray-50 flex items-center justify-center w-full max-w-full">
+                    <div className="rounded-lg border border-gray-200 overflow-hidden relative aspect-[1/1] flex items-center justify-center">
                         <Image
                             src="/images/placeholder.jpg"
                             alt="No image available"
                             width={350}
                             height={350}
-                            className="w-full h-full object-cover bg-slate-50"
+                            className="w-full h-full object-cover"
                             priority
                         />
                     </div>
@@ -128,153 +205,104 @@ export default function ProductGallery({ images, productTitle, baseUrl = '' }: P
         );
     }
 
-    const mainImageUrl = getProductImageUrl(baseUrl, images[activeImageIndex]?.url);
-
     return (
-        <div className="relative p-4 sm:p-6 md:p-8 flex flex-col gap-5 w-full max-w-full overflow-hidden lg:max-w-[1400px] lg:mx-auto">
-            <div className="flex flex-col md:flex-row gap-5 items-start w-full">
-                {/* PC端：缩略图在左侧（纵向） */}
-                {images.length > 1 && (
-                    <div className="hidden md:flex flex-col items-center gap-2 relative w-full md:w-auto">
-                        <button
-                            className="w-8 h-8 rounded-full bg-white/95 border border-gray-300 flex items-center justify-center cursor-pointer transition-all duration-300 z-10 hover:bg-white hover:border-blue-500 hover:shadow-lg hover:scale-110"
-                            onClick={scrollThumbnailsUp}
-                            aria-label="Scroll thumbnails up"
-                        >
-                            <FontAwesomeIcon icon={faChevronUp} className="text-sm text-gray-600 hover:text-blue-500" />
-                        </button>
+        <div className="relative flex flex-row gap-4 w-full max-w-full overflow-hidden">
+            {/* 缩略图区域 - 始终在左侧垂直排列 */}
+            {processedImages.length > 1 && (
+                <div className="flex flex-col items-center gap-2 w-auto">
+                    <div
+                        className="flex flex-col gap-2 overflow-y-auto max-h-[500px] scroll-smooth"
+                        style={{
+                            msOverflowStyle: 'none',
+                            scrollbarWidth: 'none'
+                        }}
+                    >
+                        {processedImages.map((image, index) => (
+                            <div
+                                key={index}
+                                className={`flex-shrink-0 w-16 h-16 lg:w-20 lg:h-20 overflow-hidden cursor-pointer border-2 transition-all duration-300 relative bg-gray-50 rounded-md ${
+                                    index === activeImageIndex
+                                        ? 'border-black'
+                                        : 'border-transparent hover:border-gray-300'
+                                }`}
+                                onClick={() => handleThumbnailClick(index)}
+                            >
+                                <Image
+                                    src={image.url}
+                                    alt={image.alt}
+                                    width={80}
+                                    height={80}
+                                    className="w-full h-full object-cover"
+                                />
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
 
-                        <div
-                            className="flex flex-col gap-3 max-h-[500px] overflow-y-auto py-2 px-1 scroll-smooth [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-gray-100 [&::-webkit-scrollbar-track]:rounded [&::-webkit-scrollbar-thumb]:bg-gray-400 [&::-webkit-scrollbar-thumb]:rounded [&::-webkit-scrollbar-thumb:hover]:bg-gray-600"
-                            ref={thumbnailContainerRef}
-                        >
-                            {images.map((image, index) => (
-                                <div
+            {/* 主图区域 */}
+            <div className="flex-1 w-full">
+                <div
+                    className={`rounded-lg overflow-hidden relative aspect-[1/1] flex items-center justify-center
+                       w-full max-w-[580px] mx-auto md:max-w-none 
+                       shadow-md select-none
+                       ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+                    style={{
+                        cursor: isDragging ? 'grabbing' : 'grab'
+                    }}
+                    onMouseDown={handleMouseDown}
+                    onMouseMove={handleMouseMove}
+                    onMouseUp={handleMouseUp}
+                    onMouseLeave={handleMouseLeave}
+                    onTouchStart={handleTouchStartEvent}
+                    onTouchMove={handleTouchMoveEvent}
+                    onTouchEnd={handleTouchEndEvent}
+                >
+                    {/* 图片容器 - 滑动时实时移动 */}
+                    <div
+                        className="flex w-full h-full transition-transform ease-out"
+                        style={{
+                            transform: `translateX(${currentTranslate}%)`,
+                            // 修复水合不匹配：统一transition属性格式
+                            transition: isDragging
+                                ? 'none'
+                                : `transform ${transitionDuration}ms ease-out`
+                        }}
+                    >
+                        {processedImages.map((image, index) => (
+                            <div
+                                key={index}
+                                className="flex-shrink-0 w-full h-full relative"
+                            >
+                                <Image
+                                    src={image.url}
+                                    alt={image.alt}
+                                    width={600}
+                                    height={600}
+                                    className="w-full h-full object-cover"
+                                    priority={index === 0}
+                                    sizes="(max-width: 768px) 80vw, (max-width: 1200px) 60vw, 50vw"
+                                    draggable={false}
+                                />
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* 点状指示器 */}
+                    {processedImages.length > 1 && (
+                        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2 z-10">
+                            {processedImages.map((_, index) => (
+                                <button
                                     key={index}
-                                    className={`w-20 h-[93px] rounded-lg overflow-hidden cursor-pointer border-2 transition-all duration-300 flex-shrink-0 relative bg-gray-50 ${
+                                    className={`w-2 h-2 rounded-full transition-all duration-300 ${
                                         index === activeImageIndex
-                                            ? 'border-blue-500 scale-105 shadow-lg shadow-blue-500/30'
-                                            : 'border-transparent hover:scale-105 hover:shadow-lg'
+                                            ? 'bg-white scale-125'
+                                            : 'bg-white/60 hover:bg-white/80'
                                     }`}
                                     onClick={() => handleThumbnailClick(index)}
-                                >
-                                    <Image
-                                        src={getProductImageUrl(baseUrl, image.url)}
-                                        alt={image.alt || `Thumbnail ${index + 1}`}
-                                        width={80}
-                                        height={80}
-                                        className="w-full h-full object-cover bg-slate-50"
-                                    />
-                                </div>
+                                    aria-label={`查看图片 ${index + 1}`}
+                                />
                             ))}
-                        </div>
-
-                        <button
-                            className="w-8 h-8 rounded-full bg-white/95 border border-gray-300 flex items-center justify-center cursor-pointer transition-all duration-300 z-10 hover:bg-white hover:border-blue-500 hover:shadow-lg hover:scale-110"
-                            onClick={scrollThumbnailsDown}
-                            aria-label="Scroll thumbnails down"
-                        >
-                            <FontAwesomeIcon icon={faChevronDown} className="text-sm text-gray-600 hover:text-blue-500" />
-                        </button>
-                    </div>
-                )}
-
-                <div className="flex-1 w-full">
-                    <div className="overflow-hidden shadow-lg relative aspect-[1/1] bg-gray-50 flex items-center justify-center w-full max-w-full">
-                        {mainImageUrl && mainImageUrl !== '' && images[activeImageIndex] && (
-                            <Image
-                                src={mainImageUrl}
-                                alt={images[activeImageIndex].alt || productTitle}
-                                width={600}
-                                height={600}
-                                className="w-full h-full object-cover bg-slate-50"
-                                priority={activeImageIndex === 0}
-                                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
-                            />
-                        )}
-
-                        {images.length > 1 && (
-                            <div
-                                className="absolute top-1/2 w-full flex justify-between px-4 sm:px-5 transform -translate-y-1/2 pointer-events-none"
-                                style={{ zIndex: Z_INDEX.CONTENT }}
-                            >
-                                <button
-                                    className={`w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center cursor-pointer shadow-lg transition-all duration-300 pointer-events-auto ${
-                                        isFirstImage
-                                            ? 'bg-gray-100/80 text-gray-400 cursor-not-allowed'
-                                            : 'bg-white/95 hover:bg-white hover:shadow-xl hover:scale-105'
-                                    }`}
-                                    onClick={handlePrevClick}
-                                    disabled={isFirstImage}
-                                >
-                                    <FontAwesomeIcon
-                                        icon={faChevronLeft}
-                                        className={`text-sm sm:text-base ${isFirstImage ? 'text-gray-400' : 'text-gray-800'}`}
-                                    />
-                                </button>
-                                <button
-                                    className={`w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center cursor-pointer shadow-lg transition-all duration-300 pointer-events-auto ${
-                                        isLastImage
-                                            ? 'bg-gray-100/80 text-gray-400 cursor-not-allowed'
-                                            : 'bg-white/95 hover:bg-white hover:shadow-xl hover:scale-105'
-                                    }`}
-                                    onClick={handleNextClick}
-                                    disabled={isLastImage}
-                                >
-                                    <FontAwesomeIcon
-                                        icon={faChevronRight}
-                                        className={`text-sm sm:text-base ${isLastImage ? 'text-gray-400' : 'text-gray-800'}`}
-                                    />
-                                </button>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* 移动端：缩略图在主图下方（横向） */}
-                    {images.length > 1 && (
-                        <div className="flex md:hidden flex-col items-center gap-2 mt-4 w-full">
-                            <div className="flex items-center gap-2 w-full">
-                                <button
-                                    className="w-8 h-8 rounded-full bg-white/95 border border-gray-300 flex items-center justify-center cursor-pointer transition-all duration-300 z-10 hover:bg-white hover:border-blue-500 hover:shadow-lg hover:scale-110 flex-shrink-0"
-                                    onClick={scrollThumbnailsLeft}
-                                    aria-label="Scroll thumbnails left"
-                                >
-                                    <FontAwesomeIcon icon={faChevronLeft} className="text-sm text-gray-600 hover:text-blue-500" />
-                                </button>
-
-                                <div
-                                    className="flex gap-3 overflow-x-auto py-2 px-1 scroll-smooth hide-scrollbar w-full"
-                                    ref={thumbnailContainerRef}
-                                >
-                                    {images.map((image, index) => (
-                                        <div
-                                            key={index}
-                                            className={`w-16 h-[75px] rounded-lg overflow-hidden cursor-pointer border-2 transition-all duration-300 flex-shrink-0 relative bg-gray-50 ${
-                                                index === activeImageIndex
-                                                    ? 'border-blue-500 scale-105 shadow-lg shadow-blue-500/30'
-                                                    : 'border-transparent hover:scale-105 hover:shadow-lg'
-                                            }`}
-                                            onClick={() => handleThumbnailClick(index)}
-                                        >
-                                            <Image
-                                                src={getProductImageUrl(baseUrl, image.url)}
-                                                alt={image.alt || `Thumbnail ${index + 1}`}
-                                                width={64}
-                                                height={64}
-                                                className="w-full h-full object-cover bg-slate-50"
-                                            />
-                                        </div>
-                                    ))}
-                                </div>
-
-                                <button
-                                    className="w-8 h-8 rounded-full bg-white/95 border border-gray-300 flex items-center justify-center cursor-pointer transition-all duration-300 z-10 hover:bg-white hover:border-blue-500 hover:shadow-lg hover:scale-110 flex-shrink-0"
-                                    onClick={scrollThumbnailsRight}
-                                    aria-label="Scroll thumbnails right"
-                                >
-                                    <FontAwesomeIcon icon={faChevronRight} className="text-sm text-gray-600 hover:text-blue-500" />
-                                </button>
-                            </div>
                         </div>
                     )}
                 </div>
@@ -282,11 +310,7 @@ export default function ProductGallery({ images, productTitle, baseUrl = '' }: P
 
             {/* 隐藏滚动条样式 */}
             <style jsx>{`
-                .hide-scrollbar {
-                    -ms-overflow-style: none;
-                    scrollbar-width: none;
-                }
-                .hide-scrollbar::-webkit-scrollbar {
+                .scroll-smooth::-webkit-scrollbar {
                     display: none;
                 }
             `}</style>
