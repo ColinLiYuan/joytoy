@@ -2,61 +2,105 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import Image from 'next/image';
 import { ProductResponse, ProductSku } from '@/types/product';
 import { getProductImageUrl } from '@/lib/image-utils';
 import { wishlistService } from '@/services/wishlistService';
 import { useAuth } from '@/contexts/authContext';
 import { useToast } from '@/contexts/toastContext';
 import { useCartStore } from '@/stores/useCartStore';
-import Image from 'next/image';
-import { getMappedColor, getColorDisplayText } from '@/lib/constants/color-map';
+import { getMappedColor } from '@/lib/constants/color-map';
+
+// 常量提取到组件外部，避免重复创建
+const BLUR_DATA_URL = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q==";
+
+// 移动端滑动配置常量
+const MOBILE_SWIPE_CONFIG = {
+    sensitivity: 0.8,
+    boundaryElasticity: 0.3,
+    distanceThreshold: 0.25,
+    minSpeed: 600,
+    speedRatio: 300,
+    transitionDuration: 300
+} as const;
 
 interface ProductCardProps {
     product: ProductResponse;
     onWishlistUpdate?: () => void;
 }
 
+// 懒加载图片组件
+const LazyImage = ({
+                       src,
+                       alt,
+                       priority = false,
+                       ...props
+                   }: {
+    src: string;
+    alt: string;
+    priority?: boolean;
+} & React.ComponentProps<typeof Image>) => (
+    <Image
+        src={src}
+        alt={alt}
+        width={300}
+        height={300}
+        className="w-full h-full object-cover"
+        placeholder="blur"
+        blurDataURL={BLUR_DATA_URL}
+        loading={priority ? "eager" : "lazy"}
+        {...props}
+    />
+);
+
 export default function ProductCard({ product, onWishlistUpdate }: ProductCardProps) {
     const productDetailPath = `/toys${product.slug}`;
-    const [isLoading, setIsLoading] = useState(false);
-    const [isFavorited, setIsFavorited] = useState(false);
-    const [addingToCart, setAddingToCart] = useState(false);
+
+    // 状态合并和简化
+    const [uiState, setUiState] = useState({
+        isLoading: false,
+        isFavorited: product.favorited || false,
+        addingToCart: false,
+        addedToCart: false,
+        currentImageIndex: 0,
+        isDragging: false,
+        currentTranslate: 0,
+        isHovered: false,
+        isAnimating: true,
+    });
+
+    const [loadedImages, setLoadedImages] = useState<Set<number>>(new Set([0])); // 默认第一张已加载
+
+    const [deviceState, setDeviceState] = useState({
+        isMobile: false,
+        isMounted: false
+    });
+
     const [selectedSku, setSelectedSku] = useState<ProductSku | null>(null);
-    const [currentImageIndex, setCurrentImageIndex] = useState(0);
-    const [addedToCart, setAddedToCart] = useState(false);
 
-    // 移动端滑动相关状态
-    const [isDragging, setIsDragging] = useState(false);
-    const [currentTranslate, setCurrentTranslate] = useState(0);
-    const [isMobile, setIsMobile] = useState(false);
-    const [isMounted, setIsMounted] = useState(false);
+    // Refs 合并
+    const interactionRefs = useRef({
+        dragStartX: 0,
+        dragCurrentX: 0,
+        dragStartTime: 0,
+        prevTranslate: 0,
+        isClick: true,
+        hoverTimeout: null as NodeJS.Timeout | null,
+        hasAutoSwitched: false,
+        hasManualSwitch: false
+    });
 
-    const dragStartX = useRef(0);
-    const dragCurrentX = useRef(0);
-    const dragStartTime = useRef(0);
-    const dragEndTime = useRef(0);
-    const prevTranslate = useRef(0);
-    const isClickRef = useRef(true);
-
-    const { isLoggedIn, openAuthModal, userInfo } = useAuth();
-    const { showToast } = useToast();
-
-    const [isAnimating, setIsAnimating] = useState(true);
     const imageContainerRef = useRef<HTMLDivElement>(null);
 
-    // 添加悬停相关状态
-    const [isHovered, setIsHovered] = useState(false);
-    const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-    const hasAutoSwitchedRef = useRef(false);
-    const hasManualSwitchRef = useRef(false);
-
-    // 使用 Zustand store
+    // Hooks
+    const { isLoggedIn, openAuthModal, userInfo } = useAuth();
+    const { showToast } = useToast();
     const addItemToCart = useCartStore(state => state.addItemToCart);
     const loading = useCartStore(state => state.loading);
 
-    // 使用 useMemo 缓存所有图片的完整 URL - 修复重复调用问题
-    const allImages = useMemo(() => {
+    // 使用 useMemo 缓存所有图片的完整 URL
+    const imageData = useMemo(() => {
         const mainImage = {
             url: getProductImageUrl(product.baseUrl, product.image),
             alt: product.title
@@ -67,81 +111,276 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
             url: getProductImageUrl(product.baseUrl, gallery.url)
         }));
 
-        return [mainImage, ...galleryImages];
+        return {
+            allImages: [mainImage, ...galleryImages],
+            mainImageUrl: mainImage.url
+        };
     }, [product.baseUrl, product.image, product.title, product.galleries]);
 
-    // 缓存主图 URL（用于购物车）
-    const mainImageUrl = useMemo(() => {
-        return getProductImageUrl(product.baseUrl, product.image);
-    }, [product.baseUrl, product.image]);
+    const { allImages, mainImageUrl } = imageData;
 
-    // 初始化设备检测和挂载状态
+    // 设备检测和初始化 - 简化版本
     useEffect(() => {
-        setIsMounted(true);
-        setIsMobile(window.innerWidth < 768);
+        setDeviceState({
+            isMounted: true,
+            isMobile: typeof window !== 'undefined' ? window.innerWidth < 768 : false
+        });
+
+        if (typeof window === 'undefined') return;
 
         const handleResize = () => {
-            setIsMobile(window.innerWidth < 768);
+            setDeviceState(prev => ({ ...prev, isMobile: window.innerWidth < 768 }));
         };
 
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
-    // 初始化收藏状态
+    // 修复：安全的 SKU 初始化
     useEffect(() => {
-        setIsFavorited(product.favorited || false);
-    }, [product.favorited]);
-
-    // 初始化选中的 SKU
-    useEffect(() => {
-        if (product.productSkus && product.productSkus.length > 0) {
-            const availableSku = product.productSkus.find(sku =>
+        const productSkus = product.productSkus || [];
+        if (productSkus.length > 0) {
+            const availableSku = productSkus.find(sku =>
                 getAvailableStock(sku) > 0
             );
-            if (availableSku) {
-                setSelectedSku(availableSku);
-            } else {
-                setSelectedSku(product.productSkus[0]);
-            }
+            setSelectedSku(availableSku || productSkus[0]);
         }
     }, [product.productSkus]);
 
-    // 鼠标悬停处理 - 只在桌面端生效
-    useEffect(() => {
-        if (!isMounted || isMobile) return;
+    // 工具函数
+    const getAvailableStock = useCallback((sku: ProductSku): number => {
+        return (sku.stock || 0) - (sku.lockedStock || 0);
+    }, []);
 
-        if (isHovered && allImages.length > 1 && !hasAutoSwitchedRef.current && !hasManualSwitchRef.current) {
-            const nextIndex = currentImageIndex + 1;
+    // 检查是否有可用库存 - 修复类型错误
+    const hasAvailableStock = useMemo(() => {
+        const productSkus = product.productSkus || [];
+        return productSkus.some(sku => getAvailableStock(sku) > 0);
+    }, [product.productSkus, getAvailableStock]);
+
+    // 图片懒加载处理
+    const handleImageLoad = useCallback((index: number) => {
+        setLoadedImages(prev => {
+            const newLoadedImages = new Set(prev);
+            newLoadedImages.add(index);
+            return newLoadedImages;
+        });
+    }, []);
+
+    // 预加载相邻图片 - 修复 new Image() 错误
+    useEffect(() => {
+        if (!deviceState.isMounted || typeof window === 'undefined') return;
+
+        const preloadIndices = [
+            uiState.currentImageIndex - 1,
+            uiState.currentImageIndex + 1
+        ].filter(index => index >= 0 && index < allImages.length);
+
+        preloadIndices.forEach(index => {
+            if (!loadedImages.has(index)) {
+                // 修复：使用正确的 Image 构造函数
+                const img = new window.Image();
+                img.src = allImages[index].url;
+                img.onload = () => handleImageLoad(index);
+            }
+        });
+    }, [uiState.currentImageIndex, allImages.length, deviceState.isMounted, loadedImages, allImages, handleImageLoad]);
+
+    // 图片切换逻辑 - 简化版本
+    const goToImage = useCallback((index: number, e?: React.MouseEvent) => {
+        e?.preventDefault();
+        e?.stopPropagation();
+
+        if (index !== uiState.currentImageIndex) {
+            setUiState(prev => ({
+                ...prev,
+                isAnimating: true,
+                currentImageIndex: index
+            }));
+
+            // 确保目标图片被标记为需要加载
+            if (!loadedImages.has(index)) {
+                handleImageLoad(index);
+            }
+
+            setTimeout(() => setUiState(prev => ({ ...prev, isAnimating: false })), 300);
+        }
+    }, [uiState.currentImageIndex, loadedImages, handleImageLoad]);
+
+    const nextImage = useCallback((e: React.MouseEvent) => {
+        e?.preventDefault();
+        e?.stopPropagation();
+
+        if (uiState.currentImageIndex < allImages.length - 1) {
+            goToImage(uiState.currentImageIndex + 1);
+            interactionRefs.current.hasManualSwitch = true;
+        }
+    }, [uiState.currentImageIndex, allImages.length, goToImage]);
+
+    const prevImage = useCallback((e: React.MouseEvent) => {
+        e?.preventDefault();
+        e?.stopPropagation();
+
+        if (uiState.currentImageIndex > 0) {
+            goToImage(uiState.currentImageIndex - 1);
+            interactionRefs.current.hasManualSwitch = true;
+        }
+    }, [uiState.currentImageIndex, goToImage]);
+
+    // 鼠标悬停处理 - 简化版本
+    const handleMouseEnter = useCallback(() => {
+        if (!deviceState.isMounted || deviceState.isMobile) return;
+
+        setUiState(prev => ({ ...prev, isHovered: true }));
+
+        if (allImages.length > 1 &&
+            !interactionRefs.current.hasAutoSwitched &&
+            !interactionRefs.current.hasManualSwitch) {
+
+            const nextIndex = uiState.currentImageIndex + 1;
             if (nextIndex < allImages.length) {
-                hoverTimeoutRef.current = setTimeout(() => {
-                    setIsAnimating(true);
-                    setCurrentImageIndex(nextIndex);
-                    hasAutoSwitchedRef.current = true;
-                    setTimeout(() => setIsAnimating(false), 300);
+                interactionRefs.current.hoverTimeout = setTimeout(() => {
+                    goToImage(nextIndex);
+                    interactionRefs.current.hasAutoSwitched = true;
                 }, 300);
             }
         }
+    }, [deviceState.isMounted, deviceState.isMobile, allImages.length, uiState.currentImageIndex, goToImage]);
 
-        return () => {
-            if (hoverTimeoutRef.current) {
-                clearTimeout(hoverTimeoutRef.current);
-            }
+    const handleMouseLeave = useCallback(() => {
+        if (!deviceState.isMounted || deviceState.isMobile) return;
+
+        setUiState(prev => ({ ...prev, isHovered: false }));
+
+        if (interactionRefs.current.hoverTimeout) {
+            clearTimeout(interactionRefs.current.hoverTimeout);
+        }
+
+        if (interactionRefs.current.hasAutoSwitched &&
+            !interactionRefs.current.hasManualSwitch &&
+            uiState.currentImageIndex !== 0) {
+            goToImage(0);
+        }
+
+        interactionRefs.current.hasAutoSwitched = false;
+    }, [deviceState.isMounted, deviceState.isMobile, uiState.currentImageIndex, goToImage]);
+
+    // 移动端滑动逻辑 - 简化版本
+    const handleTouchStart = useCallback((clientX: number) => {
+        if (!deviceState.isMounted || !deviceState.isMobile) return;
+
+        const refs = interactionRefs.current;
+        setUiState(prev => ({ ...prev, isDragging: true }));
+
+        refs.isClick = true;
+        refs.dragStartX = clientX;
+        refs.dragCurrentX = clientX;
+        refs.dragStartTime = Date.now();
+        refs.prevTranslate = uiState.currentTranslate;
+    }, [deviceState.isMounted, deviceState.isMobile, uiState.currentTranslate]);
+
+    const handleTouchMove = useCallback((clientX: number) => {
+        if (!deviceState.isMounted || !deviceState.isMobile || !uiState.isDragging) return;
+
+        const refs = interactionRefs.current;
+        refs.dragCurrentX = clientX;
+
+        const diff = clientX - refs.dragStartX;
+
+        // 如果移动距离超过阈值，认为是拖动而不是点击
+        if (Math.abs(diff) > 10) {
+            refs.isClick = false;
+        }
+
+        let newTranslate = refs.prevTranslate + (diff / window.innerWidth) * 100 * MOBILE_SWIPE_CONFIG.sensitivity;
+
+        // 边界限制
+        const maxTranslate = 0;
+        const minTranslate = -(allImages.length - 1) * 100;
+
+        if (newTranslate > maxTranslate) {
+            newTranslate = maxTranslate + (newTranslate - maxTranslate) * MOBILE_SWIPE_CONFIG.boundaryElasticity;
+        } else if (newTranslate < minTranslate) {
+            newTranslate = minTranslate + (newTranslate - minTranslate) * MOBILE_SWIPE_CONFIG.boundaryElasticity;
+        }
+
+        setUiState(prev => ({ ...prev, currentTranslate: newTranslate }));
+    }, [deviceState.isMounted, deviceState.isMobile, uiState.isDragging, allImages.length]);
+
+    const handleTouchEnd = useCallback(() => {
+        if (!deviceState.isMounted || !deviceState.isMobile || !uiState.isDragging) return;
+
+        const refs = interactionRefs.current;
+        setUiState(prev => ({ ...prev, isDragging: false }));
+
+        if (refs.isClick) return;
+
+        const diff = refs.dragCurrentX - refs.dragStartX;
+        const screenThreshold = window.innerWidth * MOBILE_SWIPE_CONFIG.distanceThreshold;
+
+        let targetIndex = uiState.currentImageIndex;
+        if (Math.abs(diff) > screenThreshold) {
+            targetIndex = diff > 0
+                ? Math.max(0, uiState.currentImageIndex - 1)
+                : Math.min(allImages.length - 1, uiState.currentImageIndex + 1);
+        }
+
+        setUiState(prev => ({
+            ...prev,
+            currentImageIndex: targetIndex,
+            currentTranslate: -targetIndex * 100
+        }));
+    }, [deviceState.isMounted, deviceState.isMobile, uiState.isDragging, uiState.currentImageIndex, allImages.length]);
+
+    // 移动端触摸事件
+    const handleTouchStartEvent = useCallback((e: React.TouchEvent) => {
+        handleTouchStart(e.touches[0].clientX);
+    }, [handleTouchStart]);
+
+    const handleTouchMoveEvent = useCallback((e: React.TouchEvent) => {
+        if (!uiState.isDragging) return;
+        handleTouchMove(e.touches[0].clientX);
+    }, [uiState.isDragging, handleTouchMove]);
+
+    const handleTouchEndEvent = useCallback((e: React.TouchEvent) => {
+        if (!uiState.isDragging) return;
+        handleTouchEnd();
+    }, [uiState.isDragging, handleTouchEnd]);
+
+    // 样式计算 - 简化版本
+    const getImageContainerStyle = useCallback(() => {
+        if (!deviceState.isMounted) {
+            return {
+                transform: `translateX(-${uiState.currentImageIndex * 100}%)`,
+                transition: 'transform 0.3s ease-out'
+            };
+        }
+
+        if (deviceState.isMobile) {
+            return {
+                transform: `translateX(${uiState.currentTranslate}%)`,
+                transition: uiState.isDragging ? 'none' : `transform ${MOBILE_SWIPE_CONFIG.transitionDuration}ms ease-out`
+            };
+        }
+
+        return {
+            transform: `translateX(-${uiState.currentImageIndex * 100}%)`,
+            transition: uiState.isAnimating ? 'transform 0.3s ease-out' : 'none'
         };
-    }, [isHovered, currentImageIndex, allImages.length, isMounted, isMobile]);
+    }, [deviceState.isMounted, deviceState.isMobile, uiState]);
 
-    // 获取可用库存
-    const getAvailableStock = (sku: ProductSku): number => {
-        return (sku.stock || 0) - (sku.lockedStock || 0);
-    };
+    // 处理图片点击 - 进入详情页
+    const handleImageClick = useCallback((e: React.MouseEvent) => {
+        // 如果正在拖动，阻止点击事件
+        if (uiState.isDragging) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        // 否则让 Link 组件正常处理导航
+    }, [uiState.isDragging]);
 
-    // 获取颜色显示值
-    const getColorValue = (color: string): string => {
-        return getMappedColor(color);
-    };
-
-    // 处理 SKU 选择
-    const handleSkuSelect = (sku: ProductSku, e: React.MouseEvent) => {
+    // SKU 选择处理 - 修复类型错误
+    const handleSkuSelect = useCallback((sku: ProductSku, e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
 
@@ -149,242 +388,15 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
         if (availableStock > 0) {
             setSelectedSku(sku);
         }
-    };
+    }, [getAvailableStock]);
 
-    // 桌面端：切换到下一张图片
-    const nextImage = (e: React.MouseEvent) => {
-        e?.preventDefault();
-        e?.stopPropagation();
-
-        if (currentImageIndex < allImages.length - 1) {
-            setIsAnimating(true);
-            setCurrentImageIndex(prev => prev + 1);
-            hasManualSwitchRef.current = true;
-            setTimeout(() => setIsAnimating(false), 300);
-        }
-    };
-
-    // 桌面端：切换到上一张图片
-    const prevImage = (e: React.MouseEvent) => {
-        e?.preventDefault();
-        e?.stopPropagation();
-
-        if (currentImageIndex > 0) {
-            setIsAnimating(true);
-            setCurrentImageIndex(prev => prev - 1);
-            hasManualSwitchRef.current = true;
-            setTimeout(() => setIsAnimating(false), 300);
-        }
-    };
-
-    // 跳转到指定图片
-    const goToImage = (index: number, e?: React.MouseEvent) => {
-        e?.preventDefault();
-        e?.stopPropagation();
-
-        if (index !== currentImageIndex) {
-            setIsAnimating(true);
-            setCurrentImageIndex(index);
-            setCurrentTranslate(-index * 100);
-            hasManualSwitchRef.current = true;
-            setTimeout(() => setIsAnimating(false), 300);
-        }
-    };
-
-    // 鼠标进入处理
-    const handleMouseEnter = () => {
-        if (!isMounted || isMobile) return;
-        setIsHovered(true);
-    };
-
-    // 鼠标离开处理
-    const handleMouseLeave = () => {
-        if (!isMounted || isMobile) return;
-        setIsHovered(false);
-        if (hoverTimeoutRef.current) {
-            clearTimeout(hoverTimeoutRef.current);
-        }
-
-        if (hasAutoSwitchedRef.current && !hasManualSwitchRef.current && currentImageIndex !== 0) {
-            setIsAnimating(true);
-            setCurrentImageIndex(0);
-            setTimeout(() => setIsAnimating(false), 300);
-        }
-
-        hasAutoSwitchedRef.current = false;
-    };
-
-    // ========== 移动端滑动逻辑 ==========
-    const getCssVariable = (variableName: string, defaultValue: string): number => {
-        if (!isMounted) return parseFloat(defaultValue);
-
-        const value = getComputedStyle(document.documentElement)
-            .getPropertyValue(variableName)
-            .trim();
-
-        return parseFloat(value || defaultValue);
-    };
-
-    // 触摸开始
-    const handleTouchStart = (clientX: number) => {
-        if (!isMounted || !isMobile) return;
-        setIsDragging(true);
-        isClickRef.current = true;
-        dragStartX.current = clientX;
-        dragCurrentX.current = clientX;
-        dragStartTime.current = Date.now();
-        prevTranslate.current = currentTranslate;
-    };
-
-    // 触摸移动
-    const handleTouchMove = (clientX: number) => {
-        if (!isMounted || !isMobile || !isDragging) return;
-        dragCurrentX.current = clientX;
-
-        const diff = clientX - dragStartX.current;
-
-        // 如果移动距离超过阈值，认为是拖动而不是点击
-        if (Math.abs(diff) > 10) {
-            isClickRef.current = false;
-        }
-
-        // 使用全局变量控制灵敏度
-        const sensitivity = getCssVariable('--gallery-sensitivity', '0.8');
-
-        let newTranslate = prevTranslate.current + (diff / window.innerWidth) * 100 * sensitivity;
-
-        // 边界限制
-        const maxTranslate = 0;
-        const minTranslate = -(allImages.length - 1) * 100;
-
-        // 使用全局变量控制边界弹性
-        const boundaryElasticity = getCssVariable('--gallery-boundary-elasticity', '0.3');
-
-        if (newTranslate > maxTranslate) {
-            newTranslate = maxTranslate + (newTranslate - maxTranslate) * boundaryElasticity;
-        } else if (newTranslate < minTranslate) {
-            newTranslate = minTranslate + (newTranslate - minTranslate) * boundaryElasticity;
-        }
-
-        setCurrentTranslate(newTranslate);
-    };
-
-    // 触摸结束
-    const handleTouchEnd = () => {
-        if (!isMounted || !isMobile || !isDragging) return;
-        setIsDragging(false);
-
-        // 如果是点击，不处理滑动逻辑
-        if (isClickRef.current) {
-            return;
-        }
-
-        dragEndTime.current = Date.now();
-
-        const diff = dragCurrentX.current - dragStartX.current;
-        const timeDiff = Math.max(1, dragEndTime.current - dragStartTime.current);
-
-        // 计算滑动速度
-        const speed = Math.abs(diff) / (timeDiff / 1000);
-
-        // 使用全局变量控制距离阈值
-        const distanceThreshold = getCssVariable('--gallery-distance-threshold', '0.25');
-        const screenThreshold = window.innerWidth * distanceThreshold;
-
-        let slidesToMove = 0;
-
-        // 基本规则：滑动距离超过阈值时切换一张
-        if (Math.abs(diff) > screenThreshold) {
-            slidesToMove = 1;
-        }
-
-        // 使用全局变量控制速度阈值
-        const minSpeed = getCssVariable('--gallery-min-speed', '600');
-        const speedRatio = getCssVariable('--gallery-speed-ratio', '300');
-
-        // 根据速度增加额外的切换数量
-        if (speed > minSpeed) {
-            const extraSlides = Math.floor((speed - minSpeed) / speedRatio);
-            slidesToMove += extraSlides;
-        }
-
-        // 限制跳转数量
-        slidesToMove = Math.min(slidesToMove, allImages.length - 1);
-
-        let targetIndex;
-        if (diff > 0) {
-            targetIndex = Math.max(0, currentImageIndex - slidesToMove);
-        } else {
-            targetIndex = Math.min(allImages.length - 1, currentImageIndex + slidesToMove);
-        }
-
-        setCurrentImageIndex(targetIndex);
-        setCurrentTranslate(-targetIndex * 100);
-    };
-
-    // 移动端触摸事件
-    const handleTouchStartEvent = (e: React.TouchEvent) => {
-        handleTouchStart(e.touches[0].clientX);
-    };
-
-    const handleTouchMoveEvent = (e: React.TouchEvent) => {
-        if (!isDragging) return;
-        handleTouchMove(e.touches[0].clientX);
-    };
-
-    const handleTouchEndEvent = (e: React.TouchEvent) => {
-        if (!isDragging) return;
-        handleTouchEnd();
-    };
-
-    // 获取全局动画时长
-    const transitionDuration = getCssVariable('--gallery-transition-duration', '300');
-
-    // 修复：统一的样式计算函数，避免 hydration 不匹配
-    const getImageContainerStyle = () => {
-        // 服务端渲染时返回简单的样式，避免 hydration 不匹配
-        if (!isMounted) {
-            return {
-                transform: `translateX(-${currentImageIndex * 100}%)`,
-                transition: 'transform 0.3s ease-out'
-            };
-        }
-
-        // 客户端渲染时根据设备类型返回不同样式
-        if (isMobile) {
-            return {
-                transform: `translateX(${currentTranslate}%)`,
-                transition: isDragging ? 'none' : `transform ${transitionDuration}ms ease-out`
-            };
-        } else {
-            return {
-                transform: `translateX(-${currentImageIndex * 100}%)`,
-                transition: isAnimating ? 'transform 0.3s ease-out' : 'none'
-            };
-        }
-    };
-
-    // 处理图片点击 - 进入详情页
-    const handleImageClick = (e: React.MouseEvent) => {
-        // 如果正在拖动，阻止点击事件
-        if (isDragging) {
-            e.preventDefault();
-            e.stopPropagation();
-            return;
-        }
-        // 否则让 Link 组件正常处理导航
-    };
-
+    // 收藏逻辑
     const handleToggleFavorite = async (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
 
         if (!isLoggedIn) {
-            openAuthModal('login', {
-                onSuccess: () => {
-                    executeToggleFavorite();
-                }
-            });
+            openAuthModal('login', { onSuccess: executeToggleFavorite });
             return;
         }
 
@@ -392,14 +404,13 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
     };
 
     const executeToggleFavorite = async () => {
-        if (isLoading) return;
+        if (uiState.isLoading) return;
 
-        setIsLoading(true);
+        setUiState(prev => ({ ...prev, isLoading: true }));
+        const newFavoritedState = !uiState.isFavorited;
+        setUiState(prev => ({ ...prev, isFavorited: newFavoritedState }));
 
         try {
-            const newFavoritedState = !isFavorited;
-            setIsFavorited(newFavoritedState);
-
             if (!userInfo) {
                 console.error('用户未登录');
                 return;
@@ -421,46 +432,39 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
                 });
             }
 
-            if (onWishlistUpdate) {
-                onWishlistUpdate();
-            }
-
+            onWishlistUpdate?.();
         } catch (error) {
             console.error('Toggle favorite failed:', error);
-            setIsFavorited(!isFavorited);
+            setUiState(prev => ({ ...prev, isFavorited: !newFavoritedState }));
             showToast('error', 'Add Failed', 'Failed to add product to wishlist. Please try again.');
         } finally {
-            setIsLoading(false);
+            setUiState(prev => ({ ...prev, isLoading: false }));
         }
     };
 
+    // 购物车逻辑
     const handleAddToCart = async (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
 
         try {
-            setAddingToCart(true);
+            setUiState(prev => ({ ...prev, addingToCart: true }));
 
             if (!isLoggedIn) {
-                openAuthModal('login', {
-                    onSuccess: () => {
-                        executeAddToCart();
-                    }
-                });
+                openAuthModal('login', { onSuccess: executeAddToCart });
                 return;
             }
 
             await executeAddToCart();
-            setAddedToCart(true);
+            setUiState(prev => ({ ...prev, addedToCart: true }));
             setTimeout(() => {
-                setAddedToCart(false);
+                setUiState(prev => ({ ...prev, addedToCart: false }));
             }, 2000);
-
         } catch (error) {
             console.error('Failed to add product to cart:', error);
             showToast('error', 'Add Failed', 'Failed to add product to cart. Please try again.');
         } finally {
-            setAddingToCart(false);
+            setUiState(prev => ({ ...prev, addingToCart: false }));
         }
     };
 
@@ -480,7 +484,7 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
             productId: product.id,
             productTitle: product.title,
             productSku: selectedSku.sku,
-            productImage: mainImageUrl,  // 使用缓存的 URL
+            productImage: mainImageUrl,
             unitPrice: product.currentPrice,
             quantity: 1,
             color: selectedSku.color
@@ -492,12 +496,12 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
         showToast('success', 'Added to Cart', `${product.title}${colorText} has been added to your cart!`);
     };
 
-    // 检查是否有任何 SKU 有库存
-    const hasAvailableStock = product.productSkus?.some(sku => getAvailableStock(sku) > 0) || false;
-
     // 检查是否可以切换到上一张/下一张
-    const canGoPrevious = currentImageIndex > 0;
-    const canGoNext = currentImageIndex < allImages.length - 1;
+    const canGoPrevious = uiState.currentImageIndex > 0;
+    const canGoNext = uiState.currentImageIndex < allImages.length - 1;
+
+    // 修复：安全的 SKU 列表获取
+    const productSkus = product.productSkus || [];
 
     return (
         <div
@@ -517,7 +521,6 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
                     borderTopRightRadius: 'var(--radius-lg)'
                 }}
                 ref={imageContainerRef}
-                // 移动端触摸事件
                 onTouchStart={handleTouchStartEvent}
                 onTouchMove={handleTouchMoveEvent}
                 onTouchEnd={handleTouchEndEvent}
@@ -534,15 +537,23 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
                                     className="cursor-pointer block w-full h-full"
                                     onClick={handleImageClick}
                                 >
-                                    <Image
-                                        src={image.url}  // 直接使用缓存的完整 URL
-                                        alt={image.alt || product.title}
-                                        width={300}
-                                        height={300}
-                                        className="w-full h-full object-cover"
-                                        placeholder="blur"
-                                        blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
-                                    />
+                                    {/* 第一张图片优先加载，其他图片懒加载 */}
+                                    {index === 0 ? (
+                                        <LazyImage
+                                            src={image.url}
+                                            alt={image.alt || product.title}
+                                            priority={true}
+                                        />
+                                    ) : loadedImages.has(index) ? (
+                                        <LazyImage
+                                            src={image.url}
+                                            alt={image.alt || product.title}
+                                            priority={false}
+                                        />
+                                    ) : (
+                                        // 占位符，直到图片被加载
+                                        <div className="w-full h-full bg-gray-200 animate-pulse" />
+                                    )}
                                 </Link>
                             </div>
                         ))}
@@ -550,7 +561,7 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
                 </div>
 
                 {/* 桌面端：左右切换按钮 - 只在悬停时显示 */}
-                {allImages.length > 1 && isHovered && isMounted && !isMobile && (
+                {allImages.length > 1 && uiState.isHovered && deviceState.isMounted && !deviceState.isMobile && (
                     <>
                         <button
                             className={`absolute left-2 top-1/2 transform -translate-y-1/2 w-8 h-8 bg-white/95 backdrop-blur-sm flex items-center justify-center shadow-sm border border-gray-200 z-10 transition-all duration-200 ${
@@ -613,19 +624,19 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
                                 borderRadius: 'var(--radius-full)'
                             }}
                         >
-                            {currentImageIndex + 1} / {allImages.length}
+                            {uiState.currentImageIndex + 1} / {allImages.length}
                         </div>
                     </div>
                 )}
 
-                {/* 图片指示器 - 底部居中 (桌面端和移动端都显示) */}
+                {/* 图片指示器 - 底部居中 */}
                 {allImages.length > 1 && (
                     <div className="absolute bottom-3 left-1/2 transform -translate-x-1/2 flex gap-2 z-10">
                         {allImages.map((_, index) => (
                             <button
                                 key={index}
                                 className={`w-2 h-2 transition-all cursor-pointer ${
-                                    index === currentImageIndex
+                                    index === uiState.currentImageIndex
                                         ? 'bg-white scale-125'
                                         : 'bg-white/60'
                                 }`}
@@ -661,14 +672,14 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
                 </div>
 
                 {/* 颜色选择区域 + 收藏按钮 */}
-                {product.productSkus && product.productSkus.length > 0 && (
+                {productSkus.length > 0 && (
                     <div className="mb-4 flex items-center justify-between">
                         <div className="flex flex-wrap gap-2">
-                            {product.productSkus.map((sku, index) => {
+                            {productSkus.map((sku) => {
                                 const availableStock = getAvailableStock(sku);
                                 const isSelected = selectedSku?.id === sku.id;
                                 const isOutOfStock = availableStock <= 0;
-                                const colorValue = getColorValue(sku.color || '#ccc');
+                                const colorValue = getMappedColor(sku.color || '#ccc');
 
                                 return (
                                     <button
@@ -702,28 +713,28 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
                         {/* 收藏按钮 */}
                         <button
                             className={`flex items-center justify-center w-8 h-8 bg-white relative cursor-pointer border shadow-sm
-                                ${isFavorited ? 'text-red-500' : 'text-gray-400'} 
-                                ${isLoading ? 'opacity-70 pointer-events-none' : ''}
+                                ${uiState.isFavorited ? 'text-red-500' : 'text-gray-400'} 
+                                ${uiState.isLoading ? 'opacity-70 pointer-events-none' : ''}
                                 hover:shadow-md transition-all`}
                             style={{
                                 borderRadius: 'var(--radius-full)',
                                 border: '1px solid var(--border-medium)'
                             }}
                             onClick={handleToggleFavorite}
-                            disabled={isLoading}
-                            aria-label={isFavorited ? 'Remove from wishlist' : 'Add to wishlist'}
+                            disabled={uiState.isLoading}
+                            aria-label={uiState.isFavorited ? 'Remove from wishlist' : 'Add to wishlist'}
                         >
                             <svg
                                 width="16"
                                 height="16"
                                 viewBox="0 0 24 24"
-                                fill={isFavorited ? "currentColor" : "none"}
+                                fill={uiState.isFavorited ? "currentColor" : "none"}
                                 stroke="currentColor"
                                 strokeWidth="2"
                             >
                                 <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
                             </svg>
-                            {isLoading && (
+                            {uiState.isLoading && (
                                 <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
                                     <div className="w-3 h-3 border-2 border-transparent border-t-current rounded-full animate-spin"></div>
                                 </div>
@@ -749,13 +760,13 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
                     {/* 购物车按钮 */}
                     <button
                         className={`flex items-center justify-center relative transition-all
-                            ${!hasAvailableStock || !selectedSku || addingToCart || loading
+                            ${!hasAvailableStock || !selectedSku || uiState.addingToCart || loading
                             ? 'bg-gray-200 text-gray-400 cursor-not-allowed opacity-70'
-                            : addedToCart
+                            : uiState.addedToCart
                                 ? 'bg-green-500 text-white cursor-default'
                                 : 'bg-blue-600 text-white cursor-pointer hover:bg-blue-700'
                         }
-                        ${addedToCart
+                        ${uiState.addedToCart
                             ? 'w-10 h-10 md:w-10 md:h-10'
                             : 'px-4 py-2 md:px-4 md:py-2'
                         }`}
@@ -763,12 +774,12 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
                             borderRadius: 'var(--radius-lg)'
                         }}
                         onClick={handleAddToCart}
-                        disabled={(!hasAvailableStock || !selectedSku || addingToCart || loading) && !addedToCart}
+                        disabled={(!hasAvailableStock || !selectedSku || uiState.addingToCart || loading) && !uiState.addedToCart}
                         aria-label={!hasAvailableStock ? "Out of stock" : "Add to cart"}
                     >
-                        {addingToCart ? (
+                        {uiState.addingToCart ? (
                             <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                        ) : addedToCart ? (
+                        ) : uiState.addedToCart ? (
                             <svg
                                 width="20"
                                 height="20"
