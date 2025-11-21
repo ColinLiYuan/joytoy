@@ -86,6 +86,7 @@ export const config = {
         '/products/vibrator-g-sucking-usb-szm',
         '/products/vibrator-silicone-sucking-mirro',
         '/membership',
+        '/contact',
         '/products/suction-sex-toy-soft-szm',
         '/products/sex-doll-vagina-dghs',
         '/collections/male-sex-toys/pocket-pussy',
