@@ -13,7 +13,7 @@ export function middleware(request) {
         '/membership',
         '/products/suction-sex-toy-soft-szm',
         '/products/sex-doll-vagina-dghs',
-        '/products',
+        '/contact',
         '/collections/male-sex-toys/pocket-pussy',
         '/collections/female-sex-toys/fairy-dildos',
         '/collections/sex-toys/pocket-pussy',
@@ -47,7 +47,9 @@ export function middleware(request) {
 
     // 前缀匹配的路径（对应 nginx 的 ^~）
     const prefixBlockedPaths = [
-        '/collections/vibrators'
+        '/collections/vibrators',
+        '/sex-toys',
+        '/products'
     ]
 
     // 检查精确匹配
@@ -86,7 +88,6 @@ export const config = {
         '/membership',
         '/products/suction-sex-toy-soft-szm',
         '/products/sex-doll-vagina-dghs',
-        '/products',
         '/collections/male-sex-toys/pocket-pussy',
         '/collections/female-sex-toys/fairy-dildos',
         '/collections/sex-toys/pocket-pussy',
@@ -118,6 +119,8 @@ export const config = {
         '/collections/female-sex-toys/vibrators',
 
         // 前缀匹配路径
-        '/collections/vibrators/:path*'
+        '/collections/vibrators/:path*',
+        '/sex-toys/:path*',
+        '/products/:path*'
     ]
 }

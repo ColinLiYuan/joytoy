@@ -1,4 +1,4 @@
-// /toys/[slug]/page.tsx
+// /toys/[slug]/route.tsx
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { productServiceServer } from '@/services/servers/product-service-server';
@@ -7,6 +7,7 @@ import ProductDetailClient from './ProductDetailClient';
 import { getProductImageUrl } from '@/lib/image-utils';
 import { colorMap } from '@/lib/constants/color-map';
 
+// 添加 Breadcrumb 类型定义
 interface Breadcrumb {
     name: string;
     path: string | null;
@@ -32,7 +33,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
         const imageUrl = getProductImageUrl(product.baseUrl, product.image);
         const description = product.description?.substring(0, 160) || `Buy ${product.title} at the best price`;
 
-        return {
+        const metadata: Metadata = {
             title: `${product.title} - Myth Toy`,
             description: description,
             alternates: {
@@ -59,6 +60,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
                 images: [imageUrl],
             },
         };
+
+        return metadata;
     } catch (error) {
         return {
             title: 'Product Not Found - Myth Toy',
@@ -80,6 +83,7 @@ function generateBreadcrumbPaths(slugArray: string[], product: ProductResponse |
         const slugPart = slugArray[i];
         currentPath += `/${slugPart}`;
 
+        // 最后一项是当前产品，不需要链接
         if (i === slugArray.length - 1) {
             breadcrumbs.push({
                 name: product?.title || formatDisplayName(slugPart),
@@ -111,47 +115,86 @@ export default async function ProductDetail({ params }: PageProps) {
         : `/${resolvedParams.slug}`;
 
     let product: ProductResponse | null = null;
+    let error: string | null = null;
 
     try {
         product = await productServiceServer.getProductBySlug(slug);
+        // console.log('ProductDetail product：', product)
     } catch (err) {
+        error = err instanceof Error ? err.message : 'Failed to fetch product';
         console.error('Error fetching product:', err);
+    }
+
+    // 如果产品不存在，返回404
+    if (error || !product) {
         notFound();
     }
 
-    // 准备数据 - 并行处理
-    const [breadcrumbs, galleryImages, specifications, features] = await Promise.all([
-        generateBreadcrumbPaths(
-            Array.isArray(resolvedParams.slug) ? resolvedParams.slug : [resolvedParams.slug],
-            product
-        ),
-        // 准备相册图片数据
-        (() => {
-            if (!product) return [];
-            const hasGallery = !!(product.galleries && product.galleries.length > 0);
-            return hasGallery ?
-                product.galleries!.map(gallery => ({
-                    url: getProductImageUrl(product!.baseUrl, gallery.url),
-                    alt: gallery.alt || product.title
-                })) :
-                [{
-                    url: getProductImageUrl(product.baseUrl, product.image),
-                    alt: product.title
-                }];
-        })(),
-        // 安全处理规格数据
-        (() => {
-            if (!product || !product.specifications) return [];
-            return Array.isArray(product.specifications) ? product.specifications : [];
-        })(),
-        // 安全处理特性数据
-        (() => {
-            if (!product || !product.features) return [];
-            return Array.isArray(product.features) ? product.features : [];
-        })()
-    ]);
+    // 准备数据
+    const breadcrumbs = generateBreadcrumbPaths(
+        Array.isArray(resolvedParams.slug) ? resolvedParams.slug : [resolvedParams.slug],
+        product
+    );
 
-    const description = product.description || '';
+    // 准备相册图片数据 - 在服务端预先计算完整URL
+    const getGalleryImages = () => {
+        if (!product) return [];
+
+        // 检查是否有图库图片
+        const hasGallery = !!(product.galleries && product.galleries.length > 0);
+        const displayImages = hasGallery ?
+            product.galleries!.map(gallery => ({
+                url: getProductImageUrl(product!.baseUrl, gallery.url),
+                alt: gallery.alt || product.title
+            })) :
+            [{
+                url: getProductImageUrl(product.baseUrl, product.image),
+                alt: product.title
+            }];
+
+        return displayImages;
+    };
+
+    // 安全处理规格数据
+    const getSafeSpecifications = () => {
+        if (!product || !product.specifications) return [];
+
+        // 确保 specifications 是数组
+        if (Array.isArray(product.specifications)) {
+            return product.specifications;
+        }
+
+        // 如果 specifications 不是数组，返回空数组
+        console.warn('specifications is not an array:', product.specifications);
+        return [];
+    };
+
+    // 安全处理特性数据
+    const getSafeFeatures = () => {
+        if (!product || !product.features) return [];
+
+        // 确保 features 是数组
+        if (Array.isArray(product.features)) {
+            return product.features;
+        }
+
+        // 如果 features 不是数组，返回空数组
+        console.warn('features is not an array:', product.features);
+        return [];
+    };
+
+    // 安全处理描述数据
+    const getSafeDescription = () => {
+        if (!product || !product.description) return '';
+        return product.description;
+    };
+
+    const galleryImages = getGalleryImages();
+    const specifications = getSafeSpecifications();
+    const features = getSafeFeatures();
+    const description = getSafeDescription();
+
+    // 默认选中的颜色
     const defaultColor = product.colors && product.colors.length > 0 ? product.colors[0] : null;
 
     return (
