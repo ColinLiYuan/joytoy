@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server'
-import { categoryServiceServer } from '@/services/servers/category-service-server';
+import { categoryService } from '@/services/category-service';
 
 export async function GET() {
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://mythtoy.com'
 
     let categories = []
     try {
-        categories = await categoryServiceServer.getCategories()
+        categories = await categoryService.getCategories()
     } catch (error) {
         console.error('❌ 获取二级分类失败:', error)
     }

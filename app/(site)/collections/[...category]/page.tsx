@@ -1,6 +1,6 @@
 // /app/collections/[category]/route.tsx
 import { productServiceServer } from '@/services/servers/product-service-server';
-import { categoryServiceServer } from '@/services/servers/category-service-server';
+import { categoryService } from '@/services/category-service';
 import { filterServiceServer } from '@/services/servers/product-filter-service-server';
 import ProductList from '@/components/product/product-list';
 import CollectionBread from '@/components/product/collection-bread';
@@ -29,7 +29,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     }
 
     try {
-        const categoryData = await categoryServiceServer.getCategoryBySlug(slug);
+        const categoryData = await categoryService.getCategoryBySlug(slug);
 
         if (categoryData) {
             const title = categoryData.name;
@@ -151,7 +151,7 @@ export default async function ProductListPage({ params, searchParams }: PageProp
     try {
         // console.log('ProductListPage init slug: ', slug)
         const results = await Promise.allSettled([
-            categoryServiceServer.getCategories(),
+            categoryService.getCategories(),
             productServiceServer.getProductsByCategory(
                 slug,
                 page,

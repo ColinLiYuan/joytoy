@@ -1,7 +1,7 @@
-// productGallery.tsx
+// /toys/[slug]/ProductGallery.tsx
 'use client';
 
-import { useState, useRef, useEffect, useMemo } from 'react';
+import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import Image from 'next/image';
 
 interface GalleryImage {
@@ -22,17 +22,14 @@ export default function ProductGallery({ images, productTitle }: ProductGalleryP
     const [isClient, setIsClient] = useState(false);
 
     const dragStartX = useRef(0);
-    const dragCurrentX = useRef(0);
-    const dragStartTime = useRef(0);
-    const dragEndTime = useRef(0);
     const prevTranslate = useRef(0);
 
-    // 修复水合不匹配：在客户端渲染后才设置状态
+    // 只在客户端渲染
     useEffect(() => {
         setIsClient(true);
     }, []);
 
-    // 使用 useMemo 缓存处理后的图片数据，避免重复渲染
+    // 使用 useMemo 缓存处理后的图片数据
     const processedImages = useMemo(() => {
         return images.map((image, index) => ({
             ...image,
@@ -40,102 +37,49 @@ export default function ProductGallery({ images, productTitle }: ProductGalleryP
         }));
     }, [images, productTitle]);
 
-    // 获取全局CSS变量值 - 添加客户端检查
-    const getCssVariable = (variableName: string, defaultValue: string): number => {
-        if (!isClient) return parseFloat(defaultValue);
+    // 使用 useCallback 优化事件处理函数
+    const handleThumbnailClick = useCallback((index: number) => {
+        setActiveImageIndex(index);
+        setCurrentTranslate(-index * 100);
+    }, []);
 
-        const value = getComputedStyle(document.documentElement)
-            .getPropertyValue(variableName)
-            .trim();
-
-        return parseFloat(value || defaultValue);
-    };
-
-    // 触摸开始
-    const handleTouchStart = (clientX: number) => {
+    const handleTouchStart = useCallback((clientX: number) => {
         setIsDragging(true);
         dragStartX.current = clientX;
-        dragCurrentX.current = clientX;
-        dragStartTime.current = Date.now();
         prevTranslate.current = currentTranslate;
-    };
+    }, [currentTranslate]);
 
-    // 触摸移动
-    const handleTouchMove = (clientX: number) => {
+    const handleTouchMove = useCallback((clientX: number) => {
         if (!isDragging) return;
-        dragCurrentX.current = clientX;
 
         const diff = clientX - dragStartX.current;
-
-        // 使用全局变量控制灵敏度
-        const sensitivity = isClient ? getCssVariable('--gallery-sensitivity', '0.8') : 0.8;
-
-        let newTranslate = prevTranslate.current + (diff / window.innerWidth) * 100 * sensitivity;
+        let newTranslate = prevTranslate.current + (diff / window.innerWidth) * 100 * 0.8;
 
         // 边界限制
         const maxTranslate = 0;
         const minTranslate = -(processedImages.length - 1) * 100;
 
-        // 使用全局变量控制边界弹性
-        const boundaryElasticity = isClient ? getCssVariable('--gallery-boundary-elasticity', '0.3') : 0.3;
-
         if (newTranslate > maxTranslate) {
-            newTranslate = maxTranslate + (newTranslate - maxTranslate) * boundaryElasticity;
+            newTranslate = maxTranslate + (newTranslate - maxTranslate) * 0.3;
         } else if (newTranslate < minTranslate) {
-            newTranslate = minTranslate + (newTranslate - minTranslate) * boundaryElasticity;
+            newTranslate = minTranslate + (newTranslate - minTranslate) * 0.3;
         }
 
         setCurrentTranslate(newTranslate);
-    };
+    }, [isDragging, processedImages.length]);
 
-    // 触摸结束
-    const handleTouchEnd = () => {
+    const handleTouchEnd = useCallback(() => {
         if (!isDragging) return;
         setIsDragging(false);
-        dragEndTime.current = Date.now();
 
-        const diff = dragCurrentX.current - dragStartX.current;
-        const timeDiff = Math.max(1, dragEndTime.current - dragStartTime.current);
+        const targetIndex = Math.round(-currentTranslate / 100);
+        const clampedIndex = Math.max(0, Math.min(processedImages.length - 1, targetIndex));
 
-        // 计算滑动速度
-        const speed = Math.abs(diff) / (timeDiff / 1000);
+        setActiveImageIndex(clampedIndex);
+        setCurrentTranslate(-clampedIndex * 100);
+    }, [isDragging, currentTranslate, processedImages.length]);
 
-        // 使用全局变量控制距离阈值
-        const distanceThreshold = isClient ? getCssVariable('--gallery-distance-threshold', '0.25') : 0.25;
-        const screenThreshold = isClient ? window.innerWidth * distanceThreshold : 100;
-
-        let slidesToMove = 0;
-
-        // 基本规则：滑动距离超过阈值时切换一张
-        if (Math.abs(diff) > screenThreshold) {
-            slidesToMove = 1;
-        }
-
-        // 使用全局变量控制速度阈值
-        const minSpeed = isClient ? getCssVariable('--gallery-min-speed', '600') : 600;
-        const speedRatio = isClient ? getCssVariable('--gallery-speed-ratio', '300') : 300;
-
-        // 根据速度增加额外的切换数量
-        if (speed > minSpeed) {
-            const extraSlides = Math.floor((speed - minSpeed) / speedRatio);
-            slidesToMove += extraSlides;
-        }
-
-        // 限制跳转数量
-        slidesToMove = Math.min(slidesToMove, processedImages.length - 1);
-
-        let targetIndex;
-        if (diff > 0) {
-            targetIndex = Math.max(0, activeImageIndex - slidesToMove);
-        } else {
-            targetIndex = Math.min(processedImages.length - 1, activeImageIndex + slidesToMove);
-        }
-
-        setActiveImageIndex(targetIndex);
-        setCurrentTranslate(-targetIndex * 100);
-    };
-
-    // 鼠标事件处理（用于桌面测试）
+    // 事件处理器
     const handleMouseDown = (e: React.MouseEvent) => {
         e.preventDefault();
         handleTouchStart(e.clientX);
@@ -153,14 +97,6 @@ export default function ProductGallery({ images, productTitle }: ProductGalleryP
         handleTouchEnd();
     };
 
-    const handleMouseLeave = (e: React.MouseEvent) => {
-        if (isDragging) {
-            e.preventDefault();
-            handleTouchEnd();
-        }
-    };
-
-    // 触摸事件
     const handleTouchStartEvent = (e: React.TouchEvent) => {
         e.preventDefault();
         handleTouchStart(e.touches[0].clientX);
@@ -178,28 +114,13 @@ export default function ProductGallery({ images, productTitle }: ProductGalleryP
         handleTouchEnd();
     };
 
-    const handleThumbnailClick = (index: number) => {
-        setActiveImageIndex(index);
-        setCurrentTranslate(-index * 100);
-    };
-
-    // 获取全局动画时长 - 修复水合不匹配
-    const transitionDuration = isClient ? getCssVariable('--gallery-transition-duration', '300') : 300;
-
-    // 检查是否有图片
+    // 如果没有图片
     if (!processedImages || processedImages.length === 0) {
         return (
             <div className="relative flex flex-row gap-4 w-full max-w-full overflow-hidden">
                 <div className="flex-1 w-full">
-                    <div className="rounded-lg border border-gray-200 overflow-hidden relative aspect-[1/1] flex items-center justify-center">
-                        <Image
-                            src="/images/placeholder.jpg"
-                            alt="No image available"
-                            width={350}
-                            height={350}
-                            className="w-full h-full object-cover"
-                            priority
-                        />
+                    <div className="rounded-lg border border-gray-200 overflow-hidden relative aspect-[1/1] flex items-center justify-center bg-gray-100">
+                        <div className="text-gray-400">No image available</div>
                     </div>
                 </div>
             </div>
@@ -208,16 +129,10 @@ export default function ProductGallery({ images, productTitle }: ProductGalleryP
 
     return (
         <div className="relative flex flex-row gap-4 w-full max-w-full overflow-hidden">
-            {/* 缩略图区域 - 始终在左侧垂直排列 */}
+            {/* 缩略图区域 */}
             {processedImages.length > 1 && (
                 <div className="flex flex-col items-center gap-2 w-auto">
-                    <div
-                        className="flex flex-col gap-2 overflow-y-auto max-h-[500px] scroll-smooth"
-                        style={{
-                            msOverflowStyle: 'none',
-                            scrollbarWidth: 'none'
-                        }}
-                    >
+                    <div className="flex flex-col gap-2 overflow-y-auto max-h-[500px] scroll-smooth [scrollbar-width:none] [-ms-overflow-style:none]">
                         {processedImages.map((image, index) => (
                             <div
                                 key={index}
@@ -230,10 +145,11 @@ export default function ProductGallery({ images, productTitle }: ProductGalleryP
                             >
                                 <Image
                                     src={image.url}
-                                    alt={image.alt}
+                                    alt={image.alt || ''}
                                     width={80}
                                     height={80}
                                     className="w-full h-full object-cover"
+                                    loading="lazy"
                                 />
                             </div>
                         ))}
@@ -248,26 +164,19 @@ export default function ProductGallery({ images, productTitle }: ProductGalleryP
                        w-full max-w-[580px] mx-auto md:max-w-none 
                        shadow-md select-none
                        ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
-                    style={{
-                        cursor: isDragging ? 'grabbing' : 'grab'
-                    }}
                     onMouseDown={handleMouseDown}
                     onMouseMove={handleMouseMove}
                     onMouseUp={handleMouseUp}
-                    onMouseLeave={handleMouseLeave}
+                    onMouseLeave={handleMouseUp}
                     onTouchStart={handleTouchStartEvent}
                     onTouchMove={handleTouchMoveEvent}
                     onTouchEnd={handleTouchEndEvent}
                 >
-                    {/* 图片容器 - 滑动时实时移动 */}
                     <div
                         className="flex w-full h-full transition-transform ease-out"
                         style={{
                             transform: `translateX(${currentTranslate}%)`,
-                            // 修复水合不匹配：统一transition属性格式
-                            transition: isDragging
-                                ? 'none'
-                                : `transform ${transitionDuration}ms ease-out`
+                            transition: isDragging ? 'none' : 'transform 300ms ease-out'
                         }}
                     >
                         {processedImages.map((image, index) => (
@@ -277,11 +186,12 @@ export default function ProductGallery({ images, productTitle }: ProductGalleryP
                             >
                                 <Image
                                     src={image.url}
-                                    alt={image.alt}
+                                    alt={image.alt || ''}
                                     width={600}
                                     height={600}
                                     className="w-full h-full object-cover"
                                     priority={index === 0}
+                                    loading={index === 0 ? "eager" : "lazy"}
                                     sizes="(max-width: 768px) 80vw, (max-width: 1200px) 60vw, 50vw"
                                     draggable={false}
                                 />
@@ -301,20 +211,13 @@ export default function ProductGallery({ images, productTitle }: ProductGalleryP
                                             : 'bg-white/60 hover:bg-white/80'
                                     }`}
                                     onClick={() => handleThumbnailClick(index)}
-                                    aria-label={`查看图片 ${index + 1}`}
+                                    aria-label={`View image ${index + 1}`}
                                 />
                             ))}
                         </div>
                     )}
                 </div>
             </div>
-
-            {/* 隐藏滚动条样式 */}
-            <style jsx>{`
-                .scroll-smooth::-webkit-scrollbar {
-                    display: none;
-                }
-            `}</style>
         </div>
     );
 }

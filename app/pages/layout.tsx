@@ -1,4 +1,4 @@
-import { categoryServiceServer } from '@/services/servers/category-service-server';
+import { categoryService } from '@/services/category-service';
 import { RootResponse } from '@/types/category';
 import Notice from '@/components/common/notice';
 import Navigation from '@/components/navigation/navigation';
@@ -11,7 +11,7 @@ export default async function PagesLayout({
 }) {
     let rootsData: RootResponse[] = [];
     try {
-        const roots = await categoryServiceServer.getRoots();
+        const roots = await categoryService.getRoots();
         rootsData = Array.isArray(roots) ? roots : [];
     } catch (error) {
         console.error('Failed to load categories:', error);

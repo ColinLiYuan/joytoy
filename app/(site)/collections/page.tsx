@@ -1,7 +1,7 @@
 // app/(site)/collections/page.tsx
 import Link from 'next/link';
 import { RootResponse } from '@/types/category';
-import { categoryServiceServer } from '@/services/servers/category-service-server';
+import { categoryService } from '@/services/category-service';
 
 // 子分类图片映射 - 使用网上真实的成人用品图片
 const subcategoryImages: Record<string, string> = {
@@ -35,7 +35,7 @@ export default async function CollectionPage() {
     let rootsData: RootResponse[] = [];
 
     try {
-        const roots = await categoryServiceServer.getRoots();
+        const roots = await categoryService.getRoots();
         rootsData = Array.isArray(roots) ? roots : [];
     } catch (error) {
         console.error('Failed to load categories:', error);
