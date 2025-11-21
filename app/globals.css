@@ -1,0 +1,388 @@
+/* app/globals.css */
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Dancing+Script:wght@400;500;600&display=swap');
+@import "tailwindcss";
+
+:root {
+    /* 颜色变量 */
+    --primary-color: #F67280;
+    --secondary-color: #701a75;
+    --background-color: #f7fafc;
+    --notice-color: #7A2743;
+    --dynamic-btn-background-color: linear-gradient(135deg, #c026d3 0%, #a21caf 100%);
+    --price-color: #e53e3e;
+    --text-color: #2d3748;
+    --light-text: #a0aec0;
+    --accent-color: #8B2E4D;
+    --gray-700: #4a5568;
+
+    /* ========== 滑动相册全局参数 ========== */
+
+    /* 1. 灵敏度控制参数 */
+    --gallery-sensitivity: 1.0;           /* 滑动灵敏度 (0.1-2.0)
+                                             * 值越大，轻轻一滑图片移动越多
+                                             * 推荐: 产品展示 1.2 | 艺术画廊 0.5 | 一般使用 0.8
+                                             */
+
+    /* 2. 速度阈值控制参数 */
+    --gallery-min-speed: 800;             /* 触发多图切换的最小速度(px/s)
+                                             * 速度超过此值才会切换多张图片
+                                             * 值越小越容易触发多图切换
+                                             * 推荐: 快速浏览 400 | 精确控制 800 | 一般使用 600
+                                             */
+
+    --gallery-speed-ratio: 400;           /* 速度与切换图片数的比例
+                                             * 计算公式: 额外切换张数 = (速度 - min-speed) / speed-ratio
+                                             * 值越小，相同速度切换的图片越多
+                                             * 推荐: 快速切换 200 | 缓慢切换 400 | 一般使用 300
+                                             */
+
+    /* 3. 距离阈值控制参数 */
+    --gallery-distance-threshold: 0.25;   /* 触发单图切换的滑动距离占屏幕宽度的比例 (0.1-0.5)
+                                             * 0.25 = 滑动屏幕宽度1/4就切换1张
+                                             * 0.1 = 轻轻一滑就切换 | 0.5 = 需要滑动半屏才切换
+                                             * 推荐: 快速响应 0.15 | 精确控制 0.35 | 一般使用 0.25
+                                             */
+
+    /* 4. 动画控制参数 */
+    --gallery-transition-duration: 600;   /* 切换动画时长(毫秒)
+                                             * 值越大动画越慢越柔和 | 值越小切换越迅速
+                                             * 推荐: 柔和动画 500 | 快速切换 200 | 一般使用 300
+                                             */
+
+    --gallery-boundary-elasticity: 0.08;   /* 边界弹性系数 (0-1)
+                                             * 0 = 硬边界，完全不能超出 | 1 = 完全弹性，可以无限拉出
+                                             * 推荐: 轻微弹性 0.2 | 明显弹性 0.5 | 一般使用 0.3
+                                             */
+
+    /* 其他现有变量 */
+    --radius-lg: 0.75rem;
+    --radius-full: 9999px;
+    --radius-md: 0.375rem;
+    --border-light: #f3f4f6;
+    --border-medium: #e5e7eb;
+    --product-detail-bg: #ffffff;
+    --product-detail-border: var(--border-light);
+    --product-detail-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+    --btn-primary-bg: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    --btn-primary-hover: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+    --btn-disabled-bg: #6b7280;
+    --success-color: #10b981;
+    --error-color: #ef4444;
+    --warning-color: #f59e0b;
+    --breadcrumb-bg: transparent;
+    --breadcrumb-link-color: var(--gray-700);
+    --breadcrumb-link-hover: var(--accent-color);
+    --breadcrumb-current-color: var(--gray-700);
+    --spec-bg: #ffffff;
+    --spec-border: var(--border-medium);
+    --spec-hover-bg: #f9fafb;
+    --feature-bullet-color: var(--success-color);
+}
+
+/* 分类导航样式 */
+.nav-category {
+    font-family: 'Playfair Display', serif;
+}
+
+.nav-category li.active {
+    border-bottom: 2px solid var(--accent-color);
+}
+
+.nav-category .active-link {
+    color: var(--accent-color);
+    font-weight: 600;
+}
+
+.nav-category .normal-link {
+    color: var(--gray-700);
+}
+
+.nav-category .normal-link:hover {
+    color: var(--accent-color);
+}
+
+/* 通知栏样式 */
+.notice-bar {
+    font-family: 'Inter', sans-serif;
+}
+
+/* 产品卡片样式 */
+.product-card {
+    font-family: 'Inter', sans-serif;
+    border-radius: var(--radius-lg);
+    border-color: var(--border-light);
+}
+
+.product-card .product-title {
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+}
+
+.product-card .product-price {
+    color: var(--price-color);
+}
+
+/* 面包屑样式 */
+.breadcrumb {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--breadcrumb-bg);
+}
+
+.breadcrumb .breadcrumb-link {
+    color: var(--breadcrumb-link-color);
+    font-weight: 500;
+}
+
+.breadcrumb .breadcrumb-link:hover {
+    color: var(--breadcrumb-link-hover);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.breadcrumb .breadcrumb-current {
+    color: var(--breadcrumb-current-color);
+    font-weight: 500;
+}
+
+.breadcrumb .breadcrumb-separator {
+    color: #d1d5db;
+    font-weight: 300;
+}
+
+.breadcrumb .breadcrumb-title {
+    font-family: 'Playfair Display', serif;
+    color: var(--gray-700);
+    font-weight: 500;
+}
+
+.breadcrumb .breadcrumb-description {
+    font-family: 'Inter', sans-serif;
+    color: var(--gray-700);
+}
+
+/* Logo */
+.nav-logo {
+    font-size: 18px;
+    font-weight: 700;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.nav-logo:hover {
+    transform: translateY(-1px);
+}
+
+.nav-logo svg {
+    margin-right: 6px;
+    width: 16px;
+    height: 16px;
+}
+
+/* 产品筛选器样式 */
+.product-filters {
+    font-family: 'Inter', sans-serif;
+}
+
+.product-filters .filter-group-header {
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    color: var(--gray-700);
+}
+
+.product-filters .filter-option {
+    font-family: 'Inter', sans-serif;
+    color: var(--gray-700);
+}
+
+.product-filters .filter-option:hover {
+    background-color: rgba(0, 0, 0, 0.02);
+}
+
+/* 筛选器复选框和单选框样式 */
+.product-filters input[type="checkbox"],
+.product-filters input[type="radio"] {
+    accent-color: var(--primary-color);
+}
+
+.product-filters input[type="checkbox"]:checked,
+.product-filters input[type="radio"]:checked {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.product-filters input[type="checkbox"]:focus,
+.product-filters input[type="radio"]:focus {
+    outline: 2px solid rgba(246, 114, 128, 0.2);
+    outline-offset: 2px;
+}
+
+/* 产品详情页样式 */
+.product-detail-section {
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--product-detail-border);
+}
+
+.product-detail-button {
+    background: var(--btn-primary-bg);
+    transition: all 0.3s ease;
+}
+
+.product-detail-button:hover {
+    background: var(--btn-primary-hover);
+    transform: translateY(-1px);
+}
+
+.product-detail-button:disabled {
+    background: var(--btn-disabled-bg);
+    transform: none;
+}
+
+/* 规格表格样式 */
+.specifications-container {
+    background-color: var(--spec-bg);
+    border-color: var(--spec-border);
+}
+
+.specification-item {
+    border-bottom-color: var(--spec-border);
+    transition: background-color 0.3s ease;
+}
+
+.specification-item:hover {
+    background-color: var(--spec-hover-bg);
+}
+
+/* 特性列表样式 */
+.feature-bullet {
+    background-color: var(--feature-bullet-color);
+}
+
+@theme inline {
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+    --font-sans: var(--font-geist-sans);
+    --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --background: #0a0a0a;
+        --foreground: #ededed;
+    }
+}
+
+* {
+    font-family: inherit;
+    box-sizing: border-box;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-slideDown {
+    animation: slideDown 0.2s ease-out;
+}
+
+/* === 移动端布局 === */
+@media screen and (max-width: 768px) {
+    body {
+        padding-bottom: 0;
+    }
+
+    .container {
+        padding: 0 12px;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    body {
+        padding-bottom: 0;
+    }
+
+    .container {
+        padding: 0 10px;
+    }
+}
+
+@media screen and (max-width: 360px) {
+    body {
+        padding-bottom: 0;
+    }
+
+    .container {
+        padding: 0 8px;
+    }
+}
+
+/* 安全区域支持 */
+@supports(padding: max(0px)) {
+    .container {
+        padding-left: max(8px, env(safe-area-inset-left));
+        padding-right: max(8px, env(safe-area-inset-right));
+    }
+
+    @media screen and (max-width: 768px) {
+        body {
+            padding-bottom: 0;
+        }
+    }
+}
+
+/* Responsive Design */
+@media screen and (max-width: 992px) {
+    .footer-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media screen and (max-width: 768px) {
+    .nav-menu {
+        position: fixed;
+        top: 70px;
+        left: -100%;
+        flex-direction: column;
+        background-color: var(--primary-color);
+        width: 100%;
+        height: calc(100vh - 70px);
+        transition: 0.4s;
+        padding: 50px 20px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .nav-menu.active {
+        left: 0;
+    }
+
+    .nav-item {
+        margin: 15px 0;
+    }
+
+    .hamburger {
+        display: block;
+    }
+}
+
+/* 大屏幕 */
+@media (min-width: 1600px) {
+    .container {
+        max-width: 1400px;
+    }
+}
+
+@media screen and (max-width: 576px) {
+    .footer-grid {
+        grid-template-columns: 1fr;
+    }
+}

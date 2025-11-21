@@ -1,0 +1,19 @@
+# Dockerfile.dev
+FROM node:18-alpine
+
+WORKDIR /app
+
+# 复制 package 文件
+COPY package.json package-lock.json* ./
+
+# 安装所有依赖（包括开发依赖）
+RUN npm install
+
+# 复制源代码
+COPY . .
+
+# 开发模式不需要构建
+EXPOSE 3000
+
+# 开发模式启动
+CMD ["npm", "run", "dev"]

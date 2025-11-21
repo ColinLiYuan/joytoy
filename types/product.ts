@@ -1,0 +1,54 @@
+// types/product.ts
+
+export interface ProductSku {
+    id: number;
+    sku: string;
+    color: string;
+    stock: number;
+    lockedStock: number;
+}
+
+export interface ProductResponse {
+    id: number;
+    slug: string;
+    title: string;
+    colors?: string[];
+    categories?: string[];
+    originalPrice: number;
+    currentPrice: number;
+    minOrder: string;
+    description: string;
+    image: string;
+    baseUrl: string;
+    stock: number;
+    galleries?: Array<{
+        url: string;
+        alt?: string;
+    }>;
+    // 更新规格类型
+    specifications?: Array<{
+        specKey: string;
+        specValue: string;
+    }>;
+    features?: string[];
+    favorited?: boolean;
+    color?: string;
+    // 新增 SKU 相关字段
+    productSkus?: ProductSku[];
+    sku?: string;
+    badge?: string;
+    brand?: string;
+    alt?: string;
+    rating?: number;
+    reviewId?: string;
+}
+
+export interface ProductListResponse {
+    content: ProductResponse[];
+    currentPage: number;
+    pageSize: number;
+    totalElements: number;
+    totalPages: number;
+    hasNext: boolean;
+    hasPrevious: boolean;
+}
