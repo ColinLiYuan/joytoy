@@ -17,7 +17,7 @@ export interface CategoryResponse {
     name: string;
     title: string;
     description: string;
-    root: string;
+    root?: string;
     priority?: number;
     changeFreq?: string;
     lastModified?: string;

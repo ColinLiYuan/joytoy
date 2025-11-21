@@ -1,5 +1,5 @@
 // lib/constants/categories.ts
-import { CategoriesData } from '@/types/categories-data';
+import { CategoriesData } from '@/types/category';
 
 export const CATEGORIES_DATA: CategoriesData = {
     category: {
