@@ -241,8 +241,8 @@ export default function Navigation({ minimal = false, rootsData = [] }: Navigati
                                                     {hasSubCategories ? (
                                                         <button
                                                             onClick={() => openSubCategoryPanel(root)}
-                                                            className={`w-full flex items-center justify-between px-5 py-4 text-left text-gray-700 hover:text-[var(--primary-color)] hover:bg-[color:var(--primary-color)]/10 transition-colors ${
-                                                                isActive ? 'text-[var(--primary-color)] bg-[color:var(--primary-color)]/10 border-l-4 border-[var(--primary-color)]' : ''
+                                                            className={`w-full flex items-center justify-between px-5 py-4 text-left text-gray-700 hover:text-[var(--accent-color)] hover:bg-[color:var(--accent-color)]/10 transition-colors ${
+                                                                isActive ? 'text-[var(--accent-color)] bg-[color:var(--accent-color)]/10 border-l-4 border-[var(--accent-color)]' : ''
                                                             }`}
                                                         >
                                                             <span className="font-medium">{root.name}</span>
@@ -254,8 +254,8 @@ export default function Navigation({ minimal = false, rootsData = [] }: Navigati
                                                     ) : (
                                                         <Link
                                                             href={`/collections/${categorySlug}`}
-                                                            className={`block px-5 py-4 text-gray-700 hover:text-[var(--primary-color)] hover:bg-[color:var(--primary-color)]/10 transition-colors no-underline ${
-                                                                isActive ? 'text-[var(--primary-color)] bg-[color:var(--primary-color)]/10 border-l-4 border-[var(--primary-color)]' : ''
+                                                            className={`block px-5 py-4 text-gray-700 hover:text-[var(--accent-color)] hover:bg-[color:var(--accent-color)]/10 transition-colors no-underline ${
+                                                                isActive ? 'text-[var(--accent-color)] bg-[color:var(--accent-color)]/10 border-l-4 border-[var(--accent-color)]' : ''
                                                             }`}
                                                             onClick={closeMobileNav}
                                                         >
@@ -310,8 +310,8 @@ export default function Navigation({ minimal = false, rootsData = [] }: Navigati
                                                     <li key={subCategory.slug} className="border-b border-gray-100 last:border-b-0">
                                                         <Link
                                                             href={`/collections/${subCategory.slug}`}
-                                                            className={`block px-5 py-4 text-gray-700 hover:text-[var(--primary-color)] hover:bg-[color:var(--primary-color)]/10 transition-colors no-underline ${
-                                                                isSubActive ? 'text-[var(--primary-color)] bg-[color:var(--primary-color)]/10 border-l-4 border-[var(--primary-color)]' : ''
+                                                            className={`block px-5 py-4 text-gray-700 hover:text-[var(--accent-color)] hover:bg-[color:var(--accent-color)]/10 transition-colors no-underline ${
+                                                                isSubActive ? 'text-[var(--accent-color)] bg-[color:var(--accent-color)]/10 border-l-4 border-[var(--accent-color)]' : ''
                                                             }`}
                                                             onClick={closeMobileNav}
                                                         >

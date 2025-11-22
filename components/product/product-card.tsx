@@ -684,17 +684,16 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
                                 return (
                                     <button
                                         key={sku.id}
-                                        className={`w-6 h-6 relative transition-all
-                                            ${isSelected
-                                            ? 'border-blue-500 scale-110'
+                                        className={`w-6 h-6 relative transition-all duration-200 border-2
+        ${isSelected
+                                            ? 'border-black scale-110 shadow-md'
                                             : isOutOfStock
                                                 ? 'border-gray-300 opacity-40 cursor-not-allowed'
-                                                : 'border-gray-200 cursor-pointer hover:scale-105'
+                                                : 'border-gray-200 cursor-pointer hover:scale-105 hover:shadow-sm'
                                         }`}
                                         style={{
                                             backgroundColor: colorValue,
-                                            borderRadius: 'var(--radius-full)',
-                                            border: `2px solid ${isSelected ? '#3b82f6' : isOutOfStock ? '#d1d5db' : '#e5e7eb'}`
+                                            borderRadius: 'var(--radius-full)'
                                         }}
                                         onClick={(e) => handleSkuSelect(sku, e)}
                                         disabled={isOutOfStock}

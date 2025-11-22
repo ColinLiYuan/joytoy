@@ -4,7 +4,7 @@
 
 :root {
     /* 颜色变量 */
-    --primary-color: #F67280;
+    /*--primary-color: #F67280;*/
     --secondary-color: #701a75;
     --background-color: #f7fafc;
     --notice-color: #7A2743;
@@ -108,17 +108,21 @@
 
 /* 产品卡片样式 */
 .product-card {
-    font-family: 'Inter', sans-serif;
-    border-radius: var(--radius-lg);
-    border-color: var(--border-light);
+    font-family: 'Inter', sans-serif;  /* 主要字体 - 清晰易读 */
 }
 
 .product-card .product-title {
-    font-family: 'Inter', sans-serif;
-    font-weight: 600;
+    font-family: 'Inter', sans-serif;  /* 与面包屑一致，保持专业感 */
+    font-weight: 600;  /* 中等粗体，突出但不夸张 */
+    font-size: 1.125rem; /* 18px - 适中大小 */
+    line-height: 1.4;
+    color: var(--gray-700);
 }
 
 .product-card .product-price {
+    font-family: 'Inter', sans-serif;  /* 价格信息需要清晰易读 */
+    font-weight: 700;  /* 粗体强调价格 */
+    font-size: 1.25rem; /* 20px - 突出价格 */
     color: var(--price-color);
 }
 
