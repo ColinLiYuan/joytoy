@@ -72,6 +72,7 @@ class CategoryService {
             const roots = this.generateRoots();
             localStorage.setItem(this.ROOTS_STORAGE_KEY, JSON.stringify(roots));
 
+            console.log('getRoots roots: ', roots)
             return roots;
         } catch (error) {
             console.error('Error getting roots from cache, using generated data:', error);
@@ -80,7 +81,7 @@ class CategoryService {
     }
 
     async getCategories(): Promise<CategoryResponse[]> {
-        // 如果是服务端渲染，直接返回生成的数据
+        // // 如果是服务端渲染，直接返回生成的数据
         if (typeof window === 'undefined') {
             return this.generateAllCategories();
         }

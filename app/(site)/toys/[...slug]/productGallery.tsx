@@ -26,6 +26,7 @@ export default function ProductGallery({ images, productTitle }: ProductGalleryP
     const dragStartTime = useRef(0);
     const dragEndTime = useRef(0);
     const prevTranslate = useRef(0);
+    const galleryRef = useRef<HTMLDivElement>(null);
 
     // 修复水合不匹配：在客户端渲染后才设置状态
     useEffect(() => {
@@ -160,23 +161,46 @@ export default function ProductGallery({ images, productTitle }: ProductGalleryP
         }
     };
 
-    // 触摸事件
+    // 触摸事件 - 修复：阻止默认行为
     const handleTouchStartEvent = (e: React.TouchEvent) => {
+        // 阻止默认行为，防止浏览器滚动
         e.preventDefault();
         handleTouchStart(e.touches[0].clientX);
     };
 
     const handleTouchMoveEvent = (e: React.TouchEvent) => {
         if (!isDragging) return;
+        // 阻止默认行为，防止浏览器滚动
         e.preventDefault();
         handleTouchMove(e.touches[0].clientX);
     };
 
     const handleTouchEndEvent = (e: React.TouchEvent) => {
         if (!isDragging) return;
+        // 阻止默认行为
         e.preventDefault();
         handleTouchEnd();
     };
+
+    // 添加被动事件监听器修复 - 防止控制台警告和确保阻止默认行为生效
+    useEffect(() => {
+        const galleryElement = galleryRef.current;
+        if (!galleryElement) return;
+
+        // 添加被动事件监听器来阻止触摸移动的默认行为
+        const preventDefault = (e: Event) => {
+            if (isDragging) {
+                e.preventDefault();
+            }
+        };
+
+        // 使用 passive: false 确保可以调用 preventDefault()
+        galleryElement.addEventListener('touchmove', preventDefault, { passive: false });
+
+        return () => {
+            galleryElement.removeEventListener('touchmove', preventDefault);
+        };
+    }, [isDragging]);
 
     const handleThumbnailClick = (index: number) => {
         setActiveImageIndex(index);
@@ -241,8 +265,8 @@ export default function ProductGallery({ images, productTitle }: ProductGalleryP
                 </div>
             )}
 
-            {/* 主图区域 */}
-            <div className="flex-1 w-full">
+            {/* 主图区域 - 添加 ref */}
+            <div className="flex-1 w-full" ref={galleryRef}>
                 <div
                     className={`rounded-lg overflow-hidden relative aspect-[1/1] flex items-center justify-center
                        w-full max-w-[580px] mx-auto md:max-w-none 

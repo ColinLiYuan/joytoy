@@ -54,7 +54,7 @@ export default async function CollectionPage() {
                         key={rootCategory.slug}
                         className={`mb-16 ${index % 2 === 1 ? 'bg-white rounded-2xl p-8' : ''}`}
                     >
-                        {/* Root Category Header */}
+                        {/* Root MainCategory Header */}
                         <div className="text-center mb-12">
                             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
                                 {rootCategory.name}

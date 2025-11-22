@@ -79,16 +79,18 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
 
     const [selectedSku, setSelectedSku] = useState<ProductSku | null>(null);
 
-    // Refs 合并
+    // Refs 合并 - 修复版本
     const interactionRefs = useRef({
         dragStartX: 0,
         dragCurrentX: 0,
+        dragStartY: 0, // 添加缺失的属性
         dragStartTime: 0,
         prevTranslate: 0,
         isClick: true,
         hoverTimeout: null as NodeJS.Timeout | null,
         hasAutoSwitched: false,
-        hasManualSwitch: false
+        hasManualSwitch: false,
+        isHorizontalSwipe: false
     });
 
     const imageContainerRef = useRef<HTMLDivElement>(null);
@@ -178,7 +180,6 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
 
         preloadIndices.forEach(index => {
             if (!loadedImages.has(index)) {
-                // 修复：使用正确的 Image 构造函数
                 const img = new window.Image();
                 img.src = allImages[index].url;
                 img.onload = () => handleImageLoad(index);
@@ -198,7 +199,6 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
                 currentImageIndex: index
             }));
 
-            // 确保目标图片被标记为需要加载
             if (!loadedImages.has(index)) {
                 handleImageLoad(index);
             }
@@ -265,34 +265,42 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
         interactionRefs.current.hasAutoSwitched = false;
     }, [deviceState.isMounted, deviceState.isMobile, uiState.currentImageIndex, goToImage]);
 
-    // 移动端滑动逻辑 - 简化版本
-    const handleTouchStart = useCallback((clientX: number) => {
+    // 移动端滑动逻辑 - 修复版本
+    const handleTouchStart = useCallback((clientX: number, clientY: number) => {
         if (!deviceState.isMounted || !deviceState.isMobile) return;
 
         const refs = interactionRefs.current;
         setUiState(prev => ({ ...prev, isDragging: true }));
 
         refs.isClick = true;
+        refs.isHorizontalSwipe = false;
         refs.dragStartX = clientX;
+        refs.dragStartY = clientY;
         refs.dragCurrentX = clientX;
         refs.dragStartTime = Date.now();
         refs.prevTranslate = uiState.currentTranslate;
     }, [deviceState.isMounted, deviceState.isMobile, uiState.currentTranslate]);
 
-    const handleTouchMove = useCallback((clientX: number) => {
+    const handleTouchMove = useCallback((clientX: number, clientY: number) => {
         if (!deviceState.isMounted || !deviceState.isMobile || !uiState.isDragging) return;
 
         const refs = interactionRefs.current;
         refs.dragCurrentX = clientX;
 
-        const diff = clientX - refs.dragStartX;
+        const diffX = clientX - refs.dragStartX;
+        const diffY = clientY - refs.dragStartY;
+
+        // 判断是否为水平滑动
+        if (!refs.isHorizontalSwipe && Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 5) {
+            refs.isHorizontalSwipe = true;
+        }
 
         // 如果移动距离超过阈值，认为是拖动而不是点击
-        if (Math.abs(diff) > 10) {
+        if (Math.abs(diffX) > 10) {
             refs.isClick = false;
         }
 
-        let newTranslate = refs.prevTranslate + (diff / window.innerWidth) * 100 * MOBILE_SWIPE_CONFIG.sensitivity;
+        let newTranslate = refs.prevTranslate + (diffX / window.innerWidth) * 100 * MOBILE_SWIPE_CONFIG.sensitivity;
 
         // 边界限制
         const maxTranslate = 0;
@@ -332,20 +340,35 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
         }));
     }, [deviceState.isMounted, deviceState.isMobile, uiState.isDragging, uiState.currentImageIndex, allImages.length]);
 
-    // 移动端触摸事件
+    // 移动端触摸事件 - 修复版本
     const handleTouchStartEvent = useCallback((e: React.TouchEvent) => {
-        handleTouchStart(e.touches[0].clientX);
-    }, [handleTouchStart]);
+        if (allImages.length <= 1) return;
+        handleTouchStart(e.touches[0].clientX, e.touches[0].clientY);
+    }, [allImages.length, handleTouchStart]);
 
     const handleTouchMoveEvent = useCallback((e: React.TouchEvent) => {
-        if (!uiState.isDragging) return;
-        handleTouchMove(e.touches[0].clientX);
-    }, [uiState.isDragging, handleTouchMove]);
+        if (!uiState.isDragging || allImages.length <= 1) return;
+
+        const refs = interactionRefs.current;
+        // 如果是水平滑动，阻止默认行为防止浏览器滚动
+        if (refs.isHorizontalSwipe) {
+            e.preventDefault();
+        }
+
+        handleTouchMove(e.touches[0].clientX, e.touches[0].clientY);
+    }, [uiState.isDragging, allImages.length, handleTouchMove]);
 
     const handleTouchEndEvent = useCallback((e: React.TouchEvent) => {
-        if (!uiState.isDragging) return;
+        if (!uiState.isDragging || allImages.length <= 1) return;
+
+        const refs = interactionRefs.current;
+        // 如果是水平滑动，阻止默认行为
+        if (refs.isHorizontalSwipe) {
+            e.preventDefault();
+        }
+
         handleTouchEnd();
-    }, [uiState.isDragging, handleTouchEnd]);
+    }, [uiState.isDragging, allImages.length, handleTouchEnd]);
 
     // 样式计算 - 简化版本
     const getImageContainerStyle = useCallback(() => {
@@ -371,15 +394,13 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
 
     // 处理图片点击 - 进入详情页
     const handleImageClick = useCallback((e: React.MouseEvent) => {
-        // 如果正在拖动，阻止点击事件
         if (uiState.isDragging) {
             e.preventDefault();
             e.stopPropagation();
         }
-        // 否则让 Link 组件正常处理导航
     }, [uiState.isDragging]);
 
-    // SKU 选择处理 - 修复类型错误
+    // SKU 选择处理
     const handleSkuSelect = useCallback((sku: ProductSku, e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
@@ -537,7 +558,6 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
                                     className="cursor-pointer block w-full h-full"
                                     onClick={handleImageClick}
                                 >
-                                    {/* 第一张图片优先加载，其他图片懒加载 */}
                                     {index === 0 ? (
                                         <LazyImage
                                             src={image.url}
@@ -551,7 +571,6 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
                                             priority={false}
                                         />
                                     ) : (
-                                        // 占位符，直到图片被加载
                                         <div className="w-full h-full bg-gray-200 animate-pulse" />
                                     )}
                                 </Link>
@@ -615,8 +634,8 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
                     </>
                 )}
 
-                {/* 图片计数器 */}
-                {allImages.length > 1 && (
+                {/* 图片计数器 - PC端悬停显示，移动端不显示 */}
+                {allImages.length > 1 && deviceState.isMounted && !deviceState.isMobile && uiState.isHovered && (
                     <div className="absolute top-3 left-3 z-10">
                         <div
                             className="px-2 py-1 bg-black/50 text-white text-xs backdrop-blur-sm"
@@ -629,7 +648,7 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
                     </div>
                 )}
 
-                {/* 图片指示器 - 底部居中 */}
+                {/* 图片指示器 - 底部点点点，一直显示 */}
                 {allImages.length > 1 && (
                     <div className="absolute bottom-3 left-1/2 transform -translate-x-1/2 flex gap-2 z-10">
                         {allImages.map((_, index) => (
@@ -684,17 +703,16 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
                                 return (
                                     <button
                                         key={sku.id}
-                                        className={`w-6 h-6 relative transition-all
-                                            ${isSelected
-                                            ? 'border-blue-500 scale-110'
+                                        className={`w-6 h-6 relative transition-all duration-200 border-2
+        ${isSelected
+                                            ? 'border-black scale-110 shadow-md'
                                             : isOutOfStock
                                                 ? 'border-gray-300 opacity-40 cursor-not-allowed'
-                                                : 'border-gray-200 cursor-pointer hover:scale-105'
+                                                : 'border-gray-200 cursor-pointer hover:scale-105 hover:shadow-sm'
                                         }`}
                                         style={{
                                             backgroundColor: colorValue,
-                                            borderRadius: 'var(--radius-full)',
-                                            border: `2px solid ${isSelected ? '#3b82f6' : isOutOfStock ? '#d1d5db' : '#e5e7eb'}`
+                                            borderRadius: 'var(--radius-full)'
                                         }}
                                         onClick={(e) => handleSkuSelect(sku, e)}
                                         disabled={isOutOfStock}
