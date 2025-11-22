@@ -29,13 +29,13 @@ export default function SlugGenerator({ product, roots, updateProduct }: SlugGen
     const parseExistingSlug = useCallback((slug: string, categories: Category[]) => {
         if (!slug) return { root: '', category: '', suffix: '' };
 
-        console.log('解析slug:', slug);
+        // console.log('解析slug:', slug);
 
         // 移除开头和结尾的斜杠
         const cleanSlug = slug.replace(/^\/|\/$/g, '');
         const parts = cleanSlug.split('/');
 
-        console.log('分割结果:', parts);
+        // console.log('分割结果:', parts);
 
         // 预期的slug格式: /一级分类/二级分类/产品标识
         // 比如: /female-sex-toys/clit-vibrators/123
@@ -45,7 +45,7 @@ export default function SlugGenerator({ product, roots, updateProduct }: SlugGen
             const fullCategorySlug = `${rootSlug}/${categorySlug}`; // 完整的二级分类slug
             const productSuffix = parts.slice(2).join('/'); // 产品标识
 
-            console.log('查找分类:', { rootSlug, categorySlug, fullCategorySlug });
+            // console.log('查找分类:', { rootSlug, categorySlug, fullCategorySlug });
 
             // 查找匹配的一级分类
             const root = categories.find(r => r.slug === rootSlug);
@@ -57,11 +57,11 @@ export default function SlugGenerator({ product, roots, updateProduct }: SlugGen
                 });
 
                 if (category) {
-                    console.log('找到匹配的分类:', {
-                        root: root.slug,
-                        category: category.slug,
-                        suffix: productSuffix
-                    });
+                    // console.log('找到匹配的分类:', {
+                    //     root: root.slug,
+                    //     category: category.slug,
+                    //     suffix: productSuffix
+                    // });
                     return {
                         root: root.slug,
                         category: category.slug, // 完整的二级分类slug
@@ -71,28 +71,28 @@ export default function SlugGenerator({ product, roots, updateProduct }: SlugGen
             }
         }
 
-        console.log('解析失败，返回空');
+        // console.log('解析失败，返回空');
         return { root: '', category: '', suffix: '' };
     }, []);
 
     // 初始化解析
     useEffect(() => {
         if (roots.length > 0 && product.slug !== undefined && !isInitialized) {
-            console.log('可用的分类数据:', roots.map(root => ({
-                name: root.name,
-                slug: root.slug,
-                subcategories: root.categoryList?.map(cat => ({
-                    name: cat.name,
-                    slug: cat.slug
-                }))
-            })));
+            // console.log('可用的分类数据:', roots.map(root => ({
+            //     name: root.name,
+            //     slug: root.slug,
+            //     subcategories: root.categoryList?.map(cat => ({
+            //         name: cat.name,
+            //         slug: cat.slug
+            //     }))
+            // })));
 
             const parsed = parseExistingSlug(product.slug || '', roots);
 
-            console.log('解析结果:', {
-                original: product.slug,
-                parsed
-            });
+            // console.log('解析结果:', {
+            //     original: product.slug,
+            //     parsed
+            // });
 
             setSelectedRoot(parsed.root);
             setSelectedCategory(parsed.category);
@@ -126,12 +126,12 @@ export default function SlugGenerator({ product, roots, updateProduct }: SlugGen
         // 转换为小写并清理
         newSlug = newSlug.toLowerCase().replace(/\/+/g, '/');
 
-        console.log('生成新slug:', {
-            selectedRoot,
-            selectedCategory,
-            suffix,
-            newSlug
-        });
+        // console.log('生成新slug:', {
+        //     selectedRoot,
+        //     selectedCategory,
+        //     suffix,
+        //     newSlug
+        // });
 
         // 只有当slug确实改变时才更新
         if (newSlug !== product.slug) {
@@ -145,13 +145,13 @@ export default function SlugGenerator({ product, roots, updateProduct }: SlugGen
     }, [generateSlug]);
 
     const handleRootChange = (rootSlug: string) => {
-        console.log('选择一级分类:', rootSlug);
+        // console.log('选择一级分类:', rootSlug);
         setSelectedRoot(rootSlug);
         setSelectedCategory(''); // 重置二级分类
     };
 
     const handleCategoryChange = (categorySlug: string) => {
-        console.log('选择二级分类:', categorySlug);
+        // console.log('选择二级分类:', categorySlug);
         setSelectedCategory(categorySlug);
     };
 

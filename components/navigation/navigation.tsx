@@ -194,10 +194,6 @@ export default function Navigation({ minimal = false, rootsData = [] }: Navigati
                         onBackToMain={backToMainPanel}
                         onOpenSubCategory={openSubCategoryPanel}
                         activeCategory={activeCategory}
-                        isLoggedIn={isLoggedIn}
-                        onWishlistClick={handleWishlistClick}
-                        onAuthModalOpen={() => openAuthModal('login')}
-                        onLogout={handleLogout}
                     />
                 )}
 

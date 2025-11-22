@@ -99,7 +99,7 @@ export default function AdminProductForm() {
     const loadProductData = async (id: string) => {
         try {
             const productData = await productService.adminGetById(id);
-            console.log('loadProductData:', productData)
+            // console.log('loadProductData:', productData)
             setProduct(productData);
         } catch (error) {
             console.error('加载产品数据失败:', error);
