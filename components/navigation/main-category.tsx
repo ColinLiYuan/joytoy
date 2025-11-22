@@ -1,4 +1,4 @@
-// components/navigation/category.tsx
+// components/navigation/main-category.tsx
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -10,7 +10,7 @@ interface MainNaviCategoryProps {
     rootsData?: RootResponse[];
 }
 
-export default function Category({ rootsData = [] }: MainNaviCategoryProps) {
+export default function MainCategory({ rootsData = [] }: MainNaviCategoryProps) {
     const pathname = usePathname();
     const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
     const [touchExpanded, setTouchExpanded] = useState<string | null>(null);

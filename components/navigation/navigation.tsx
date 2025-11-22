@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import Category from '@/components/navigation/category';
+import MainCategory from '@/components/navigation/main-category';
 import UserActions from '@/components/common/user-actions';
 import Cart from '@/components/common/cart';
 import MinimalNavigation from '@/components/navigation/minimal-navigation';
@@ -154,7 +154,7 @@ export default function Navigation({ minimal = false, rootsData = [] }: Navigati
 
                             {/* 桌面版分类导航 */}
                             <div className="hidden lg:block flex-1 max-w-[600px] mx-5">
-                                <Category rootsData={rootsData} />
+                                <MainCategory rootsData={rootsData} />
                             </div>
 
                             {/* 右侧区域 - 用户操作和汉堡菜单紧凑排列 */}
