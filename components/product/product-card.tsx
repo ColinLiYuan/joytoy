@@ -88,7 +88,8 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
         isClick: true,
         hoverTimeout: null as NodeJS.Timeout | null,
         hasAutoSwitched: false,
-        hasManualSwitch: false
+        hasManualSwitch: false,
+        isHorizontalSwipe: false // 新增：判断是否为水平滑动
     });
 
     const imageContainerRef = useRef<HTMLDivElement>(null);
@@ -265,34 +266,51 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
         interactionRefs.current.hasAutoSwitched = false;
     }, [deviceState.isMounted, deviceState.isMobile, uiState.currentImageIndex, goToImage]);
 
-    // 移动端滑动逻辑 - 简化版本
-    const handleTouchStart = useCallback((clientX: number) => {
+    // 移动端滑动逻辑 - 修复版本
+    const handleTouchStart = useCallback((clientX: number, clientY: number) => {
         if (!deviceState.isMounted || !deviceState.isMobile) return;
 
         const refs = interactionRefs.current;
         setUiState(prev => ({ ...prev, isDragging: true }));
 
         refs.isClick = true;
+        refs.isHorizontalSwipe = false;
         refs.dragStartX = clientX;
+        refs.dragStartY = clientY;
         refs.dragCurrentX = clientX;
         refs.dragStartTime = Date.now();
         refs.prevTranslate = uiState.currentTranslate;
     }, [deviceState.isMounted, deviceState.isMobile, uiState.currentTranslate]);
 
-    const handleTouchMove = useCallback((clientX: number) => {
+    const handleTouchMove = useCallback((clientX: number, clientY: number) => {
         if (!deviceState.isMounted || !deviceState.isMobile || !uiState.isDragging) return;
 
         const refs = interactionRefs.current;
         refs.dragCurrentX = clientX;
 
-        const diff = clientX - refs.dragStartX;
+        const diffX = clientX - refs.dragStartX;
+        const diffY = clientY - refs.dragStartY;
+
+        // 判断是否为水平滑动
+        if (!refs.isHorizontalSwipe && Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 5) {
+            refs.isHorizontalSwipe = true;
+        }
+
+        // 如果是水平滑动，阻止默认行为
+        if (refs.isHorizontalSwipe) {
+            // 阻止默认行为，防止浏览器滑动
+            if (typeof window !== 'undefined') {
+                const event = new Event('touchmove', { cancelable: true });
+                window.dispatchEvent(event);
+            }
+        }
 
         // 如果移动距离超过阈值，认为是拖动而不是点击
-        if (Math.abs(diff) > 10) {
+        if (Math.abs(diffX) > 10) {
             refs.isClick = false;
         }
 
-        let newTranslate = refs.prevTranslate + (diff / window.innerWidth) * 100 * MOBILE_SWIPE_CONFIG.sensitivity;
+        let newTranslate = refs.prevTranslate + (diffX / window.innerWidth) * 100 * MOBILE_SWIPE_CONFIG.sensitivity;
 
         // 边界限制
         const maxTranslate = 0;
@@ -332,20 +350,39 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
         }));
     }, [deviceState.isMounted, deviceState.isMobile, uiState.isDragging, uiState.currentImageIndex, allImages.length]);
 
-    // 移动端触摸事件
+    // 移动端触摸事件 - 修复版本
     const handleTouchStartEvent = useCallback((e: React.TouchEvent) => {
-        handleTouchStart(e.touches[0].clientX);
-    }, [handleTouchStart]);
+        // 只有在多张图片时才处理触摸事件
+        if (allImages.length <= 1) return;
+
+        handleTouchStart(e.touches[0].clientX, e.touches[0].clientY);
+    }, [allImages.length, handleTouchStart]);
 
     const handleTouchMoveEvent = useCallback((e: React.TouchEvent) => {
-        if (!uiState.isDragging) return;
-        handleTouchMove(e.touches[0].clientX);
-    }, [uiState.isDragging, handleTouchMove]);
+        if (!uiState.isDragging || allImages.length <= 1) return;
+
+        const refs = interactionRefs.current;
+        // 如果是水平滑动，阻止默认行为防止浏览器滚动
+        if (refs.isHorizontalSwipe) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        handleTouchMove(e.touches[0].clientX, e.touches[0].clientY);
+    }, [uiState.isDragging, allImages.length, handleTouchMove]);
 
     const handleTouchEndEvent = useCallback((e: React.TouchEvent) => {
-        if (!uiState.isDragging) return;
+        if (!uiState.isDragging || allImages.length <= 1) return;
+
+        const refs = interactionRefs.current;
+        // 如果是水平滑动，阻止默认行为
+        if (refs.isHorizontalSwipe) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
         handleTouchEnd();
-    }, [uiState.isDragging, handleTouchEnd]);
+    }, [uiState.isDragging, allImages.length, handleTouchEnd]);
 
     // 样式计算 - 简化版本
     const getImageContainerStyle = useCallback(() => {
@@ -615,8 +652,8 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
                     </>
                 )}
 
-                {/* 图片计数器 */}
-                {allImages.length > 1 && (
+                {/* 图片计数器 - PC端悬停显示，移动端不显示 */}
+                {allImages.length > 1 && deviceState.isMounted && !deviceState.isMobile && uiState.isHovered && (
                     <div className="absolute top-3 left-3 z-10">
                         <div
                             className="px-2 py-1 bg-black/50 text-white text-xs backdrop-blur-sm"
@@ -629,7 +666,7 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
                     </div>
                 )}
 
-                {/* 图片指示器 - 底部居中 */}
+                {/* 图片指示器 - 底部点点点，一直显示 */}
                 {allImages.length > 1 && (
                     <div className="absolute bottom-3 left-1/2 transform -translate-x-1/2 flex gap-2 z-10">
                         {allImages.map((_, index) => (
