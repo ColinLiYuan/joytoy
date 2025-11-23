@@ -4,11 +4,9 @@
 
 :root {
     /* 颜色变量 */
-    /*--primary-color: #F67280;*/
-    --secondary-color: #701a75;
+    --primary-color: black;
     --background-color: #f7fafc;
     --notice-color: #7A2743;
-    --dynamic-btn-background-color: linear-gradient(135deg, #c026d3 0%, #a21caf 100%);
     --price-color: #e53e3e;
     --text-color: #2d3748;
     --light-text: #a0aec0;
@@ -18,7 +16,7 @@
     /* ========== 滑动相册全局参数 ========== */
 
     /* 1. 灵敏度控制参数 */
-    --gallery-sensitivity: 1.0;           /* 滑动灵敏度 (0.1-2.0)
+    --gallery-sensitivity: 1.2;           /* 滑动灵敏度 (0.1-2.0)
                                              * 值越大，轻轻一滑图片移动越多
                                              * 推荐: 产品展示 1.2 | 艺术画廊 0.5 | 一般使用 0.8
                                              */

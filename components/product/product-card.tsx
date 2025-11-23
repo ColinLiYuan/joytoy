@@ -574,8 +574,6 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
             <div
                 className="aspect-[1/1] overflow-hidden relative bg-gray-50 touch-pan-y"
                 style={{
-                    borderTopLeftRadius: 'var(--radius-lg)',
-                    borderTopRightRadius: 'var(--radius-lg)',
                     // 添加 CSS 属性帮助阻止滚动
                     touchAction: deviceState.isMobile ? 'pan-y' : 'auto'
                 }}
