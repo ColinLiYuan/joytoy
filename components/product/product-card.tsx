@@ -79,17 +79,18 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
 
     const [selectedSku, setSelectedSku] = useState<ProductSku | null>(null);
 
-    // Refs 合并
+    // Refs 合并 - 修复版本
     const interactionRefs = useRef({
         dragStartX: 0,
         dragCurrentX: 0,
+        dragStartY: 0, // 添加缺失的属性
         dragStartTime: 0,
         prevTranslate: 0,
         isClick: true,
         hoverTimeout: null as NodeJS.Timeout | null,
         hasAutoSwitched: false,
         hasManualSwitch: false,
-        isHorizontalSwipe: false // 新增：判断是否为水平滑动
+        isHorizontalSwipe: false
     });
 
     const imageContainerRef = useRef<HTMLDivElement>(null);
@@ -179,7 +180,6 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
 
         preloadIndices.forEach(index => {
             if (!loadedImages.has(index)) {
-                // 修复：使用正确的 Image 构造函数
                 const img = new window.Image();
                 img.src = allImages[index].url;
                 img.onload = () => handleImageLoad(index);
@@ -199,7 +199,6 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
                 currentImageIndex: index
             }));
 
-            // 确保目标图片被标记为需要加载
             if (!loadedImages.has(index)) {
                 handleImageLoad(index);
             }
@@ -296,15 +295,6 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
             refs.isHorizontalSwipe = true;
         }
 
-        // 如果是水平滑动，阻止默认行为
-        if (refs.isHorizontalSwipe) {
-            // 阻止默认行为，防止浏览器滑动
-            if (typeof window !== 'undefined') {
-                const event = new Event('touchmove', { cancelable: true });
-                window.dispatchEvent(event);
-            }
-        }
-
         // 如果移动距离超过阈值，认为是拖动而不是点击
         if (Math.abs(diffX) > 10) {
             refs.isClick = false;
@@ -352,9 +342,7 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
 
     // 移动端触摸事件 - 修复版本
     const handleTouchStartEvent = useCallback((e: React.TouchEvent) => {
-        // 只有在多张图片时才处理触摸事件
         if (allImages.length <= 1) return;
-
         handleTouchStart(e.touches[0].clientX, e.touches[0].clientY);
     }, [allImages.length, handleTouchStart]);
 
@@ -365,7 +353,6 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
         // 如果是水平滑动，阻止默认行为防止浏览器滚动
         if (refs.isHorizontalSwipe) {
             e.preventDefault();
-            e.stopPropagation();
         }
 
         handleTouchMove(e.touches[0].clientX, e.touches[0].clientY);
@@ -378,7 +365,6 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
         // 如果是水平滑动，阻止默认行为
         if (refs.isHorizontalSwipe) {
             e.preventDefault();
-            e.stopPropagation();
         }
 
         handleTouchEnd();
@@ -408,15 +394,13 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
 
     // 处理图片点击 - 进入详情页
     const handleImageClick = useCallback((e: React.MouseEvent) => {
-        // 如果正在拖动，阻止点击事件
         if (uiState.isDragging) {
             e.preventDefault();
             e.stopPropagation();
         }
-        // 否则让 Link 组件正常处理导航
     }, [uiState.isDragging]);
 
-    // SKU 选择处理 - 修复类型错误
+    // SKU 选择处理
     const handleSkuSelect = useCallback((sku: ProductSku, e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
@@ -574,7 +558,6 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
                                     className="cursor-pointer block w-full h-full"
                                     onClick={handleImageClick}
                                 >
-                                    {/* 第一张图片优先加载，其他图片懒加载 */}
                                     {index === 0 ? (
                                         <LazyImage
                                             src={image.url}
@@ -588,7 +571,6 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
                                             priority={false}
                                         />
                                     ) : (
-                                        // 占位符，直到图片被加载
                                         <div className="w-full h-full bg-gray-200 animate-pulse" />
                                     )}
                                 </Link>
