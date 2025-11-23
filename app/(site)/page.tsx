@@ -14,6 +14,8 @@ import {
   faUserMd
 } from '@fortawesome/free-solid-svg-icons';
 import ClientAgeVerification from '@/components/common/client-age-verification';
+import ProductCard from '@/components/product/product-card';
+import Link from 'next/link';
 
 // 生成页面元数据
 export async function generateMetadata() {
@@ -142,9 +144,9 @@ export default async function HomePage() {
                 <div className="hero-content w-full aspect-square sm:aspect-auto sm:min-h-[40vh] mx-auto flex items-center justify-center text-center py-8 sm:py-16 relative z-10">
                   <div className="max-w-2xl mx-auto space-y-4 md:space-y-6">
                     {/* 优惠码 - 突出但不刺眼 */}
-                    <div className="mb-1 md:mb-2 font-['Playfair_Display']">
-                      <span className="text-white/90 text-sm font-medium tracking-wide bg-black/20 backdrop-blur-sm px-4 py-2 rounded-full border border-white/20">USE CODE: <span className="font-bold text-white ml-1">MYTH20</span></span>
-                    </div>
+                    <span className="text-white/90 text-sm font-medium tracking-wide">
+                      USE CODE: <span className="font-bold text-white ml-1">MYTH20</span>
+                    </span>
 
                     {/* 副标题 - 优雅吸引人 */}
                     <p className="text-base md:text-lg lg:text-xl text-white font-medium tracking-wider uppercase mb-1 md:mb-2 font-['Playfair_Display']">
@@ -175,6 +177,37 @@ export default async function HomePage() {
             </div>
           </section>
 
+          <section id="bestsellers" className="bestsellers py-8 bg-white">
+            <div className="container max-w-7xl mx-auto px-4">
+              {/* 标题区域 - 左对齐设计 */}
+              <div className="text-left mb-6">
+                <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2 font-['Playfair_Display']">
+                  Best Sellers
+                </h2>
+                <p className="text-gray-600 font-['Inter']">
+                  Most loved products for ultimate pleasure
+                </p>
+              </div>
+
+              {/* 产品网格 */}
+              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+                {bestSellers.length > 0 ? (
+                    bestSellers
+                        .filter(product => product?.id)
+                        .map((product) => (
+                            <ProductCard
+                                key={product.id}
+                                product={product}
+                            />
+                        ))
+                ) : (
+                    <div className="col-span-4 text-center py-8">
+                      <div className="text-gray-500">No products available</div>
+                    </div>
+                )}
+              </div>
+            </div>
+          </section>
 
           {/* Error Display */}
           {error && (
@@ -288,33 +321,6 @@ export default async function HomePage() {
             </div>
           </section>
 
-          {/* Best Sellers Section */}
-          <section id="bestsellers" className="bestsellers-products py-20 bg-white relative">
-            <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-pink-500 to-transparent"></div>
-            <div className="container max-w-6xl mx-auto px-4 sm:px-6 text-center">
-              <h2 className="text-3xl md:text-4xl font-semibold text-purple-800 text-center mb-12 relative">
-                Best Sellers
-                <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-20 h-1 bg-gradient-to-r from-pink-500 to-purple-600 rounded-full mt-3"></div>
-              </h2>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
-                {bestSellers.length > 0 ? (
-                    bestSellers
-                        .filter(product => product?.id)
-                        .map((product) => (
-                            <ProductCard key={product.id} product={product} />
-                        ))
-                ) : (
-                    <div className="col-span-2 text-gray-500">No products available</div>
-                )}
-              </div>
-
-              <a href="/collections/best-sellers" className="btn inline-block bg-gradient-to-br from-pink-600 to-purple-700 hover:from-pink-700 hover:to-purple-800 text-white font-semibold py-4 px-8 rounded-full transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl shadow-lg">
-                View All Best Sellers
-              </a>
-            </div>
-          </section>
-
           {/* Trust Signals Section */}
           <section id="trust" className="trust-signals py-20 bg-gradient-to-br from-pink-50 to-pink-100 relative">
             <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-pink-500 to-transparent"></div>
@@ -377,34 +383,5 @@ export default async function HomePage() {
           </section>
         </div>
       </>
-  );
-}
-
-// 产品卡片组件
-function ProductCard({ product }: { product: ProductResponse }) {
-  const productDetailPath = `/toys${product.slug || ''}`;
-
-  return (
-      <div className="product-card bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border border-pink-50 group">
-        <a href={productDetailPath} className="product-link block h-full">
-          <div className="product-img-container h-64 bg-gray-50 flex items-center justify-center overflow-hidden">
-            <img
-                src={`${product.baseUrl}/${product.image}`}
-                alt={product.title}
-                className="product-img w-full h-full object-contain transition-transform duration-400 group-hover:scale-105"
-                loading="lazy"
-            />
-          </div>
-          <div className="product-info p-6">
-            <h3 className="text-lg font-semibold text-purple-800 mb-3 line-clamp-2">{product.title}</h3>
-            <div className="price-container flex items-center gap-2">
-              <span className="current-price font-bold text-xl text-red-600 font-inter tracking-tight">${product.currentPrice}</span>
-              {product.originalPrice > product.currentPrice && (
-                  <span className="original-price text-base text-gray-400 line-through font-normal">${product.originalPrice}</span>
-              )}
-            </div>
-          </div>
-        </a>
-      </div>
   );
 }

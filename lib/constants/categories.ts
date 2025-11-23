@@ -5,20 +5,41 @@ export const CATEGORIES_DATA: CategoriesData = {
     category: {
         roots: [
             {
-                slug: "new-arrivals",
-                name: "New In",
-                title: "New Arrivals | Latest Sex Toys & Adult Products",
-                description: "Discover the newest sex toys and intimate products. Latest releases and innovative designs for ultimate pleasure.",
-                priority: 0.7,
-                changeFreq: "weekly"
-            },
-            {
-                slug: "best-sellers",
-                name: "Best Sellers",
-                title: "Best Selling Sex Toys | Top Rated Adult Products",
-                description: "Shop best selling sex toys and top rated adult products. Premium quality discreet shipping.",
-                priority: 0.7,
-                changeFreq: "weekly"
+                slug: "shop",
+                name: "Shop",
+                title: "Shop | Sex Toys & Adult Products",
+                description: "Browse our complete collection of sex toys, lingerie and adult products. New arrivals, best sellers and more.",
+                priority: 0.8,
+                changeFreq: "weekly",
+                categories: [
+                    {
+                        slug: "all",
+                        name: "Shop All",
+                        title: "Shop All | Complete Collection of Sex Toys",
+                        description: "Browse our complete collection of sex toys, vibrators, dildos, and adult products.",
+                        root: "shop",
+                        priority: 0.9,
+                        changeFreq: "weekly"
+                    },
+                    {
+                        slug: "new-arrivals",
+                        name: "New In",
+                        title: "New Arrivals | Latest Sex Toys & Adult Products",
+                        description: "Discover the newest sex toys and intimate products. Latest releases and innovative designs for ultimate pleasure.",
+                        root: "shop",
+                        priority: 0.7,
+                        changeFreq: "weekly"
+                    },
+                    {
+                        slug: "best-sellers",
+                        name: "Best Sellers",
+                        title: "Best Selling Sex Toys | Top Rated Adult Products",
+                        description: "Shop best selling sex toys and top rated adult products. Premium quality discreet shipping.",
+                        root: "shop",
+                        priority: 0.7,
+                        changeFreq: "weekly"
+                    }
+                ]
             },
             {
                 slug: "female-sex-toys",

@@ -121,11 +121,6 @@ export default function MainCategory({ rootsData = [] }: MainNaviCategoryProps) 
                                         itemProp="url"
                                     >
                                         <span itemProp="name">{root.name}</span>
-                                        {subCategories.length > 0 && (
-                                            <span className="ml-1 text-xs" aria-hidden="true">
-                                                ▼
-                                            </span>
-                                        )}
                                     </Link>
 
                                     {/* 子分类下拉菜单 */}
