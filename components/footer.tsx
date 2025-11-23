@@ -74,7 +74,7 @@ export default function Footer() {
                             <button
                                 type="submit"
                                 className="w-full bg-gradient-to-br from-pink-600 to-purple-700 hover:from-pink-700 hover:to-purple-800 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-lg text-sm"
-                                style={{ fontFamily: 'Inter, sans-serif', borderRadius: 'var(--radius-md)' }}
+                                style={{ fontFamily: 'Inter, sans-serif', borderRadius: 'var(--radius-lg)' }}
                             >
                                 Subscribe & Save 20%
                             </button>

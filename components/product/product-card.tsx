@@ -564,7 +564,7 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
         <div
             className="overflow-hidden shadow-md relative flex flex-col h-full bg-white product-card"
             style={{
-                borderRadius: 'var(--radius-lg)',
+                borderRadius: 'var(--radius-sm)',
                 border: '1px solid var(--border-light)'
             }}
             onMouseEnter={handleMouseEnter}
@@ -710,8 +710,8 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
             <div
                 className="p-4 flex flex-col flex-grow bg-white"
                 style={{
-                    borderBottomLeftRadius: 'var(--radius-lg)',
-                    borderBottomRightRadius: 'var(--radius-lg)'
+                    borderBottomLeftRadius: 'var(--radius-sm)',
+                    borderBottomRightRadius: 'var(--radius-sm)'
                 }}
             >
                 {/* 产品标题 */}
