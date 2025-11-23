@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { useState, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import { Z_INDEX } from '@/lib/constants/z-index';
 
 interface Promotion {
@@ -24,6 +25,7 @@ const promotions: Promotion[] = [
 
 export default function Notice({ onCloseMenu }: PromotionBarProps) {
     const [currentSlide, setCurrentSlide] = useState(0);
+    const pathname = usePathname();
 
     // 自动轮换促销通知 - 只有多条消息时才轮换
     useEffect(() => {
@@ -35,6 +37,10 @@ export default function Notice({ onCloseMenu }: PromotionBarProps) {
 
         return () => clearInterval(interval);
     }, []);
+
+    if (pathname === '/') {
+        return null;
+    }
 
     const goToPrevSlide = () => {
         if (promotions.length <= 1) return;
