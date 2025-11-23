@@ -562,7 +562,7 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
 
     return (
         <div
-            className="overflow-hidden shadow-md relative flex flex-col h-full bg-white product-card"
+            className="overflow-hidden relative flex flex-col h-full bg-white product-card"
             style={{
                 borderRadius: 'var(--radius-sm)',
                 border: '1px solid var(--border-light)'
