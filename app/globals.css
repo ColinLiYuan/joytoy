@@ -14,6 +14,10 @@
     --gray-700: #4a5568;
     --primary-color: black;
 
+    /* 动画时间变量 */
+    --filter-panel-duration: 0.3s;
+    --filter-panel-easing: ease-in-out;
+
     /* ========== 滑动相册全局参数 ========== */
 
     /* 1. 灵敏度控制参数 */
@@ -261,14 +265,14 @@
 
 /* 特性列表样式 */
 .feature-bullet {
-    background-color: var(--feature-bullet-color);
+    background-color: var(--notice-color);
 }
 
 @theme inline {
     --color-background: var(--background);
     --color-foreground: var(--foreground);
-    --font-sans: var(--font-geist-sans);
-    --font-mono: var(--font-geist-mono);
+    --font-sans: var(--notice-color);
+    --font-mono: var(--notice-color);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -283,6 +287,25 @@
     box-sizing: border-box;
 }
 
+/* 动画效果 */
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+    }
+    to {
+        transform: translateX(0);
+    }
+}
+
+@keyframes opacityIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 0.5;
+    }
+}
+
 @keyframes slideDown {
     from {
         opacity: 0;
@@ -292,6 +315,14 @@
         opacity: 1;
         transform: translateY(0);
     }
+}
+
+.animate-slideInRight {
+    animation: slideInRight var(--filter-panel-duration) var(--filter-panel-easing) forwards;
+}
+
+.animate-opacityIn {
+    animation: opacityIn var(--filter-panel-duration) var(--filter-panel-easing) forwards;
 }
 
 .animate-slideDown {

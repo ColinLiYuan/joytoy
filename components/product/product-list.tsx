@@ -224,16 +224,16 @@ export default function ProductList({
                 </div>
             </div>
 
-            {/* Filters Slide-out Panel - 只在 showFilters 为 true 时渲染 */}
+            {/* Filters Slide-out Panel - 从右侧滑出 */}
             {isMounted && showFilters && (
                 <>
                     <div
-                        className="fixed inset-0 z-[10000] bg-black transition-opacity duration-500 ease-in-out opacity-50"
+                        className="fixed inset-0 z-[10000] bg-black opacity-0 animate-opacityIn"
                         onClick={handleCloseFilters}
                     />
 
                     <div
-                        className="fixed right-0 top-0 bottom-0 z-[10001] bg-white shadow-2xl transition-transform duration-500 ease-in-out translate-x-0 w-full max-w-sm lg:max-w-md"
+                        className="fixed right-0 top-0 bottom-0 z-[10001] bg-white shadow-2xl w-full max-w-sm lg:max-w-md animate-slideInRight"
                     >
                         <div className="flex flex-col h-full">
                             {/* Header */}
