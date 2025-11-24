@@ -2,7 +2,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
 import { ProductResponse, ProductSku } from '@/types/product';
 import { useToast } from '@/contexts/toastContext';
 import { useAuth } from '@/contexts/authContext';

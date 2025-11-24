@@ -91,9 +91,11 @@ export default function CheckoutPage() {
                     quantity: item.quantity,
                     unitPrice: item.unitPrice,
                     productSku: item.productSku,
+                    productImage: item.productImage,
                     color: item.color,
                 };
             });
+            console.log('convertedOrderItems : ', convertedOrderItems)
             setOrderItems(convertedOrderItems);
         }
     }, [cart?.items]);

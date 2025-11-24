@@ -2,35 +2,20 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
     faShoppingBag,
-    faTruck,
     faShieldAlt
 } from '@fortawesome/free-solid-svg-icons';
 import { OrderItemRequest } from '@/types/order';
+import Image from 'next/image';
+import { colorMap } from '@/lib/constants/color-map';
+import { getProductImageUrl } from '@/lib/image-utils';
 
 interface OrderSummaryProps {
     orderItems: OrderItemRequest[];
 }
 
 const getColorValue = (colorName: string): string => {
-    const colorMap: { [key: string]: string } = {
-        'red': '#FF0000',
-        'blue': '#0000FF',
-        'green': '#008000',
-        'black': '#000000',
-        'white': '#FFFFFF',
-        'yellow': '#FFFF00',
-        'purple': '#800080',
-        'pink': '#FFC0CB',
-        'orange': '#FFA500',
-        'gray': '#808080',
-        'brown': '#A52A2A',
-        'navy': '#000080',
-        'teal': '#008080',
-        'gold': '#FFD700',
-        'silver': '#C0C0C0'
-    };
-
-    return colorMap[colorName.toLowerCase()] || '#CCCCCC';
+    const normalizedColor = colorName.toLowerCase().trim();
+    return colorMap[normalizedColor] || '#CCCCCC';
 };
 
 export default function OrderSummary({ orderItems }: OrderSummaryProps) {
@@ -46,10 +31,21 @@ export default function OrderSummary({ orderItems }: OrderSummaryProps) {
                 </h3>
                 {orderItems.map((item, index) => (
                     <div key={`${item.productId}-${index}`} className="flex gap-4 py-4 border-b border-gray-200 last:border-b-0">
-                        <div className="w-15 h-15 rounded-lg bg-gray-100 overflow-hidden flex-shrink-0">
-                            <div className="w-full h-full flex items-center justify-center bg-purple-600 text-white font-semibold text-lg">
-                                {item.productTitle.charAt(0)}
-                            </div>
+                        {/* 商品图片 - 显示主图 */}
+                        <div className="w-15 h-15 rounded-lg overflow-hidden flex-shrink-0">
+                            {item.productImage ? (
+                                <Image
+                                    src={item.productImage}
+                                    alt={item.productTitle}
+                                    width={60}
+                                    height={60}
+                                    className="w-full h-full object-cover rounded-lg"
+                                />
+                            ) : (
+                                <div className="w-full h-full flex items-center justify-center bg-purple-600 text-white font-semibold text-lg rounded-lg">
+                                    {item.productTitle.charAt(0)}
+                                </div>
+                            )}
                         </div>
                         <div className="flex-1 min-w-0">
                             <h4 className="font-medium text-gray-800 mb-1 text-sm">{item.productTitle}</h4>
@@ -73,7 +69,8 @@ export default function OrderSummary({ orderItems }: OrderSummaryProps) {
                                 )}
                             </div>
                         </div>
-                        <div className="font-semibold text-gray-800 text-right">
+                        {/* 价格样式使用全局变量 */}
+                        <div className="font-semibold text-gray-800 text-right" style={{ color: 'var(--price-color)' }}>
                             ${(item.unitPrice * item.quantity).toFixed(2)}
                         </div>
                     </div>
@@ -83,19 +80,11 @@ export default function OrderSummary({ orderItems }: OrderSummaryProps) {
             <div className="border-t border-gray-200 pt-4">
                 <div className="flex justify-between py-2 text-gray-600">
                     <span>Subtotal</span>
-                    <span>${subtotal.toFixed(2)}</span>
+                    <span style={{ color: 'var(--price-color)' }}>${subtotal.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between py-4 border-t border-gray-200 mt-2 text-xl font-semibold text-gray-800">
                     <span>Total</span>
-                    <span>${total.toFixed(2)}</span>
-                </div>
-            </div>
-
-            <div className="flex items-center gap-3 p-4 bg-blue-50 rounded-lg mt-6">
-                <FontAwesomeIcon icon={faTruck} className="text-blue-600" />
-                <div>
-                    <h4 className="font-semibold text-blue-800">Free Shipping</h4>
-                    <p className="text-sm text-blue-600">All orders include free standard shipping</p>
+                    <span style={{ color: 'var(--price-color)' }}>${total.toFixed(2)}</span>
                 </div>
             </div>
 

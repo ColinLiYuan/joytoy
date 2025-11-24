@@ -514,7 +514,7 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
             productId: product.id,
             productTitle: product.title,
             productSku: selectedSku.sku,
-            productImage: mainImageUrl,
+            productImage: product.image,
             unitPrice: product.currentPrice,
             quantity: 1,
             color: selectedSku.color
