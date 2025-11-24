@@ -2,15 +2,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { apiPost, handleApiError } from '@/lib/api-utils';
 import { FrontApiResponse } from '@/types/api';
+import { SessionManager } from '@/lib/session-utils';
 
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
 
+        // 获取或创建 sessionId
+        const { sessionId, isNew } = SessionManager.getOrCreateSessionId(request);
+
+        // 准备请求头，包含 sessionId
+        const headers: Record<string, string> = {
+            'Content-Type': 'application/json',
+            'X-Session-Id': sessionId  // 添加 sessionId 到 header
+        };
+
         const result: FrontApiResponse<any> = await apiPost('/api/V1/users/login', body, {
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            headers: headers,
         });
 
         if (result.success) {
@@ -20,7 +28,6 @@ export async function POST(request: NextRequest) {
             // 设置用户 token 到 cookie（根据你的 API 返回结构调整）
             const token = result.data?.token || result.data?.access_token;
             const userInfo = result.data?.data || result.data;
-            // console.log('login route userInfo: ', userInfo.data.id);
             console.log('login route userInfo2: ', result.data);
 
             if (token) {
@@ -49,6 +56,9 @@ export async function POST(request: NextRequest) {
                     path: '/',
                 });
             }
+
+            // 设置或更新 sessionId Cookie（如果是新session或者需要更新）
+            SessionManager.setSessionCookie(response, sessionId);
 
             const setCookies = response.cookies.getAll();
             console.log('🔐 Response cookies set:', setCookies);
