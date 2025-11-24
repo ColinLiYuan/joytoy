@@ -215,7 +215,7 @@ export default function ProductGallery({ images, productTitle }: ProductGalleryP
         return (
             <div className="relative flex flex-row gap-4 w-full max-w-full overflow-hidden">
                 <div className="flex-1 w-full">
-                    <div className="rounded-lg border border-gray-200 overflow-hidden relative aspect-[1/1] flex items-center justify-center">
+                    <div className="border border-gray-200 overflow-hidden relative aspect-[1/1] flex items-center justify-center">
                         <Image
                             src="/images/placeholder.jpg"
                             alt="No image available"
@@ -245,11 +245,14 @@ export default function ProductGallery({ images, productTitle }: ProductGalleryP
                         {processedImages.map((image, index) => (
                             <div
                                 key={index}
-                                className={`flex-shrink-0 w-16 h-16 lg:w-20 lg:h-20 overflow-hidden cursor-pointer border-2 transition-all duration-300 relative bg-gray-50 rounded-md ${
+                                className={`flex-shrink-0 w-16 h-16 lg:w-20 lg:h-20 overflow-hidden cursor-pointer border-2 transition-all duration-300 relative bg-gray-50 ${
                                     index === activeImageIndex
                                         ? 'border-black'
-                                        : 'border-transparent hover:border-gray-300'
+                                        : 'border-transparent'
                                 }`}
+                                style={{
+                                    borderRadius: 'var(--radius-sm)'
+                                }}
                                 onClick={() => handleThumbnailClick(index)}
                             >
                                 <Image
@@ -268,11 +271,12 @@ export default function ProductGallery({ images, productTitle }: ProductGalleryP
             {/* 主图区域 - 添加 ref */}
             <div className="flex-1 w-full" ref={galleryRef}>
                 <div
-                    className={`rounded-lg overflow-hidden relative aspect-[1/1] flex items-center justify-center
+                    className={`overflow-hidden relative aspect-[1/1] flex items-center justify-center
                        w-full max-w-[580px] mx-auto md:max-w-none 
                        shadow-md select-none
                        ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
                     style={{
+                        borderRadius: 'var(--radius-sm)',
                         cursor: isDragging ? 'grabbing' : 'grab'
                     }}
                     onMouseDown={handleMouseDown}

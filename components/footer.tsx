@@ -14,6 +14,7 @@ export default function Footer() {
                     <div className="footer-section">
                         <h3 className="text-lg font-bold text-gray-900 mb-6" style={{ fontFamily: 'Playfair Display, serif' }}>Shop</h3>
                         <ul className="space-y-3">
+                            <li><a href="/collections/all" className="text-sm text-gray-600 hover:text-gray-900 font-normal transition-all duration-300 inline-block py-1 border-b border-transparent hover:border-gray-900" style={{ fontFamily: 'Inter, sans-serif' }}>Shop All</a></li>
                             <li><a href="/collections/new-arrivals" className="text-sm text-gray-600 hover:text-gray-900 font-normal transition-all duration-300 inline-block py-1 border-b border-transparent hover:border-gray-900" style={{ fontFamily: 'Inter, sans-serif' }}>New In</a></li>
                             <li><a href="/collections/best-sellers" className="text-sm text-gray-600 hover:text-gray-900 font-normal transition-all duration-300 inline-block py-1 border-b border-transparent hover:border-gray-900" style={{ fontFamily: 'Inter, sans-serif' }}>Best Sellers</a></li>
                             <li><a href="/collections/female-sex-toys" className="text-sm text-gray-600 hover:text-gray-900 font-normal transition-all duration-300 inline-block py-1 border-b border-transparent hover:border-gray-900" style={{ fontFamily: 'Inter, sans-serif' }}>Sex Toys For Women</a></li>
@@ -73,7 +74,7 @@ export default function Footer() {
                             <button
                                 type="submit"
                                 className="w-full bg-gradient-to-br from-pink-600 to-purple-700 hover:from-pink-700 hover:to-purple-800 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-lg text-sm"
-                                style={{ fontFamily: 'Inter, sans-serif', borderRadius: 'var(--radius-md)' }}
+                                style={{ fontFamily: 'Inter, sans-serif', borderRadius: 'var(--radius-lg)' }}
                             >
                                 Subscribe & Save 20%
                             </button>

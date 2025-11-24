@@ -143,10 +143,30 @@ export default async function ProductListPage({ params, searchParams }: PageProp
     const pathname = `/collections/${Array.isArray(slugParam) ? slugParam.join('/') : slugParam}`;
 
     const page = parseInt(resolvedSearchParams.page as string) || 0;
+    const sortParam = resolvedSearchParams.sort as string || 'newest';
     const priceRange = parsePriceRange(resolvedSearchParams.priceRange);
     const colors = resolvedSearchParams.colors ? (resolvedSearchParams.colors as string).split(',') : [];
     const features = resolvedSearchParams.features ? (resolvedSearchParams.features as string).split(',') : [];
     const materials = resolvedSearchParams.materials ? (resolvedSearchParams.materials as string).split(',') : [];
+
+    let sortBy = 'updatedAt';
+    let sortDirection = 'DESC';
+
+    switch (sortParam) {
+        case 'price-low':
+            sortBy = 'currentPrice';
+            sortDirection = 'ASC';
+            break;
+        case 'price-high':
+            sortBy = 'currentPrice';
+            sortDirection = 'DESC';
+            break;
+        case 'newest':
+        default:
+            sortBy = 'createdAt';
+            sortDirection = 'DESC';
+            break;
+    }
 
     try {
         // console.log('ProductListPage init slug: ', slug)
@@ -160,7 +180,9 @@ export default async function ProductListPage({ params, searchParams }: PageProp
                     priceRange,
                     colors,
                     features,
-                    materials
+                    materials,
+                    sortBy,
+                    sortDirection
                 }
             ),
             filterServiceServer.getFilters('colors'),

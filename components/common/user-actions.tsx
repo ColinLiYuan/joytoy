@@ -46,14 +46,14 @@ export default function UserActions({
             {isLoggedIn ? (
                 <Link
                     href="/wishlist"
-                    className="w-8 h-8 flex items-center justify-center text-gray-700 hover:text-[var(--primary-color)] hover:bg-[color-mix(in_srgb,var(--primary-color)_10%,transparent)] rounded-full transition-colors cursor-pointer"
+                    className="w-8 h-8 flex items-center justify-center text-gray-700 hover:text-[var(--danger-color)] hover:bg-[color-mix(in_srgb,var(--primary-color)_10%,transparent)] rounded-full transition-colors cursor-pointer"
                     aria-label="Wishlist"
                 >
                     <FontAwesomeIcon icon={faHeart} className="w-3.5 h-3.5" />
                 </Link>
             ) : (
                 <button
-                    className="w-8 h-8 flex items-center justify-center text-gray-700 hover:text-[var(--primary-color)] hover:bg-[color-mix(in_srgb,var(--primary-color)_10%,transparent)] rounded-full transition-colors cursor-pointer"
+                    className="w-8 h-8 flex items-center justify-center text-gray-700 hover:text-[var(--danger-color)] hover:bg-[color-mix(in_srgb,var(--primary-color)_10%,transparent)] rounded-full transition-colors cursor-pointer"
                     aria-label="Wishlist"
                     onClick={onWishlistClick}
                     title="Login to view wishlist"
@@ -73,7 +73,7 @@ export default function UserActions({
                 {/* 徽章 - 只在有内容时渲染 */}
                 {badgeText && (
                     <span
-                        className="absolute -top-1 -right-1 bg-[var(--primary-color)] text-white text-xs rounded-full w-3.5 h-3.5 flex items-center justify-center font-semibold text-[9px]"
+                        className="absolute -top-1 -right-1 bg-[var(--danger-color)] text-white text-xs rounded-full w-3.5 h-3.5 flex items-center justify-center font-semibold text-[9px]"
                     >
                         {badgeText}
                     </span>

@@ -12,21 +12,21 @@ export default function SortSelectModal({ className = '' }: SortSelectModalProps
     const router = useRouter();
     const pathname = usePathname();
     const searchParams = useSearchParams();
-    const [sortBy, setSortBy] = useState('featured');
+    const [sortBy, setSortBy] = useState('newest'); // 默认改为 newest
     const [isOpen, setIsOpen] = useState(false);
 
     const sortOptions = [
-        { value: 'featured', label: 'Featured' },
-        { value: 'price-low', label: 'Price: Low to High' },
-        { value: 'price-high', label: 'Price: High to Low' },
         { value: 'newest', label: 'Newest Arrivals' },
-        { value: 'best-selling', label: 'Best Selling' }
+        { value: 'price-low', label: 'Price: Low to High' },
+        { value: 'price-high', label: 'Price: High to Low' }
     ];
 
     useEffect(() => {
         const sortParam = searchParams.get('sort');
         if (sortParam) {
             setSortBy(sortParam);
+        } else {
+            setSortBy('newest'); // 没有参数时默认 newest
         }
     }, [searchParams]);
 
@@ -36,11 +36,15 @@ export default function SortSelectModal({ className = '' }: SortSelectModalProps
 
         const params = new URLSearchParams(searchParams);
 
-        if (value === 'featured') {
+        if (value === 'newest') {
+            // 默认排序，删除sort参数
             params.delete('sort');
         } else {
             params.set('sort', value);
         }
+
+        // 排序时回到第一页
+        params.delete('page');
 
         const newUrl = `${pathname}?${params.toString()}`;
         router.push(newUrl, { scroll: false });
@@ -48,7 +52,7 @@ export default function SortSelectModal({ className = '' }: SortSelectModalProps
 
     const getDisplayText = () => {
         const currentOption = sortOptions.find(option => option.value === sortBy);
-        return currentOption ? currentOption.label : 'Sort by';
+        return currentOption ? currentOption.label : 'Newest Arrivals'; // 默认显示文字也改一下
     };
 
     return (

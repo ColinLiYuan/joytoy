@@ -83,7 +83,7 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
     const interactionRefs = useRef({
         dragStartX: 0,
         dragCurrentX: 0,
-        dragStartY: 0, // 添加缺失的属性
+        dragStartY: 0,
         dragStartTime: 0,
         prevTranslate: 0,
         isClick: true,
@@ -340,35 +340,71 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
         }));
     }, [deviceState.isMounted, deviceState.isMobile, uiState.isDragging, uiState.currentImageIndex, allImages.length]);
 
-    // 移动端触摸事件 - 修复版本
+    // 移动端触摸事件 - 完全修复版本（解决浏览器滚动问题）
     const handleTouchStartEvent = useCallback((e: React.TouchEvent) => {
         if (allImages.length <= 1) return;
+
+        // 立即阻止所有默认行为和冒泡
+        e.preventDefault();
+        e.stopPropagation();
+
         handleTouchStart(e.touches[0].clientX, e.touches[0].clientY);
     }, [allImages.length, handleTouchStart]);
 
     const handleTouchMoveEvent = useCallback((e: React.TouchEvent) => {
-        if (!uiState.isDragging || allImages.length <= 1) return;
+        if (allImages.length <= 1) return;
 
         const refs = interactionRefs.current;
-        // 如果是水平滑动，阻止默认行为防止浏览器滚动
-        if (refs.isHorizontalSwipe) {
+
+        // 如果已经开始拖动或者是水平滑动，完全阻止默认行为
+        if (uiState.isDragging || refs.isHorizontalSwipe) {
             e.preventDefault();
+            e.stopPropagation();
         }
 
-        handleTouchMove(e.touches[0].clientX, e.touches[0].clientY);
+        if (uiState.isDragging) {
+            handleTouchMove(e.touches[0].clientX, e.touches[0].clientY);
+        }
     }, [uiState.isDragging, allImages.length, handleTouchMove]);
 
     const handleTouchEndEvent = useCallback((e: React.TouchEvent) => {
-        if (!uiState.isDragging || allImages.length <= 1) return;
+        if (allImages.length <= 1) return;
 
-        const refs = interactionRefs.current;
-        // 如果是水平滑动，阻止默认行为
-        if (refs.isHorizontalSwipe) {
-            e.preventDefault();
+        // 阻止默认行为
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (uiState.isDragging) {
+            handleTouchEnd();
         }
-
-        handleTouchEnd();
     }, [uiState.isDragging, allImages.length, handleTouchEnd]);
+
+    // 增强的被动事件监听器 - 完全阻止浏览器滚动
+    useEffect(() => {
+        const imageContainer = imageContainerRef.current;
+        if (!imageContainer || !deviceState.isMobile) return;
+
+        const handleTouchMove = (e: TouchEvent) => {
+            if (uiState.isDragging) {
+                e.preventDefault();
+            }
+        };
+
+        const handleTouchStart = (e: TouchEvent) => {
+            // 在特定条件下允许 preventDefault
+            if (allImages.length > 1) {
+                e.preventDefault();
+            }
+        };
+
+        imageContainer.addEventListener('touchstart', handleTouchStart, { passive: false });
+        imageContainer.addEventListener('touchmove', handleTouchMove, { passive: false });
+
+        return () => {
+            imageContainer.removeEventListener('touchstart', handleTouchStart);
+            imageContainer.removeEventListener('touchmove', handleTouchMove);
+        };
+    }, [deviceState.isMobile, uiState.isDragging, allImages.length]);
 
     // 样式计算 - 简化版本
     const getImageContainerStyle = useCallback(() => {
@@ -526,9 +562,9 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
 
     return (
         <div
-            className="overflow-hidden shadow-md relative flex flex-col h-full bg-white product-card"
+            className="overflow-hidden relative flex flex-col h-full bg-white product-card"
             style={{
-                borderRadius: 'var(--radius-lg)',
+                borderRadius: 'var(--radius-sm)',
                 border: '1px solid var(--border-light)'
             }}
             onMouseEnter={handleMouseEnter}
@@ -536,10 +572,10 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
         >
             {/* 产品图片区域 */}
             <div
-                className="aspect-[1/1] overflow-hidden relative bg-gray-50"
+                className="aspect-[1/1] overflow-hidden relative bg-gray-50 touch-pan-y"
                 style={{
-                    borderTopLeftRadius: 'var(--radius-lg)',
-                    borderTopRightRadius: 'var(--radius-lg)'
+                    // 添加 CSS 属性帮助阻止滚动
+                    touchAction: deviceState.isMobile ? 'pan-y' : 'auto'
                 }}
                 ref={imageContainerRef}
                 onTouchStart={handleTouchStartEvent}
@@ -674,8 +710,8 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
             <div
                 className="p-4 flex flex-col flex-grow bg-white"
                 style={{
-                    borderBottomLeftRadius: 'var(--radius-lg)',
-                    borderBottomRightRadius: 'var(--radius-lg)'
+                    borderBottomLeftRadius: 'var(--radius-sm)',
+                    borderBottomRightRadius: 'var(--radius-sm)'
                 }}
             >
                 {/* 产品标题 */}

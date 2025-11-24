@@ -4,21 +4,20 @@
 
 :root {
     /* 颜色变量 */
-    /*--primary-color: #F67280;*/
-    --secondary-color: #701a75;
     --background-color: #f7fafc;
-    --notice-color: #7A2743;
-    --dynamic-btn-background-color: linear-gradient(135deg, #c026d3 0%, #a21caf 100%);
+    --notice-color: #b86a6f;
     --price-color: #e53e3e;
+    --danger-color: #e53e3e;
     --text-color: #2d3748;
     --light-text: #a0aec0;
-    --accent-color: #8B2E4D;
+    --accent-color: #d63031;
     --gray-700: #4a5568;
+    --primary-color: black;
 
     /* ========== 滑动相册全局参数 ========== */
 
     /* 1. 灵敏度控制参数 */
-    --gallery-sensitivity: 1.0;           /* 滑动灵敏度 (0.1-2.0)
+    --gallery-sensitivity: 1.2;           /* 滑动灵敏度 (0.1-2.0)
                                              * 值越大，轻轻一滑图片移动越多
                                              * 推荐: 产品展示 1.2 | 艺术画廊 0.5 | 一般使用 0.8
                                              */
@@ -54,10 +53,14 @@
                                              * 推荐: 轻微弹性 0.2 | 明显弹性 0.5 | 一般使用 0.3
                                              */
 
-    /* 其他现有变量 */
+    /* 圆角变量 */
+    --radius-no: 0rem;
+    --radius-sm: 0.25rem;
+    --radius-md: 0.375rem;
     --radius-lg: 0.75rem;
     --radius-full: 9999px;
-    --radius-md: 0.375rem;
+
+    /* 其他现有变量 */
     --border-light: #f3f4f6;
     --border-medium: #e5e7eb;
     --product-detail-bg: #ffffff;
@@ -66,9 +69,6 @@
     --btn-primary-bg: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
     --btn-primary-hover: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
     --btn-disabled-bg: #6b7280;
-    --success-color: #10b981;
-    --error-color: #ef4444;
-    --warning-color: #f59e0b;
     --breadcrumb-bg: transparent;
     --breadcrumb-link-color: var(--gray-700);
     --breadcrumb-link-hover: var(--accent-color);
@@ -76,7 +76,6 @@
     --spec-bg: #ffffff;
     --spec-border: var(--border-medium);
     --spec-hover-bg: #f9fafb;
-    --feature-bullet-color: var(--success-color);
 }
 
 /* 分类导航样式 */
