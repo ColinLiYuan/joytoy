@@ -5,7 +5,7 @@ export const CATEGORIES_DATA: CategoriesData = {
     category: {
         roots: [
             {
-                slug: "shop",
+                slug: "all",
                 name: "Shop",
                 title: "Shop | Sex Toys & Adult Products",
                 description: "Browse our complete collection of sex toys, lingerie and adult products. New arrivals, best sellers and more.",
