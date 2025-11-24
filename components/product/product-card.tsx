@@ -79,7 +79,7 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
 
     const [selectedSku, setSelectedSku] = useState<ProductSku | null>(null);
 
-    // Refs 合并 - 修复版本
+    // Refs 合并
     const interactionRefs = useRef({
         dragStartX: 0,
         dragCurrentX: 0,
@@ -90,7 +90,8 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
         hoverTimeout: null as NodeJS.Timeout | null,
         hasAutoSwitched: false,
         hasManualSwitch: false,
-        isHorizontalSwipe: false
+        isHorizontalSwipe: false,
+        touchMoved: false // 新增：标记是否发生了触摸移动
     });
 
     const imageContainerRef = useRef<HTMLDivElement>(null);
@@ -265,34 +266,44 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
         interactionRefs.current.hasAutoSwitched = false;
     }, [deviceState.isMounted, deviceState.isMobile, uiState.currentImageIndex, goToImage]);
 
-    // 移动端滑动逻辑 - 修复版本
-    const handleTouchStart = useCallback((clientX: number, clientY: number) => {
-        if (!deviceState.isMounted || !deviceState.isMobile) return;
+    // 修复的移动端触摸事件处理
+    const handleTouchStartEvent = useCallback((e: React.TouchEvent) => {
+        if (allImages.length <= 1) return;
 
         const refs = interactionRefs.current;
-        setUiState(prev => ({ ...prev, isDragging: true }));
+        const touch = e.touches[0];
 
+        refs.touchMoved = false;
         refs.isClick = true;
         refs.isHorizontalSwipe = false;
-        refs.dragStartX = clientX;
-        refs.dragStartY = clientY;
-        refs.dragCurrentX = clientX;
+        refs.dragStartX = touch.clientX;
+        refs.dragStartY = touch.clientY;
+        refs.dragCurrentX = touch.clientX;
         refs.dragStartTime = Date.now();
         refs.prevTranslate = uiState.currentTranslate;
-    }, [deviceState.isMounted, deviceState.isMobile, uiState.currentTranslate]);
 
-    const handleTouchMove = useCallback((clientX: number, clientY: number) => {
-        if (!deviceState.isMounted || !deviceState.isMobile || !uiState.isDragging) return;
+        // 只在多张图片时才设置拖动状态
+        if (allImages.length > 1) {
+            setUiState(prev => ({ ...prev, isDragging: true }));
+        }
+    }, [allImages.length, uiState.currentTranslate]);
+
+    const handleTouchMoveEvent = useCallback((e: React.TouchEvent) => {
+        if (allImages.length <= 1) return;
 
         const refs = interactionRefs.current;
-        refs.dragCurrentX = clientX;
+        const touch = e.touches[0];
 
-        const diffX = clientX - refs.dragStartX;
-        const diffY = clientY - refs.dragStartY;
+        refs.dragCurrentX = touch.clientX;
+        refs.touchMoved = true;
+
+        const diffX = touch.clientX - refs.dragStartX;
+        const diffY = touch.clientY - refs.dragStartY;
 
         // 判断是否为水平滑动
         if (!refs.isHorizontalSwipe && Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 5) {
             refs.isHorizontalSwipe = true;
+            refs.isClick = false;
         }
 
         // 如果移动距离超过阈值，认为是拖动而不是点击
@@ -300,109 +311,71 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
             refs.isClick = false;
         }
 
-        let newTranslate = refs.prevTranslate + (diffX / window.innerWidth) * 100 * MOBILE_SWIPE_CONFIG.sensitivity;
+        // 只有确认是水平滑动时才处理拖动
+        if (refs.isHorizontalSwipe && uiState.isDragging) {
+            let newTranslate = refs.prevTranslate + (diffX / window.innerWidth) * 100 * MOBILE_SWIPE_CONFIG.sensitivity;
 
-        // 边界限制
-        const maxTranslate = 0;
-        const minTranslate = -(allImages.length - 1) * 100;
+            // 边界限制
+            const maxTranslate = 0;
+            const minTranslate = -(allImages.length - 1) * 100;
 
-        if (newTranslate > maxTranslate) {
-            newTranslate = maxTranslate + (newTranslate - maxTranslate) * MOBILE_SWIPE_CONFIG.boundaryElasticity;
-        } else if (newTranslate < minTranslate) {
-            newTranslate = minTranslate + (newTranslate - minTranslate) * MOBILE_SWIPE_CONFIG.boundaryElasticity;
+            if (newTranslate > maxTranslate) {
+                newTranslate = maxTranslate + (newTranslate - maxTranslate) * MOBILE_SWIPE_CONFIG.boundaryElasticity;
+            } else if (newTranslate < minTranslate) {
+                newTranslate = minTranslate + (newTranslate - minTranslate) * MOBILE_SWIPE_CONFIG.boundaryElasticity;
+            }
+
+            setUiState(prev => ({ ...prev, currentTranslate: newTranslate }));
         }
-
-        setUiState(prev => ({ ...prev, currentTranslate: newTranslate }));
-    }, [deviceState.isMounted, deviceState.isMobile, uiState.isDragging, allImages.length]);
-
-    const handleTouchEnd = useCallback(() => {
-        if (!deviceState.isMounted || !deviceState.isMobile || !uiState.isDragging) return;
-
-        const refs = interactionRefs.current;
-        setUiState(prev => ({ ...prev, isDragging: false }));
-
-        if (refs.isClick) return;
-
-        const diff = refs.dragCurrentX - refs.dragStartX;
-        const screenThreshold = window.innerWidth * MOBILE_SWIPE_CONFIG.distanceThreshold;
-
-        let targetIndex = uiState.currentImageIndex;
-        if (Math.abs(diff) > screenThreshold) {
-            targetIndex = diff > 0
-                ? Math.max(0, uiState.currentImageIndex - 1)
-                : Math.min(allImages.length - 1, uiState.currentImageIndex + 1);
-        }
-
-        setUiState(prev => ({
-            ...prev,
-            currentImageIndex: targetIndex,
-            currentTranslate: -targetIndex * 100
-        }));
-    }, [deviceState.isMounted, deviceState.isMobile, uiState.isDragging, uiState.currentImageIndex, allImages.length]);
-
-    // 移动端触摸事件 - 完全修复版本（解决浏览器滚动问题）
-    const handleTouchStartEvent = useCallback((e: React.TouchEvent) => {
-        if (allImages.length <= 1) return;
-
-        // 立即阻止所有默认行为和冒泡
-        e.preventDefault();
-        e.stopPropagation();
-
-        handleTouchStart(e.touches[0].clientX, e.touches[0].clientY);
-    }, [allImages.length, handleTouchStart]);
-
-    const handleTouchMoveEvent = useCallback((e: React.TouchEvent) => {
-        if (allImages.length <= 1) return;
-
-        const refs = interactionRefs.current;
-
-        // 如果已经开始拖动或者是水平滑动，完全阻止默认行为
-        if (uiState.isDragging || refs.isHorizontalSwipe) {
-            e.preventDefault();
-            e.stopPropagation();
-        }
-
-        if (uiState.isDragging) {
-            handleTouchMove(e.touches[0].clientX, e.touches[0].clientY);
-        }
-    }, [uiState.isDragging, allImages.length, handleTouchMove]);
+    }, [allImages.length, uiState.isDragging]);
 
     const handleTouchEndEvent = useCallback((e: React.TouchEvent) => {
         if (allImages.length <= 1) return;
 
-        // 阻止默认行为
-        e.preventDefault();
-        e.stopPropagation();
+        const refs = interactionRefs.current;
 
-        if (uiState.isDragging) {
-            handleTouchEnd();
+        // 如果是点击且没有移动，不阻止事件传播，允许链接点击
+        if (refs.isClick && !refs.touchMoved) {
+            setUiState(prev => ({ ...prev, isDragging: false }));
+            return; // 允许点击事件正常传播到 Link 组件
         }
-    }, [uiState.isDragging, allImages.length, handleTouchEnd]);
 
-    // 增强的被动事件监听器 - 完全阻止浏览器滚动
+        // 如果是滑动，处理图片切换
+        if (uiState.isDragging) {
+            const diff = refs.dragCurrentX - refs.dragStartX;
+            const screenThreshold = window.innerWidth * MOBILE_SWIPE_CONFIG.distanceThreshold;
+
+            let targetIndex = uiState.currentImageIndex;
+            if (Math.abs(diff) > screenThreshold) {
+                targetIndex = diff > 0
+                    ? Math.max(0, uiState.currentImageIndex - 1)
+                    : Math.min(allImages.length - 1, uiState.currentImageIndex + 1);
+            }
+
+            setUiState(prev => ({
+                ...prev,
+                isDragging: false,
+                currentImageIndex: targetIndex,
+                currentTranslate: -targetIndex * 100
+            }));
+        }
+    }, [allImages.length, uiState.isDragging, uiState.currentImageIndex]);
+
+    // 移除被动事件监听器，简化处理
     useEffect(() => {
-        const imageContainer = imageContainerRef.current;
-        if (!imageContainer || !deviceState.isMobile) return;
+        if (!deviceState.isMobile || allImages.length <= 1) return;
 
-        const handleTouchMove = (e: TouchEvent) => {
-            if (uiState.isDragging) {
+        const handleDocumentTouchMove = (e: TouchEvent) => {
+            // 如果正在拖动，阻止页面滚动
+            if (uiState.isDragging && interactionRefs.current.isHorizontalSwipe) {
                 e.preventDefault();
             }
         };
 
-        const handleTouchStart = (e: TouchEvent) => {
-            // 在特定条件下允许 preventDefault
-            if (allImages.length > 1) {
-                e.preventDefault();
-            }
-        };
-
-        imageContainer.addEventListener('touchstart', handleTouchStart, { passive: false });
-        imageContainer.addEventListener('touchmove', handleTouchMove, { passive: false });
+        document.addEventListener('touchmove', handleDocumentTouchMove, { passive: false });
 
         return () => {
-            imageContainer.removeEventListener('touchstart', handleTouchStart);
-            imageContainer.removeEventListener('touchmove', handleTouchMove);
+            document.removeEventListener('touchmove', handleDocumentTouchMove);
         };
     }, [deviceState.isMobile, uiState.isDragging, allImages.length]);
 
