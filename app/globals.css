@@ -15,8 +15,8 @@
     --primary-color: black;
 
     /* 动画时间变量 */
-    --filter-panel-duration: 0.3s;
-    --filter-panel-easing: ease-in-out;
+    --panel-duration: 0.3s;
+    --panel-easing: ease-in-out;
 
     /* ========== 滑动相册全局参数 ========== */
 
@@ -318,11 +318,11 @@
 }
 
 .animate-slideInRight {
-    animation: slideInRight var(--filter-panel-duration) var(--filter-panel-easing) forwards;
+    animation: slideInRight var(--panel-duration) var(--panel-easing) forwards;
 }
 
 .animate-opacityIn {
-    animation: opacityIn var(--filter-panel-duration) var(--filter-panel-easing) forwards;
+    animation: opacityIn var(--panel-duration) var(--panel-easing) forwards;
 }
 
 .animate-slideDown {
