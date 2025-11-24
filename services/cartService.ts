@@ -9,7 +9,7 @@ class CartService {
     async getCart(cartId: string): Promise<CartResponse> {
         try {
             if (!cartId) {
-                throw new Error('Cart ID is required');
+                cartId = '0';
             }
 
             let url = `${SERVER_CONFIG.apiRoutes.cart}/${cartId}`;
@@ -64,10 +64,6 @@ class CartService {
      */
     async removeItemFromCart(cartId: string, itemId: number): Promise<CartResponse> {
         try {
-            if (!cartId) {
-                throw new Error('Cart ID is required');
-            }
-
             let url = `${SERVER_CONFIG.apiRoutes.cart}/items/${itemId}`;
             const response = await fetch(url, {
                 method: 'DELETE',
@@ -93,11 +89,6 @@ class CartService {
      */
     async updateItemQuantity(cartId: string, itemId: number, quantity: number): Promise<CartResponse> {
         try {
-            console.log('updateItemQuantity start')
-            if (!cartId) {
-                throw new Error('Cart ID is required');
-            }
-
             const url = `${SERVER_CONFIG.apiRoutes.cart}/items/${itemId}`;
             // console.log('updateItemQuantity url: ', url)
             const response = await fetch(url, {

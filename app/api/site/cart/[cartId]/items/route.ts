@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { apiPost, handleApiError } from '@/lib/api-utils';
 import { FrontApiResponse } from '@/types/api';
+import { SessionManager } from '@/lib/session-utils';
 
 // add to cart
 export async function POST(
@@ -11,8 +12,12 @@ export async function POST(
         const { cartId } = await params;
         const body = await request.json();
 
+        // 使用 SessionManager 简化代码
+        const { sessionId, isNew } = SessionManager.getOrCreateSessionId(request);
+        const requestOptions = SessionManager.prepareSessionHeaders(cartId, sessionId);
+
         const url = `/api/V1/cart/${cartId}/items`;
-        const result:FrontApiResponse = await apiPost(url, body);
+        const result: FrontApiResponse = await apiPost(url, body, requestOptions);
 
         if (!result.success) {
             return NextResponse.json(
@@ -21,7 +26,12 @@ export async function POST(
             );
         }
 
-        return NextResponse.json(result.data);
+        const response = NextResponse.json(result.data);
+        if (isNew) {
+            SessionManager.setSessionCookie(response, sessionId);
+        }
+
+        return response;
     } catch (error) {
         const { error: errorMessage } = handleApiError(error);
         return NextResponse.json(

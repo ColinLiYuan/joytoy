@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { apiGet, handleApiError } from '@/lib/api-utils';
 import { FrontApiResponse } from '@/types/api';
+import { SessionManager } from '@/lib/session-utils';
 
 // /api/cart/[cartId]
 // get cart
@@ -11,10 +12,15 @@ export async function GET(
     try {
         const { cartId } = await params;
 
-        // console.log('/api/cart/[cartId] ' + cartId)
+        // 1. 获取或创建 sessionId
+        const { sessionId, isNew } = SessionManager.getOrCreateSessionId(request);
+
+        // 2. 准备请求配置
+        const requestOptions = SessionManager.prepareSessionHeaders(cartId, sessionId);
+
+        // 3. 调用后端 API
         const url = `/api/V1/cart/${cartId}`;
-        const result:FrontApiResponse = await apiGet(url);
-        // console.log('🟢 PUT - apiPut 结果:', result);
+        const result: FrontApiResponse = await apiGet(url, requestOptions);
 
         if (!result.success) {
             return NextResponse.json(
@@ -23,7 +29,13 @@ export async function GET(
             );
         }
 
-        return NextResponse.json(result.data);
+        // 4. 创建响应并设置 Cookie（如果是新session）
+        const response = NextResponse.json(result.data);
+        if (isNew) {
+            SessionManager.setSessionCookie(response, sessionId);
+        }
+
+        return response;
     } catch (error) {
         const { error: errorMessage } = handleApiError(error);
         return NextResponse.json(

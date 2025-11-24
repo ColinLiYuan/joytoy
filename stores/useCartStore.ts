@@ -56,10 +56,10 @@ export const useCartStore = create<CartStore>()(
             getCart: async (cartId?: string) => {
                 let targetCartId = cartId || get().getCartId();
 
-                if (!targetCartId) {
-                    set({ error: 'Cart ID not found' });
-                    return;
-                }
+                // if (!targetCartId) {
+                //     set({ error: 'Cart ID not found' });
+                //     return;
+                // }
 
                 set({ loading: true, error: null });
                 try {
@@ -88,11 +88,11 @@ export const useCartStore = create<CartStore>()(
             updateItemQuantity: async (itemId: number, quantity: number) => {
                 const cartId = get().getCartId();
 
-                if (!cartId) {
-                    const error = 'Cart ID not found';
-                    set({ error });
-                    throw new Error(error);
-                }
+                // if (!cartId) {
+                //     const error = 'Cart ID not found';
+                //     set({ error });
+                //     throw new Error(error);
+                // }
 
                 set({ loading: true, error: null });
                 try {
@@ -121,11 +121,11 @@ export const useCartStore = create<CartStore>()(
             removeItemFromCart: async (itemId: number) => {
                 const cartId = get().getCartId();
 
-                if (!cartId) {
-                    const error = 'Cart ID not found';
-                    set({ error });
-                    throw new Error(error);
-                }
+                // if (!cartId) {
+                //     const error = 'Cart ID not found';
+                //     set({ error });
+                //     throw new Error(error);
+                // }
 
                 set({ loading: true, error: null });
                 try {

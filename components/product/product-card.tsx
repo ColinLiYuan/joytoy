@@ -549,8 +549,8 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
 
         await addItemToCart(addToCartRequest);
 
-        const colorText = selectedSku.color ? ` (${selectedSku.color})` : '';
-        showToast('success', 'Added to Cart', `${product.title}${colorText} has been added to your cart!`);
+        // const colorText = selectedSku.color ? ` (${selectedSku.color})` : '';
+        // showToast('success', 'Added to Cart', `${product.title}${colorText} has been added to your cart!`);
     };
 
     // 检查是否可以切换到上一张/下一张

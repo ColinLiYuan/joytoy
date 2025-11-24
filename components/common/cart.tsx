@@ -77,7 +77,7 @@ export default function Cart({ isOpen, onClose }: CartProps) {
         setIsUpdating(itemId);
         try {
             await removeItemFromCart(itemId);
-            showToast('success', 'Item Removed', `${productTitle} has been removed from cart`);
+            // showToast('success', 'Item Removed', `${productTitle} has been removed from cart`);
         } catch (error) {
             console.error('Failed to remove item:', error);
             showToast('error', 'Removal Failed', 'Failed to remove item from cart');

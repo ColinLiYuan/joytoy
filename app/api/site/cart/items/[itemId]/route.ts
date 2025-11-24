@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { apiPut, apiDelete, handleApiError } from '@/lib/api-utils';
 import { FrontApiResponse } from '@/types/api';
+import { SessionManager } from '@/lib/session-utils';
 
 // /api/cart/items/[itemId]
 // update quantity and delete item
@@ -20,13 +21,8 @@ export async function PUT(
             quantity = body.quantity || 1;
             cartId = body.cartId;
 
-            // console.log('cart update route cartId: ', cartId)
-
             if (!cartId) {
-                return NextResponse.json(
-                    { error: 'Cart ID is required' },
-                    { status: 400 }
-                );
+                cartId = '0';
             }
         } catch (error) {
             console.log('🟡 PUT - 无法解析请求体');
@@ -36,9 +32,15 @@ export async function PUT(
             );
         }
 
+        // 获取或创建 sessionId
+        const { sessionId, isNew } = SessionManager.getOrCreateSessionId(request);
+
+        // 准备请求配置
+        const requestOptions = SessionManager.prepareSessionHeaders(cartId, sessionId);
+
         // 调用后端 API - 数量通过查询参数传递
         const url = `/api/V1/cart/items/${itemId}?quantity=${quantity}&cartId=${cartId}`;
-        const result: FrontApiResponse = await apiPut(url);
+        const result: FrontApiResponse = await apiPut(url, undefined, requestOptions);
 
         if (!result.success) {
             return NextResponse.json(
@@ -47,7 +49,13 @@ export async function PUT(
             );
         }
 
-        return NextResponse.json(result.data);
+        // 创建响应并设置 Cookie（如果是新session）
+        const response = NextResponse.json(result.data);
+        if (isNew) {
+            SessionManager.setSessionCookie(response, sessionId);
+        }
+
+        return response;
 
     } catch (error) {
         console.error('🔴 PUT Error:', error);
@@ -75,10 +83,7 @@ export async function DELETE(
             cartId = body.cartId;
 
             if (!cartId) {
-                return NextResponse.json(
-                    { error: 'Cart ID is required' },
-                    { status: 400 }
-                );
+                cartId = '0';
             }
         } catch (error) {
             console.log('🟡 DELETE - 无法解析请求体');
@@ -88,9 +93,15 @@ export async function DELETE(
             );
         }
 
+        // 获取或创建 sessionId
+        const { sessionId, isNew } = SessionManager.getOrCreateSessionId(request);
+
+        // 准备请求配置
+        const requestOptions = SessionManager.prepareSessionHeaders(cartId, sessionId);
+
         // 调用后端 API
         const url = `/api/V1/cart/items/${itemId}?cartId=${cartId}`;
-        const result = await apiDelete(url);
+        const result = await apiDelete(url, requestOptions);
 
         if (!result.success) {
             return NextResponse.json(
@@ -102,10 +113,17 @@ export async function DELETE(
             );
         }
 
-        return NextResponse.json({
+        // 创建响应并设置 Cookie（如果是新session）
+        const response = NextResponse.json({
             success: true,
             data: result.data || { message: 'Item removed successfully' }
         });
+
+        if (isNew) {
+            SessionManager.setSessionCookie(response, sessionId);
+        }
+
+        return response;
     } catch (error) {
         console.error('🔴 DELETE Error:', error);
         const { error: errorMessage } = handleApiError(error);

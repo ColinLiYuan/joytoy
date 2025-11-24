@@ -114,15 +114,7 @@ export default function Navigation({ minimal = false, rootsData = [] }: Navigati
     };
 
     const handleCartClick = () => {
-        if (!isLoggedIn) {
-            openAuthModal('login', {
-                onSuccess: () => {
-                    toggleCart();
-                }
-            });
-        } else {
-            toggleCart();
-        }
+        toggleCart();
     };
 
     const handleLogout = () => {
