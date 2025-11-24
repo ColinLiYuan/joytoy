@@ -155,10 +155,10 @@ export const useCartStore = create<CartStore>()(
             addItemToCart: async (request: AddToCartRequest) => {
                 const cartId = get().getCartId();
 
-                if (!cartId) {
-                    set({ error: 'Cart ID not found' });
-                    throw new Error('Cart ID not found');
-                }
+                // if (!cartId) {
+                //     set({ error: 'Cart ID not found' });
+                //     throw new Error('Cart ID not found');
+                // }
 
                 set({ loading: true, error: null });
                 try {

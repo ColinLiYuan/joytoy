@@ -507,10 +507,10 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
         try {
             setUiState(prev => ({ ...prev, addingToCart: true }));
 
-            if (!isLoggedIn) {
-                openAuthModal('login', { onSuccess: executeAddToCart });
-                return;
-            }
+            // if (!isLoggedIn) {
+            //     openAuthModal('login', { onSuccess: executeAddToCart });
+            //     return;
+            // }
 
             await executeAddToCart();
             setUiState(prev => ({ ...prev, addedToCart: true }));

@@ -35,7 +35,7 @@ class CartService {
     async addItemToCart(cartId: string, request: AddToCartRequest): Promise<CartResponse> {
         try {
             if (!cartId) {
-                throw new Error('Cart ID is required');
+                cartId = '0';
             }
 
             let url = `${SERVER_CONFIG.apiRoutes.cart}/${cartId}/items`;
