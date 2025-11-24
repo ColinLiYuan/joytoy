@@ -42,7 +42,14 @@ export function middleware(request) {
         '/male-sex-toys/male-masturbators/auto-suction-masturbator-fire',
         '/female-sex-toys/clit-vibrators/charming-vibes',
         '/collections/male-sex-toys/sex-doll',
-        '/collections/female-sex-toys/vibrators'
+        '/collections/female-sex-toys/vibrators',
+        '/collections/new',
+        '/collections/male',
+        '/collections/fairy-dildos',
+        '/collections/valentine',
+        '/collections/nipple-toys',
+        '/collections/silicone-male-masturbator',
+        '/collections/female'
     ]
 
     // 前缀匹配的路径（对应 nginx 的 ^~）
@@ -118,6 +125,13 @@ export const config = {
         '/female-sex-toys/clit-vibrators/charming-vibes',
         '/collections/male-sex-toys/sex-doll',
         '/collections/female-sex-toys/vibrators',
+        '/collections/new',
+        '/collections/male',
+        '/collections/fairy-dildos',
+        '/collections/valentine',
+        '/collections/nipple-toys',
+        '/collections/silicone-male-masturbator',
+        '/collections/female',
 
         // 前缀匹配路径
         '/collections/vibrators/:path*',
