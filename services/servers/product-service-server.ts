@@ -27,6 +27,8 @@ class ProductServiceServer {
             colors?: string[];
             features?: string[];
             materials?: string[];
+            sortBy?: string;
+            sortDirection?: string;
         }
     ): Promise<ProductListResponse> {
         try {
@@ -36,7 +38,9 @@ class ProductServiceServer {
                 page: page.toString(),
                 size: size.toString(),
                 userId: userId? userId.toString() : '',
-                category: slug ? slug : ''
+                category: slug ? slug : '',
+                sortBy: filters?.sortBy || 'createdAt',
+                sortDirection: filters?.sortDirection || 'DESC'
             });
 
             // 添加筛选参数
@@ -56,13 +60,13 @@ class ProductServiceServer {
                 }
             }
 
-            // console.log('🔄 productService getProductsByCategory - 请求参数:', {
-            //     slug,
-            //     page,
-            //     size,
-            //     filters,
-            //     queryParams: queryParams.toString()
-            // });
+            console.log('🔄 productService getProductsByCategory - 请求参数:', {
+                slug,
+                page,
+                size,
+                filters,
+                queryParams: queryParams.toString()
+            });
             const url = `${SERVER_CONFIG.baseURL}${SERVER_CONFIG.apiRoutes.product}/list?${queryParams}`;
             // console.log('getProductsByCategory url:', url)
             const response = await fetch(url, {

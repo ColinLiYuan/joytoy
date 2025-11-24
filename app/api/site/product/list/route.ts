@@ -18,12 +18,15 @@ export async function GET(request: NextRequest) {
         const features = searchParams.get('features');
         const materials = searchParams.get('materials');
 
+        // 新增排序参数
+        const sortBy = searchParams.get('sortBy');
+        const sortDirection = searchParams.get('sortDirection');
+
         let url = `/api/V1/product/queryByCategory?category=${category}&page=${page}&size=${size}`;
 
         if (userId) {
             url += `&userId=${userId}`;
         }
-        console.log('product list route url: ' + url)
 
         // 添加筛选参数到后端API
         if (minPrice) url += `&minPrice=${minPrice}`;
@@ -32,8 +35,13 @@ export async function GET(request: NextRequest) {
         if (features) url += `&features=${features}`;
         if (materials) url += `&materials=${materials}`;
 
-        // console.log('queryByCategory url ' + url)
-        const result:FrontApiResponse = await apiGet(url);
+        // 添加排序参数到后端API
+        if (sortBy) url += `&sortBy=${sortBy}`;
+        if (sortDirection) url += `&sortDirection=${sortDirection}`;
+
+        // console.log('product list route url: ' + url);
+
+        const result: FrontApiResponse = await apiGet(url);
 
         if (!result.success) {
             return NextResponse.json(
