@@ -2,6 +2,7 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { RootResponse } from '@/types/category';
 import { Z_INDEX } from '@/lib/constants/z-index';
 
@@ -13,7 +14,6 @@ interface MobileNavigationProps {
     currentRootCategory: RootResponse | null;
     onBackToMain: () => void;
     onOpenSubCategory: (root: RootResponse) => void;
-    activeCategory: string;
 }
 
 export default function MobileNavigation({
@@ -24,32 +24,55 @@ export default function MobileNavigation({
                                              currentRootCategory,
                                              onBackToMain,
                                              onOpenSubCategory,
-                                             activeCategory,
                                          }: MobileNavigationProps) {
+    const pathname = usePathname();
+
+    // 改进的激活状态判断逻辑
+    const getIsActive = (slug: string, isRootCategory: boolean = true) => {
+        if (isRootCategory) {
+            // 对于主分类，检查当前路径是否包含该主分类或其任何子分类
+            const rootCategory = rootsData.find(root => root.slug === slug);
+            if (rootCategory) {
+                // 检查是否是主分类本身
+                if (pathname.includes(`/collections/${slug}`)) {
+                    return true;
+                }
+                // 检查是否是子分类
+                if (rootCategory.categories) {
+                    return rootCategory.categories.some(subCat =>
+                        pathname.includes(`/collections/${subCat.slug}`)
+                    );
+                }
+            }
+        } else {
+            // 对于子分类，直接检查路径
+            return pathname.includes(`/collections/${slug}`);
+        }
+        return false;
+    };
+
     return (
         <>
-            {/* 遮罩层 - 修复：确保完全覆盖 */}
+            {/* 遮罩层 */}
             <div
                 className={`lg:hidden fixed inset-0 bg-black transition-all duration-300 ${
                     isOpen ? 'opacity-40 visible' : 'opacity-0 invisible'
                 }`}
                 style={{
                     zIndex: Z_INDEX.OVERLAY,
-                    // 确保遮罩层覆盖整个视口
                     width: '100vw',
                     height: '100vh'
                 }}
                 onClick={onClose}
             />
 
-            {/* 侧边栏容器 - 修复：确保不超出视口 */}
+            {/* 侧边栏容器 */}
             <div
                 className={`lg:hidden fixed top-0 right-0 w-4/5 max-w-xs h-full transition-transform duration-300 ease-in-out ${
                     isOpen ? 'translate-x-0' : 'translate-x-full'
                 } overflow-hidden`}
                 style={{
                     zIndex: Z_INDEX.NAVIGATION,
-                    // 确保面板不会导致页面滚动
                     maxWidth: '320px'
                 }}
             >
@@ -86,15 +109,17 @@ export default function MobileNavigation({
                                 const categorySlug = root.slug;
                                 const subCategories = root.categories || [];
                                 const hasSubCategories = subCategories.length > 0;
-                                const isActive = activeCategory === categorySlug;
+                                const isActive = getIsActive(categorySlug, true);
 
                                 return (
                                     <li key={root.name} className="border-b border-gray-100 last:border-b-0">
                                         {hasSubCategories ? (
                                             <button
                                                 onClick={() => onOpenSubCategory(root)}
-                                                className={`w-full flex items-center justify-between px-5 py-4 text-left text-gray-700 hover:text-[var(--accent-color)] hover:bg-[color:var(--accent-color)]/10 transition-colors ${
-                                                    isActive ? 'text-[var(--accent-color)] bg-[color:var(--accent-color)]/10 border-l-4 border-[var(--accent-color)]' : ''
+                                                className={`w-full flex items-center justify-between px-5 py-4 text-left transition-colors ${
+                                                    isActive
+                                                        ? 'text-[var(--accent-color)] font-medium'
+                                                        : 'text-gray-700 hover:text-[var(--accent-color)]'
                                                 }`}
                                             >
                                                 <span className="font-medium">{root.name}</span>
@@ -105,8 +130,10 @@ export default function MobileNavigation({
                                         ) : (
                                             <Link
                                                 href={`/collections/${categorySlug}`}
-                                                className={`block px-5 py-4 text-gray-700 hover:text-[var(--accent-color)] hover:bg-[color:var(--accent-color)]/10 transition-colors no-underline ${
-                                                    isActive ? 'text-[var(--accent-color)] bg-[color:var(--accent-color)]/10 border-l-4 border-[var(--accent-color)]' : ''
+                                                className={`block px-5 py-4 no-underline transition-colors ${
+                                                    isActive
+                                                        ? 'text-[var(--accent-color)] font-medium'
+                                                        : 'text-gray-700 hover:text-[var(--accent-color)]'
                                                 }`}
                                                 onClick={onClose}
                                             >
@@ -154,14 +181,16 @@ export default function MobileNavigation({
                         {currentRootCategory && (
                             <ul className="py-2">
                                 {(currentRootCategory.categories || []).map((subCategory) => {
-                                    const isSubActive = activeCategory === subCategory.slug;
+                                    const isSubActive = getIsActive(subCategory.slug, false);
 
                                     return (
                                         <li key={subCategory.slug} className="border-b border-gray-100 last:border-b-0">
                                             <Link
                                                 href={`/collections/${subCategory.slug}`}
-                                                className={`block px-5 py-4 text-gray-700 hover:text-[var(--accent-color)] hover:bg-[color:var(--accent-color)]/10 transition-colors no-underline ${
-                                                    isSubActive ? 'text-[var(--accent-color)] bg-[color:var(--accent-color)]/10 border-l-4 border-[var(--accent-color)]' : ''
+                                                className={`block px-5 py-4 no-underline transition-colors ${
+                                                    isSubActive
+                                                        ? 'text-[var(--accent-color)] font-medium'
+                                                        : 'text-gray-700 hover:text-[var(--accent-color)]'
                                                 }`}
                                                 onClick={onClose}
                                             >
