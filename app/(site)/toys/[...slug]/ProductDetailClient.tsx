@@ -90,16 +90,6 @@ export default function ProductDetailClient({
         try {
             setAddingToCart(true);
 
-            if (!isLoggedIn) {
-                openAuthModal('login', {
-                    onSuccess: () => {
-                        // 登录成功后自动执行添加到购物车操作
-                        executeAddToCart();
-                    }
-                });
-                return;
-            }
-
             // 已登录，直接添加到购物车
             await executeAddToCart();
 
@@ -129,8 +119,8 @@ export default function ProductDetailClient({
             productImage: getProductImageUrl(product.baseUrl, product.image),
             unitPrice: product.currentPrice,
             quantity: 1,
-            color: selectedSku.color, // 使用 SKU 的颜色
-            skuId: selectedSku.id // 新增 SKU ID
+            color: selectedSku.color,
+            skuId: selectedSku.id
         };
 
         // 使用 Zustand store 添加商品
