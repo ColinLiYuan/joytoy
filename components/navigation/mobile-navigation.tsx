@@ -66,14 +66,13 @@ export default function MobileNavigation({
                 onClick={onClose}
             />
 
-            {/* 侧边栏容器 */}
+            {/* 侧边栏容器 - 修改宽度与筛选器一致 */}
             <div
-                className={`lg:hidden fixed top-0 right-0 w-4/5 max-w-xs h-full transition-transform duration-300 ease-in-out ${
+                className={`lg:hidden fixed top-0 right-0 w-full max-w-sm lg:max-w-md h-full transition-transform duration-300 ease-in-out ${
                     isOpen ? 'translate-x-0' : 'translate-x-full'
                 } overflow-hidden`}
                 style={{
-                    zIndex: Z_INDEX.NAVIGATION,
-                    maxWidth: '320px'
+                    zIndex: Z_INDEX.NAVIGATION
                 }}
             >
                 {/* 主面板 */}
