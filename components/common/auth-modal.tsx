@@ -139,7 +139,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
 
             {/* 模态框 - 参考 Cart 的设计 */}
             <div
-                className={`fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-[450px] bg-white rounded-2xl shadow-lg flex flex-col transition-all duration-300 ${
+                className={`fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[calc(100%-32px)] max-w-[450px] bg-white rounded-2xl shadow-lg flex flex-col transition-all duration-300 ${
                     isOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95 invisible'
                 }`}
                 style={{ zIndex: Z_INDEX.MODAL }}
