@@ -231,7 +231,7 @@ export default function ProductList() {
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         {product.image ? (
                                             <img
-                                                src={getProductImageUrl(product.baseUrl || '', product.image || '')}
+                                                src={getProductImageUrl('', product.image || '')}
                                                 alt={product.title}
                                                 className="w-12 h-12 object-cover rounded"
                                             />

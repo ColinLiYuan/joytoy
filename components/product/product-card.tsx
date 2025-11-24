@@ -91,7 +91,7 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
         hasAutoSwitched: false,
         hasManualSwitch: false,
         isHorizontalSwipe: false,
-        touchMoved: false // 新增：标记是否发生了触摸移动
+        touchMoved: false
     });
 
     const imageContainerRef = useRef<HTMLDivElement>(null);
@@ -105,20 +105,20 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
     // 使用 useMemo 缓存所有图片的完整 URL
     const imageData = useMemo(() => {
         const mainImage = {
-            url: getProductImageUrl(product.baseUrl, product.image),
+            url: getProductImageUrl('', product.image),
             alt: product.title
         };
 
         const galleryImages = (product.galleries || []).map(gallery => ({
             ...gallery,
-            url: getProductImageUrl(product.baseUrl, gallery.url)
+            url: getProductImageUrl('', gallery.url)
         }));
 
         return {
             allImages: [mainImage, ...galleryImages],
             mainImageUrl: mainImage.url
         };
-    }, [product.baseUrl, product.image, product.title, product.galleries]);
+    }, [product.image, product.title, product.galleries]);
 
     const { allImages, mainImageUrl } = imageData;
 

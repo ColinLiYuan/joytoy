@@ -42,6 +42,10 @@ export default function Notice({ onCloseMenu }: PromotionBarProps) {
         return null;
     }
 
+    if (pathname === '/checkout') {
+        return null;
+    }
+
     const goToPrevSlide = () => {
         if (promotions.length <= 1) return;
         setCurrentSlide((prev) => (prev - 1 + promotions.length) % promotions.length);

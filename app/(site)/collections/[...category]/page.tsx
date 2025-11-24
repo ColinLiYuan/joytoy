@@ -138,7 +138,6 @@ function extractFilterArray(data: any): string[] {
 export default async function ProductListPage({ params, searchParams }: PageProps) {
     const [resolvedParams, resolvedSearchParams] = await Promise.all([params, searchParams]);
     const slugParam = resolvedParams.category;
-    const categorySlug = Array.isArray(slugParam) ? slugParam[slugParam.length - 1] : slugParam;
     const slug = Array.isArray(slugParam) ? slugParam.join('/') : (slugParam || '');
     const pathname = `/collections/${Array.isArray(slugParam) ? slugParam.join('/') : slugParam}`;
 

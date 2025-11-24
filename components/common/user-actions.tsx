@@ -60,6 +60,14 @@ export default function UserActions({
         setIsUserMenuOpen(!isUserMenuOpen);
     };
 
+    const handleUserMenuOpen = () => {
+        setIsUserMenuOpen(true);
+    };
+
+    const handleUserMenuClose = () => {
+        setIsUserMenuOpen(false);
+    };
+
     const handleLogout = () => {
         onLogout();
         setIsUserMenuOpen(false);
@@ -110,7 +118,12 @@ export default function UserActions({
             </button>
 
             {/* 用户账户 */}
-            <div className="relative" ref={userMenuRef}>
+            <div
+                className="relative"
+                ref={userMenuRef}
+                onMouseEnter={handleUserMenuOpen}
+                onMouseLeave={handleUserMenuClose}
+            >
                 {isLoggedIn ? (
                     <div className="relative">
                         <button

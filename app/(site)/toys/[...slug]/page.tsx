@@ -30,7 +30,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
         const product = await productServiceServer.getProductBySlug(slug);
 
         const canonicalUrl = `https://mythtoy.com/toys${slug}`;
-        const imageUrl = getProductImageUrl(product.baseUrl, product.image);
+        const imageUrl = getProductImageUrl('', product.image);
         const description = product.description?.substring(0, 160) || `Buy ${product.title} at the best price`;
 
         const metadata: Metadata = {
@@ -148,7 +148,7 @@ export default async function ProductDetail({ params }: PageProps) {
                 alt: gallery.alt || product.title
             })) :
             [{
-                url: getProductImageUrl(product.baseUrl, product.image),
+                url: getProductImageUrl('', product.image),
                 alt: product.title
             }];
 

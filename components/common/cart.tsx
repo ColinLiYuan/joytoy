@@ -5,7 +5,6 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
     faTimes,
     faShoppingCart,
-    faTrash,
     faPlus,
     faMinus,
     faSpinner,
@@ -18,30 +17,16 @@ import { useCartStore } from '@/stores/useCartStore';
 import { Z_INDEX } from '@/lib/constants/z-index';
 import { colorMap } from '@/lib/constants/color-map';
 import Image from 'next/image';
+import { getProductImageUrl } from '@/lib/image-utils';
 
 interface CartProps {
     isOpen: boolean;
     onClose: () => void;
 }
 
-interface CartItem {
-    itemId: number;
-    productId: number;
-    productTitle: string;
-    productImage?: string;
-    unitPrice: number;
-    quantity: number;
-    totalPrice: number;
-    color?: string;
-    length?: string;
-    width?: string;
-    weight?: string;
-}
-
 export default function Cart({ isOpen, onClose }: CartProps) {
     const {
         cart,
-        loading,
         error,
         totalItems,
         getCart,
@@ -52,101 +37,54 @@ export default function Cart({ isOpen, onClose }: CartProps) {
     const router = useRouter();
     const { isLoggedIn } = useAuth();
     const [isUpdating, setIsUpdating] = useState<number | null>(null);
-    const [localCart, setLocalCart] = useState<CartItem[]>([]);
-    const [localTotal, setLocalTotal] = useState(0);
+    const [isInitialLoading, setIsInitialLoading] = useState(false);
 
-    // 同步本地状态和 store 状态
+    // Get cart data only once when opening
     useEffect(() => {
-        if (cart?.items) {
-            setLocalCart(cart.items);
-            setLocalTotal(cart.items.reduce((total, item) => total + item.totalPrice, 0));
+        if (isOpen && isLoggedIn) {
+            setIsInitialLoading(true);
+            getCart().finally(() => {
+                setIsInitialLoading(false);
+            });
         }
-    }, [cart]);
+    }, [isOpen, isLoggedIn]);
 
-    // Get cart data
-    useEffect(() => {
-        if (isOpen) {
-            getCart();
-        }
-    }, [isOpen, getCart]);
-
-    // Handle quantity increase - 使用乐观更新
+    // Handle quantity increase
     const handleIncreaseQuantity = async (itemId: number, currentQuantity: number, productTitle: string) => {
         setIsUpdating(itemId);
-
-        // 乐观更新：立即更新本地状态
-        setLocalCart(prev => prev.map(item =>
-            item.itemId === itemId
-                ? {
-                    ...item,
-                    quantity: currentQuantity + 1,
-                    totalPrice: item.unitPrice * (currentQuantity + 1)
-                }
-                : item
-        ));
-
         try {
             await updateItemQuantity(itemId, currentQuantity + 1);
         } catch (error) {
             console.error('Failed to update quantity:', error);
             showToast('error', 'Update Failed', 'Failed to update item quantity');
-            // 回滚本地状态
-            getCart();
         } finally {
             setIsUpdating(null);
         }
     };
 
-    // Handle quantity decrease - 使用乐观更新
+    // Handle quantity decrease
     const handleDecreaseQuantity = async (itemId: number, currentQuantity: number, productTitle: string) => {
         if (currentQuantity <= 1) return;
 
         setIsUpdating(itemId);
-
-        // 乐观更新：立即更新本地状态
-        setLocalCart(prev => prev.map(item =>
-            item.itemId === itemId
-                ? {
-                    ...item,
-                    quantity: currentQuantity - 1,
-                    totalPrice: item.unitPrice * (currentQuantity - 1)
-                }
-                : item
-        ));
-
         try {
             await updateItemQuantity(itemId, currentQuantity - 1);
         } catch (error) {
             console.error('Failed to update quantity:', error);
             showToast('error', 'Update Failed', 'Failed to update item quantity');
-            // 回滚本地状态
-            getCart();
         } finally {
             setIsUpdating(null);
         }
     };
 
-    // Handle item removal - 使用乐观更新
+    // Handle item removal
     const handleRemoveItem = async (itemId: number, productTitle: string) => {
         setIsUpdating(itemId);
-
-        // 保存要删除的项目用于回滚
-        const itemToRemove = localCart.find(item => item.itemId === itemId);
-
-        // 乐观更新：立即从本地状态移除
-        setLocalCart(prev => prev.filter(item => item.itemId !== itemId));
-
         try {
             await removeItemFromCart(itemId);
         } catch (error) {
             console.error('Failed to remove item:', error);
             showToast('error', 'Removal Failed', 'Failed to remove item from cart');
-            // 回滚本地状态
-            if (itemToRemove) {
-                setLocalCart(prev => [...prev, itemToRemove]);
-            } else {
-                getCart();
-            }
         } finally {
             setIsUpdating(null);
         }
@@ -158,14 +96,14 @@ export default function Cart({ isOpen, onClose }: CartProps) {
             showToast('warning', 'Empty Cart', 'Please add items to cart first');
             return;
         }
-
         onClose();
         router.push('/checkout');
     };
 
-    // Calculate total amount from local state
+    // Calculate total amount
     const calculateTotal = () => {
-        return localCart.reduce((total, item) => total + item.totalPrice, 0);
+        if (!cart?.items) return 0;
+        return cart.items.reduce((total, item) => total + item.totalPrice, 0);
     };
 
     // 使用统一的颜色映射函数
@@ -178,7 +116,6 @@ export default function Cart({ isOpen, onClose }: CartProps) {
     const formatColorDisplay = (color: string | undefined) => {
         if (!color) return null;
 
-        // Check if color is a hex code
         if (color.startsWith('#')) {
             return (
                 <div className="flex items-center gap-2 text-sm">
@@ -208,8 +145,8 @@ export default function Cart({ isOpen, onClose }: CartProps) {
         );
     };
 
-    // 修复状态计算问题 - 使用本地状态
-    const hasCartItems = localCart.length > 0;
+    // 修复状态计算问题
+    const hasCartItems = cart?.items && cart.items.length > 0;
     const isEmptyCart = !hasCartItems;
 
     if (!isOpen) return null;
@@ -233,8 +170,8 @@ export default function Cart({ isOpen, onClose }: CartProps) {
                 {/* Cart Header */}
                 <div className="flex justify-between items-center p-5 border-b border-gray-200">
                     <h3 className="text-gray-800 font-semibold text-lg m-0">
-                        Shopping Cart ({localCart.reduce((total, item) => total + item.quantity, 0)})
-                        {loading && <FontAwesomeIcon icon={faSpinner} spin className="ml-2" />}
+                        Shopping Cart ({totalItems})
+                        {isInitialLoading && <FontAwesomeIcon icon={faSpinner} spin className="ml-2" />}
                     </h3>
                     <button
                         className="bg-transparent border-none text-gray-800 text-xl cursor-pointer p-1 transition-all hover:text-gray-600 hover:scale-110"
@@ -252,7 +189,8 @@ export default function Cart({ isOpen, onClose }: CartProps) {
                             <button
                                 className="inline-block px-6 py-3 bg-gray-100 text-gray-800 rounded-lg font-semibold transition-all hover:bg-gray-200 hover:shadow-md border-none cursor-pointer"
                                 onClick={() => {
-                                    getCart();
+                                    setIsInitialLoading(true);
+                                    getCart().finally(() => setIsInitialLoading(false));
                                 }}
                             >
                                 Retry
@@ -260,14 +198,14 @@ export default function Cart({ isOpen, onClose }: CartProps) {
                         </div>
                     )}
 
-                    {loading && !cart && (
+                    {isInitialLoading && !cart && (
                         <div className="text-center p-10 text-gray-600">
                             <FontAwesomeIcon icon={faSpinner} spin size="2x" />
                             <p className="mt-4">Loading cart...</p>
                         </div>
                     )}
 
-                    {!loading && !isLoggedIn && (
+                    {!isInitialLoading && !isLoggedIn && (
                         <div className="text-center p-10 text-gray-600">
                             <FontAwesomeIcon icon={faShoppingCart} size="2x" />
                             <p className="my-5 text-lg">Please login to view your cart</p>
@@ -280,7 +218,7 @@ export default function Cart({ isOpen, onClose }: CartProps) {
                         </div>
                     )}
 
-                    {!loading && isLoggedIn && isEmptyCart && (
+                    {!isInitialLoading && isLoggedIn && isEmptyCart && (
                         <div className="text-center p-10 text-gray-600">
                             <FontAwesomeIcon icon={faShoppingCart} size="2x" />
                             <p className="my-5 text-lg">Your cart is empty</p>
@@ -293,15 +231,15 @@ export default function Cart({ isOpen, onClose }: CartProps) {
                         </div>
                     )}
 
-                    {!loading && isLoggedIn && hasCartItems && (
+                    {!isInitialLoading && isLoggedIn && hasCartItems && (
                         <>
                             <div className="flex flex-col gap-4">
-                                {localCart.map(item => (
+                                {cart.items.map(item => (
                                     <div key={item.itemId} className="flex gap-4 py-4 border-b border-gray-100 last:border-b-0">
                                         <div className="relative">
                                             {item.productImage ? (
                                                 <Image
-                                                    src={item.productImage}
+                                                    src={getProductImageUrl('', item.productImage)}
                                                     alt={item.productTitle}
                                                     width={80}
                                                     height={80}
@@ -315,6 +253,7 @@ export default function Cart({ isOpen, onClose }: CartProps) {
                                         </div>
                                         <div className="flex-1">
                                             <h4 className="font-semibold text-sm m-0 mb-1 text-gray-800">{item.productTitle}</h4>
+                                            {/* 单价使用全局样式 */}
                                             <p className="font-bold text-sm my-1" style={{ color: 'var(--price-color)' }}>
                                                 ${item.unitPrice.toFixed(2)}
                                             </p>
@@ -362,6 +301,7 @@ export default function Cart({ isOpen, onClose }: CartProps) {
                                             </div>
                                         </div>
                                         <div className="flex flex-col items-end gap-1">
+                                            {/* 删除按钮 - 黑色叉叉 */}
                                             <button
                                                 className="bg-transparent border-none text-gray-800 cursor-pointer p-1 transition-all hover:text-red-500 hover:scale-110 disabled:opacity-50"
                                                 onClick={() => handleRemoveItem(item.itemId, item.productTitle)}
@@ -382,6 +322,7 @@ export default function Cart({ isOpen, onClose }: CartProps) {
                             <div className="mt-auto pt-5 border-t border-gray-200">
                                 <div className="flex justify-between text-lg font-bold mb-5 text-gray-800">
                                     <span>Total:</span>
+                                    {/* 总价使用全局样式 */}
                                     <span style={{ color: 'var(--price-color)' }}>${calculateTotal().toFixed(2)}</span>
                                 </div>
                                 <div className="flex flex-col gap-2">

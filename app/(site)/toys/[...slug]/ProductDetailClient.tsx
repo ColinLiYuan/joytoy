@@ -115,7 +115,7 @@ export default function ProductDetailClient({
             productId: product.id,
             productTitle: product.title,
             productSku: selectedSku.sku, // 使用选中的 SKU
-            productImage: getProductImageUrl(product.baseUrl, product.image),
+            productImage: getProductImageUrl('', product.image),
             unitPrice: product.currentPrice,
             quantity: 1,
             color: selectedSku.color,
@@ -142,7 +142,6 @@ export default function ProductDetailClient({
                     <ProductGallery
                         images={galleryImages}
                         productTitle={product.title}
-                        baseUrl={product.baseUrl}
                     />
 
                     {/* 产品描述 */}

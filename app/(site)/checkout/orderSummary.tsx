@@ -1,4 +1,4 @@
-// orderSummary.tsx - 已更新为使用 Tailwind CSS 类名
+// orderSummary.tsx - 已更新为使用统一的图片连接方式
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
     faShoppingBag,
@@ -35,7 +35,7 @@ export default function OrderSummary({ orderItems }: OrderSummaryProps) {
                         <div className="w-15 h-15 rounded-lg overflow-hidden flex-shrink-0">
                             {item.productImage ? (
                                 <Image
-                                    src={item.productImage}
+                                    src={getProductImageUrl('', item.productImage)}
                                     alt={item.productTitle}
                                     width={60}
                                     height={60}
@@ -69,8 +69,7 @@ export default function OrderSummary({ orderItems }: OrderSummaryProps) {
                                 )}
                             </div>
                         </div>
-                        {/* 价格样式使用全局变量 */}
-                        <div className="font-semibold text-gray-800 text-right" style={{ color: 'var(--price-color)' }}>
+                        <div className="font-semibold text-gray-800 text-right">
                             ${(item.unitPrice * item.quantity).toFixed(2)}
                         </div>
                     </div>
@@ -80,11 +79,11 @@ export default function OrderSummary({ orderItems }: OrderSummaryProps) {
             <div className="border-t border-gray-200 pt-4">
                 <div className="flex justify-between py-2 text-gray-600">
                     <span>Subtotal</span>
-                    <span style={{ color: 'var(--price-color)' }}>${subtotal.toFixed(2)}</span>
+                    <span>${subtotal.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between py-4 border-t border-gray-200 mt-2 text-xl font-semibold text-gray-800">
                     <span>Total</span>
-                    <span style={{ color: 'var(--price-color)' }}>${total.toFixed(2)}</span>
+                    <span>${total.toFixed(2)}</span>
                 </div>
             </div>
 
