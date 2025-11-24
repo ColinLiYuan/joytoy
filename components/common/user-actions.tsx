@@ -10,7 +10,7 @@ import {
     faUserCircle,
 } from '@fortawesome/free-solid-svg-icons';
 import { useCartStore } from '@/stores/useCartStore';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 interface UserActionsProps {
     isLoggedIn: boolean;
@@ -28,6 +28,8 @@ export default function UserActions({
                                         onLogout
                                     }: UserActionsProps) {
     const [isMounted, setIsMounted] = useState(false);
+    const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+    const userMenuRef = useRef<HTMLDivElement>(null);
     const totalItems = useCartStore(state => state.totalItems);
     const isLoadingCart = useCartStore(state => state.loading);
 
@@ -35,10 +37,37 @@ export default function UserActions({
         setIsMounted(true);
     }, []);
 
+    // 点击外部关闭用户菜单
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+                setIsUserMenuOpen(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
+
     // 只在客户端计算徽章文本
     const badgeText = isMounted && totalItems > 0
         ? (totalItems > 99 ? '99+' : totalItems.toString())
         : '';
+
+    const handleUserMenuToggle = () => {
+        setIsUserMenuOpen(!isUserMenuOpen);
+    };
+
+    const handleLogout = () => {
+        onLogout();
+        setIsUserMenuOpen(false);
+    };
+
+    const handleMenuLinkClick = () => {
+        setIsUserMenuOpen(false);
+    };
 
     return (
         <div className="flex items-center gap-1">
@@ -81,29 +110,38 @@ export default function UserActions({
             </button>
 
             {/* 用户账户 */}
-            <div className="relative">
+            <div className="relative" ref={userMenuRef}>
                 {isLoggedIn ? (
-                    <div className="group relative">
+                    <div className="relative">
                         <button
                             className="w-8 h-8 flex items-center justify-center text-gray-700 hover:text-[var(--primary-color)] hover:bg-[color-mix(in_srgb,var(--primary-color)_10%,transparent)] rounded-full transition-colors cursor-pointer"
                             aria-label="User account"
+                            onClick={handleUserMenuToggle}
                         >
                             <FontAwesomeIcon icon={faUserCircle} className="w-3.5 h-3.5" />
                         </button>
-                        <div className="absolute top-full right-0 bg-white rounded-xl shadow-lg py-2 min-w-[160px] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform -translate-y-2 group-hover:translate-y-0">
-                            <Link href="/account" className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:text-[var(--primary-color)] hover:bg-[color-mix(in_srgb,var(--primary-color)_10%,transparent)] transition-colors text-sm">
-                                <FontAwesomeIcon icon={faUser} className="w-3 h-3" />
-                                My Account
-                            </Link>
-                            <Link href="/orders" className="block px-3 py-2 text-gray-700 hover:text-[var(--primary-color)] hover:bg-[color-mix(in_srgb,var(--primary-color)_10%,transparent)] transition-colors text-sm">
+                        <div className={`absolute top-full right-0 bg-white rounded-xl shadow-lg py-2 min-w-[160px] z-50 ${
+                            isUserMenuOpen
+                                ? 'opacity-100 visible translate-y-0'
+                                : 'opacity-0 invisible -translate-y-2'
+                        } transition-all duration-300`}>
+                            <Link
+                                href="/orders"
+                                className="block px-3 py-2 text-gray-700 hover:text-[var(--primary-color)] hover:bg-[color-mix(in_srgb,var(--primary-color)_10%,transparent)] transition-colors text-sm"
+                                onClick={handleMenuLinkClick}
+                            >
                                 Orders
                             </Link>
-                            <Link href="/wishlist" className="block px-3 py-2 text-gray-700 hover:text-[var(--primary-color)] hover:bg-[color-mix(in_srgb,var(--primary-color)_10%,transparent)] transition-colors text-sm">
+                            <Link
+                                href="/wishlist"
+                                className="block px-3 py-2 text-gray-700 hover:text-[var(--primary-color)] hover:bg-[color-mix(in_srgb,var(--primary-color)_10%,transparent)] transition-colors text-sm"
+                                onClick={handleMenuLinkClick}
+                            >
                                 Wishlist
                             </Link>
                             <button
                                 className="w-full text-left px-3 py-2 text-gray-700 hover:text-[var(--primary-color)] hover:bg-[color-mix(in_srgb,var(--primary-color)_10%,transparent)] transition-colors text-sm border-t border-gray-100 mt-1"
-                                onClick={onLogout}
+                                onClick={handleLogout}
                             >
                                 Logout
                             </button>
