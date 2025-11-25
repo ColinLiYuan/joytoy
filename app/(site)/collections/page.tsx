@@ -2,34 +2,30 @@
 import Link from 'next/link';
 import { RootResponse } from '@/types/category';
 import { categoryService } from '@/services/category-service';
+import { ArrowRight, Sparkles } from 'lucide-react'; // ✅ 使用 Lucide
+import { Metadata } from 'next';
 
-// 子分类图片映射 - 使用网上真实的成人用品图片
-const subcategoryImages: Record<string, string> = {
-    // For Her 子分类
-    "Clit Vibrators": "https://images.unsplash.com/photo-1594736797933-d0c1381d7c45?w=400&h=300&fit=crop",
-    "Nipple Stimulator": "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=400&h=300&fit=crop",
-    "G-Spot Vibrators": "https://images.unsplash.com/photo-1594736797933-d0c1381d7c45?w=400&h=300&fit=crop",
-    "Bullet Vibrators": "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=400&h=300&fit=crop",
-    "Rabbit Vibrators": "https://images.unsplash.com/photo-1594736797933-d0c1381d7c45?w=400&h=300&fit=crop",
-    "Wand Vibrators": "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=400&h=300&fit=crop",
-    "Dildos": "https://images.unsplash.com/photo-1594736797933-d0c1381d7c45?w=400&h=300&fit=crop",
-
-    // For Him 子分类
-    "Male Masturbators": "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=400&h=300&fit=crop",
-    "Pussy & Ass Masturbators": "https://images.unsplash.com/photo-1594736797933-d0c1381d7c45?w=400&h=300&fit=crop",
-    "Prostate Massagers": "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=400&h=300&fit=crop",
-    "Sex Dolls": "https://images.unsplash.com/photo-1594736797933-d0c1381d7c45?w=400&h=300&fit=crop",
-
-    // Sex Toys 子分类
-    "Anal Beads": "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=400&h=300&fit=crop",
-    "Butt Plugs": "https://images.unsplash.com/photo-1594736797933-d0c1381d7c45?w=400&h=300&fit=crop",
-    "Tail Toys": "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=400&h=300&fit=crop",
-
-    // Lingerie 子分类
-    "Schoolgirl Lingerie": "https://images.unsplash.com/photo-1595950755472-9d5d28441d06?w=400&h=300&fit=crop"
+// SEO Metadata
+export const metadata: Metadata = {
+    title: "Collections | MythToy - Premium Adult Pleasure",
+    description: "Explore our curated collections of premium adult products. From intimate massagers to luxury lingerie, find exactly what you desire.",
+    openGraph: {
+        title: "Collections | MythToy",
+        description: "Explore our curated collections of premium adult products.",
+        type: "website",
+        url: "/collections",
+    },
 };
 
-const DEFAULT_IMAGE = "https://images.unsplash.com/photo-1594736797933-d0c1381d7c45?w=400&h=300&fit=crop";
+// 预定义的渐变色数组，用于给没有图片的分类提供高级背景
+const GRADIENTS = [
+    "from-pink-100 to-rose-50",
+    "from-purple-100 to-fuchsia-50",
+    "from-blue-100 to-indigo-50",
+    "from-orange-100 to-amber-50",
+    "from-emerald-100 to-teal-50",
+    "from-gray-100 to-slate-50",
+];
 
 export default async function CollectionPage() {
     let rootsData: RootResponse[] = [];
@@ -42,124 +38,145 @@ export default async function CollectionPage() {
         rootsData = [];
     }
 
-    // 过滤掉 best-sellers
+    // 过滤掉 best-sellers，因为它通常是专题页
     const filteredRoots = rootsData.filter(root => root.slug !== 'best-sellers');
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+        <div className="min-h-screen bg-white">
+            {/* Hero Section */}
+            <section className="relative py-20 md:py-28 bg-gray-50 overflow-hidden">
+                {/* 装饰背景 */}
+                <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-white to-gray-50"></div>
+                <div className="absolute right-0 top-0 w-96 h-96 bg-pink-100/40 rounded-full blur-3xl translate-x-1/3 -translate-y-1/2"></div>
+                <div className="absolute left-0 bottom-0 w-96 h-96 bg-purple-100/40 rounded-full blur-3xl -translate-x-1/3 translate-y-1/2"></div>
+
+                <div className="container mx-auto px-4 max-w-7xl relative z-10 text-center">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-pink-50 text-pink-600 text-xs font-bold tracking-widest uppercase mb-6 border border-pink-100">
+                        <Sparkles size={12} />
+                        Curated Collections
+                    </div>
+                    <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6 font-['Playfair_Display']">
+                        Explore Your Desires
+                    </h1>
+                    <p className="text-lg text-gray-500 max-w-2xl mx-auto leading-relaxed">
+                        Discover our comprehensive range of premium intimate products, designed for every body and every pleasure.
+                    </p>
+                </div>
+            </section>
+
             {/* Categories Sections */}
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-                {filteredRoots.map((rootCategory, index) => (
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+                {filteredRoots.map((rootCategory, rootIndex) => (
                     <section
                         key={rootCategory.slug}
-                        className={`mb-16 ${index % 2 === 1 ? 'bg-white rounded-2xl p-8' : ''}`}
+                        className="mb-24 last:mb-0"
                     >
-                        {/* Root MainCategory Header */}
-                        <div className="text-center mb-12">
-                            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-                                {rootCategory.name}
-                            </h2>
-                            <p className="text-lg text-gray-600 max-w-2xl mx-auto mb-6">
-                                {rootCategory.description}
-                            </p>
+                        {/* Root Category Header */}
+                        <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4 border-b border-gray-100 pb-4">
+                            <div>
+                                <h2 className="text-3xl md:text-4xl font-bold text-gray-900 font-['Playfair_Display'] mb-2">
+                                    {rootCategory.name}
+                                </h2>
+                                <p className="text-gray-500 max-w-xl">
+                                    {rootCategory.description || `Browse our premium selection of ${rootCategory.name.toLowerCase()}.`}
+                                </p>
+                            </div>
                             <Link
                                 href={`/collections/${rootCategory.slug}`}
-                                className="inline-flex items-center text-blue-600 hover:text-blue-700 font-semibold transition-colors"
+                                className="hidden md:inline-flex items-center text-sm font-bold uppercase tracking-wider text-gray-900 hover:text-pink-600 transition-colors group"
                             >
-                                View All {rootCategory.name}
-                                <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                </svg>
+                                View All
+                                <ArrowRight className="w-4 h-4 ml-2 transform group-hover:translate-x-1 transition-transform" />
                             </Link>
                         </div>
 
-                        {/* Subcategories Grid - 直接从 rootCategory.categories 获取 */}
+                        {/* Subcategories Grid */}
                         {rootCategory.categories && rootCategory.categories.length > 0 ? (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                                {rootCategory.categories.map((subcategory) => (
-                                    <Link
-                                        key={subcategory.slug}
-                                        href={`/collections/${subcategory.slug}`}
-                                        className="group bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 hover:border-gray-200"
-                                    >
-                                        {/* Image Container */}
-                                        <div className="relative h-48 overflow-hidden">
-                                            <img
-                                                src={subcategoryImages[subcategory.name] || DEFAULT_IMAGE}
-                                                alt={subcategory.name}
-                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                                loading="lazy"
-                                            />
-                                            <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-10 transition-opacity duration-300" />
-                                        </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                                {rootCategory.categories.map((subcategory, subIndex) => {
+                                    // 获取一个固定的渐变色
+                                    const gradientClass = GRADIENTS[(rootIndex + subIndex) % GRADIENTS.length];
 
-                                        {/* Content */}
-                                        <div className="p-4">
-                                            <h3 className="font-semibold text-gray-900 text-lg mb-2 group-hover:text-blue-600 transition-colors">
-                                                {subcategory.name}
-                                            </h3>
-                                            <p className="text-gray-600 text-sm line-clamp-2 mb-3">
-                                                {subcategory.description}
-                                            </p>
-                                            <div className="flex items-center text-blue-600 font-medium text-sm group-hover:text-blue-700 transition-colors">
-                                                Shop Now
-                                                <svg className="w-4 h-4 ml-1 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                                </svg>
+                                    return (
+                                        <Link
+                                            key={subcategory.slug}
+                                            href={`/collections/${subcategory.slug}`}
+                                            className="group flex flex-col h-full bg-white rounded-2xl overflow-hidden border border-gray-100 hover:border-pink-200 hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+                                        >
+                                            {/* Image / Placeholder Container */}
+                                            <div className={`relative h-48 overflow-hidden bg-gradient-to-br ${gradientClass} flex items-center justify-center group-hover:opacity-90 transition-opacity`}>
+                                                {/* 这里预留了图片位置，如果有真实图片可以取消注释并替换 */}
+                                                {/* <img src={subcategory.image} alt={subcategory.name} className="w-full h-full object-cover" /> */}
+
+                                                {/* 如果没有图片，显示首字母作为装饰 */}
+                                                <span className="text-6xl font-['Playfair_Display'] text-gray-900/10 font-bold select-none group-hover:scale-110 transition-transform duration-500">
+                                                    {subcategory.name.charAt(0)}
+                                                </span>
                                             </div>
-                                        </div>
-                                    </Link>
-                                ))}
+
+                                            {/* Content */}
+                                            <div className="p-6 flex flex-col flex-grow">
+                                                <h3 className="font-bold text-gray-900 text-lg mb-2 group-hover:text-pink-600 transition-colors font-['Playfair_Display']">
+                                                    {subcategory.name}
+                                                </h3>
+                                                <p className="text-gray-500 text-sm line-clamp-2 mb-4 flex-grow">
+                                                    {subcategory.description || `Explore our ${subcategory.name} collection.`}
+                                                </p>
+
+                                                <div className="flex items-center text-xs font-bold uppercase tracking-wider text-gray-900 group-hover:text-pink-600 transition-colors mt-auto">
+                                                    Shop Now
+                                                    <ArrowRight className="w-3 h-3 ml-2" />
+                                                </div>
+                                            </div>
+                                        </Link>
+                                    );
+                                })}
                             </div>
                         ) : (
-                            <div className="text-center py-12">
-                            <div className="text-gray-400 text-6xl mb-4">🛍️</div>
-                            <p className="text-gray-500 text-lg">Coming soon - new products are on the way!</p>
+                            <div className="text-center py-12 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
+                                <div className="text-gray-300 mb-3">
+                                    <Sparkles size={40} className="mx-auto" strokeWidth={1.5} />
+                                </div>
+                                <p className="text-gray-500">Coming soon - new products are on the way!</p>
                             </div>
-                            )}
+                        )}
+
+                        {/* Mobile View All Link */}
+                        <div className="mt-6 md:hidden">
+                            <Link
+                                href={`/collections/${rootCategory.slug}`}
+                                className="inline-flex items-center text-sm font-bold uppercase tracking-wider text-gray-900 hover:text-pink-600 transition-colors"
+                            >
+                                View All {rootCategory.name}
+                                <ArrowRight className="w-4 h-4 ml-2" />
+                            </Link>
+                        </div>
                     </section>
                 ))}
             </div>
 
-            {/* Footer CTA */}
-            <div className="bg-gray-900 text-white py-16 px-4">
-                <div className="max-w-4xl mx-auto text-center">
-                    <h3 className="text-2xl md:text-3xl font-bold mb-4">
+            {/* Footer CTA - 替换了原来黑乎乎的块，改为更现代的风格 */}
+            <section className="bg-gray-900 text-white py-20 px-4 relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-pink-600 rounded-full mix-blend-overlay filter blur-3xl opacity-20"></div>
+                <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-600 rounded-full mix-blend-overlay filter blur-3xl opacity-20"></div>
+
+                <div className="container mx-auto max-w-4xl text-center relative z-10">
+                    <h3 className="text-3xl md:text-4xl font-bold mb-6 font-['Playfair_Display']">
                         Can't Find What You're Looking For?
                     </h3>
-                    <p className="text-gray-300 text-lg mb-6 max-w-2xl mx-auto">
-                        We continuously update our collections to bring you the finest selection of adult products
+                    <p className="text-gray-300 text-lg mb-10 max-w-2xl mx-auto leading-relaxed">
+                        As a manufacturer, we have access to thousands of products not yet listed.
+                        Tell us what you need, and we'll help you find it.
                     </p>
                     <Link
-                        href="/contact"
-                        className="inline-flex items-center bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-lg transition-colors"
+                        href="/pages/contact"
+                        className="inline-flex items-center bg-white text-black hover:bg-pink-50 font-bold px-8 py-4 rounded-full transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
                     >
-                        Contact Us for Custom Requests
-                        <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                        </svg>
+                        Contact Our Team
+                        <ArrowRight className="w-4 h-4 ml-2" />
                     </Link>
                 </div>
-            </div>
+            </section>
         </div>
     );
-}
-
-// SEO Metadata
-export async function generateMetadata() {
-    return {
-        title: "Adult Products Collections | Premium Sex Toys & Lingerie",
-        description: "Explore our premium collection of adult products including sex toys, lingerie, and intimate accessories. Discreet shipping and premium quality guaranteed.",
-        keywords: "sex toys, adult products, lingerie, vibrators, dildos, masturbators, adult store",
-        openGraph: {
-            title: "Adult Products Collections | Premium Sex Toys & Lingerie",
-            description: "Explore our premium collection of adult products including sex toys, lingerie, and intimate accessories.",
-            type: "website",
-            url: "/collections",
-        },
-        robots: {
-            index: true,
-            follow: true,
-        }
-    };
 }

@@ -44,10 +44,12 @@ const categories = [
 
 export default function CategoriesSection() {
     return (
-        <section id="categories" className="py-20 md:py-28 bg-white relative overflow-hidden">
-            {/* 柔和的背景光晕 */}
-            <div className="absolute top-1/2 left-0 w-96 h-96 bg-pink-100/40 rounded-full blur-3xl -translate-y-1/2 -translate-x-1/2 pointer-events-none"></div>
-            <div className="absolute bottom-0 right-0 w-96 h-96 bg-purple-100/40 rounded-full blur-3xl translate-y-1/3 translate-x-1/3 pointer-events-none"></div>
+        <section id="categories" className="relative py-20 md:py-28 bg-white w-full">
+            {/* ✅ 修复：双层锁定，防止光晕溢出 */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                <div className="absolute top-1/2 left-0 w-96 h-96 bg-pink-100/40 rounded-full blur-3xl -translate-y-1/2 -translate-x-1/2"></div>
+                <div className="absolute bottom-0 right-0 w-96 h-96 bg-purple-100/40 rounded-full blur-3xl translate-y-1/3 translate-x-1/3"></div>
+            </div>
 
             <div className="container max-w-7xl mx-auto px-4 sm:px-6 relative z-10">
                 {/* 标题区域 */}

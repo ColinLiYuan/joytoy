@@ -2,6 +2,7 @@
 'use client';
 
 import Link from 'next/link';
+import { ChevronRight } from 'lucide-react'; // ✅ Lucide
 
 interface Breadcrumb {
     name: string;
@@ -14,13 +15,10 @@ interface ProductBreadcrumbProps {
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://mythtoy.com';
 
-export default function ProductBreadcrumb({
-                                              breadcrumbs
-                                          }: ProductBreadcrumbProps) {
-    // 过滤掉最后一个面包屑（当前页面）
+export default function ProductBreadcrumb({ breadcrumbs }: ProductBreadcrumbProps) {
     const visibleBreadcrumbs = breadcrumbs.slice(0, -1);
 
-    // 结构化数据（包含所有面包屑）
+    // JSON-LD Schema
     const structuredData = {
         '@context': 'https://schema.org',
         '@type': 'BreadcrumbList',
@@ -35,41 +33,30 @@ export default function ProductBreadcrumb({
     };
 
     return (
-        <div className="flex flex-col gap-0 breadcrumb">
+        <nav className="flex items-center text-xs text-gray-500 pt-4" aria-label="Breadcrumb">
             <script
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
             />
-
-            <div className="w-full">
-                <nav
-                    className="flex items-center flex-wrap gap-1 text-sm"
-                    aria-label="Breadcrumb"
-                >
-                    {visibleBreadcrumbs.map((item, index) => (
-                        <span key={index} className="flex items-center gap-1">
-                            {item.path ? (
-                                <Link
-                                    href={item.path}
-                                    className="rounded-md no-underline breadcrumb-link transition-all duration-200"
-                                >
-                                    {item.name}
-                                </Link>
-                            ) : (
-                                <span
-                                    className="rounded-md cursor-default breadcrumb-current"
-                                    aria-current="page"
-                                >
-                                    {item.name}
-                                </span>
-                            )}
-                            {index < visibleBreadcrumbs.length - 1 && (
-                                <span className="breadcrumb-separator text-xs mx-1">/</span>
-                            )}
-                        </span>
-                    ))}
-                </nav>
+            <div className="flex flex-wrap items-center gap-2">
+                {visibleBreadcrumbs.map((item, index) => (
+                    <div key={index} className="flex items-center gap-2">
+                        {item.path ? (
+                            <Link
+                                href={item.path}
+                                className="hover:text-black hover:underline underline-offset-2 transition-colors"
+                            >
+                                {item.name}
+                            </Link>
+                        ) : (
+                            <span className="text-gray-900 font-medium">{item.name}</span>
+                        )}
+                        {index < visibleBreadcrumbs.length - 1 && (
+                            <ChevronRight size={12} className="text-gray-300" />
+                        )}
+                    </div>
+                ))}
             </div>
-        </div>
+        </nav>
     );
 }

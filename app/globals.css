@@ -2,6 +2,20 @@
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Dancing+Script:wght@400;500;600&display=swap');
 @import "tailwindcss";
 
+html {
+    width: 100%;
+    overflow-x: hidden; /* 强制禁止 HTML 层面的横向滚动 */
+}
+
+body {
+    width: 100%; /* 不要用 100vw，会算上滚动条宽度导致溢出 */
+    overflow-x: hidden; /* 强制禁止 Body 层面的横向滚动 */
+    position: relative;
+    margin: 0;
+    padding: 0;
+    -webkit-font-smoothing: antialiased;
+}
+
 :root {
     /* 颜色变量 */
     --background-color: #f7fafc;

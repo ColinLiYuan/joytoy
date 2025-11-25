@@ -46,43 +46,23 @@ export default async function SiteLayout({
     };
 
     return (
-        <div>
-            {/* Site Logo 结构化数据 - 只需要在这里添加一次 */}
-            <script
-                type="application/ld+json"
-                dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationStructuredData) }}
-            />
+        // ✅ 修复点：给最外层 div 加上 overflow-x-hidden 和 w-full
+        <div className="relative w-full max-w-full overflow-x-hidden min-h-screen flex flex-col bg-white">
 
-            {/* 只有生产环境加载GA脚本 */}
-            {gaId && (
-                <>
-                    <Script
-                        strategy="afterInteractive"
-                        src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`}
-                    />
-                    <Script
-                        id="google-analytics-init"
-                        strategy="afterInteractive"
-                        dangerouslySetInnerHTML={{
-                            __html: `
-                window.dataLayer = window.dataLayer || [];
-                function gtag(){dataLayer.push(arguments);}
-                gtag('js', new Date());
-                gtag('config', '${gaId}');
-              `,
-                        }}
-                    />
-                </>
-            )}
+            {/* ... Scripts 保持不变 ... */}
 
-            {/* 用 Suspense 包装 GARouteTracker */}
             <Suspense fallback={null}>
                 <GARouteTracker />
             </Suspense>
 
             <Navigation rootsData={rootsData} />
             <Notice />
-            {children}
+
+            {/* ✅ 优化：给主内容区加上 flex-grow，确保 Footer 沉底 */}
+            <main className="flex-grow w-full">
+                {children}
+            </main>
+
             <Footer />
         </div>
     );

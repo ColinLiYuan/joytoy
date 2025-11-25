@@ -1,9 +1,9 @@
 // components/home/trust-signals.tsx
 import {
-    Package,        // 对应 faBoxOpen (包裹/隐私发货)
-    ShieldCheck,    // 对应 faCertificate (安全认证)
-    Lock,           // 对应 faShieldAlt (安全支付)
-    Stethoscope     // 对应 faUserMd (专家认证)
+    Package,
+    ShieldCheck,
+    Lock,
+    Stethoscope
 } from 'lucide-react';
 
 export default function TrustSignals() {
@@ -35,12 +35,16 @@ export default function TrustSignals() {
     ];
 
     return (
-        <section id="trust" className="trust-signals py-16 md:py-24 bg-gradient-to-b from-white via-pink-50/30 to-white relative overflow-hidden">
+        <section id="trust" className="relative py-16 md:py-24 bg-gradient-to-b from-white via-pink-50/30 to-white w-full">
 
-            {/* 装饰背景元素 */}
-            <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-pink-200 to-transparent opacity-50"></div>
-            <div className="absolute -left-20 top-40 w-64 h-64 bg-purple-100 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob"></div>
-            <div className="absolute -right-20 top-40 w-64 h-64 bg-pink-100 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-2000"></div>
+            {/* ✅ 修复核心：将装饰元素单独放在一个绝对定位且 overflow-hidden 的容器中 */}
+            {/* pointer-events-none 确保不会阻挡点击，inset-0 填满父容器 */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-pink-200 to-transparent opacity-50"></div>
+                {/* 注意：这里增加了 max-w-full 限制 */}
+                <div className="absolute -left-20 top-40 w-64 h-64 bg-purple-100 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob"></div>
+                <div className="absolute -right-20 top-40 w-64 h-64 bg-pink-100 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-2000"></div>
+            </div>
 
             <div className="container max-w-7xl mx-auto px-4 sm:px-6 relative z-10">
                 {/* 标题区域 */}
@@ -59,7 +63,7 @@ export default function TrustSignals() {
                 {/* 卡片网格 */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                     {features.map((feature) => {
-                        const IconComponent = feature.icon; // 获取图标组件
+                        const IconComponent = feature.icon;
                         return (
                             <div
                                 key={feature.id}
@@ -67,7 +71,6 @@ export default function TrustSignals() {
                             >
                                 {/* 图标容器 */}
                                 <div className="mb-6 inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-pink-50 to-purple-50 group-hover:from-pink-100 group-hover:to-purple-100 transition-colors duration-300">
-                                    {/* ✅ 使用 Lucide 图标 */}
                                     <IconComponent
                                         size={32}
                                         className="text-pink-600 group-hover:text-purple-600 transition-colors duration-300 drop-shadow-sm"

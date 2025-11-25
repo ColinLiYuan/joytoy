@@ -1,16 +1,18 @@
 // components/footer.tsx
 import Link from 'next/link';
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
     faWhatsapp,
     faFacebookF,
     faInstagram
 } from '@fortawesome/free-brands-svg-icons';
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 export default function Footer() {
     return (
-        <footer className="bg-white border-t border-gray-100 pt-16 pb-8 relative">
+        // ✅ 修复：加上 w-full 和 overflow-hidden，防止子元素撑开
+        <footer className="bg-white border-t border-gray-100 pt-16 pb-8 relative w-full overflow-hidden">
             <div className="container max-w-6xl mx-auto px-4 sm:px-6">
+                {/* ... 内容保持不变 ... */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 mb-12">
                     {/* Shop Section */}
                     <div className="footer-section">
@@ -45,7 +47,7 @@ export default function Footer() {
                         </ul>
                     </div>
 
-                    {/* Policies Section - 保留最重要的 */}
+                    {/* Policies Section */}
                     <div className="footer-section">
                         <h3 className="text-lg font-bold text-gray-900 mb-6 font-['Playfair_Display']">Policies</h3>
                         <ul className="space-y-3 font-['Inter']">
@@ -79,31 +81,13 @@ export default function Footer() {
                         {/* Social Icons */}
                         <div className="mt-8 pt-6 border-t border-gray-100">
                             <div className="flex gap-4">
-                                <a
-                                    href="https://www.facebook.com/profile.php?id=61581471022682"
-                                    className="w-10 h-10 bg-gray-50 text-gray-600 rounded-full flex items-center justify-center transition-all duration-300 hover:bg-blue-600 hover:text-white hover:-translate-y-1"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    aria-label="Facebook"
-                                >
+                                <a href="https://www.facebook.com/profile.php?id=61581471022682" className="w-10 h-10 bg-gray-50 text-gray-600 rounded-full flex items-center justify-center transition-all duration-300 hover:bg-blue-600 hover:text-white hover:-translate-y-1" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
                                     <FontAwesomeIcon icon={faFacebookF} className="text-sm" />
                                 </a>
-                                <a
-                                    href="https://www.instagram.com/colinliyuan"
-                                    className="w-10 h-10 bg-gray-50 text-gray-600 rounded-full flex items-center justify-center transition-all duration-300 hover:bg-pink-600 hover:text-white hover:-translate-y-1"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    aria-label="Instagram"
-                                >
+                                <a href="https://www.instagram.com/colinliyuan" className="w-10 h-10 bg-gray-50 text-gray-600 rounded-full flex items-center justify-center transition-all duration-300 hover:bg-pink-600 hover:text-white hover:-translate-y-1" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
                                     <FontAwesomeIcon icon={faInstagram} className="text-sm" />
                                 </a>
-                                <a
-                                    href="https://wa.me/17620189025"
-                                    className="w-10 h-10 bg-gray-50 text-gray-600 rounded-full flex items-center justify-center transition-all duration-300 hover:bg-green-500 hover:text-white hover:-translate-y-1"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    aria-label="WhatsApp"
-                                >
+                                <a href="https://wa.me/17620189025" className="w-10 h-10 bg-gray-50 text-gray-600 rounded-full flex items-center justify-center transition-all duration-300 hover:bg-green-500 hover:text-white hover:-translate-y-1" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp">
                                     <FontAwesomeIcon icon={faWhatsapp} className="text-sm" />
                                 </a>
                             </div>
@@ -111,27 +95,18 @@ export default function Footer() {
                     </div>
                 </div>
 
-                {/* ✅ 底部版权区域 (Sub-footer) */}
+                {/* Sub-footer */}
                 <div className="border-t border-gray-100 pt-8 flex flex-col md:flex-row justify-between items-center gap-6">
                     <div className="flex flex-col md:items-start items-center gap-3">
                         <p className="text-gray-400 text-xs font-['Inter']">
                             &copy; {new Date().getFullYear()} MythToy. All rights reserved. 18+ Only.
                         </p>
-
-                        {/* ✅ Cookie & Payment Policy 放在这里，作为次级链接 */}
                         <div className="flex flex-wrap justify-center md:justify-start gap-4 text-xs text-gray-400 font-['Inter']">
-                            <Link href="/pages/cookie-policy" className="hover:text-gray-600 transition-colors border-b border-transparent hover:border-gray-400">
-                                Cookie Policy
-                            </Link>
-                            <Link href="/pages/payment-policy" className="hover:text-gray-600 transition-colors border-b border-transparent hover:border-gray-400">
-                                Payment Policy
-                            </Link>
+                            <Link href="/pages/cookie-policy" className="hover:text-gray-600 transition-colors border-b border-transparent hover:border-gray-400">Cookie Policy</Link>
+                            <Link href="/pages/payment-policy" className="hover:text-gray-600 transition-colors border-b border-transparent hover:border-gray-400">Payment Policy</Link>
                         </div>
                     </div>
-
-                    {/* Payment Icons */}
                     <div className="flex gap-4 grayscale opacity-40">
-                        {/* 这里的文字可以换成具体的 SVG 图标 */}
                         <span className="text-xs font-bold text-gray-400 tracking-widest border border-gray-200 px-2 py-1 rounded">VISA</span>
                         <span className="text-xs font-bold text-gray-400 tracking-widest border border-gray-200 px-2 py-1 rounded">MASTERCARD</span>
                         <span className="text-xs font-bold text-gray-400 tracking-widest border border-gray-200 px-2 py-1 rounded">PAYPAL</span>
