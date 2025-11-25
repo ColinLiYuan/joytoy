@@ -7,6 +7,7 @@ import Pagination from '@/components/common/pagination';
 import ProductFilters from '@/components/product/product-filters';
 import { useState, useEffect } from 'react';
 import SortSelectModal from '@/components/product/sort-select-modal';
+import { useRouter } from 'next/navigation';
 
 interface ProductListProps {
     products: ProductResponse[];
@@ -52,8 +53,9 @@ export default function ProductList({
                                     }: ProductListProps) {
     const [showFilters, setShowFilters] = useState(false);
     const [isMounted, setIsMounted] = useState(false);
+    const router = useRouter();
 
-    // 添加本地筛选状态
+    // 本地筛选状态
     const [localFilters, setLocalFilters] = useState({
         priceRange: initialFilters.priceRange,
         colors: initialFilters.colors,
@@ -64,6 +66,17 @@ export default function ProductList({
     useEffect(() => {
         setIsMounted(true);
     }, []);
+
+    // ✅ 核心修复：当 URL 变化（initialFilters 变化）时，同步更新本地勾选状态
+    // 这解决了 "Clear 后再打开，勾选框依然选中" 的问题
+    useEffect(() => {
+        setLocalFilters({
+            priceRange: initialFilters.priceRange,
+            colors: initialFilters.colors,
+            features: initialFilters.features,
+            materials: initialFilters.materials
+        });
+    }, [initialFilters]);
 
     // 处理背景滚动 - 只在移动端禁用滚动
     useEffect(() => {
@@ -107,6 +120,8 @@ export default function ProductList({
         // 添加价格范围
         if (localFilters.priceRange) {
             params.set('priceRange', `${localFilters.priceRange[0]}-${localFilters.priceRange[1]}`);
+        } else {
+            params.delete('priceRange');
         }
 
         // 添加其他筛选条件
@@ -120,21 +135,25 @@ export default function ProductList({
             params.set('materials', localFilters.materials.join(','));
         }
 
-        // 保留其他现有参数（如分页）
+        // 保留其他现有参数（如 sort），但排除旧的筛选参数以防万一
         const currentParams = new URLSearchParams(window.location.search);
         currentParams.forEach((value, key) => {
-            if (!['priceRange', 'colors', 'features', 'materials'].includes(key)) {
+            if (!['priceRange', 'colors', 'features', 'materials', 'page'].includes(key)) {
                 params.set(key, value);
             }
         });
 
-        // 跳转到新的 URL
+        // ✅ 只要筛选条件变了，必须重置回第 0/1 页
+        params.delete('page');
+
         const newUrl = `${window.location.pathname}?${params.toString()}`;
-        window.location.href = newUrl;
+
+        // ✅ 使用 scroll: false 防止页面跳动
+        router.push(newUrl, { scroll: false });
+        setShowFilters(false);
     };
 
     const handleClearFilters = () => {
-        // 清除所有筛选条件并刷新页面
         const params = new URLSearchParams(window.location.search);
 
         // 移除所有筛选相关的参数
@@ -142,9 +161,21 @@ export default function ProductList({
             params.delete(param);
         });
 
-        // 跳转到清除筛选后的 URL
+        // ✅ 只要筛选条件变了，必须重置回第 0/1 页
+        params.delete('page');
+
         const newUrl = `${window.location.pathname}?${params.toString()}`;
-        window.location.href = newUrl;
+        router.push(newUrl, { scroll: false });
+
+        // ✅ 立即重置本地状态，给用户即时反馈
+        setLocalFilters({
+            priceRange: null,
+            colors: [],
+            features: [],
+            materials: []
+        });
+
+        setShowFilters(false);
     };
 
     if (products.length === 0) {
