@@ -25,8 +25,34 @@ export default async function SiteLayout({
     // 环境判断
     const gaId = process.env.NODE_ENV === 'production' ? 'G-X0CTZ0DD1Q' : '';
 
+    // Site Logo 结构化数据
+    const organizationStructuredData = {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": "MythToy",
+        "url": "https://mythtoy.com",
+        "logo": "https://mythtoy.com/logo.png",
+        "description": "Premium adult lifestyle products for exploration, pleasure, and wellness.",
+        // "sameAs": [
+        //     "https://www.facebook.com/yourpage",
+        //     "https://www.instagram.com/yourprofile",
+        //     "https://twitter.com/yourhandle"
+        // ],
+        "contactPoint": {
+            "@type": "ContactPoint",
+            "email": "support@mythtoy.com",
+            "contactType": "customer service"
+        }
+    };
+
     return (
         <div>
+            {/* Site Logo 结构化数据 - 只需要在这里添加一次 */}
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationStructuredData) }}
+            />
+
             {/* 只有生产环境加载GA脚本 */}
             {gaId && (
                 <>
