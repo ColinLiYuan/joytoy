@@ -2,19 +2,33 @@
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Dancing+Script:wght@400;500;600&display=swap');
 @import "tailwindcss";
 
+/* 暴力重置盒模型 */
+*, *::before, *::after {
+    box-sizing: border-box;
+    max-width: 100%; /* ⚠️ 关键：防止任何子元素宽度超过父级 */
+}
+
 html {
     width: 100%;
-    overflow-x: hidden; /* 锁死 HTML */
-    -webkit-overflow-scrolling: touch;
+    overflow-x: hidden;
+    -webkit-text-size-adjust: 100%;
 }
 
 body {
     width: 100%;
-    max-width: 100%; /* 绝对不要用 100vw */
-    overflow-x: hidden; /* 锁死 Body */
+    overflow-x: hidden;
     position: relative;
     margin: 0;
     padding: 0;
+    /* 修复 iOS 上的回弹效果可能导致的溢出视觉 */
+    overscroll-behavior-x: none;
+}
+
+/* 强制所有图片自适应，防止大图撑开 */
+img, video {
+    max-width: 100%;
+    height: auto;
+    display: block;
 }
 
 /* 修复某些容器可能导致的溢出 */
