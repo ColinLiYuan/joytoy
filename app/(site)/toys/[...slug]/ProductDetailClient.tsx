@@ -1,4 +1,4 @@
-// /toys/[slug]/ProductDetailClient.tsx
+// app/(site)/toys/[...slug]/ProductDetailClient.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -18,7 +18,7 @@ import {
     ChevronDown,
     ChevronUp,
     Star
-} from 'lucide-react';
+} from 'lucide-react'; // ✅ Lucide
 
 interface ProductDetailClientProps {
     product: ProductResponse;
@@ -45,7 +45,6 @@ export default function ProductDetailClient({
     const [selectedSku, setSelectedSku] = useState<ProductSku | null>(null);
     const [expandedSection, setExpandedSection] = useState<string | null>('description');
     const { showToast } = useToast();
-    // const { openAuthModal, isLoggedIn } = useAuth(); // 暂时没用到，先注释掉避免警告
     const addItemToCart = useCartStore(state => state.addItemToCart);
 
     // Init SKU
@@ -64,13 +63,14 @@ export default function ProductDetailClient({
         }
     }, [product.productSkus, defaultColor]);
 
-    // 🛠️ 修复：添加类型检查，处理 sku 为 null/undefined 的情况
+    // ✅ 修复：安全获取库存
     const getAvailableStock = (sku: ProductSku | null | undefined) => {
         if (!sku) return 0;
         return (sku.stock || 0) - (sku.lockedStock || 0);
     };
 
     const getMappedColor = (color: string) => colorMap[color.toLowerCase().trim()] || color;
+    const isOnSale = product.originalPrice > product.currentPrice;
 
     const handleAddToCart = async () => {
         if (!product || !selectedSku) return;
@@ -90,7 +90,7 @@ export default function ProductDetailClient({
                 skuId: selectedSku.id
             });
 
-            // showToast('success', 'Added to Bag', `${product.title} is in your bag.`);
+            showToast('success', 'Added to Bag', `${product.title} is in your bag.`);
         } catch (error) {
             console.error('Add to cart failed', error);
             showToast('error', 'Error', 'Failed to add product.');
@@ -120,17 +120,29 @@ export default function ProductDetailClient({
                         <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3 font-['Playfair_Display'] leading-tight">
                             {product.title}
                         </h1>
+
                         <div className="flex items-center justify-between">
                             <div className="flex items-baseline gap-3">
-                                <span className="text-2xl font-bold text-gray-900">
-                                    ${product.currentPrice.toFixed(2)}
-                                </span>
-                                {product.originalPrice > product.currentPrice && (
-                                    <span className="text-lg text-gray-400 line-through decoration-gray-400">
-                                        ${product.originalPrice.toFixed(2)}
+                                {/* ✅ 价格逻辑：打折变红，平时全黑 */}
+                                {isOnSale ? (
+                                    <>
+                                        <span className="text-2xl font-bold text-[#b62337]">
+                                            ${product.currentPrice.toFixed(2)}
+                                        </span>
+                                        <span className="text-lg text-gray-400 line-through decoration-gray-300">
+                                            ${product.originalPrice.toFixed(2)}
+                                        </span>
+                                        <span className="bg-red-100 text-red-700 text-xs font-bold px-2 py-1 rounded-full uppercase tracking-wide">
+                                            Sale
+                                        </span>
+                                    </>
+                                ) : (
+                                    <span className="text-2xl font-bold text-gray-900">
+                                        ${product.currentPrice.toFixed(2)}
                                     </span>
                                 )}
                             </div>
+
                             {/* Review Stars */}
                             <div className="flex items-center gap-1">
                                 {[1,2,3,4,5].map(i => <Star key={i} size={14} className="fill-yellow-400 text-yellow-400" />)}
@@ -143,7 +155,7 @@ export default function ProductDetailClient({
                     {product.productSkus && product.productSkus.length > 0 && (
                         <div className="mb-8">
                             <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wide mb-3">
-                                Color: <span className="text-gray-500 font-normal capitalize">{selectedSku?.color || 'Select Color'}</span>
+                                Color: <span className="text-gray-500 font-normal capitalize">{selectedSku?.color || 'Select'}</span>
                             </h3>
                             <div className="flex flex-wrap gap-3">
                                 {product.productSkus.map((sku) => {
@@ -179,7 +191,7 @@ export default function ProductDetailClient({
                                 w-full py-4 rounded-full font-bold text-lg flex items-center justify-center gap-3 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5
                                 ${!selectedSku || getAvailableStock(selectedSku) <= 0
                                 ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                                : 'bg-black text-white hover:bg-gray-900'
+                                : 'bg-black text-white hover:bg-gray-800'
                             }
                             `}
                             onClick={handleAddToCart}
@@ -189,7 +201,7 @@ export default function ProductDetailClient({
                                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                             ) : (
                                 <>
-                                    <ShoppingBag size={20} />
+                                    <ShoppingBag size={20} strokeWidth={2} />
                                     {getAvailableStock(selectedSku) <= 0 ? 'Out of Stock' : 'Add to Bag'}
                                 </>
                             )}
@@ -212,7 +224,7 @@ export default function ProductDetailClient({
                         </div>
                     </div>
 
-                    {/* Accordion: Description */}
+                    {/* Accordions */}
                     <div className="border-b border-gray-100">
                         <button
                             onClick={() => toggleSection('description')}
@@ -228,7 +240,6 @@ export default function ProductDetailClient({
                         )}
                     </div>
 
-                    {/* Accordion: Specifications */}
                     {specifications.length > 0 && (
                         <div className="border-b border-gray-100">
                             <button
@@ -253,21 +264,28 @@ export default function ProductDetailClient({
                 </div>
             </div>
 
-            {/* Mobile Sticky Add to Cart Bar */}
+            {/* Mobile Sticky Bar */}
             <div
                 className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-4 shadow-[0_-4px_20px_rgba(0,0,0,0.05)] flex items-center gap-4"
                 style={{ zIndex: Z_INDEX.STICKY }}
             >
                 <div className="flex-1">
                     <p className="text-xs text-gray-500 truncate">{product.title}</p>
-                    <p className="font-bold text-gray-900">${product.currentPrice}</p>
+                    {isOnSale ? (
+                        <div className="flex items-center gap-2">
+                            <p className="font-bold text-[#b62337]">${product.currentPrice}</p>
+                            <p className="text-xs text-gray-400 line-through">${product.originalPrice}</p>
+                        </div>
+                    ) : (
+                        <p className="font-bold text-gray-900">${product.currentPrice}</p>
+                    )}
                 </div>
                 <button
                     className={`
                         px-8 py-3 rounded-full font-bold text-sm transition-all shadow-md
                         ${!selectedSku || getAvailableStock(selectedSku) <= 0
-                        ? 'bg-gray-200 text-gray-400'
-                        : 'bg-black text-white hover:bg-gray-900'
+                        ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                        : 'bg-black text-white hover:bg-gray-800'
                     }
                     `}
                     onClick={handleAddToCart}
