@@ -3,136 +3,105 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { getProductImageUrl } from '@/lib/image-utils';
 
-// 分类图片配置
-const categoryImages = {
-    forHer: {
-        src: 'forHer.jpg',
-        alt: "Luxury adult toys for women, pastel colors, quiet motor, perfect for self-care and intimate moments"
+const categories = [
+    {
+        id: 'for-her',
+        title: "For Her",
+        description: "Curated pleasure & comfort",
+        link: "/collections/female-sex-toys",
+        image: "forHer.jpg",
+        alt: "Luxury adult toys for women",
+        gradient: "from-pink-100 to-rose-50"
     },
-    forHim: {
-        src: 'forHim.jpg',
-        alt: "High-quality male adult toys, including prostate massagers and masturbators, body-safe materials, realistic and silicone texture"
+    {
+        id: 'for-him',
+        title: "For Him",
+        description: "Performance & sensation",
+        link: "/collections/male-sex-toys",
+        image: "forHim.jpg",
+        alt: "High-quality male adult toys",
+        gradient: "from-blue-50 to-indigo-50"
     },
-    sexToy: {
-        src: 'sexToy.jpg',
-        alt: "Diverse collection of adult sex toys, body-safe silicone and ABS materials, suitable for couples and solo use"
+    {
+        id: 'sex-toys',
+        title: "Couples & Toys",
+        description: "Shared intimacy & fun",
+        link: "/collections/sex-toys",
+        image: "sexToy.jpg",
+        alt: "Adult sex toys for couples",
+        gradient: "from-purple-50 to-fuchsia-50"
     },
-    lingerie: {
-        src: 'lingerie.jpg',
-        alt: "Elegant intimate apparel, including babydolls and corsets, designed to enhance confidence and romance"
+    {
+        id: 'lingerie',
+        title: "Lingerie",
+        description: "Confidence & romance",
+        link: "/collections/lingerie",
+        image: "lingerie.jpg",
+        alt: "Elegant intimate apparel",
+        gradient: "from-red-50 to-orange-50"
     }
-};
+];
 
 export default function CategoriesSection() {
     return (
-        <section id="categories" className="categories py-20 bg-gradient-to-br from-pink-50 to-pink-100 relative">
-            <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-pink-500 to-transparent"></div>
-            <div className="container max-w-6xl mx-auto px-4 sm:px-6">
-                <h2 className="text-3xl md:text-4xl font-semibold text-purple-800 text-center mb-12 relative">
-                    Shop By Category
-                    <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-20 h-1 bg-gradient-to-r from-pink-500 to-purple-600 rounded-full mt-3"></div>
-                </h2>
+        <section id="categories" className="py-20 md:py-28 bg-white relative overflow-hidden">
+            {/* 柔和的背景光晕 */}
+            <div className="absolute top-1/2 left-0 w-96 h-96 bg-pink-100/40 rounded-full blur-3xl -translate-y-1/2 -translate-x-1/2 pointer-events-none"></div>
+            <div className="absolute bottom-0 right-0 w-96 h-96 bg-purple-100/40 rounded-full blur-3xl translate-y-1/3 translate-x-1/3 pointer-events-none"></div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    {/* For Her */}
-                    <div className="category-card bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-400 hover:-translate-y-2 relative group">
-                        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-pink-500 to-purple-600"></div>
-                        <div className="category-img-container h-64 bg-gray-50 flex items-center justify-center overflow-hidden">
-                            <Image
-                                src={getProductImageUrl('', categoryImages.forHer.src)}
-                                alt={categoryImages.forHer.alt}
-                                width={400}
-                                height={256}
-                                className="category-img w-full h-full object-contain transition-transform duration-400 group-hover:scale-110"
-                                loading="lazy"
-                            />
-                        </div>
-                        <div className="category-content p-8 text-center">
-                            <h3 className="text-xl font-semibold text-purple-800 mb-4">For Her</h3>
-                            <p className="text-gray-700 mb-6 leading-relaxed">Curated Adult Toys for Women - Comfort, Discretion & Pleasure</p>
-                            <Link
-                                href="/collections/female-sex-toys"
-                                className="btn inline-block bg-gradient-to-br from-pink-600 to-purple-700 hover:from-pink-700 hover:to-purple-800 text-white font-semibold py-3 px-6 rounded-full transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
-                            >
-                                Shop Women's Collection
-                            </Link>
-                        </div>
-                    </div>
+            <div className="container max-w-7xl mx-auto px-4 sm:px-6 relative z-10">
+                {/* 标题区域 */}
+                <div className="text-center mb-16">
+                    <span className="text-pink-600 font-medium tracking-widest uppercase text-xs mb-3 block">
+                        Explore Our Collections
+                    </span>
+                    <h2 className="text-3xl md:text-5xl font-bold text-gray-900 mb-6 font-['Playfair_Display']">
+                        Find Your Pleasure
+                    </h2>
+                    <div className="w-24 h-1 bg-gradient-to-r from-pink-500 to-purple-600 mx-auto rounded-full"></div>
+                </div>
 
-                    {/* For Him */}
-                    <div className="category-card bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-400 hover:-translate-y-2 relative group">
-                        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-pink-500 to-purple-600"></div>
-                        <div className="category-img-container h-64 bg-gray-50 flex items-center justify-center overflow-hidden">
-                            <Image
-                                src={getProductImageUrl('', categoryImages.forHim.src)}
-                                alt={categoryImages.forHim.alt}
-                                width={400}
-                                height={256}
-                                className="category-img w-full h-full object-contain transition-transform duration-400 group-hover:scale-110"
-                                loading="lazy"
-                            />
-                        </div>
-                        <div className="category-content p-8 text-center">
-                            <h3 className="text-xl font-semibold text-purple-800 mb-4">For Him</h3>
-                            <p className="text-gray-700 mb-6 leading-relaxed">His Pleasure Toys: Body-Safe Masturbators & Prostate Devices</p>
-                            <Link
-                                href="/collections/male-sex-toys"
-                                className="btn inline-block bg-gradient-to-br from-pink-600 to-purple-700 hover:from-pink-700 hover:to-purple-800 text-white font-semibold py-3 px-6 rounded-full transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
-                            >
-                                Shop Men's Collection
-                            </Link>
-                        </div>
-                    </div>
+                {/* 网格布局 */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+                    {categories.map((cat) => (
+                        <Link
+                            key={cat.id}
+                            href={cat.link}
+                            className="group relative flex flex-col md:flex-row bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-500 border border-gray-100"
+                        >
+                            {/* 图片区域 - 占据一半或更多 */}
+                            <div className={`w-full md:w-1/2 h-64 md:h-auto relative overflow-hidden bg-gradient-to-br ${cat.gradient} flex items-center justify-center p-6`}>
+                                <div className="relative w-full h-full transition-transform duration-700 ease-in-out group-hover:scale-110">
+                                    <Image
+                                        src={getProductImageUrl('', cat.image)}
+                                        alt={cat.alt}
+                                        fill
+                                        sizes="(max-width: 768px) 100vw, 50vw"
+                                        className="object-contain drop-shadow-md"
+                                        loading="lazy"
+                                    />
+                                </div>
+                            </div>
 
-                    {/* Sex Toys */}
-                    <div className="category-card bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-400 hover:-translate-y-2 relative group">
-                        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-pink-500 to-purple-600"></div>
-                        <div className="category-img-container h-64 bg-gray-50 flex items-center justify-center overflow-hidden">
-                            <Image
-                                src={getProductImageUrl('', categoryImages.sexToy.src)}
-                                alt={categoryImages.sexToy.alt}
-                                width={400}
-                                height={256}
-                                className="category-img w-full h-full object-contain transition-transform duration-400 group-hover:scale-110"
-                                loading="lazy"
-                            />
-                        </div>
-                        <div className="category-content p-8 text-center">
-                            <h3 className="text-xl font-semibold text-purple-800 mb-4">Sex Toys</h3>
-                            <p className="text-gray-700 mb-6 leading-relaxed">Premium Sex Toys Connection: For Couples & Solo Play</p>
-                            <Link
-                                href="/collections/sex-toys"
-                                className="btn inline-block bg-gradient-to-br from-pink-600 to-purple-700 hover:from-pink-700 hover:to-purple-800 text-white font-semibold py-3 px-6 rounded-full transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
-                            >
-                                Shop Sex Toys Collection
-                            </Link>
-                        </div>
-                    </div>
+                            {/* 内容区域 */}
+                            <div className="w-full md:w-1/2 p-8 md:p-10 flex flex-col justify-center items-start">
+                                <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2 font-['Playfair_Display'] group-hover:text-pink-700 transition-colors">
+                                    {cat.title}
+                                </h3>
+                                <p className="text-gray-500 mb-8 leading-relaxed">
+                                    {cat.description}
+                                </p>
 
-                    {/* Lingerie */}
-                    <div className="category-card bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-400 hover:-translate-y-2 relative group">
-                        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-pink-500 to-purple-600"></div>
-                        <div className="category-img-container h-64 bg-gray-50 flex items-center justify-center overflow-hidden">
-                            <Image
-                                src={getProductImageUrl('', categoryImages.lingerie.src)}
-                                alt={categoryImages.lingerie.alt}
-                                width={400}
-                                height={256}
-                                className="category-img w-full h-full object-contain transition-transform duration-400 group-hover:scale-110"
-                                loading="lazy"
-                            />
-                        </div>
-                        <div className="category-content p-8 text-center">
-                            <h3 className="text-xl font-semibold text-purple-800 mb-4">Lingerie</h3>
-                            <p className="text-gray-700 mb-6 leading-relaxed">Her Lingerie Collection: Babydolls, Corsets & Comfortable Silk Panties</p>
-                            <Link
-                                href="/collections/lingerie"
-                                className="btn inline-block bg-gradient-to-br from-pink-600 to-purple-700 hover:from-pink-700 hover:to-purple-800 text-white font-semibold py-3 px-6 rounded-full transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
-                            >
-                                Shop Lingerie Collection
-                            </Link>
-                        </div>
-                    </div>
+                                <span className="inline-flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-gray-900 border-b-2 border-transparent group-hover:border-pink-500 transition-all duration-300 pb-1">
+                                    Shop Now
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="transform transition-transform group-hover:translate-x-1">
+                                        <path d="M5 12h14"></path>
+                                        <path d="m12 5 7 7-7 7"></path>
+                                    </svg>
+                                </span>
+                            </div>
+                        </Link>
+                    ))}
                 </div>
             </div>
         </section>

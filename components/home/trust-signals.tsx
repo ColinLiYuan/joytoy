@@ -1,0 +1,95 @@
+// components/home/trust-signals.tsx
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+    faLock,
+    faCertificate,
+    faShieldAlt,
+    faUserMd,
+    faBoxOpen // 新增：更直观的包裹图标
+} from '@fortawesome/free-solid-svg-icons';
+
+export default function TrustSignals() {
+    const features = [
+        {
+            id: 'privacy',
+            icon: faBoxOpen, // 或者用 faLock
+            title: "100% Discreet Shipping",
+            desc: "Plain packaging. No logos, no product names. Only you know what's inside."
+        },
+        {
+            id: 'material',
+            icon: faCertificate,
+            title: "Body-Safe Materials",
+            desc: "Certified medical-grade silicone & non-toxic ABS. Safe for your most intimate areas."
+        },
+        {
+            id: 'security',
+            icon: faShieldAlt,
+            title: "Secure Checkout",
+            desc: "256-bit SSL encryption. We never store your credit card information."
+        },
+        {
+            id: 'expert',
+            icon: faUserMd,
+            title: "Expert Approved",
+            desc: "Curated collection recommended by wellness experts and verified testers."
+        }
+    ];
+
+    return (
+        <section id="trust" className="trust-signals py-16 md:py-24 bg-gradient-to-b from-white via-pink-50/30 to-white relative overflow-hidden">
+
+            {/* 装饰背景元素 - 增加层次感但不抢戏 */}
+            <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-pink-200 to-transparent opacity-50"></div>
+            <div className="absolute -left-20 top-40 w-64 h-64 bg-purple-100 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob"></div>
+            <div className="absolute -right-20 top-40 w-64 h-64 bg-pink-100 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-2000"></div>
+
+            <div className="container max-w-7xl mx-auto px-4 sm:px-6 relative z-10">
+                {/* 标题区域 */}
+                <div className="text-center mb-16 max-w-3xl mx-auto">
+                    <span className="text-pink-600 font-semibold tracking-wider uppercase text-sm mb-2 block">
+                        Shop With Confidence
+                    </span>
+                    <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4 font-['Playfair_Display']">
+                        Why Choose MythToy?
+                    </h2>
+                    <p className="text-gray-500 text-lg leading-relaxed">
+                        We prioritize your privacy and safety above all else. Experience pleasure without worry.
+                    </p>
+                </div>
+
+                {/* 卡片网格 */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                    {features.map((feature, index) => (
+                        <div
+                            key={feature.id}
+                            className="group bg-white rounded-2xl p-8 shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] transition-all duration-300 ease-out hover:-translate-y-2 border border-gray-100/50"
+                        >
+                            {/* 图标容器 */}
+                            <div className="mb-6 inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-pink-50 to-purple-50 group-hover:from-pink-100 group-hover:to-purple-100 transition-colors duration-300">
+                                <FontAwesomeIcon
+                                    icon={feature.icon}
+                                    className="text-3xl text-pink-600 group-hover:text-purple-600 transition-colors duration-300 drop-shadow-sm"
+                                />
+                            </div>
+
+                            {/* 文字内容 */}
+                            <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-pink-700 transition-colors">
+                                {feature.title}
+                            </h3>
+                            <p className="text-gray-500 text-sm leading-relaxed group-hover:text-gray-600">
+                                {feature.desc}
+                            </p>
+                        </div>
+                    ))}
+                </div>
+
+                {/* 底部信任徽章/支付方式 (可选，增加电商属性) */}
+                <div className="mt-16 pt-8 border-t border-gray-100 flex flex-wrap justify-center gap-6 opacity-60 grayscale hover:grayscale-0 transition-all duration-500">
+                    {/* 这里可以用 Image 组件放 Visa/Mastercard/PayPal 的 logo，如果没有可以用文字代替 */}
+                    <span className="text-xs font-semibold text-gray-400 tracking-widest uppercase">Secure Payment Partners</span>
+                </div>
+            </div>
+        </section>
+    );
+}

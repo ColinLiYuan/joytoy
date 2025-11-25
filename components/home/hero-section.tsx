@@ -61,6 +61,23 @@ export default function HeroSection() {
                     </div>
                 </div>
             </div>
+            {/* 迷你信任条 - 放在 Hero 下方 */}
+            <div className="bg-black/95 text-white py-3 border-t border-white/10">
+                <div className="container mx-auto px-4 flex justify-center md:justify-between items-center gap-4 text-xs md:text-sm font-medium tracking-wide overflow-x-auto whitespace-nowrap">
+                    <div className="flex items-center gap-2">
+                        <span className="text-green-400">✓</span> Discreet Shipping
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <span className="text-green-400">✓</span> 24/7 Support
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <span className="text-green-400">✓</span> 30-Day Returns
+                    </div>
+                    <div className="hidden md:flex items-center gap-2">
+                        <span className="text-green-400">✓</span> Secure Checkout
+                    </div>
+                </div>
+            </div>
         </section>
     );
 }
