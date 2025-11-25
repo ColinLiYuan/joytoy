@@ -1,8 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { Z_INDEX } from '@/lib/constants/z-index';
@@ -18,31 +17,40 @@ interface PromotionBarProps {
 
 const promotions: Promotion[] = [
     {
-        text: "Free shipping on orders over $40",
+        text: "Free discreet shipping on orders over $40",
         link: "/collections/best-sellers"
+    },
+    {
+        text: "New Collection Dropped: Curated for Your Pleasure",
+        link: "/collections/new-arrivals"
     }
 ];
 
 export default function Notice({ onCloseMenu }: PromotionBarProps) {
     const [currentSlide, setCurrentSlide] = useState(0);
     const pathname = usePathname();
+    const [isVisible, setIsVisible] = useState(false);
 
-    // 自动轮换促销通知 - 只有多条消息时才轮换
+    // 1. 修复：更稳健的首页隐藏逻辑
+    // 使用 useEffect 确保只在客户端判断，避免服务端渲染不一致导致的闪烁
+    useEffect(() => {
+        if (pathname === '/' || pathname === '/checkout') {
+            setIsVisible(false);
+        } else {
+            setIsVisible(true);
+        }
+    }, [pathname]);
+
     useEffect(() => {
         if (promotions.length <= 1) return;
-
         const interval = setInterval(() => {
             setCurrentSlide((prev) => (prev + 1) % promotions.length);
         }, 5000);
-
         return () => clearInterval(interval);
     }, []);
 
-    if (pathname === '/') {
-        return null;
-    }
-
-    if (pathname === '/checkout') {
+    // 如果不应该显示，直接返回 null
+    if (!isVisible) {
         return null;
     }
 
@@ -56,42 +64,40 @@ export default function Notice({ onCloseMenu }: PromotionBarProps) {
         setCurrentSlide((prev) => (prev + 1) % promotions.length);
     };
 
-    const handlePromotionClick = () => {
-        if (onCloseMenu) {
-            onCloseMenu();
-        }
-    };
-
     return (
+        // 2. 修复：z-index 改为 40 (比导航栏低)，防止盖住下拉菜单
         <div
-            className="bg-[var(--notice-color)] text-white py-2 overflow-hidden static cursor-pointer relative notice-bar"
-            style={{ zIndex: Z_INDEX.NAVIGATION }} // 在最外层容器设置 z-index
+            className="bg-gray-900 text-white py-2.5 overflow-hidden relative"
+            style={{ zIndex: Z_INDEX.NOTICE }}
         >
-            <div className="flex items-center justify-center relative">
-                {/* 只有多条消息时才显示箭头 */}
+            <div className="container mx-auto px-4 max-w-7xl flex items-center justify-center relative">
+
+                {/* 左箭头 */}
                 {promotions.length > 1 && (
                     <button
-                        className="bg-white/20 border-none text-white w-8 h-8 rounded-full flex items-center justify-center cursor-pointer transition-all duration-300 flex-shrink-0 hover:bg-white/30 hover:scale-110"
+                        className="absolute left-4 md:static p-1 text-gray-400 hover:text-white transition-colors cursor-pointer"
                         onClick={goToPrevSlide}
                         aria-label="Previous promotion"
                     >
-                        <FontAwesomeIcon icon={faChevronLeft} className="w-3.5 h-3.5" />
+                        <ChevronLeft size={14} />
                     </button>
                 )}
 
-                <div className="flex w-full flex-1">
+                {/* 文本内容 */}
+                <div className="flex-1 relative h-5 overflow-hidden mx-4">
                     {promotions.map((promotion, index) => (
                         <div
                             key={index}
-                            className="flex-[0_0_100%] text-center px-5 text-sm font-medium"
-                            style={{
-                                display: index === currentSlide ? 'block' : 'none'
-                            }}
+                            className={`absolute inset-0 flex items-center justify-center w-full transition-all duration-500 ease-in-out ${
+                                index === currentSlide
+                                    ? 'opacity-100 translate-y-0'
+                                    : 'opacity-0 translate-y-full pointer-events-none'
+                            }`}
                         >
                             <Link
                                 href={promotion.link}
-                                className="block w-full text-white no-underline py-1"
-                                onClick={handlePromotionClick}
+                                className="text-xs md:text-sm font-medium tracking-wide hover:underline decoration-pink-500 underline-offset-4 transition-all text-center truncate px-2"
+                                onClick={onCloseMenu}
                             >
                                 {promotion.text}
                             </Link>
@@ -99,14 +105,14 @@ export default function Notice({ onCloseMenu }: PromotionBarProps) {
                     ))}
                 </div>
 
-                {/* 只有多条消息时才显示箭头 */}
+                {/* 右箭头 */}
                 {promotions.length > 1 && (
                     <button
-                        className="bg-white/20 border-none text-white w-8 h-8 rounded-full flex items-center justify-center cursor-pointer transition-all duration-300 flex-shrink-0 hover:bg-white/30 hover:scale-110"
+                        className="absolute right-4 md:static p-1 text-gray-400 hover:text-white transition-colors cursor-pointer"
                         onClick={goToNextSlide}
                         aria-label="Next promotion"
                     >
-                        <FontAwesomeIcon icon={faChevronRight} className="w-3.5 h-3.5" />
+                        <ChevronRight size={14} />
                     </button>
                 )}
             </div>

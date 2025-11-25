@@ -1,17 +1,9 @@
-// components/auth-modal.tsx
 'use client';
 
 import { useState } from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import {
-    faEnvelope,
-    faLock,
-    faEye,
-    faEyeSlash,
-    faTimes
-} from '@fortawesome/free-solid-svg-icons';
 import { useAuth } from '@/contexts/authContext';
 import { Z_INDEX } from '@/lib/constants/z-index';
+import { X, Mail, Lock, Eye, EyeOff, Loader2, Check } from 'lucide-react'; // ✅ Lucide
 
 interface AuthModalProps {
     isOpen: boolean;
@@ -34,75 +26,42 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: value
-        }));
-        if (errors[name]) {
-            setErrors(prev => ({
-                ...prev,
-                [name]: ''
-            }));
-        }
+        setFormData(prev => ({ ...prev, [name]: value }));
+        if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
     };
 
     const validateForm = () => {
         const newErrors: Record<string, string> = {};
+        if (!formData.email) newErrors.email = 'Email is required';
+        else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Email is invalid';
 
-        if (!formData.email) {
-            newErrors.email = 'Email is required';
-        } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-            newErrors.email = 'Email is invalid';
-        }
-
-        if (!formData.password) {
-            newErrors.password = 'Password is required';
-        } else if (formData.password.length < 6) {
-            newErrors.password = 'Password must be at least 6 characters';
-        }
+        if (!formData.password) newErrors.password = 'Password is required';
+        else if (formData.password.length < 6) newErrors.password = 'Password must be at least 6 characters';
 
         if (!isLogin) {
-            if (!formData.confirmPassword) {
-                newErrors.confirmPassword = 'Please confirm your password';
-            } else if (formData.password !== formData.confirmPassword) {
-                newErrors.confirmPassword = 'Passwords do not match';
-            }
+            if (!formData.confirmPassword) newErrors.confirmPassword = 'Confirm your password';
+            else if (formData.password !== formData.confirmPassword) newErrors.confirmPassword = 'Passwords do not match';
         }
-
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-
         if (!validateForm()) return;
-
         setIsLoading(true);
 
         try {
             if (isLogin) {
-                const loginRequest = {
-                    email: formData.email,
-                    password: formData.password
-                };
-                await login(loginRequest);
+                await login({ email: formData.email, password: formData.password });
             } else {
-                const registerRequest = {
-                    email: formData.email,
-                    password: formData.password
-                };
-                await register(registerRequest);
+                await register({ email: formData.email, password: formData.password });
                 setIsLogin(true);
                 setErrors({});
-                setFormData(prev => ({
-                    ...prev,
-                    confirmPassword: ''
-                }));
+                setFormData(prev => ({ ...prev, confirmPassword: '' }));
             }
         } catch (error: any) {
-            console.error('Authentication error:', error);
-            setErrors({ submit: error.message || 'Something went wrong. Please try again.' });
+            setErrors({ submit: error.message || 'Authentication failed' });
         } finally {
             setIsLoading(false);
         }
@@ -111,187 +70,149 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
     const toggleMode = () => {
         setIsLogin(!isLogin);
         setErrors({});
-        setFormData({
-            email: '',
-            password: '',
-            confirmPassword: ''
-        });
-    };
-
-    const handleOverlayClick = (e: React.MouseEvent) => {
-        if (e.target === e.currentTarget) {
-            onClose();
-        }
+        setFormData({ email: '', password: '', confirmPassword: '' });
     };
 
     if (!isOpen) return null;
 
     return (
         <>
-            {/* 遮罩层 - 参考 Cart 的设计 */}
             <div
-                className={`fixed inset-0 bg-black transition-opacity duration-300 ${
-                    isOpen ? 'opacity-40' : 'opacity-0 invisible'
+                className={`fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-300 ${
+                    isOpen ? 'opacity-100 visible' : 'opacity-0 invisible'
                 }`}
                 style={{ zIndex: Z_INDEX.OVERLAY }}
                 onClick={onClose}
             />
 
-            {/* 模态框 - 参考 Cart 的设计 */}
             <div
-                className={`fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[calc(100%-32px)] max-w-[450px] bg-white rounded-2xl shadow-lg flex flex-col transition-all duration-300 ${
+                className={`fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[calc(100%-32px)] max-w-[450px] bg-white rounded-2xl shadow-2xl flex flex-col transition-all duration-300 ${
                     isOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95 invisible'
                 }`}
                 style={{ zIndex: Z_INDEX.MODAL }}
             >
                 {/* Header */}
-                <div className="flex justify-between items-center p-6 border-b border-gray-200 bg-white rounded-t-2xl">
-                    <h2 className="text-2xl font-bold text-gray-900 m-0">
-                        {isLogin ? 'Welcome Back' : 'Create Account'}
+                <div className="flex justify-between items-center p-6 border-b border-gray-100">
+                    <h2 className="text-2xl font-bold text-gray-900 font-['Playfair_Display']">
+                        {isLogin ? 'Welcome Back' : 'Join MythToy'}
                     </h2>
                     <button
-                        className="bg-gray-50 border-none w-10 h-10 rounded-full flex items-center justify-center cursor-pointer transition-all duration-300 text-gray-600 hover:bg-gray-100 hover:scale-110 hover:text-gray-800"
+                        className="p-2 text-gray-400 hover:text-black rounded-full hover:bg-gray-50 transition-colors"
                         onClick={onClose}
                     >
-                        <FontAwesomeIcon icon={faTimes} />
+                        <X size={24} />
                     </button>
                 </div>
 
-                {/* Form Content */}
-                <div className="flex-1 overflow-y-auto p-6">
+                {/* Form */}
+                <div className="p-8">
                     <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-                        <div className="flex flex-col gap-2">
+                        <div className="space-y-1">
                             <div className="relative flex items-center">
-                                <FontAwesomeIcon
-                                    icon={faEnvelope}
-                                    className="absolute left-4 text-gray-600 w-4 h-4"
-                                />
+                                <Mail className="absolute left-4 text-gray-400 w-5 h-5" />
                                 <input
                                     type="email"
                                     name="email"
                                     placeholder="Email Address"
                                     value={formData.email}
                                     onChange={handleInputChange}
-                                    className={`w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-xl text-base transition-all duration-300 bg-white focus:outline-none focus:border-purple-600 focus:ring-3 focus:ring-purple-100 ${
-                                        errors.email ? 'border-red-500' : ''
+                                    className={`w-full pl-12 pr-4 py-3.5 border rounded-xl text-base bg-gray-50 focus:bg-white focus:ring-1 transition-all ${
+                                        errors.email ? 'border-red-500 focus:ring-red-500' : 'border-gray-200 focus:border-black focus:ring-black'
                                     }`}
                                 />
                             </div>
-                            {errors.email && (
-                                <span className="text-red-600 text-sm font-medium">{errors.email}</span>
-                            )}
+                            {errors.email && <span className="text-red-500 text-xs ml-1">{errors.email}</span>}
                         </div>
 
-                        <div className="flex flex-col gap-2">
+                        <div className="space-y-1">
                             <div className="relative flex items-center">
-                                <FontAwesomeIcon
-                                    icon={faLock}
-                                    className="absolute left-4 text-gray-600 w-4 h-4"
-                                />
+                                <Lock className="absolute left-4 text-gray-400 w-5 h-5" />
                                 <input
                                     type={showPassword ? 'text' : 'password'}
                                     name="password"
                                     placeholder="Password"
                                     value={formData.password}
                                     onChange={handleInputChange}
-                                    className={`w-full pl-12 pr-12 py-4 border-2 border-gray-200 rounded-xl text-base transition-all duration-300 bg-white focus:outline-none focus:border-purple-600 focus:ring-3 focus:ring-purple-100 ${
-                                        errors.password ? 'border-red-500' : ''
+                                    className={`w-full pl-12 pr-12 py-3.5 border rounded-xl text-base bg-gray-50 focus:bg-white focus:ring-1 transition-all ${
+                                        errors.password ? 'border-red-500 focus:ring-red-500' : 'border-gray-200 focus:border-black focus:ring-black'
                                     }`}
                                 />
                                 <button
                                     type="button"
-                                    className="absolute right-4 bg-transparent border-none text-gray-600 cursor-pointer p-1 transition-colors duration-300 hover:text-gray-800"
+                                    className="absolute right-4 text-gray-400 hover:text-black transition-colors"
                                     onClick={() => setShowPassword(!showPassword)}
                                 >
-                                    <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} />
+                                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                                 </button>
                             </div>
-                            {errors.password && (
-                                <span className="text-red-600 text-sm font-medium">{errors.password}</span>
-                            )}
+                            {errors.password && <span className="text-red-500 text-xs ml-1">{errors.password}</span>}
                         </div>
 
                         {!isLogin && (
-                            <div className="flex flex-col gap-2">
+                            <div className="space-y-1">
                                 <div className="relative flex items-center">
-                                    <FontAwesomeIcon
-                                        icon={faLock}
-                                        className="absolute left-4 text-gray-600 w-4 h-4"
-                                    />
+                                    <Lock className="absolute left-4 text-gray-400 w-5 h-5" />
                                     <input
                                         type={showConfirmPassword ? 'text' : 'password'}
                                         name="confirmPassword"
                                         placeholder="Confirm Password"
                                         value={formData.confirmPassword}
                                         onChange={handleInputChange}
-                                        className={`w-full pl-12 pr-12 py-4 border-2 border-gray-200 rounded-xl text-base transition-all duration-300 bg-white focus:outline-none focus:border-purple-600 focus:ring-3 focus:ring-purple-100 ${
-                                            errors.confirmPassword ? 'border-red-500' : ''
+                                        className={`w-full pl-12 pr-12 py-3.5 border rounded-xl text-base bg-gray-50 focus:bg-white focus:ring-1 transition-all ${
+                                            errors.confirmPassword ? 'border-red-500 focus:ring-red-500' : 'border-gray-200 focus:border-black focus:ring-black'
                                         }`}
                                     />
                                     <button
                                         type="button"
-                                        className="absolute right-4 bg-transparent border-none text-gray-600 cursor-pointer p-1 transition-colors duration-300 hover:text-gray-800"
+                                        className="absolute right-4 text-gray-400 hover:text-black transition-colors"
                                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                                     >
-                                        <FontAwesomeIcon icon={showConfirmPassword ? faEyeSlash : faEye} />
+                                        {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                                     </button>
                                 </div>
-                                {errors.confirmPassword && (
-                                    <span className="text-red-600 text-sm font-medium">{errors.confirmPassword}</span>
-                                )}
+                                {errors.confirmPassword && <span className="text-red-500 text-xs ml-1">{errors.confirmPassword}</span>}
                             </div>
                         )}
 
                         {isLogin && (
                             <div className="flex justify-between items-center text-sm">
-                                <label className="flex items-center gap-2 cursor-pointer text-gray-600">
-                                    <input type="checkbox" className="hidden" />
-                                    <span className="w-4 h-4 border-2 border-gray-200 rounded flex items-center justify-center transition-all duration-300 peer-checked:bg-purple-600 peer-checked:border-purple-600">
-                                        <span className="text-white text-xs font-bold hidden peer-checked:inline">✓</span>
+                                <label className="flex items-center gap-2 cursor-pointer text-gray-600 select-none">
+                                    <input type="checkbox" className="peer hidden" />
+                                    <span className="w-4 h-4 border border-gray-300 rounded flex items-center justify-center peer-checked:bg-black peer-checked:border-black transition-all">
+                                        <Check size={12} className="text-white hidden peer-checked:block" />
                                     </span>
                                     Remember me
                                 </label>
-                                <button type="button" className="bg-transparent border-none text-purple-600 cursor-pointer font-semibold transition-colors duration-300 hover:text-purple-700">
+                                <button type="button" className="text-gray-500 hover:text-black transition-colors">
                                     Forgot password?
                                 </button>
                             </div>
                         )}
 
                         {errors.submit && (
-                            <div className={`text-center p-3 rounded-lg ${
-                                errors.submit.includes('successful')
-                                    ? 'bg-green-50 border border-green-200 text-green-700'
-                                    : 'bg-red-50 border border-red-200 text-red-700'
-                            }`}>
+                            <div className="bg-red-50 border border-red-100 text-red-600 text-sm p-3 rounded-lg text-center">
                                 {errors.submit}
                             </div>
                         )}
 
                         <button
                             type="submit"
-                            className="bg-purple-600 text-white border-none py-4 rounded-xl text-base font-semibold cursor-pointer transition-all duration-300 flex items-center justify-center gap-2 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-purple-500/40 disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none"
+                            className="w-full bg-black text-white py-4 rounded-xl font-bold text-base hover:bg-gray-800 transition-all disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-gray-200"
                             disabled={isLoading}
                         >
-                            {isLoading ? (
-                                <div className="w-5 h-5 border-2 border-transparent border-t-white rounded-full animate-spin"></div>
-                            ) : (
-                                isLogin ? 'Sign In' : 'Create Account'
-                            )}
+                            {isLoading ? <Loader2 className="animate-spin" /> : (isLogin ? 'Sign In' : 'Create Account')}
                         </button>
                     </form>
 
-                    {/* Footer */}
-                    <div className="text-center mt-6 pt-5 border-t border-gray-200 text-gray-600">
-                        <p>
-                            {isLogin ? "Don't have an account? " : "Already have an account? "}
-                            <button
-                                type="button"
-                                className="bg-transparent border-none text-purple-600 cursor-pointer font-semibold transition-colors duration-300 hover:text-purple-700 hover:underline"
-                                onClick={toggleMode}
-                            >
-                                {isLogin ? 'Sign Up' : 'Sign In'}
-                            </button>
-                        </p>
+                    <div className="text-center mt-6 text-sm text-gray-500">
+                        {isLogin ? "Don't have an account? " : "Already have an account? "}
+                        <button
+                            type="button"
+                            className="text-pink-600 font-semibold hover:text-pink-700 hover:underline transition-colors"
+                            onClick={toggleMode}
+                        >
+                            {isLogin ? 'Sign Up' : 'Sign In'}
+                        </button>
                     </div>
                 </div>
             </div>
