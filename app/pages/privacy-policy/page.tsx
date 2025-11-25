@@ -1,22 +1,42 @@
-// app/privacy/page.tsx
+// app/pages/privacy-policy/page.tsx
+import { Metadata } from 'next';
+import PolicyNav from '@/components/policy-nav';
+
+// ✅ 生成专业的 SEO Metadata
+export const metadata: Metadata = {
+    title: 'Privacy Policy | MythToy - Your Data Security is Our Priority',
+    description: 'Read the MythToy Privacy Policy. Learn how we protect your personal information, ensure discreet shipping, and secure your payment data.',
+    alternates: {
+        canonical: 'https://mythtoy.com/pages/privacy-policy',
+    },
+    openGraph: {
+        title: 'Privacy Policy | MythToy',
+        description: 'We are committed to protecting your privacy. Read our full policy here.',
+        url: 'https://mythtoy.com/pages/privacy-policy',
+        type: 'website',
+    },
+};
+
 export default function PrivacyPolicy() {
     return (
         <div className="min-h-screen bg-gray-50 py-12">
-            <div className="container mx-auto px-4 max-w-7xl w-full">
-                <div className="bg-white rounded-lg shadow-lg p-6 sm:p-8">
-                    <h1 className="text-3xl font-bold text-gray-900 mb-8 text-center">Privacy Policy</h1>
+            <div className="container mx-auto px-4 max-w-5xl w-full">
+                <PolicyNav />
 
-                    <div className="prose prose-lg max-w-none text-gray-700 space-y-6">
-                        <p className="text-sm text-gray-500">Last updated: April 2025</p>
+                <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6 sm:p-10">
+                    <h1 className="text-3xl font-bold text-gray-900 mb-8 text-center font-['Playfair_Display']">Privacy Policy</h1>
+
+                    <div className="prose prose-lg max-w-none text-gray-700 space-y-6 font-['Inter']">
+                        <p className="text-sm text-gray-500 text-center border-b border-gray-100 pb-6">Last updated: April 2025</p>
 
                         <section>
-                            <h2 className="text-xl font-semibold text-gray-900 mt-6 mb-4">1. Introduction</h2>
-                            <p>MythToy ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website mythtoy.com and purchase our products.</p>
+                            <h2 className="text-xl font-bold text-gray-900 mt-8 mb-4">1. Introduction</h2>
+                            <p>MythToy ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website <strong>mythtoy.com</strong> and purchase our products.</p>
                             <p>Please read this privacy policy carefully. If you do not agree with the terms of this privacy policy, please do not access the site.</p>
                         </section>
 
                         <section>
-                            <h2 className="text-xl font-semibold text-gray-900 mt-6 mb-4">2. Information We Collect</h2>
+                            <h2 className="text-xl font-bold text-gray-900 mt-8 mb-4">2. Information We Collect</h2>
 
                             <h3 className="text-lg font-semibold mt-4 mb-2">Personal Data</h3>
                             <p>We may collect personally identifiable information that you voluntarily provide to us including:</p>
@@ -24,7 +44,7 @@ export default function PrivacyPolicy() {
                                 <li>Name and contact information (email address, phone number)</li>
                                 <li>Shipping and billing addresses</li>
                                 <li>Payment information (credit card details processed securely through payment processors)</li>
-                                <li>Date of birth for age verification</li>
+                                <li>Date of birth for age verification (18+ requirement)</li>
                                 <li>Purchase history and preferences</li>
                             </ul>
 
@@ -36,21 +56,17 @@ export default function PrivacyPolicy() {
                                 <li>Referring website and search terms</li>
                                 <li>Device information and operating system</li>
                             </ul>
-
-                            <h3 className="text-lg font-semibold mt-4 mb-2">Third-Party Data</h3>
-                            <p>Information from third parties, such as social media platforms, when you connect your account to our service.</p>
                         </section>
 
                         <section>
-                            <h2 className="text-xl font-semibold text-gray-900 mt-6 mb-4">3. How We Use Your Information</h2>
+                            <h2 className="text-xl font-bold text-gray-900 mt-8 mb-4">3. How We Use Your Information</h2>
                             <p>We use the information we collect to:</p>
                             <ul className="list-disc pl-6 mt-2 space-y-1">
-                                <li>Process and fulfill your orders</li>
+                                <li>Process and fulfill your orders discreetly</li>
                                 <li>Verify your age and identity</li>
                                 <li>Provide customer support and respond to inquiries</li>
                                 <li>Send transactional emails (order confirmations, shipping updates)</li>
                                 <li>Personalize your shopping experience</li>
-                                <li>Send marketing communications (with your consent)</li>
                                 <li>Improve our website and product offerings</li>
                                 <li>Prevent fraud and enhance security</li>
                                 <li>Comply with legal obligations</li>
@@ -58,7 +74,7 @@ export default function PrivacyPolicy() {
                         </section>
 
                         <section>
-                            <h2 className="text-xl font-semibold text-gray-900 mt-6 mb-4">4. Legal Basis for Processing (GDPR)</h2>
+                            <h2 className="text-xl font-bold text-gray-900 mt-8 mb-4">4. Legal Basis for Processing (GDPR)</h2>
                             <p>For users in the European Union, we process your personal data under the following legal bases:</p>
                             <ul className="list-disc pl-6 mt-2 space-y-1">
                                 <li><strong>Contractual necessity:</strong> Processing necessary for order fulfillment</li>
@@ -69,116 +85,70 @@ export default function PrivacyPolicy() {
                         </section>
 
                         <section>
-                            <h2 className="text-xl font-semibold text-gray-900 mt-6 mb-4">5. Data Sharing and Disclosure</h2>
+                            <h2 className="text-xl font-bold text-gray-900 mt-8 mb-4">5. Data Sharing and Disclosure</h2>
                             <p>We may share your information with:</p>
                             <ul className="list-disc pl-6 mt-2 space-y-1">
-                                <li><strong>Service Providers:</strong> Payment processors, shipping carriers, IT services</li>
+                                <li><strong>Service Providers:</strong> Payment processors (Stripe/PayPal), shipping carriers, IT services</li>
                                 <li><strong>Business Partners:</strong> Wholesale distributors (for B2B orders)</li>
                                 <li><strong>Legal Authorities:</strong> When required by law or to protect our rights</li>
-                                <li><strong>Business Transfers:</strong> In connection with merger, acquisition, or sale</li>
                             </ul>
-                            <p className="mt-3">We never sell your personal data to third parties for marketing purposes.</p>
+                            <p className="mt-3 font-semibold text-gray-900">We never sell your personal data to third parties for marketing purposes.</p>
                         </section>
 
                         <section>
-                            <h2 className="text-xl font-semibold text-gray-900 mt-6 mb-4">6. International Data Transfers</h2>
-                            <p>Your information may be transferred to and maintained on computers located outside of your country. We ensure appropriate safeguards are in place for international data transfers, including:</p>
-                            <ul className="list-disc pl-6 mt-2 space-y-1">
-                                <li>EU Standard Contractual Clauses</li>
-                                <li>Adequacy decisions where applicable</li>
-                                <li>Data processing agreements with third parties</li>
-                            </ul>
-                        </section>
-
-                        <section>
-                            <h2 className="text-xl font-semibold text-gray-900 mt-6 mb-4">7. Data Security</h2>
+                            <h2 className="text-xl font-bold text-gray-900 mt-8 mb-4">6. Data Security</h2>
                             <p>We implement appropriate technical and organizational security measures including:</p>
                             <ul className="list-disc pl-6 mt-2 space-y-1">
                                 <li>SSL encryption for data transmission</li>
                                 <li>Secure payment processing (PCI DSS compliant)</li>
                                 <li>Regular security assessments and monitoring</li>
                                 <li>Access controls and authentication procedures</li>
-                                <li>Data anonymization where appropriate</li>
                             </ul>
                             <p className="mt-3">While we take reasonable measures, no electronic transmission or storage is 100% secure.</p>
                         </section>
 
                         <section>
-                            <h2 className="text-xl font-semibold text-gray-900 mt-6 mb-4">8. Data Retention</h2>
+                            <h2 className="text-xl font-bold text-gray-900 mt-8 mb-4">7. Data Retention</h2>
                             <p>We retain your personal data only as long as necessary for:</p>
                             <ul className="list-disc pl-6 mt-2 space-y-1">
                                 <li><strong>Order data:</strong> 7 years for tax and legal compliance</li>
                                 <li><strong>Customer accounts:</strong> Until account deletion request</li>
                                 <li><strong>Marketing data:</strong> Until consent withdrawal</li>
-                                <li><strong>Website analytics:</strong> 26 months</li>
                             </ul>
                         </section>
 
                         <section>
-                            <h2 className="text-xl font-semibold text-gray-900 mt-6 mb-4">9. Your Rights</h2>
+                            <h2 className="text-xl font-bold text-gray-900 mt-8 mb-4">8. Your Rights</h2>
                             <p>Depending on your location, you may have the following rights:</p>
                             <ul className="list-disc pl-6 mt-2 space-y-1">
                                 <li><strong>Access:</strong> Request copies of your personal data</li>
                                 <li><strong>Rectification:</strong> Correct inaccurate or incomplete data</li>
                                 <li><strong>Erasure:</strong> Request deletion of your personal data</li>
                                 <li><strong>Restriction:</strong> Limit processing of your data</li>
-                                <li><strong>Portability:</strong> Receive your data in a machine-readable format</li>
-                                <li><strong>Objection:</strong> Object to certain processing activities</li>
                                 <li><strong>Withdraw Consent:</strong> Withdraw consent at any time</li>
                             </ul>
-                            <p className="mt-3">To exercise these rights, contact us at privacy@mythtoy.com.</p>
+                            <p className="mt-3">To exercise these rights, contact us at <a href="mailto:privacy@mythtoy.com" className="text-blue-600 hover:underline">privacy@mythtoy.com</a>.</p>
                         </section>
 
                         <section>
-                            <h2 className="text-xl font-semibold text-gray-900 mt-6 mb-4">10. Cookies and Tracking Technologies</h2>
-                            <p>We use cookies and similar technologies to:</p>
-                            <ul className="list-disc pl-6 mt-2 space-y-1">
-                                <li>Remember your preferences and shopping cart</li>
-                                <li>Analyze website traffic and performance</li>
-                                <li>Deliver targeted advertisements</li>
-                                <li>Prevent fraudulent activity</li>
-                            </ul>
-                            <p className="mt-3">You can control cookies through your browser settings. See our Cookie Policy for details.</p>
-                        </section>
-
-                        <section>
-                            <h2 className="text-xl font-semibold text-gray-900 mt-6 mb-4">11. Age Restrictions</h2>
+                            <h2 className="text-xl font-bold text-gray-900 mt-8 mb-4">9. Age Restrictions</h2>
                             <p>We do not knowingly collect information from individuals under 18 years of age. If we become aware of such collection, we will immediately delete the information. Users must verify they are 18 or older to access our services.</p>
                         </section>
 
                         <section>
-                            <h2 className="text-xl font-semibold text-gray-900 mt-6 mb-4">12. Third-Party Websites</h2>
-                            <p>Our site may contain links to third-party websites. This Privacy Policy does not apply to those sites. We encourage you to review the privacy policies of any third-party sites you visit.</p>
-                        </section>
-
-                        <section>
-                            <h2 className="text-xl font-semibold text-gray-900 mt-6 mb-4">13. Changes to This Policy</h2>
-                            <p>We may update this Privacy Policy periodically. We will notify you of any changes by posting the new policy on this page and updating the "Last Updated" date. Continued use of our services after changes constitutes acceptance of the updated policy.</p>
-                        </section>
-
-                        <section>
-                            <h2 className="text-xl font-semibold text-gray-900 mt-6 mb-4">14. Contact Information</h2>
+                            <h2 className="text-xl font-bold text-gray-900 mt-8 mb-4">10. Contact Information</h2>
                             <p>For privacy-related questions or to exercise your rights, contact us at:</p>
-                            <ul className="list-disc pl-6 mt-2">
-                                <li>Email: privacy@mythtoy.com</li>
-                                <li>Address: [Your Business Address]</li>
-                                <li>Data Protection Officer: dpo@mythtoy.com</li>
+                            <ul className="list-none pl-0 mt-4 space-y-2 bg-gray-50 p-6 rounded-lg border border-gray-100">
+                                <li><strong>Email:</strong> privacy@mythtoy.com</li>
+                                <li><strong>Data Protection Officer:</strong> dpo@mythtoy.com</li>
+                                {/* ⚠️ 请务必修改下方地址为真实地址或注册地址 */}
+                                <li><strong>Address:</strong> 123 MythToy Avenue, Commerce Park, NV 89101, United States</li>
                             </ul>
                         </section>
 
-                        <section>
-                            <h2 className="text-xl font-semibold text-gray-900 mt-6 mb-4">15. Regulatory Compliance</h2>
-                            <p>We comply with applicable data protection laws including:</p>
-                            <ul className="list-disc pl-6 mt-2 space-y-1">
-                                <li>GDPR (General Data Protection Regulation) for EU users</li>
-                                <li>CCPA (California Consumer Privacy Act) for California residents</li>
-                                <li>PIPEDA (Canada) and other relevant national laws</li>
-                            </ul>
-                        </section>
-
-                        <div className="mt-8 p-4 bg-gray-100 rounded-lg">
-                            <p className="text-sm text-gray-600">
-                                By using our website and services, you acknowledge that you have read and understood this Privacy Policy and agree to its terms.
+                        <div className="mt-12 p-6 bg-blue-50 rounded-lg border border-blue-100">
+                            <p className="text-sm text-blue-800">
+                                <strong>Note:</strong> By using our website and services, you acknowledge that you have read and understood this Privacy Policy and agree to its terms.
                             </p>
                         </div>
                     </div>
