@@ -22,22 +22,15 @@ export default async function SiteLayout({
         rootsData = [];
     }
 
-    // 环境判断
     const gaId = process.env.NODE_ENV === 'production' ? 'G-X0CTZ0DD1Q' : '';
 
-    // Site Logo 结构化数据
     const organizationStructuredData = {
         "@context": "https://schema.org",
         "@type": "Organization",
         "name": "MythToy",
         "url": "https://mythtoy.com",
         "logo": "https://mythtoy.com/logo.png",
-        "description": "Premium adult lifestyle products for exploration, pleasure, and wellness.",
-        // "sameAs": [
-        //     "https://www.facebook.com/yourpage",
-        //     "https://www.instagram.com/yourprofile",
-        //     "https://twitter.com/yourhandle"
-        // ],
+        "description": "Premium adult lifestyle products.",
         "contactPoint": {
             "@type": "ContactPoint",
             "email": "support@mythtoy.com",
@@ -46,24 +39,57 @@ export default async function SiteLayout({
     };
 
     return (
-        // ✅ 修复点：给最外层 div 加上 overflow-x-hidden 和 w-full
-        <div className="relative w-full max-w-full overflow-x-hidden min-h-screen flex flex-col bg-white">
+        // ✅ 核心修复：
+        // 1. max-w-[100vw]: 强制最大宽度为视口宽度
+        // 2. overflow-x-clip: 比 hidden 更强硬的裁剪属性 (Tailwind class)
+        // 3. position: relative: 确保内部绝对定位元素以它为边界
+        <div className="relative flex flex-col min-h-screen w-full max-w-[100vw] overflow-x-clip bg-white">
 
-            {/* ... Scripts 保持不变 ... */}
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationStructuredData) }}
+            />
+
+            {gaId && (
+                <>
+                    <Script
+                        strategy="afterInteractive"
+                        src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`}
+                    />
+                    <Script
+                        id="google-analytics-init"
+                        strategy="afterInteractive"
+                        dangerouslySetInnerHTML={{
+                            __html: `
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+                gtag('config', '${gaId}');
+              `,
+                        }}
+                    />
+                </>
+            )}
 
             <Suspense fallback={null}>
                 <GARouteTracker />
             </Suspense>
 
-            <Navigation rootsData={rootsData} />
-            <Notice />
+            {/* 导航栏区域 */}
+            <div className="w-full relative z-50">
+                <Navigation rootsData={rootsData} />
+                <Notice />
+            </div>
 
-            {/* ✅ 优化：给主内容区加上 flex-grow，确保 Footer 沉底 */}
-            <main className="flex-grow w-full">
+            {/* 主内容区域 - 再次加固 */}
+            <main className="flex-grow w-full max-w-[100vw] overflow-x-clip">
                 {children}
             </main>
 
-            <Footer />
+            {/* Footer */}
+            <div className="w-full max-w-[100vw] overflow-x-clip">
+                <Footer />
+            </div>
         </div>
     );
 }

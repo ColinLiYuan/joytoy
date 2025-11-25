@@ -1,8 +1,5 @@
-// shipping.tsx - 已更新为使用 Tailwind CSS 类名
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import {
-    faSpinner
-} from '@fortawesome/free-solid-svg-icons';
+// app/checkout/shipping.tsx
+import { Loader2, ArrowRight } from 'lucide-react'; // ✅ Lucide
 import { useShipping } from '@/hooks/useShipping';
 import { useState } from 'react';
 
@@ -19,277 +16,115 @@ export default function ShippingForm({
                                          onProceedToPayment,
                                          isCreatingOrder
                                      }: ShippingFormProps) {
-    const {
-        shippingAddress,
-        updateShippingAddress,
-        validateShippingForm
-    } = useShipping({
-        userEmail,
-        userName
-    });
-
+    const { shippingAddress, updateShippingAddress, validateShippingForm } = useShipping({ userEmail, userName });
     const [errors, setErrors] = useState<Record<string, string>>({});
-
-    type ShippingAddressField = keyof typeof shippingAddress;
 
     const validateForm = () => {
         const newErrors: Record<string, string> = {};
-
-        if (!shippingAddress.country.trim()) {
-            newErrors.country = 'Country is required';
-        }
-        if (!shippingAddress.phone.trim()) {
-            newErrors.phone = 'Phone number is required';
-        } else if (!/^[\+]?[1-9][\d]{0,15}$/.test(shippingAddress.phone.replace(/\s/g, ''))) {
-            newErrors.phone = 'Please enter a valid phone number';
-        }
-        if (!shippingAddress.email.trim()) {
-            newErrors.email = 'Email is required';
-        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(shippingAddress.email)) {
-            newErrors.email = 'Please enter a valid email address';
-        }
-        if (!shippingAddress.firstName.trim()) {
-            newErrors.firstName = 'First name is required';
-        }
-        if (!shippingAddress.lastName.trim()) {
-            newErrors.lastName = 'Last name is required';
-        }
-        if (!shippingAddress.addressLine1.trim()) {
-            newErrors.addressLine1 = 'Address is required';
-        }
-        if (!shippingAddress.city.trim()) {
-            newErrors.city = 'City is required';
-        }
-        if (!shippingAddress.province.trim()) {
-            newErrors.province = 'State is required';
-        }
-        if (!shippingAddress.zipCode.trim()) {
-            newErrors.zipCode = 'Zip Code is required';
-        }
-
+        if (!shippingAddress.email.trim()) newErrors.email = 'Email is required';
+        if (!shippingAddress.firstName.trim()) newErrors.firstName = 'First Name is required';
+        if (!shippingAddress.lastName.trim()) newErrors.lastName = 'Last Name is required';
+        if (!shippingAddress.addressLine1.trim()) newErrors.addressLine1 = 'Address is required';
+        if (!shippingAddress.city.trim()) newErrors.city = 'City is required';
+        if (!shippingAddress.province.trim()) newErrors.province = 'State/Province is required';
+        if (!shippingAddress.zipCode.trim()) newErrors.zipCode = 'Zip Code is required';
+        if (!shippingAddress.country.trim()) newErrors.country = 'Country is required';
+        if (!shippingAddress.phone.trim()) newErrors.phone = 'Phone is required';
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
 
-    const scrollToFirstError = () => {
-        setTimeout(() => {
-            const firstErrorField = document.querySelector('.border-red-500');
-            if (firstErrorField) {
-                firstErrorField.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'center'
-                });
-            }
-        }, 100);
-    };
-
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-
-        const isFormValid = validateForm();
-        const isShippingValid = validateShippingForm();
-
-        if (isFormValid && isShippingValid) {
+        if (validateForm() && validateShippingForm()) {
             onProceedToPayment();
         } else {
-            console.log('Form validation failed');
-            scrollToFirstError();
+            document.querySelector('.border-red-500')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
     };
 
-    const handleInputChange = (field: ShippingAddressField, value: string) => {
+    const handleChange = (field: keyof typeof shippingAddress, value: string) => {
         updateShippingAddress(field, value);
-        if (errors[field]) {
-            setErrors(prev => ({ ...prev, [field]: '' }));
-        }
+        if (errors[field]) setErrors(prev => ({ ...prev, [field]: '' }));
     };
 
-    const countries = [
-        // 北美市场
-        "United States",     // 美国
-        "Canada",            // 加拿大
-        "Mexico",            // 墨西哥
+    const inputClass = (error?: string) => `
+        w-full p-4 rounded-xl border text-sm transition-all outline-none
+        ${error
+        ? 'border-red-500 bg-red-50 focus:border-red-500 placeholder:text-red-400'
+        : 'border-gray-200 bg-gray-50 focus:bg-white focus:border-black focus:ring-1 focus:ring-black'
+    }
+    `;
 
-        // 西欧核心市场
-        "United Kingdom",    // 英国
-        "Germany",           // 德国
-        "France",            // 法国
-
-        // 其他西欧/欧元区重要国家
-        "Italy",             // 意大利
-        "Spain",             // 西班牙
-        "Netherlands",       // 荷兰
-        "Belgium",           // 比利时
-        "Sweden",            // 瑞典
-        "Ireland",           // 爱尔兰
-
-        // 北欧国家
-        "Denmark",           // 丹麦
-        "Norway",            // 挪威
-        "Finland",           // 芬兰
-
-        // 大洋洲（通常被归入欧美市场体系）
-        "Australia"          // 澳大利亚
-    ].sort();
+    const countries = ["United States", "United Kingdom", "Canada", "Australia", "Germany", "France", "Italy", "Spain"].sort();
 
     return (
-        <form onSubmit={handleSubmit}>
-            <div className="grid grid-cols-2 gap-4 mb-8">
-                <div className="flex flex-col">
-                    <select
-                        id="country"
-                        value={shippingAddress.country}
-                        onChange={(e) => handleInputChange('country', e.target.value)}
-                        className={`p-3 border rounded-lg text-base transition-colors ${
-                            errors.country ? 'border-red-500' : 'border-gray-300'
-                        } focus:outline-none focus:border-purple-500 focus:ring-3 focus:ring-purple-200`}
-                        required
-                    >
-                        <option value="">Select Country</option>
-                        {countries.map(country => (
-                            <option key={country} value={country}>{country}</option>
-                        ))}
-                    </select>
-                    {errors.country && <span className="text-red-500 text-sm mt-1">{errors.country}</span>}
-                </div>
-
-                <div className="flex flex-col col-span-2">
-                    <input
-                        type="tel"
-                        id="phone"
-                        value={shippingAddress.phone}
-                        onChange={(e) => handleInputChange('phone', e.target.value)}
-                        placeholder="Phone *"
-                        className={`p-3 border rounded-lg text-base transition-colors ${
-                            errors.phone ? 'border-red-500' : 'border-gray-300'
-                        } focus:outline-none focus:border-purple-500 focus:ring-3 focus:ring-purple-200`}
-                        required
-                    />
-                    {errors.phone && <span className="text-red-500 text-sm mt-1">{errors.phone}</span>}
-                </div>
-
-                <div className="flex flex-col col-span-2">
-                    <input
-                        type="email"
-                        id="email"
-                        value={shippingAddress.email}
-                        onChange={(e) => handleInputChange('email', e.target.value)}
-                        placeholder="Email *"
-                        className={`p-3 border rounded-lg text-base transition-colors ${
-                            errors.email ? 'border-red-500' : 'border-gray-300'
-                        } focus:outline-none focus:border-purple-500 focus:ring-3 focus:ring-purple-200`}
-                        required
-                    />
-                    {errors.email && <span className="text-red-500 text-sm mt-1">{errors.email}</span>}
-                </div>
-
-                <div className="flex flex-col">
-                    <input
-                        type="text"
-                        id="firstName"
-                        value={shippingAddress.firstName}
-                        onChange={(e) => handleInputChange('firstName', e.target.value)}
-                        placeholder="First Name *"
-                        className={`p-3 border rounded-lg text-base transition-colors ${
-                            errors.firstName ? 'border-red-500' : 'border-gray-300'
-                        } focus:outline-none focus:border-purple-500 focus:ring-3 focus:ring-purple-200`}
-                        required
-                    />
-                    {errors.firstName && <span className="text-red-500 text-sm mt-1">{errors.firstName}</span>}
-                </div>
-
-                <div className="flex flex-col">
-                    <input
-                        type="text"
-                        id="lastName"
-                        value={shippingAddress.lastName}
-                        onChange={(e) => handleInputChange('lastName', e.target.value)}
-                        placeholder="Last Name *"
-                        className={`p-3 border rounded-lg text-base transition-colors ${
-                            errors.lastName ? 'border-red-500' : 'border-gray-300'
-                        } focus:outline-none focus:border-purple-500 focus:ring-3 focus:ring-purple-200`}
-                        required
-                    />
-                    {errors.lastName && <span className="text-red-500 text-sm mt-1">{errors.lastName}</span>}
-                </div>
-
-                <div className="flex flex-col col-span-2">
-                    <input
-                        type="text"
-                        id="address"
-                        value={shippingAddress.addressLine1}
-                        onChange={(e) => handleInputChange('addressLine1', e.target.value)}
-                        placeholder="Address *"
-                        className={`p-3 border rounded-lg text-base transition-colors ${
-                            errors.addressLine1 ? 'border-red-500' : 'border-gray-300'
-                        } focus:outline-none focus:border-purple-500 focus:ring-3 focus:ring-purple-200`}
-                        required
-                    />
-                    {errors.addressLine1 && <span className="text-red-500 text-sm mt-1">{errors.addressLine1}</span>}
-                </div>
-
-                <div className="flex flex-col">
-                    <input
-                        type="text"
-                        id="city"
-                        value={shippingAddress.city}
-                        onChange={(e) => handleInputChange('city', e.target.value)}
-                        placeholder="City *"
-                        className={`p-3 border rounded-lg text-base transition-colors ${
-                            errors.city ? 'border-red-500' : 'border-gray-300'
-                        } focus:outline-none focus:border-purple-500 focus:ring-3 focus:ring-purple-200`}
-                        required
-                    />
-                    {errors.city && <span className="text-red-500 text-sm mt-1">{errors.city}</span>}
-                </div>
-
-                <div className="flex flex-col">
-                    <input
-                        type="text"
-                        id="state"
-                        value={shippingAddress.province}
-                        onChange={(e) => handleInputChange('province', e.target.value)}
-                        placeholder="State *"
-                        className={`p-3 border rounded-lg text-base transition-colors ${
-                            errors.province ? 'border-red-500' : 'border-gray-300'
-                        } focus:outline-none focus:border-purple-500 focus:ring-3 focus:ring-purple-200`}
-                        required
-                    />
-                    {errors.province && <span className="text-red-500 text-sm mt-1">{errors.province}</span>}
-                </div>
-
-                <div className="flex flex-col">
-                    <input
-                        type="text"
-                        id="zipCode"
-                        value={shippingAddress.zipCode}
-                        onChange={(e) => handleInputChange('zipCode', e.target.value)}
-                        placeholder="Zip Code *"
-                        className={`p-3 border rounded-lg text-base transition-colors ${
-                            errors.zipCode ? 'border-red-500' : 'border-gray-300'
-                        } focus:outline-none focus:border-purple-500 focus:ring-3 focus:ring-purple-200`}
-                        required
-                    />
-                    {errors.zipCode && <span className="text-red-500 text-sm mt-1">{errors.zipCode}</span>}
+        <form onSubmit={handleSubmit} className="space-y-8">
+            {/* Contact */}
+            <div>
+                <h3 className="text-lg font-bold text-gray-900 mb-5 font-['Playfair_Display']">Contact Info</h3>
+                <div className="space-y-4">
+                    <div>
+                        <input type="email" placeholder="Email Address" value={shippingAddress.email} onChange={(e) => handleChange('email', e.target.value)} className={inputClass(errors.email)} />
+                        {errors.email && <p className="text-red-500 text-xs mt-1 ml-1">{errors.email}</p>}
+                    </div>
+                    <div>
+                        <input type="tel" placeholder="Phone Number" value={shippingAddress.phone} onChange={(e) => handleChange('phone', e.target.value)} className={inputClass(errors.phone)} />
+                        {errors.phone && <p className="text-red-500 text-xs mt-1 ml-1">{errors.phone}</p>}
+                    </div>
                 </div>
             </div>
 
-            <div className="flex justify-between items-center mt-8 pt-8 border-t border-gray-200">
-                <button
-                    type="submit"
-                    className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-purple-600 to-purple-700 text-white font-semibold rounded-lg transition-all duration-300 hover:translate-y-[-2px] hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none"
-                    disabled={isCreatingOrder}
-                >
-                    {isCreatingOrder ? (
-                        <>
-                            <FontAwesomeIcon icon={faSpinner} spin />
-                            Processing...
-                        </>
-                    ) : (
-                        'Continue to Payment'
-                    )}
-                </button>
+            {/* Address */}
+            <div>
+                <h3 className="text-lg font-bold text-gray-900 mb-5 font-['Playfair_Display']">Shipping Address</h3>
+                <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <input type="text" placeholder="First Name" value={shippingAddress.firstName} onChange={(e) => handleChange('firstName', e.target.value)} className={inputClass(errors.firstName)} />
+                            {errors.firstName && <p className="text-red-500 text-xs mt-1 ml-1">{errors.firstName}</p>}
+                        </div>
+                        <div>
+                            <input type="text" placeholder="Last Name" value={shippingAddress.lastName} onChange={(e) => handleChange('lastName', e.target.value)} className={inputClass(errors.lastName)} />
+                            {errors.lastName && <p className="text-red-500 text-xs mt-1 ml-1">{errors.lastName}</p>}
+                        </div>
+                    </div>
+
+                    <div>
+                        <select value={shippingAddress.country} onChange={(e) => handleChange('country', e.target.value)} className={`${inputClass(errors.country)} appearance-none`}>
+                            <option value="">Select Country</option>
+                            {countries.map(c => <option key={c} value={c}>{c}</option>)}
+                        </select>
+                        {errors.country && <p className="text-red-500 text-xs mt-1 ml-1">{errors.country}</p>}
+                    </div>
+
+                    <div>
+                        <input type="text" placeholder="Address Line 1" value={shippingAddress.addressLine1} onChange={(e) => handleChange('addressLine1', e.target.value)} className={inputClass(errors.addressLine1)} />
+                        {errors.addressLine1 && <p className="text-red-500 text-xs mt-1 ml-1">{errors.addressLine1}</p>}
+                    </div>
+
+                    <input type="text" placeholder="Apartment, suite, etc. (optional)" value={shippingAddress.addressLine2} onChange={(e) => handleChange('addressLine2', e.target.value)} className={inputClass()} />
+
+                    <div className="grid grid-cols-3 gap-4">
+                        <div className="col-span-1">
+                            <input type="text" placeholder="City" value={shippingAddress.city} onChange={(e) => handleChange('city', e.target.value)} className={inputClass(errors.city)} />
+                            {errors.city && <p className="text-red-500 text-xs mt-1 ml-1">{errors.city}</p>}
+                        </div>
+                        <div className="col-span-1">
+                            <input type="text" placeholder="State" value={shippingAddress.province} onChange={(e) => handleChange('province', e.target.value)} className={inputClass(errors.province)} />
+                            {errors.province && <p className="text-red-500 text-xs mt-1 ml-1">{errors.province}</p>}
+                        </div>
+                        <div className="col-span-1">
+                            <input type="text" placeholder="Zip" value={shippingAddress.zipCode} onChange={(e) => handleChange('zipCode', e.target.value)} className={inputClass(errors.zipCode)} />
+                            {errors.zipCode && <p className="text-red-500 text-xs mt-1 ml-1">{errors.zipCode}</p>}
+                        </div>
+                    </div>
+                </div>
             </div>
+
+            <button type="submit" disabled={isCreatingOrder} className="w-full bg-black text-white py-4 rounded-xl font-bold text-lg hover:bg-gray-800 transition-all shadow-lg hover:shadow-xl disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-8">
+                {isCreatingOrder ? <><Loader2 className="animate-spin" /> Processing...</> : <>Continue to Payment <ArrowRight size={20} /></>}
+            </button>
         </form>
     );
 }

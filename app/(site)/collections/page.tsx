@@ -2,8 +2,10 @@
 import Link from 'next/link';
 import { RootResponse } from '@/types/category';
 import { categoryService } from '@/services/category-service';
-import { ArrowRight, Sparkles } from 'lucide-react'; // ✅ 使用 Lucide
+import { ArrowRight, Sparkles } from 'lucide-react';
 import { Metadata } from 'next';
+import { getProductImageUrl } from '@/lib/image-utils';
+import Image from 'next/image'; // 补上 Image 引入
 
 // SEO Metadata
 export const metadata: Metadata = {
@@ -17,7 +19,6 @@ export const metadata: Metadata = {
     },
 };
 
-// 预定义的渐变色数组，用于给没有图片的分类提供高级背景
 const GRADIENTS = [
     "from-pink-100 to-rose-50",
     "from-purple-100 to-fuchsia-50",
@@ -38,17 +39,26 @@ export default async function CollectionPage() {
         rootsData = [];
     }
 
-    // 过滤掉 best-sellers，因为它通常是专题页
     const filteredRoots = rootsData.filter(root => root.slug !== 'best-sellers');
 
     return (
-        <div className="min-h-screen bg-white">
+        // ✅ 修复1：最外层强制 overflow-hidden，防止任何子元素撑开
+        <div className="min-h-screen bg-white w-full overflow-x-hidden">
+
             {/* Hero Section */}
-            <section className="relative py-20 md:py-28 bg-gray-50 overflow-hidden">
-                {/* 装饰背景 */}
-                <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-white to-gray-50"></div>
-                <div className="absolute right-0 top-0 w-96 h-96 bg-pink-100/40 rounded-full blur-3xl translate-x-1/3 -translate-y-1/2"></div>
-                <div className="absolute left-0 bottom-0 w-96 h-96 bg-purple-100/40 rounded-full blur-3xl -translate-x-1/3 translate-y-1/2"></div>
+            <section className="relative py-20 md:py-28 bg-gray-50 w-full">
+
+                {/* ✅ 修复2：装饰背景层 - 双重锁定 */}
+                {/* 使用 absolute inset-0 + overflow-hidden 确保光晕绝不跑出这个盒子 */}
+                <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                    <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-white to-gray-50"></div>
+
+                    {/* 右上角光晕 - 限制 max-w 避免撑开 */}
+                    <div className="absolute -right-20 -top-20 w-96 h-96 bg-pink-100/40 rounded-full blur-3xl"></div>
+
+                    {/* 左下角光晕 */}
+                    <div className="absolute -left-20 -bottom-20 w-96 h-96 bg-purple-100/40 rounded-full blur-3xl"></div>
+                </div>
 
                 <div className="container mx-auto px-4 max-w-7xl relative z-10 text-center">
                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-pink-50 text-pink-600 text-xs font-bold tracking-widest uppercase mb-6 border border-pink-100">
@@ -94,7 +104,6 @@ export default async function CollectionPage() {
                         {rootCategory.categories && rootCategory.categories.length > 0 ? (
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                                 {rootCategory.categories.map((subcategory, subIndex) => {
-                                    // 获取一个固定的渐变色
                                     const gradientClass = GRADIENTS[(rootIndex + subIndex) % GRADIENTS.length];
 
                                     return (
@@ -105,10 +114,16 @@ export default async function CollectionPage() {
                                         >
                                             {/* Image / Placeholder Container */}
                                             <div className={`relative h-48 overflow-hidden bg-gradient-to-br ${gradientClass} flex items-center justify-center group-hover:opacity-90 transition-opacity`}>
-                                                {/* 这里预留了图片位置，如果有真实图片可以取消注释并替换 */}
-                                                {/* <img src={subcategory.image} alt={subcategory.name} className="w-full h-full object-cover" /> */}
+                                                {/* 这里使用了占位逻辑，如果你有图片字段，请替换注释部分 */}
+                                                {/*
+                                                <Image
+                                                    src={getProductImageUrl('', subcategory.image || '')}
+                                                    alt={subcategory.name}
+                                                    fill
+                                                    className="object-cover"
+                                                />
+                                                */}
 
-                                                {/* 如果没有图片，显示首字母作为装饰 */}
                                                 <span className="text-6xl font-['Playfair_Display'] text-gray-900/10 font-bold select-none group-hover:scale-110 transition-transform duration-500">
                                                     {subcategory.name.charAt(0)}
                                                 </span>
@@ -155,10 +170,13 @@ export default async function CollectionPage() {
                 ))}
             </div>
 
-            {/* Footer CTA - 替换了原来黑乎乎的块，改为更现代的风格 */}
-            <section className="bg-gray-900 text-white py-20 px-4 relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-pink-600 rounded-full mix-blend-overlay filter blur-3xl opacity-20"></div>
-                <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-600 rounded-full mix-blend-overlay filter blur-3xl opacity-20"></div>
+            {/* Footer CTA */}
+            <section className="relative w-full bg-gray-900 text-white py-20 px-4 overflow-hidden">
+                {/* ✅ 修复3：底部光晕也加锁 */}
+                <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                    <div className="absolute -right-20 -top-20 w-64 h-64 bg-pink-600 rounded-full mix-blend-overlay filter blur-3xl opacity-20"></div>
+                    <div className="absolute -left-20 -bottom-20 w-64 h-64 bg-purple-600 rounded-full mix-blend-overlay filter blur-3xl opacity-20"></div>
+                </div>
 
                 <div className="container mx-auto max-w-4xl text-center relative z-10">
                     <h3 className="text-3xl md:text-4xl font-bold mb-6 font-['Playfair_Display']">

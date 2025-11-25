@@ -102,24 +102,15 @@ export default async function HomePage() {
 
     return (
         <>
-            {/* 结构化数据 */}
-            <script
-                type="application/ld+json"
-                dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
-            />
-
-            {/* 客户端年龄验证组件 */}
+            {/* ... scripts ... */}
             <ClientAgeVerification />
 
-            {/* 主内容 */}
-            <div id="main-content">
+            {/* ✅ 修复：移除 id="main-content" 上可能存在的任何 width/padding 类 */}
+            {/* 直接作为一个纯净的容器，或者干脆去掉这个 div，用 Fragment 包裹 */}
+            <div className="w-full max-w-full overflow-x-hidden">
                 <HeroSection />
-
                 <BestSellersSection bestSellers={bestSellers} error={error} />
-
                 <CategoriesSection />
-
-                {/* ✅ 替换了原来那一长串代码 */}
                 <TrustSignals />
             </div>
         </>

@@ -1,17 +1,11 @@
-// app/wishlist/route.tsx
+// app/wishlist/page.tsx
 import Link from 'next/link';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { WishlistResponse } from '@/types/wishlist';
-import {
-    faHeart,
-    faArrowLeft,
-} from '@fortawesome/free-solid-svg-icons';
+import { Heart, ArrowLeft, ShoppingBag } from 'lucide-react'; // ✅ Lucide
 import { wishlistServiceServer } from '@/services/servers/wishlistServiceServer';
 import ProductList from '@/components/product/product-list';
 import { redirect } from 'next/navigation';
-import './wishlist.css';
 
-// 将 WishlistResponse 转换为 ProductResponse 的辅助函数
 const convertToProductResponse = (wishlistItem: WishlistResponse): any => {
     return {
         id: wishlistItem.productId,
@@ -25,10 +19,8 @@ const convertToProductResponse = (wishlistItem: WishlistResponse): any => {
     };
 };
 
-// 清空愿望清单的操作
 async function clearWishlistAction() {
     'use server';
-
     try {
         await wishlistServiceServer.clearWishlist();
         redirect('/wishlist');
@@ -43,8 +35,6 @@ export default async function WishlistPage() {
 
     try {
         const items = await wishlistServiceServer.getWishlist();
-        // console.log('Fetched wishlist items:', items);
-
         wishlistItems = Array.isArray(items) ? items : [];
     } catch (err) {
         console.error('Failed to load wishlist:', err);
@@ -52,96 +42,67 @@ export default async function WishlistPage() {
     }
 
     const products = wishlistItems.map(convertToProductResponse);
-    // console.log('Fetched wishlist items products:', products);
-
-    if (error) {
-        return (
-            <div className="wishlist-container">
-                <div className="container">
-                    <div className="empty-wishlist">
-                        <div className="empty-icon">
-                            <FontAwesomeIcon icon={faHeart} />
-                        </div>
-                        <h2>Error loading wishlist</h2>
-                        <p>{error}</p>
-                        <form action={async () => {
-                            'use server';
-                            // 重新获取数据
-                            return await Promise.resolve();
-                        }}>
-                            <button
-                                type="submit"
-                                className="continue-shopping-btn"
-                                style={{ marginTop: '20px' }}
-                            >
-                                Try Again
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        );
-    }
 
     return (
-        <div className="wishlist-container">
-            <div className="container">
-                {/* 页面头部 */}
-                <div className="wishlist-header">
-                    <div className="breadcrumb">
-                        <Link href="/" className="breadcrumb-link">
-                            <FontAwesomeIcon icon={faArrowLeft} />
-                            Back to Home
+        <div className="min-h-screen bg-white py-12">
+            <div className="container mx-auto px-4 max-w-7xl">
+
+                {/* Header */}
+                <div className="mb-12">
+                    <Link href="/" className="inline-flex items-center text-sm text-gray-500 hover:text-black transition-colors mb-6">
+                        <ArrowLeft size={16} className="mr-2" />
+                        Back to Home
+                    </Link>
+
+                    <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-gray-100 pb-6">
+                        <div>
+                            <div className="flex items-center gap-3 mb-2">
+                                <div className="p-2 bg-pink-50 rounded-full text-pink-600">
+                                    <Heart size={24} />
+                                </div>
+                                <h1 className="text-3xl md:text-4xl font-bold text-gray-900 font-['Playfair_Display']">
+                                    My Wishlist
+                                </h1>
+                            </div>
+                            <p className="text-gray-500">Your favorite picks saved for later</p>
+                        </div>
+
+                        {/* 这里可以放 Clear 按钮，如果需要的话 */}
+                    </div>
+                </div>
+
+                {/* Content */}
+                {error ? (
+                    <div className="text-center py-20 bg-gray-50 rounded-2xl">
+                        <p className="text-red-500 mb-4">{error}</p>
+                        <Link href="/wishlist" className="underline text-gray-900 font-medium">Try refreshing</Link>
+                    </div>
+                ) : wishlistItems.length === 0 ? (
+                    <div className="text-center py-24 bg-gray-50 rounded-3xl border border-dashed border-gray-200">
+                        <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm">
+                            <Heart className="w-10 h-10 text-gray-300" />
+                        </div>
+                        <h2 className="text-2xl font-bold text-gray-900 mb-3">Your wishlist is empty</h2>
+                        <p className="text-gray-500 mb-8">Start adding products you love.</p>
+                        <Link
+                            href="/collections/all"
+                            className="inline-flex items-center bg-black text-white px-8 py-3 rounded-full font-bold hover:bg-gray-900 transition-all hover:-translate-y-1 shadow-lg"
+                        >
+                            <ShoppingBag size={18} className="mr-2" />
+                            Explore Collections
                         </Link>
                     </div>
-
-                    <div className="wishlist-title-section">
-                        <div className="title-with-icon">
-                            <FontAwesomeIcon icon={faHeart} className="title-icon" />
-                            <h1 className="wishlist-title">My Wishlist</h1>
-                        </div>
-                        <p className="wishlist-subtitle">
-                            Your favorite products saved for later
-                        </p>
-                    </div>
-
-                    {wishlistItems.length > 0 && (
-                        <div className="wishlist-actions">
-                            <form action={clearWishlistAction}>
-                                {/*<button*/}
-                                {/*    type="submit"*/}
-                                {/*    className="clear-wishlist-btn"*/}
-                                {/*>*/}
-                                {/*    Clear All*/}
-                                {/*</button>*/}
-                            </form>
-                        </div>
-                    )}
-                </div>
-
-                {/* 使用 ProductList 组件显示愿望清单商品 */}
-                <div className="wishlist-content">
-                    {wishlistItems.length === 0 ? (
-                        <div className="empty-wishlist">
-                            <div className="empty-icon">
-                                <FontAwesomeIcon icon={faHeart} />
-                            </div>
-                            <h2>Your wishlist is empty</h2>
-                            <p>Start adding products you love to your wishlist</p>
-                            <Link href="/collections" className="continue-shopping-btn">
-                                Continue Shopping
-                            </Link>
-                        </div>
-                    ) : (
-                        <ProductList
-                            products={products}
-                            itemsPerPage={12}
-                            totalPages={1}
-                            currentPage={0}
-                            totalProducts={wishlistItems.length}
-                        />
-                    )}
-                </div>
+                ) : (
+                    <ProductList
+                        products={products}
+                        itemsPerPage={12}
+                        totalPages={1}
+                        currentPage={0}
+                        totalProducts={wishlistItems.length}
+                        showSortSelect={false}
+                        showPagination={false}
+                    />
+                )}
             </div>
         </div>
     );

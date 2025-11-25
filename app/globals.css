@@ -4,17 +4,26 @@
 
 html {
     width: 100%;
-    overflow-x: hidden; /* 强制禁止 HTML 层面的横向滚动 */
+    overflow-x: hidden; /* 锁死 HTML */
+    -webkit-overflow-scrolling: touch;
 }
 
 body {
-    width: 100%; /* 不要用 100vw，会算上滚动条宽度导致溢出 */
-    overflow-x: hidden; /* 强制禁止 Body 层面的横向滚动 */
+    width: 100%;
+    max-width: 100%; /* 绝对不要用 100vw */
+    overflow-x: hidden; /* 锁死 Body */
     position: relative;
     margin: 0;
     padding: 0;
-    -webkit-font-smoothing: antialiased;
 }
+
+/* 修复某些容器可能导致的溢出 */
+#main-content, main {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
 
 :root {
     /* 颜色变量 */
