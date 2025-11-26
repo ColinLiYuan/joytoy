@@ -1,3 +1,4 @@
+// components/common/cart.tsx
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -9,7 +10,7 @@ import { Z_INDEX } from '@/lib/constants/z-index';
 import { colorMap } from '@/lib/constants/color-map';
 import Image from 'next/image';
 import { getProductImageUrl } from '@/lib/image-utils';
-import { X, ShoppingBag, Plus, Minus, Loader2, Trash2 } from 'lucide-react'; // ✅ Lucide
+import { X, ShoppingBag, Plus, Minus, Loader2, Trash2 } from 'lucide-react';
 
 interface CartProps {
     isOpen: boolean;
@@ -38,7 +39,7 @@ export default function Cart({ isOpen, onClose }: CartProps) {
                 setIsInitialLoading(false);
             });
         }
-    }, [isOpen, isLoggedIn, getCart]); // Added getCart to dependencies
+    }, [isOpen, isLoggedIn, getCart]);
 
     const handleIncreaseQuantity = async (itemId: number, currentQuantity: number) => {
         setIsUpdating(itemId);
@@ -131,9 +132,9 @@ export default function Cart({ isOpen, onClose }: CartProps) {
 
             {/* Drawer */}
             <div
-                className={`fixed top-0 right-0 w-full max-w-md h-full bg-white shadow-2xl flex flex-col transition-transform duration-300 ease-out ${
+                className={`fixed top-0 right-0 h-full bg-white shadow-2xl flex flex-col transition-transform duration-300 ease-out ${
                     isOpen ? 'translate-x-0' : 'translate-x-full'
-                }`}
+                } w-full sm:w-[450px]`} /* ✅ 修复：PC 端固定宽度 450px */
                 style={{ zIndex: Z_INDEX.DRAWER }}
             >
                 {/* Header */}
@@ -152,7 +153,7 @@ export default function Cart({ isOpen, onClose }: CartProps) {
                 </div>
 
                 {/* Content */}
-                <div className="flex-1 overflow-y-auto p-5">
+                <div className="flex-1 overflow-y-auto p-5 custom-scrollbar">
                     {error && (
                         <div className="bg-red-50 border border-red-100 rounded-lg p-4 text-center mb-4 text-sm text-red-600">
                             <p>Failed to load cart: {error}</p>
@@ -199,7 +200,7 @@ export default function Cart({ isOpen, onClose }: CartProps) {
                             <h4 className="text-lg font-semibold text-gray-900 mb-2">Your bag is empty</h4>
                             <p className="text-gray-500 mb-6">Looks like you haven't added anything yet.</p>
                             <button
-                                className="w-full bg-black text-white py-3 rounded-lg font-semibold hover:bg-gray-800 transition-colors"
+                                className="w-full bg-black text-white py-3 rounded-lg font-bold hover:bg-gray-800 transition-colors"
                                 onClick={onClose}
                             >
                                 Start Shopping

@@ -30,8 +30,8 @@ export default function MainCategory({ rootsData = [] }: MainNaviCategoryProps) 
     if (!rootsData || rootsData.length === 0) return null;
 
     return (
-        <nav className="w-full flex justify-center relative z-50"> {/* ✅ 加上 relative z-50 */}
-            <ul className="flex items-center gap-1 m-0 p-0 list-none">
+        <nav className="w-full flex justify-center h-full relative z-[999]"> {/* 提升层级 */}
+            <ul className="flex items-center gap-1 m-0 p-0 list-none h-full">
                 {rootsData.map((root) => {
                     const isActive = activeCategory === root.slug;
                     const isHovered = expandedCategory === root.slug;
@@ -40,15 +40,15 @@ export default function MainCategory({ rootsData = [] }: MainNaviCategoryProps) 
                     return (
                         <li
                             key={root.slug}
-                            className="relative group h-full flex items-center" // ✅ h-full 确保 hover 区域稳定
+                            className="relative group h-full flex items-center"
                             onMouseEnter={() => setExpandedCategory(root.slug)}
                             onMouseLeave={() => setExpandedCategory(null)}
                         >
                             <Link
                                 href={`/collections/${root.slug}`}
                                 className={`
-                                    relative block px-5 py-3 text-base font-medium tracking-wide transition-colors duration-200
-                                    font-['Playfair_Display']
+                                    relative block px-6 py-3 text-base font-medium tracking-wide transition-colors duration-200
+                                    font-['Playfair_Display'] whitespace-nowrap
                                     ${isActive ? 'text-pink-600' : 'text-gray-800 hover:text-pink-600'}
                                 `}
                             >
@@ -60,12 +60,10 @@ export default function MainCategory({ rootsData = [] }: MainNaviCategoryProps) 
                                 <div
                                     className={`
                                         absolute top-full left-1/2 transform -translate-x-1/2 
-                                        w-72 /* 足够宽 */
                                         bg-white rounded-xl shadow-xl py-3 border border-gray-100
-                                        transition-all duration-200 origin-top
+                                        transition-all duration-200 origin-top min-w-[14rem] w-max
                                         ${isHovered ? 'opacity-100 scale-100 visible' : 'opacity-0 scale-95 invisible'}
                                     `}
-                                    // ✅ 使用最高的 Dropdown 层级
                                     style={{ zIndex: Z_INDEX.DROPDOWN }}
                                 >
                                     {/* 小三角 */}
