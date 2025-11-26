@@ -3,12 +3,21 @@
 
 import dynamic from 'next/dynamic';
 import { BlogResponse } from '@/types/site/blog';
-import { Calendar, User, Clock, Eye, Share2, ThumbsUp } from 'lucide-react';
+import { Calendar, User, Clock, Share2, ThumbsUp } from 'lucide-react';
 
-// 动态导入 MD 渲染器（客户端渲染，防止 Hydration Error）
+// 动态导入 MD 渲染器
 const MDViewer = dynamic(
     () => import('@uiw/react-md-editor').then((mod) => mod.default.Markdown),
-    { ssr: false, loading: () => <div className="h-96 bg-gray-50 animate-pulse rounded-xl"></div> }
+    {
+        ssr: false,
+        loading: () => (
+            <div className="space-y-4 animate-pulse">
+                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                <div className="h-4 bg-gray-200 rounded w-full"></div>
+                <div className="h-4 bg-gray-200 rounded w-5/6"></div>
+            </div>
+        )
+    }
 );
 
 interface BlogContentProps {
@@ -17,8 +26,8 @@ interface BlogContentProps {
 
 export default function BlogContent({ blog }: BlogContentProps) {
 
-    // 计算阅读时间 (粗略估计)
-    const readingTime = Math.max(1, Math.ceil(blog.content.length / 1000));
+    // 简单的阅读时间估算
+    const readingTime = Math.max(1, Math.ceil((blog.content?.length || 0) / 1000));
 
     return (
         <article className="pb-24">
@@ -60,7 +69,8 @@ export default function BlogContent({ blog }: BlogContentProps) {
             {/* Cover Image */}
             {blog.coverImage && (
                 <div className="container mx-auto px-4 max-w-5xl mb-16">
-                    <div className="relative aspect-[21/9] rounded-3xl overflow-hidden shadow-xl">
+                    <div className="relative aspect-[21/9] rounded-3xl overflow-hidden shadow-xl border border-gray-100">
+                        {/* 使用 img 标签避免 next/image 的域名配置问题，或者如果你配置好了可以用 Image */}
                         <img
                             src={blog.coverImage}
                             alt={blog.title}
@@ -72,13 +82,10 @@ export default function BlogContent({ blog }: BlogContentProps) {
 
             {/* Main Content */}
             <div className="container mx-auto px-4 max-w-3xl">
-                <div className="prose prose-lg md:prose-xl prose-stone max-w-none
-                    prose-headings:font-['Playfair_Display'] prose-headings:font-bold
-                    prose-a:text-pink-600 prose-a:no-underline hover:prose-a:underline
-                    prose-img:rounded-2xl prose-img:shadow-lg
-                    prose-blockquote:border-l-4 prose-blockquote:border-pink-500 prose-blockquote:bg-pink-50/30 prose-blockquote:py-2 prose-blockquote:px-6 prose-blockquote:rounded-r-lg prose-blockquote:not-italic
-                ">
-                    <MDViewer source={blog.content} />
+                {/* ✅ 核心修复：移除内联 Style，依靠 globals.css */}
+                <div className="prose prose-lg md:prose-xl prose-stone max-w-none">
+                    {/* 这里的 source 即使有错，通常只会渲染乱码，不会导致 SyntaxError */}
+                    <MDViewer source={blog.content || ''} />
                 </div>
 
                 {/* Tags & Share */}
@@ -108,21 +115,6 @@ export default function BlogContent({ blog }: BlogContentProps) {
                     </div>
                 </div>
             </div>
-
-            {/* Custom Styles for Markdown */}
-            <style jsx global>{`
-                .wmde-markdown {
-                    background: transparent !important;
-                    color: #374151 !important; /* text-gray-700 */
-                }
-                /* 修复列表样式 */
-                .wmde-markdown ul { list-style-type: disc !important; padding-left: 1.5em !important; }
-                .wmde-markdown ol { list-style-type: decimal !important; padding-left: 1.5em !important; }
-                /* 修复表格 */
-                .wmde-markdown table { width: 100%; border-collapse: collapse; margin: 2em 0; }
-                .wmde-markdown th { text-align: left; padding: 0.75em; background: #f9fafb; border-bottom: 2px solid #e5e7eb; }
-                .wmde-markdown td { padding: 0.75em; border-bottom: 1px solid #e5e7eb; }
-            `}</style>
         </article>
     );
 }
