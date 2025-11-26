@@ -351,57 +351,6 @@ export default function OrderDetailPage() {
                             </div>
                         </div>
 
-                        {/* Shipping Information
-                        <div className="bg-white rounded-lg shadow-sm p-6">
-                            <h2 className="text-lg font-semibold text-gray-900 mb-4">Shipping Information</h2>
-                            <div className="space-y-3">
-                                <div className="flex items-start gap-3">
-                                    <FontAwesomeIcon icon={faUser} className="w-4 h-4 text-gray-400 mt-1" />
-                                    <div>
-                                        <p className="font-medium text-gray-900">{order.recipientName}</p>
-                                    </div>
-                                </div>
-                                <div className="flex items-start gap-3">
-                                    <FontAwesomeIcon icon={faPhone} className="w-4 h-4 text-gray-400 mt-1" />
-                                    <div>
-                                        <p className="text-gray-600">{order.recipientPhone}</p>
-                                    </div>
-                                </div>
-                                <div className="flex items-start gap-3">
-                                    <FontAwesomeIcon icon={faMapMarkerAlt} className="w-4 h-4 text-gray-400 mt-1" />
-                                    <div>
-                                        <p className="text-gray-600 whitespace-pre-line">{order.shippingAddress}</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>*/}
-
-                        {/* Payment & Shipping
-                        <div className="bg-white rounded-lg shadow-sm p-6">
-                            <h2 className="text-lg font-semibold text-gray-900 mb-4">Payment & Shipping</h2>
-                            <div className="space-y-4">
-                                <div>
-                                    <h3 className="font-medium text-gray-900 mb-2">Payment Method</h3>
-                                    <div className="flex items-center gap-2">
-                                        <FontAwesomeIcon icon={faCreditCard} className="w-4 h-4 text-gray-400" />
-                                        <span className="text-gray-600 capitalize">
-                                            {order.paymentMethod.toLowerCase().replace('_', ' ')}
-                                        </span>
-                                    </div>
-                                    <p className="text-sm text-gray-500 mt-1">
-                                        Status: <span className="capitalize">{order.paymentStatus}</span>
-                                    </p>
-                                </div>
-                                <div>
-                                    <h3 className="font-medium text-gray-900 mb-2">Shipping Method</h3>
-                                    <div className="flex items-center gap-2">
-                                        <FontAwesomeIcon icon={faTruck} className="w-4 h-4 text-gray-400" />
-                                        <span className="text-gray-600">{order.shippingMethod}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>*/}
-
                         {/* Actions */}
                         <div className="bg-white rounded-lg shadow-sm p-6">
                             <h2 className="text-lg font-semibold text-gray-900 mb-4">Order Actions</h2>

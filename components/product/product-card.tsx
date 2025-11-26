@@ -74,7 +74,6 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
                 color: selectedSku.color,
                 skuId: selectedSku.id
             });
-            // showToast('success', 'Added', 'Product added to bag');
         } catch (error) {
             console.error(error);
             showToast('error', 'Error', 'Failed to add to cart');
@@ -110,8 +109,10 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
                     currentPrice: product.currentPrice,
                     slug: product.slug
                 });
+                showToast('success', 'Added', 'Added to wishlist');
             } else {
                 await wishlistService.removeItemFromWishlist({ userId: userInfo.id, productId: product.id });
+                showToast('success', 'Removed', 'Removed from wishlist');
             }
             onWishlistUpdate?.();
         } catch (error) {

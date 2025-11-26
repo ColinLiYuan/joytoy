@@ -1,13 +1,8 @@
-// components/toast.tsx
+// components/common/toast.tsx
 'use client';
 
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import {
-    faCheckCircle,
-    faExclamationCircle,
-    faInfoCircle
-} from '@fortawesome/free-solid-svg-icons';
 import { Z_INDEX } from '@/lib/constants/z-index';
+import { CheckCircle2, AlertCircle, Info, X } from 'lucide-react'; // ✅ 替换为 Lucide
 
 export interface ToastMessage {
     id: number;
@@ -22,66 +17,63 @@ interface ToastProps {
 }
 
 export default function Toast({ toasts, onRemoveToast }: ToastProps) {
-    const getToastIcon = (type: string) => {
-        switch (type) {
-            case 'success': return faCheckCircle;
-            case 'error': return faExclamationCircle;
-            case 'warning': return faInfoCircle;
-            default: return faInfoCircle;
-        }
-    };
 
-    const getToastStyles = (type: string) => {
-        const baseStyles = "flex items-start p-3 rounded-lg shadow-lg cursor-pointer transition-all duration-300 min-w-[300px] max-w-[400px] hover:-translate-x-1 animate-in slide-in-from-right";
-
+    const getIcon = (type: string) => {
         switch (type) {
-            case 'success':
-                return `${baseStyles} bg-green-50 border border-green-300 text-green-600`;
-            case 'error':
-                return `${baseStyles} bg-red-50 border border-red-300 text-red-600`;
-            case 'warning':
-                return `${baseStyles} bg-yellow-50 border border-yellow-300 text-yellow-600`;
-            default:
-                return `${baseStyles} bg-blue-50 border border-blue-300 text-blue-600`;
-        }
-    };
-
-    const getIconStyles = (type: string) => {
-        switch (type) {
-            case 'success': return "text-green-600";
-            case 'error': return "text-red-600";
-            case 'warning': return "text-yellow-600";
-            default: return "text-blue-600";
+            case 'success': return <CheckCircle2 className="w-5 h-5 text-green-500" />;
+            case 'error': return <AlertCircle className="w-5 h-5 text-red-500" />;
+            case 'warning': return <AlertCircle className="w-5 h-5 text-amber-500" />;
+            default: return <Info className="w-5 h-5 text-blue-500" />;
         }
     };
 
     return (
         <div
-            className="fixed top-5 right-5 flex flex-col gap-2 max-w-[400px]"
+            className="fixed top-4 right-4 z-[9999] flex flex-col gap-3 w-full max-w-sm pointer-events-none"
             style={{ zIndex: Z_INDEX.TOAST }}
         >
             {toasts.map(toast => (
                 <div
                     key={toast.id}
-                    className={getToastStyles(toast.type)}
                     onClick={() => onRemoveToast(toast.id)}
+                    // ✅ 核心设计升级：
+                    // 1. bg-white: 纯白背景，去大色块
+                    // 2. shadow-xl: 深邃阴影，增加悬浮感
+                    // 3. border-gray-100: 极细边框，增加精致度
+                    // 4. pointer-events-auto: 恢复点击
+                    className={`
+                        pointer-events-auto
+                        flex items-start gap-3 p-4
+                        bg-white rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-gray-100
+                        transform transition-all duration-300 ease-out
+                        animate-in slide-in-from-right-10 fade-in
+                        cursor-pointer hover:translate-x-[-4px]
+                    `}
                 >
-                    <FontAwesomeIcon
-                        icon={getToastIcon(toast.type)}
-                        className={`mr-3 text-lg shrink-0 mt-0.5 ${getIconStyles(toast.type)}`}
-                    />
-                    <div className="flex-1">
-                        <div className="font-semibold text-sm mb-1">{toast.title}</div>
-                        <div className="text-sm opacity-90 leading-relaxed">{toast.message}</div>
+                    {/* 图标区域 */}
+                    <div className="flex-shrink-0 mt-0.5">
+                        {getIcon(toast.type)}
                     </div>
+
+                    {/* 文字区域 */}
+                    <div className="flex-1 min-w-0">
+                        <h4 className="text-sm font-bold text-gray-900 leading-tight mb-1">
+                            {toast.title}
+                        </h4>
+                        <p className="text-sm text-gray-500 leading-relaxed">
+                            {toast.message}
+                        </p>
+                    </div>
+
+                    {/* 关闭按钮 */}
                     <button
-                        className="bg-transparent border-none text-lg cursor-pointer opacity-70 ml-2 p-0 w-5 h-5 flex items-center justify-center rounded-full transition-colors hover:opacity-100 hover:bg-black hover:bg-opacity-10"
+                        className="flex-shrink-0 text-gray-400 hover:text-gray-900 transition-colors p-1 rounded-md hover:bg-gray-50"
                         onClick={(e) => {
                             e.stopPropagation();
                             onRemoveToast(toast.id);
                         }}
                     >
-                        ×
+                        <X size={16} />
                     </button>
                 </div>
             ))}

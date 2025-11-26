@@ -1,18 +1,6 @@
 // app/route.tsx - 服务端组件
 import { ProductResponse } from '@/types/product';
 import { productServiceServer } from '@/services/servers/product-service-server';
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faWhatsapp,
-  faFacebookF,
-  faInstagram
-} from '@fortawesome/free-brands-svg-icons';
-import {
-  faLock,
-  faCertificate,
-  faShieldAlt,
-  faUserMd
-} from '@fortawesome/free-solid-svg-icons';
 import ClientAgeVerification from '@/components/common/client-age-verification';
 import HeroSection from '@/components/home/hero-section';
 import BestSellersSection from '@/components/home/best-sellers-section';
