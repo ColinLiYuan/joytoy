@@ -71,7 +71,6 @@ export default function ProductDetailClient({
                 color: selectedSku.color,
                 skuId: selectedSku.id
             });
-            showToast('success', 'Added to Bag', `${product.title} is in your bag.`);
         } catch (error) {
             console.error(error);
             showToast('error', 'Error', 'Failed to add product.');
