@@ -1,11 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { User, ShoppingBag, Heart, Search, LogOut, Package, Settings } from 'lucide-react'; // ✅ Lucide
+import { User, ShoppingBag, Heart, Search, LogOut, Package, Settings } from 'lucide-react';
 import { useCartStore } from '@/stores/useCartStore';
 import { useState, useEffect, useRef } from 'react';
 import { Z_INDEX } from '@/lib/constants/z-index';
-import SearchModal from '@/components/navigation/search-modal'; // ✅ 引入搜索
+import SearchModal from '@/components/navigation/search-modal';
 
 interface UserActionsProps {
     isLoggedIn: boolean;
@@ -25,6 +25,7 @@ export default function UserActions({
     const [isMounted, setIsMounted] = useState(false);
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
     const [isSearchOpen, setIsSearchOpen] = useState(false);
+
     const userMenuRef = useRef<HTMLDivElement>(null);
     const totalItems = useCartStore(state => state.totalItems);
 
@@ -42,7 +43,7 @@ export default function UserActions({
     }, []);
 
     return (
-        <div className="flex items-center gap-1 md:gap-3">
+        <div className="flex items-center gap-1 md:gap-3 relative z-50">
 
             {/* 1. Search Button */}
             <button
@@ -82,62 +83,81 @@ export default function UserActions({
                 )}
             </button>
 
-            {/* 4. User Menu (Dropdown) */}
-            <div
-                className="relative"
-                ref={userMenuRef}
-                onMouseEnter={() => setIsUserMenuOpen(true)}
-                onMouseLeave={() => setIsUserMenuOpen(false)}
-            >
+            {/* 4. User Menu Container (Relative Parent) */}
+            <div className="relative" ref={userMenuRef}>
+                {/* Avatar Button */}
                 <button
-                    className="w-10 h-10 flex items-center justify-center text-gray-700 hover:text-black rounded-full hover:bg-gray-100 transition-all duration-200"
-                    onClick={isLoggedIn ? undefined : onAuthModalOpen}
+                    className={`w-10 h-10 flex items-center justify-center rounded-full transition-all duration-200 border ${isUserMenuOpen ? 'bg-black text-white border-black' : 'border-transparent text-gray-700 hover:text-black hover:bg-gray-100'}`}
+                    onClick={() => isLoggedIn ? setIsUserMenuOpen(!isUserMenuOpen) : onAuthModalOpen()}
                     aria-label="Account"
                 >
                     <User size={22} strokeWidth={1.5} />
                 </button>
 
-                {/* Dropdown Menu */}
+                {/* Dropdown Menu (Absolute Position) */}
                 {isLoggedIn && (
                     <div
-                        className={`absolute top-full right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-100 py-2 transition-all duration-200 origin-top-right ${
-                            isUserMenuOpen ? 'opacity-100 scale-100 visible' : 'opacity-0 scale-95 invisible'
-                        }`}
-                        style={{ zIndex: Z_INDEX.DROPDOWN }} // ✅ 60，高于导航栏
+                        className={`
+                            absolute top-full right-0 mt-2 
+                            /* ✅ 核心修复： */
+                            /* !w-60: 强制宽度 240px */
+                            /* !max-w-none: 强制解除父级宽度限制 */
+                            !w-60 !max-w-none
+                            bg-white rounded-xl shadow-xl border border-gray-100 py-2 
+                            origin-top-right transition-all duration-200
+                            ${isUserMenuOpen ? 'opacity-100 scale-100 visible' : 'opacity-0 scale-95 invisible'}
+                        `}
+                        // ✅ Z-Index 60: 保证浮在导航栏(50)之上
+                        style={{ zIndex: Z_INDEX.DROPDOWN }}
                     >
-                        {/* 小三角 */}
+                        {/* 小三角 - 完美对齐头像中心 */}
                         <div className="absolute -top-1.5 right-3.5 w-3 h-3 bg-white border-t border-l border-gray-100 transform rotate-45"></div>
 
                         <div className="relative bg-white rounded-xl overflow-hidden">
-                            <div className="px-4 py-3 border-b border-gray-50 bg-gray-50/50">
-                                <p className="text-xs text-gray-500">Signed in as</p>
-                                <p className="text-sm font-bold text-gray-900 truncate">My Account</p>
+                            <div className="px-5 py-3 border-b border-gray-50 bg-gray-50/50">
+                                <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Account</p>
                             </div>
 
-                            <Link href="/orders" className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-black transition-colors">
-                                <Package size={16} /> My Orders
-                            </Link>
-                            <Link href="/wishlist" className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-pink-600 transition-colors">
-                                <Heart size={16} /> Wishlist
-                            </Link>
-                            <Link href="/pages/about" className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-black transition-colors">
-                                <Settings size={16} /> Support
-                            </Link>
+                            <div className="py-1">
+                                <Link
+                                    href="/orders"
+                                    className="flex items-center gap-3 px-5 py-3 text-sm text-gray-700 hover:bg-pink-50 hover:text-pink-600 transition-colors whitespace-nowrap"
+                                    onClick={() => setIsUserMenuOpen(false)}
+                                >
+                                    <Package size={18} strokeWidth={1.5} /> <span>My Orders</span>
+                                </Link>
+                                <Link
+                                    href="/wishlist"
+                                    className="flex items-center gap-3 px-5 py-3 text-sm text-gray-700 hover:bg-pink-50 hover:text-pink-600 transition-colors whitespace-nowrap"
+                                    onClick={() => setIsUserMenuOpen(false)}
+                                >
+                                    <Heart size={18} strokeWidth={1.5} /> <span>Wishlist</span>
+                                </Link>
+                                <Link
+                                    href="/pages/about"
+                                    className="flex items-center gap-3 px-5 py-3 text-sm text-gray-700 hover:bg-pink-50 hover:text-pink-600 transition-colors whitespace-nowrap"
+                                    onClick={() => setIsUserMenuOpen(false)}
+                                >
+                                    <Settings size={18} strokeWidth={1.5} /> <span>Support</span>
+                                </Link>
+                            </div>
 
                             <div className="h-px bg-gray-100 my-1"></div>
 
                             <button
-                                className="w-full text-left flex items-center gap-3 px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                                onClick={onLogout}
+                                className="w-full text-left flex items-center gap-3 px-5 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors whitespace-nowrap"
+                                onClick={() => {
+                                    setIsUserMenuOpen(false);
+                                    onLogout();
+                                }}
                             >
-                                <LogOut size={16} /> Log Out
+                                <LogOut size={18} strokeWidth={1.5} /> <span>Log Out</span>
                             </button>
                         </div>
                     </div>
                 )}
             </div>
 
-            {/* 5. Search Modal */}
             <SearchModal
                 isOpen={isSearchOpen}
                 onClose={() => setIsSearchOpen(false)}
