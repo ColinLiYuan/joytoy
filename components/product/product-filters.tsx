@@ -2,10 +2,30 @@
 'use client';
 
 import { useState } from 'react';
-import { ChevronDown } from 'lucide-react'; // ✅ Lucide
+import { ChevronDown } from 'lucide-react';
 
-// ... (Interfaces and PRICE_RANGES keep same)
-// 为了节省篇幅，这里只展示修改后的 render 部分，逻辑保持不变
+export interface FilterState {
+    priceRange: [number, number] | null;
+    priceRanges: string[];
+    colors: string[];
+    features: string[];
+    materials: string[];
+}
+
+interface ProductFiltersProps {
+    filters: {
+        priceRange: [number, number] | null;
+        colors: string[];
+        features: string[];
+        materials: string[];
+    };
+    onFiltersChange: (filters: any) => void;
+    availableFilters: {
+        colors: string[];
+        features: string[];
+        materials: string[];
+    };
+}
 
 // Predefined price ranges with actual min/max values
 const PRICE_RANGES = [
@@ -28,7 +48,6 @@ export default function ProductFilters({ filters, onFiltersChange, availableFilt
         setExpandedGroups(prev => ({ ...prev, [group]: !prev[group] }));
     };
 
-    // ... Handlers keep same ...
     const handlePriceRangeChange = (range: typeof PRICE_RANGES[0]) => {
         const newPriceRange = filters.priceRange?.[0] === range.min && filters.priceRange?.[1] === range.max
             ? null

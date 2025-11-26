@@ -198,15 +198,15 @@ export default function ProductList({
                         className={`fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-300 ${
                             showFilters ? 'opacity-100 visible' : 'opacity-0 invisible'
                         }`}
-                        style={{ zIndex: Z_INDEX.OVERLAY }} // 100
+                        style={{ zIndex: Z_INDEX.OVERLAY }}
                         onClick={handleCloseFilters}
                     />
 
                     <div
-                        className={`fixed right-0 top-0 bottom-0 bg-white shadow-2xl w-full max-w-sm lg:max-w-md transition-transform duration-300 ${
+                        className={`fixed right-0 top-0 bottom-0 bg-white shadow-2xl w-full max-w-xs sm:max-w-sm transition-transform duration-300 ease-in-out ${ // ✅ 加上 ease-in-out
                             showFilters ? 'translate-x-0' : 'translate-x-full'
                         }`}
-                        style={{ zIndex: Z_INDEX.DRAWER }} // 110
+                        style={{ zIndex: Z_INDEX.DRAWER }}
                     >
                         <div className="flex flex-col h-full">
                             {/* Header */}

@@ -52,11 +52,16 @@ function parsePriceRange(priceRangeParam: string | string[] | undefined): [numbe
 
 function extractFilterArray(data: any): string[] {
     if (!data) return [];
-    if (Array.isArray(data)) {
-        if (data.length > 0 && data[0]?.keyWord && Array.isArray(data[0].keyWord)) return data[0].keyWord;
-        if (data.length > 0 && typeof data[0] === 'string') return data;
+
+    if (Array.isArray(data) && data.length > 0 && typeof data[0] === 'string') {
+        return data;
     }
-    return data?.keyWord || [];
+
+    if (Array.isArray(data) && data.length > 0 && data[0]?.keyWord) {
+        return data.map(item => item.keyWord);
+    }
+
+    return [];
 }
 
 export default async function ProductListPage({ params, searchParams }: PageProps) {

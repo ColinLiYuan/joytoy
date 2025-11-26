@@ -7,6 +7,7 @@ class ProductFilterServiceServer {
         try {
             if (type) {
                 const filters = getFiltersByType(type);
+                // console.log('getFiltersByType : ', filters)
 
                 if (type === 'features') {
                     // features返回完整对象

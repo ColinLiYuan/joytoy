@@ -132,9 +132,9 @@ export default function Cart({ isOpen, onClose }: CartProps) {
 
             {/* Drawer */}
             <div
-                className={`fixed top-0 right-0 h-full bg-white shadow-2xl flex flex-col transition-transform duration-300 ease-out ${
+                className={`fixed top-0 right-0 h-full bg-white shadow-2xl flex flex-col transition-transform duration-300 ease-in-out ${ // ✅ 统一动画曲线
                     isOpen ? 'translate-x-0' : 'translate-x-full'
-                } w-full sm:w-[450px]`} /* ✅ 修复：PC 端固定宽度 450px */
+                } w-full sm:w-[450px]`}
                 style={{ zIndex: Z_INDEX.DRAWER }}
             >
                 {/* Header */}

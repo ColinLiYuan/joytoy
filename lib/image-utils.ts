@@ -51,12 +51,12 @@ export const getProductImageUrl = (baseUrl: string | undefined, imagePath: strin
     const url = getSafeImageUrl(fullUrl);
 
     if (process.env.NODE_ENV === 'development') {
-        console.log('getProductImageUrl called with:', {
-            baseUrl,
-            imagePath,
-            effectiveBaseUrl,
-            result: url
-        });
+        // console.log('getProductImageUrl called with:', {
+        //     baseUrl,
+        //     imagePath,
+        //     effectiveBaseUrl,
+        //     result: url
+        // });
     }
     return url;
 };
