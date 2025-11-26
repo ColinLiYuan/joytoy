@@ -1,13 +1,14 @@
-// app/blog/[slug]/BlogContent.tsx
+// app/blog/[slug]/blog-content.tsx
 'use client';
 
 import dynamic from 'next/dynamic';
 import { BlogResponse } from '@/types/site/blog';
+import { Calendar, User, Clock, Eye, Share2, ThumbsUp } from 'lucide-react';
 
-// 动态导入 MD 渲染器（在客户端渲染）
+// 动态导入 MD 渲染器（客户端渲染，防止 Hydration Error）
 const MDViewer = dynamic(
     () => import('@uiw/react-md-editor').then((mod) => mod.default.Markdown),
-    { ssr: false }
+    { ssr: false, loading: () => <div className="h-96 bg-gray-50 animate-pulse rounded-xl"></div> }
 );
 
 interface BlogContentProps {
@@ -15,146 +16,113 @@ interface BlogContentProps {
 }
 
 export default function BlogContent({ blog }: BlogContentProps) {
+
+    // 计算阅读时间 (粗略估计)
+    const readingTime = Math.max(1, Math.ceil(blog.content.length / 1000));
+
     return (
-        <div className="min-h-screen bg-white">
-            {/* 博客头部 */}
-            <div className="bg-gray-50 border-b">
-                <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-                    <h1 className="text-4xl font-bold text-gray-900 mb-4">{blog.title}</h1>
-
-                    {/* 副标题 */}
-                    {blog.subTitle && (
-                        <h2 className="text-xl text-gray-600 mb-6 font-light italic">
-                            {blog.subTitle}
-                        </h2>
-                    )}
-
-                    <div className="flex items-center text-gray-600 space-x-4 flex-wrap">
-                        <span>By {blog.author}</span>
-                        <span>•</span>
-                        <span>{new Date(blog.createdAt).toLocaleDateString('en-US')}</span>
-                        <span>•</span>
-                        <span>Views: {blog.viewCount}</span>
-                        <span>•</span>
-                        <span>Likes: {blog.likeCount}</span>
-                    </div>
-
-                    {/* 标签 */}
-                    {blog.tags && blog.tags.length > 0 && (
-                        <div className="flex flex-wrap gap-2 mt-4">
-                            {blog.tags.map((tag, index) => (
-                                <span
-                                    key={index}
-                                    className="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm font-medium"
-                                >
-                  {tag}
-                </span>
-                            ))}
-                        </div>
-                    )}
+        <article className="pb-24">
+            {/* Article Header */}
+            <header className="container mx-auto px-4 max-w-4xl mb-12 text-center">
+                <div className="flex flex-wrap items-center justify-center gap-4 text-sm text-gray-500 mb-6 font-medium uppercase tracking-wider">
+                    <span className="flex items-center gap-1.5">
+                        <Calendar size={14} />
+                        {new Date(blog.createdAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                    </span>
+                    <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
+                    <span className="flex items-center gap-1.5">
+                        <Clock size={14} />
+                        {readingTime} min read
+                    </span>
                 </div>
-            </div>
 
-            {/* 博客内容 */}
-            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                {/* 摘要 */}
-                {blog.summary && (
-                    <div className="bg-purple-50 border-l-4 border-purple-500 p-6 mb-8 rounded-r-lg">
-                        <p className="text-gray-700 text-lg leading-relaxed">{blog.summary}</p>
-                    </div>
+                <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-6 font-['Playfair_Display'] leading-tight">
+                    {blog.title}
+                </h1>
+
+                {blog.subTitle && (
+                    <p className="text-xl text-gray-500 max-w-2xl mx-auto leading-relaxed italic mb-8 font-serif">
+                        {blog.subTitle}
+                    </p>
                 )}
 
-                {/* 使用 MDViewer 渲染 Markdown 内容 */}
-                <div className="prose prose-lg max-w-none">
+                <div className="flex items-center justify-center gap-3">
+                    <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-gray-400">
+                        <User size={20} />
+                    </div>
+                    <div className="text-left">
+                        <p className="text-sm font-bold text-gray-900">{blog.author || 'MythToy Editorial'}</p>
+                        <p className="text-xs text-gray-500">Wellness Expert</p>
+                    </div>
+                </div>
+            </header>
+
+            {/* Cover Image */}
+            {blog.coverImage && (
+                <div className="container mx-auto px-4 max-w-5xl mb-16">
+                    <div className="relative aspect-[21/9] rounded-3xl overflow-hidden shadow-xl">
+                        <img
+                            src={blog.coverImage}
+                            alt={blog.title}
+                            className="w-full h-full object-cover"
+                        />
+                    </div>
+                </div>
+            )}
+
+            {/* Main Content */}
+            <div className="container mx-auto px-4 max-w-3xl">
+                <div className="prose prose-lg md:prose-xl prose-stone max-w-none
+                    prose-headings:font-['Playfair_Display'] prose-headings:font-bold
+                    prose-a:text-pink-600 prose-a:no-underline hover:prose-a:underline
+                    prose-img:rounded-2xl prose-img:shadow-lg
+                    prose-blockquote:border-l-4 prose-blockquote:border-pink-500 prose-blockquote:bg-pink-50/30 prose-blockquote:py-2 prose-blockquote:px-6 prose-blockquote:rounded-r-lg prose-blockquote:not-italic
+                ">
                     <MDViewer source={blog.content} />
                 </div>
 
-                {/* 文章底部信息 */}
-                <div className="mt-12 pt-8 border-t border-gray-200">
-                    <div className="flex justify-between items-center text-sm text-gray-500 flex-wrap gap-4">
-                        <div>
-                            <span>Published: {new Date(blog.createdAt).toLocaleDateString('en-US')}</span>
-                            {blog.updatedAt !== blog.createdAt && (
-                                <span className="ml-4">
-                  Updated: {new Date(blog.updatedAt).toLocaleDateString('en-US')}
-                </span>
-                            )}
+                {/* Tags & Share */}
+                <div className="mt-16 pt-8 border-t border-gray-100 flex flex-col md:flex-row justify-between items-center gap-6">
+                    {blog.tags && blog.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-2">
+                            {blog.tags.map((tag, index) => (
+                                <span
+                                    key={index}
+                                    className="px-4 py-1.5 bg-gray-100 text-gray-600 rounded-full text-sm font-medium hover:bg-gray-200 transition-colors cursor-pointer"
+                                >
+                                    #{tag}
+                                </span>
+                            ))}
                         </div>
-                        <div className="flex items-center space-x-4">
-                            <span>👁️ {blog.viewCount} views</span>
-                            <span>❤️ {blog.likeCount} likes</span>
-                        </div>
+                    )}
+
+                    <div className="flex items-center gap-4 text-gray-500">
+                        <button className="flex items-center gap-2 hover:text-pink-600 transition-colors">
+                            <ThumbsUp size={18} />
+                            <span className="text-sm font-bold">{blog.likeCount || 0}</span>
+                        </button>
+                        <button className="flex items-center gap-2 hover:text-black transition-colors">
+                            <Share2 size={18} />
+                            <span className="text-sm font-medium">Share</span>
+                        </button>
                     </div>
                 </div>
             </div>
 
-            {/* 自定义 CSS 确保样式正确 */}
+            {/* Custom Styles for Markdown */}
             <style jsx global>{`
-        .wmde-markdown {
-          background: transparent !important;
-          font-size: 16px !important;
-          line-height: 1.7 !important;
-        }
-        .wmde-markdown img {
-          max-width: 100% !important;
-          height: auto !important;
-          border-radius: 8px !important;
-          margin: 1rem 0 !important;
-        }
-        .wmde-markdown pre {
-          background: #f8f9fa !important;
-          border-radius: 8px !important;
-          padding: 1rem !important;
-          overflow-x: auto !important;
-        }
-        .wmde-markdown code {
-          background: #f8f9fa !important;
-          padding: 0.2em 0.4em !important;
-          border-radius: 4px !important;
-          font-size: 0.9em !important;
-        }
-        .wmde-markdown a {
-          color: #7c3aed !important;
-          text-decoration: none !important;
-          font-weight: 500 !important;
-        }
-        .wmde-markdown a:hover {
-          text-decoration: underline !important;
-          color: #6d28d9 !important;
-        }
-        .wmde-markdown blockquote {
-          border-left: 4px solid #e5e7eb !important;
-          padding-left: 1rem !important;
-          margin-left: 0 !important;
-          color: #6b7280 !important;
-          background: #f9fafb !important;
-          padding: 1rem !important;
-          border-radius: 0 8px 8px 0 !important;
-        }
-        .wmde-markdown table {
-          width: 100% !important;
-          border-collapse: collapse !important;
-          margin: 1rem 0 !important;
-        }
-        .wmde-markdown th,
-        .wmde-markdown td {
-          border: 1px solid #e5e7eb !important;
-          padding: 0.75rem !important;
-          text-align: left !important;
-        }
-        .wmde-markdown th {
-          background: #f9fafb !important;
-          font-weight: 600 !important;
-        }
-        .wmde-markdown h1, .wmde-markdown h2, .wmde-markdown h3 {
-          color: #1f2937 !important;
-          margin-top: 2rem !important;
-          margin-bottom: 1rem !important;
-        }
-        .wmde-markdown ul, .wmde-markdown ol {
-          padding-left: 1.5rem !important;
-        }
-      `}</style>
-        </div>
+                .wmde-markdown {
+                    background: transparent !important;
+                    color: #374151 !important; /* text-gray-700 */
+                }
+                /* 修复列表样式 */
+                .wmde-markdown ul { list-style-type: disc !important; padding-left: 1.5em !important; }
+                .wmde-markdown ol { list-style-type: decimal !important; padding-left: 1.5em !important; }
+                /* 修复表格 */
+                .wmde-markdown table { width: 100%; border-collapse: collapse; margin: 2em 0; }
+                .wmde-markdown th { text-align: left; padding: 0.75em; background: #f9fafb; border-bottom: 2px solid #e5e7eb; }
+                .wmde-markdown td { padding: 0.75em; border-bottom: 1px solid #e5e7eb; }
+            `}</style>
+        </article>
     );
 }
