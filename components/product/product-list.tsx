@@ -154,45 +154,30 @@ export default function ProductList({
     }
 
     return (
-        <div className="min-h-[400px] flex flex-col relative">
+        <div className="min-h-[400px] flex flex-col relative w-full max-w-full">
+            {/* Header & Grid (unchanged) */}
             <div className="flex flex-col">
                 <div className="flex-1 min-w-0">
                     {products.length > 0 && (showProductCount || showSortSelect) && (
                         <div className="flex justify-between items-center mb-1 pt-4 pb-1">
-                            {showProductCount && (
-                                <span className="text-gray-500 font-normal text-sm">{totalProducts} products</span>
-                            )}
+                            {showProductCount && <span className="text-gray-500 font-normal text-sm">{totalProducts} products</span>}
                             <div className="flex items-center gap-3">
                                 {showSortSelect && <SortSelectModal className="w-auto" />}
-                                <button
-                                    onClick={handleOpenFilters}
-                                    className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:border-black hover:text-black transition-all duration-300"
-                                >
-                                    <SlidersHorizontal size={16} />
-                                    Filters
-                                    {activeFilterCount > 0 && (
-                                        <span className="bg-black text-white text-[10px] px-1.5 py-0.5 rounded-full">
-                                            {activeFilterCount}
-                                        </span>
-                                    )}
+                                <button onClick={handleOpenFilters} className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:border-black hover:text-black transition-all duration-300">
+                                    <SlidersHorizontal size={16} /> Filters {activeFilterCount > 0 && <span className="bg-black text-white text-[10px] px-1.5 py-0.5 rounded-full">{activeFilterCount}</span>}
                                 </button>
                             </div>
                         </div>
                     )}
-
-                    {/* Grid */}
                     <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-10 flex-1">
-                        {products.map((product) => (
-                            <ProductCard key={product.id} product={product} />
-                        ))}
+                        {products.map((product) => <ProductCard key={product.id} product={product} />)}
                     </div>
-
                     {showPagination && <Pagination currentPage={currentPage} totalPages={totalPages} />}
                 </div>
             </div>
 
-            {/* Filters Panel */}
-            {isMounted && showFilters && (
+            {/* ✅ Filters Panel - 修复了溢出问题 */}
+            {isMounted && (
                 <>
                     <div
                         className={`fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-300 ${
@@ -203,45 +188,33 @@ export default function ProductList({
                     />
 
                     <div
-                        className={`fixed right-0 top-0 bottom-0 bg-white shadow-2xl w-full max-w-xs sm:max-w-sm transition-transform duration-300 ease-in-out ${ // ✅ 加上 ease-in-out
+                        className={`fixed right-0 top-0 bottom-0 bg-white shadow-2xl w-full max-w-xs sm:max-w-sm transition-transform duration-300 ease-in-out flex flex-col ${
                             showFilters ? 'translate-x-0' : 'translate-x-full'
+                        } ${
+                            /* ✅ 关键修复：关闭时 invisible，防止水平溢出 */
+                            showFilters ? 'visible' : 'invisible'
                         }`}
                         style={{ zIndex: Z_INDEX.DRAWER }}
                     >
-                        <div className="flex flex-col h-full">
-                            {/* Header */}
-                            <div className="flex items-center justify-between p-6 border-b border-gray-100">
-                                <h3 className="text-xl font-bold text-gray-900 font-['Playfair_Display']">Filters</h3>
-                                <button onClick={handleCloseFilters} className="p-2 hover:bg-gray-50 rounded-full transition-colors">
-                                    <X size={24} className="text-gray-500" />
-                                </button>
-                            </div>
+                        <div className="flex items-center justify-between p-6 border-b border-gray-100">
+                            <h3 className="text-xl font-bold text-gray-900 font-['Playfair_Display']">Filters</h3>
+                            <button onClick={handleCloseFilters} className="p-2 hover:bg-gray-50 rounded-full transition-colors">
+                                <X size={24} className="text-gray-500" />
+                            </button>
+                        </div>
 
-                            {/* Content */}
-                            <div className="flex-1 overflow-y-auto p-6">
-                                <ProductFilters
-                                    filters={localFilters}
-                                    onFiltersChange={setLocalFilters}
-                                    availableFilters={availableFilters}
-                                />
-                            </div>
+                        <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
+                            <ProductFilters
+                                filters={localFilters}
+                                onFiltersChange={setLocalFilters}
+                                availableFilters={availableFilters}
+                            />
+                        </div>
 
-                            {/* Footer */}
-                            <div className="border-t border-gray-100 p-6 bg-gray-50/50">
-                                <div className="flex gap-3">
-                                    <button
-                                        onClick={handleApplyFilters}
-                                        className="flex-1 bg-black text-white py-3.5 rounded-lg font-bold hover:bg-gray-800 transition-all shadow-lg shadow-gray-200"
-                                    >
-                                        Show Results
-                                    </button>
-                                    <button
-                                        onClick={handleClearFilters}
-                                        className="px-6 py-3.5 text-gray-600 font-medium bg-white border border-gray-200 rounded-lg hover:border-gray-400 hover:text-black transition-all"
-                                    >
-                                        Clear
-                                    </button>
-                                </div>
+                        <div className="border-t border-gray-100 p-6 bg-gray-50/50">
+                            <div className="flex gap-3">
+                                <button onClick={handleApplyFilters} className="flex-1 bg-black text-white py-3.5 rounded-lg font-bold hover:bg-gray-800 transition-all shadow-lg">Show Results</button>
+                                <button onClick={handleClearFilters} className="px-6 py-3.5 text-gray-600 font-medium bg-white border border-gray-200 rounded-lg hover:border-gray-400 hover:text-black transition-all">Clear</button>
                             </div>
                         </div>
                     </div>
