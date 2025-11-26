@@ -3,7 +3,7 @@ import { productServiceServer } from '@/services/servers/product-service-server'
 import { categoryService } from '@/services/category-service';
 import { filterServiceServer } from '@/services/servers/product-filter-service-server';
 import ProductList from '@/components/product/product-list';
-import CollectionBread from '@/components/product/collection-bread';
+import Breadcrumb, { BreadcrumbItem } from '@/components/common/breadcrumb'; // ✅ 使用通用面包屑
 import ErrorSection from '@/components/product/error-section';
 import { Metadata } from 'next';
 
@@ -52,15 +52,8 @@ function parsePriceRange(priceRangeParam: string | string[] | undefined): [numbe
 
 function extractFilterArray(data: any): string[] {
     if (!data) return [];
-
-    if (Array.isArray(data) && data.length > 0 && typeof data[0] === 'string') {
-        return data;
-    }
-
-    if (Array.isArray(data) && data.length > 0 && data[0]?.keyWord) {
-        return data.map(item => item.keyWord);
-    }
-
+    if (Array.isArray(data) && data.length > 0 && typeof data[0] === 'string') return data;
+    if (Array.isArray(data) && data.length > 0 && data[0]?.keyWord) return data.map(item => item.keyWord);
     return [];
 }
 
@@ -68,13 +61,11 @@ export default async function ProductListPage({ params, searchParams }: PageProp
     const [resolvedParams, resolvedSearchParams] = await Promise.all([params, searchParams]);
     const slugParam = resolvedParams.category;
     const slug = Array.isArray(slugParam) ? slugParam.join('/') : (slugParam || '');
-    const pathname = `/collections/${slug}`;
 
     const page = parseInt(resolvedSearchParams.page as string) || 0;
     const sortParam = resolvedSearchParams.sort as string || 'newest';
     const priceRange = parsePriceRange(resolvedSearchParams.priceRange);
 
-    // 构建筛选参数
     const filters = {
         priceRange,
         colors: resolvedSearchParams.colors ? (resolvedSearchParams.colors as string).split(',') : [],
@@ -107,20 +98,34 @@ export default async function ProductListPage({ params, searchParams }: PageProp
             slug, root: '', title: "", description: ""
         };
 
-        return (
-            // ✅ 修复核心：强制锁死宽度，防止水平溢出
-            <section className="min-h-screen bg-gray-50 py-6 w-full max-w-full overflow-x-hidden">
-                <div className="container mx-auto px-4 max-w-7xl">
+        // ✅ 生成面包屑数据
+        const breadcrumbs: BreadcrumbItem[] = [
+            { name: 'Home', path: '/' },
+            { name: currentCategory.name, path: null }
+        ];
 
-                    {/* 面包屑区域 */}
-                    <div className="mb-6 w-full overflow-hidden">
-                        <CollectionBread
-                            currentCategory={currentCategory}
-                            pathname={pathname}
-                        />
+        return (
+            <section className="min-h-screen bg-gray-50 py-8 w-full max-w-full overflow-x-hidden">
+                <div className="container mx-auto px-4 sm:px-6 max-w-7xl">
+
+                    {/* 1. 面包屑区域 */}
+                    <div className="mb-6">
+                        <Breadcrumb items={breadcrumbs} showLastItem={true} />
                     </div>
 
-                    {/* 主内容区域 */}
+                    {/* 2. 标题区域 */}
+                    <div className="mb-10 text-center md:text-left border-b border-gray-200 pb-8">
+                        <h1 className="text-3xl md:text-5xl font-bold text-gray-900 mb-4 font-['Playfair_Display'] leading-tight">
+                            {currentCategory.name}
+                        </h1>
+                        {currentCategory.description && (
+                            <p className="text-gray-500 text-base md:text-lg max-w-3xl leading-relaxed">
+                                {currentCategory.description}
+                            </p>
+                        )}
+                    </div>
+
+                    {/* 3. 主内容区域 */}
                     <div className="flex flex-col w-full">
                         <main className="flex-1 min-w-0 w-full">
                             <ProductList

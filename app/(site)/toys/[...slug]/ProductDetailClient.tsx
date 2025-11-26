@@ -4,11 +4,10 @@
 import { useState, useEffect } from 'react';
 import { ProductResponse, ProductSku } from '@/types/product';
 import { useToast } from '@/contexts/toastContext';
-import { useAuth } from '@/contexts/authContext';
 import { useCartStore } from '@/stores/useCartStore';
 import ProductGallery from './productGallery';
 import { getProductImageUrl } from '@/lib/image-utils';
-import ProductBreadcrumb from '@/components/product/product-breadcrumb';
+import Breadcrumb from '@/components/common/breadcrumb';
 import { Z_INDEX } from '@/lib/constants/z-index';
 import { ShoppingBag, ShieldCheck, Package, Truck, ChevronDown, ChevronUp, Star } from 'lucide-react';
 
@@ -86,7 +85,7 @@ export default function ProductDetailClient({
     return (
         // ✅ 修复：移除内部 max-w-7xl，直接使用 w-full，依赖父级容器对齐
         <div className="w-full pb-24 lg:pb-10">
-            <ProductBreadcrumb breadcrumbs={breadcrumbs} />
+            <Breadcrumb items={breadcrumbs} showLastItem={false} />
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 mt-6">
                 {/* Left: Gallery */}

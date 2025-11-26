@@ -45,18 +45,34 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     }
 }
 
-function generateBreadcrumbPaths(slugArray: string[], product: ProductResponse | null): Breadcrumb[] {
-    const breadcrumbs: Breadcrumb[] = [{ name: 'Home', path: '/' }];
+function generateBreadcrumbPaths(slugArray: string[], product: ProductResponse | null): { name: string; path: string | null }[] {
+    const breadcrumbs = [];
     let currentPath = '';
+
+    // 1. Home
+    breadcrumbs.push({ name: 'Home', path: '/' });
+
+    // 2. 动态分类路径
     for (let i = 0; i < slugArray.length; i++) {
         const slugPart = slugArray[i];
-        currentPath += `/${slugPart}`;
+        currentPath += `/${slugPart}`; // 这里的 currentPath 比如是 /sex-toys
+
+        // 最后一项是当前产品
         if (i === slugArray.length - 1) {
-            breadcrumbs.push({ name: product?.title || formatDisplayName(slugPart), path: null });
+            breadcrumbs.push({
+                name: product?.title || formatDisplayName(slugPart),
+                path: null
+            });
         } else {
-            breadcrumbs.push({ name: formatDisplayName(slugPart), path: `/collections${currentPath}` });
+            // 中间层级：直接指向 /collections/xxx
+            // 但面包屑文字只显示分类名，不显示 "Collections"
+            breadcrumbs.push({
+                name: formatDisplayName(slugPart),
+                path: `/collections${currentPath}` // URL 依然需要指向 collections 路由
+            });
         }
     }
+
     return breadcrumbs;
 }
 

@@ -30,8 +30,8 @@ export default function MainCategory({ rootsData = [] }: MainNaviCategoryProps) 
     if (!rootsData || rootsData.length === 0) return null;
 
     return (
-        <nav className="w-full flex justify-center h-full relative z-[999]"> {/* 提升层级 */}
-            <ul className="flex items-center gap-1 m-0 p-0 list-none h-full">
+        <nav className="w-full flex justify-center h-full relative z-[999]">
+            <ul className="flex items-center gap-2 m-0 p-0 list-none h-full">
                 {rootsData.map((root) => {
                     const isActive = activeCategory === root.slug;
                     const isHovered = expandedCategory === root.slug;
@@ -53,23 +53,24 @@ export default function MainCategory({ rootsData = [] }: MainNaviCategoryProps) 
                                 `}
                             >
                                 {root.name}
-                                <span className={`absolute bottom-0 left-5 right-5 h-0.5 bg-pink-600 transform transition-transform duration-300 origin-center ${isActive || isHovered ? 'scale-x-100' : 'scale-x-0'}`} />
+                                {/* 动态下划线 - 保持在底部，不会被遮挡 */}
+                                <span className={`absolute bottom-0 left-6 right-6 h-0.5 bg-pink-600 transform transition-transform duration-300 origin-center ${isActive || isHovered ? 'scale-x-100' : 'scale-x-0'}`} />
                             </Link>
 
+                            {/* Dropdown Menu */}
                             {subCategories.length > 0 && (
                                 <div
                                     className={`
-                                        absolute top-full left-1/2 transform -translate-x-1/2 
-                                        bg-white rounded-xl shadow-xl py-3 border border-gray-100
+                                        absolute top-full left-1/2 transform -translate-x-1/2 mt-3 /* ✅ mt-3 增加间距 */
+                                        bg-white rounded-xl shadow-2xl border border-gray-100
                                         transition-all duration-200 origin-top min-w-[14rem] w-max
                                         ${isHovered ? 'opacity-100 scale-100 visible' : 'opacity-0 scale-95 invisible'}
                                     `}
                                     style={{ zIndex: Z_INDEX.DROPDOWN }}
                                 >
-                                    {/* 小三角 */}
-                                    <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-white border-t border-l border-gray-100 transform rotate-45"></div>
+                                    {/* ✅ 移除了小三角，视觉更干净，不再遮挡下划线 */}
 
-                                    <ul className="relative bg-white rounded-xl overflow-hidden max-h-[60vh] overflow-y-auto custom-scrollbar">
+                                    <ul className="relative bg-white rounded-xl overflow-hidden max-h-[60vh] overflow-y-auto custom-scrollbar py-2">
                                         {subCategories.map((sub) => (
                                             <li key={sub.slug}>
                                                 <Link
