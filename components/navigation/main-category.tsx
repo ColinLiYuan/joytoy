@@ -1,3 +1,4 @@
+// components/navigation/main-category.tsx
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -29,7 +30,7 @@ export default function MainCategory({ rootsData = [] }: MainNaviCategoryProps) 
     if (!rootsData || rootsData.length === 0) return null;
 
     return (
-        <nav className="w-full flex justify-center">
+        <nav className="w-full flex justify-center relative z-50"> {/* ✅ 加上 relative z-50 */}
             <ul className="flex items-center gap-1 m-0 p-0 list-none">
                 {rootsData.map((root) => {
                     const isActive = activeCategory === root.slug;
@@ -39,7 +40,7 @@ export default function MainCategory({ rootsData = [] }: MainNaviCategoryProps) 
                     return (
                         <li
                             key={root.slug}
-                            className="relative group"
+                            className="relative group h-full flex items-center" // ✅ h-full 确保 hover 区域稳定
                             onMouseEnter={() => setExpandedCategory(root.slug)}
                             onMouseLeave={() => setExpandedCategory(null)}
                         >
@@ -52,27 +53,30 @@ export default function MainCategory({ rootsData = [] }: MainNaviCategoryProps) 
                                 `}
                             >
                                 {root.name}
-                                <span className={`absolute bottom-2 left-5 right-5 h-0.5 bg-pink-600 transform transition-transform duration-300 origin-center ${isActive || isHovered ? 'scale-x-100' : 'scale-x-0'}`} />
+                                <span className={`absolute bottom-0 left-5 right-5 h-0.5 bg-pink-600 transform transition-transform duration-300 origin-center ${isActive || isHovered ? 'scale-x-100' : 'scale-x-0'}`} />
                             </Link>
 
                             {subCategories.length > 0 && (
                                 <div
                                     className={`
-                                        absolute top-full left-1/2 transform -translate-x-1/2 w-64 
+                                        absolute top-full left-1/2 transform -translate-x-1/2 
+                                        w-72 /* 足够宽 */
                                         bg-white rounded-xl shadow-xl py-3 border border-gray-100
                                         transition-all duration-200 origin-top
                                         ${isHovered ? 'opacity-100 scale-100 visible' : 'opacity-0 scale-95 invisible'}
                                     `}
+                                    // ✅ 使用最高的 Dropdown 层级
                                     style={{ zIndex: Z_INDEX.DROPDOWN }}
                                 >
+                                    {/* 小三角 */}
                                     <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-white border-t border-l border-gray-100 transform rotate-45"></div>
 
-                                    <ul className="relative bg-white rounded-xl overflow-hidden">
+                                    <ul className="relative bg-white rounded-xl overflow-hidden max-h-[60vh] overflow-y-auto custom-scrollbar">
                                         {subCategories.map((sub) => (
                                             <li key={sub.slug}>
                                                 <Link
                                                     href={`/collections/${sub.slug}`}
-                                                    className="block px-6 py-2.5 text-sm text-gray-600 hover:text-pink-600 hover:bg-pink-50/50 transition-colors font-['Inter']"
+                                                    className="block px-6 py-3 text-sm text-gray-600 hover:text-pink-600 hover:bg-pink-50/50 transition-colors font-['Inter'] whitespace-nowrap"
                                                 >
                                                     {sub.name}
                                                 </Link>
