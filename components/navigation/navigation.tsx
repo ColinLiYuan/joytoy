@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image'; // ✅ 引入 Image
 import MainCategory from '@/components/navigation/main-category';
 import UserActions from '@/components/common/user-actions';
 import Cart from '@/components/common/cart';
@@ -70,19 +71,26 @@ export default function Navigation({ minimal = false, rootsData = [] }: Navigati
 
     return (
         <>
-            {/* 修复：z-index 设为 50，高于 Notice 的 40 */}
             <div
-                 className="relative w-full bg-white border-b border-gray-100 shadow-sm"
-                 style={{ zIndex: Z_INDEX.NAVIGATION }}
+                className="relative w-full bg-white border-b border-gray-100 shadow-sm"
+                style={{ zIndex: Z_INDEX.NAVIGATION }}
             >
                 <div className="container mx-auto px-4 max-w-7xl">
                     <div className="flex justify-between items-center h-16 lg:h-20">
 
-                        {/* Logo */}
-                        <Link href="/" className="flex-shrink-0 group">
-                            <span className="text-2xl font-bold text-gray-900 font-['Playfair_Display'] group-hover:text-pink-600 transition-colors">
-                                MythToy
-                            </span>
+                        {/* Logo 区域 */}
+                        <Link href="/" className="flex-shrink-0 group relative flex items-center">
+                            {/* ✅ 替换文字为图片 */}
+                            {/* w-36 h-8 控制显示大小，根据你 SVG 的长宽比微调 */}
+                            <div className="relative w-36 h-8 sm:w-40 sm:h-10">
+                                <Image
+                                    src="/logo.svg"
+                                    alt="MythToy Logo"
+                                    fill
+                                    className="object-contain object-left"
+                                    priority // 优先加载 LCP
+                                />
+                            </div>
                         </Link>
 
                         {/* Desktop Navigation */}

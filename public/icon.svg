@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" fill="none">
+  <rect width="64" height="64" rx="12" fill="#000000"/> <!-- 黑色圆角背景 -->
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&amp;display=swap');
+    .icon-text {
+      font-family: 'Playfair Display', serif;
+      font-weight: 700;
+      font-size: 40px;
+      fill: #ffffff; /* 白色文字 */
+    }
+  </style>
+  <text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" class="icon-text">
+    M
+  </text>
+</svg>
