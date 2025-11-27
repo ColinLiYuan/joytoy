@@ -1,4 +1,4 @@
-// lib/constants/categories.ts
+// lib/constants/category-data.ts
 import { CategoriesData } from '@/types/category';
 
 export const CATEGORIES_DATA: CategoriesData = {
@@ -12,15 +12,6 @@ export const CATEGORIES_DATA: CategoriesData = {
                 priority: 0.8,
                 changeFreq: "weekly",
                 categories: [
-                    {
-                        slug: "all",
-                        name: "Shop All",
-                        title: "Shop All | Complete Collection of Sex Toys",
-                        description: "Browse our complete collection of sex toys, vibrators, dildos, and adult products.",
-                        root: "shop",
-                        priority: 0.9,
-                        changeFreq: "weekly"
-                    },
                     {
                         slug: "new-arrivals",
                         name: "New In",

@@ -1,6 +1,6 @@
 // services/category-service.ts
 import { CategoryResponse, RootResponse } from '@/types/category';
-import { CATEGORIES_DATA } from '@/lib/constants/categories';
+import { CATEGORIES_DATA } from '@/lib/constants/category-data';
 
 class CategoryService {
 

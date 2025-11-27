@@ -1,4 +1,4 @@
-// lib/categories.ts - 一级分类数据配置
+// lib/category-data.ts - 一级分类数据配置
 
 export const categories = [
     {
