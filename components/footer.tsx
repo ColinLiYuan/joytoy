@@ -43,6 +43,11 @@ export default function Footer() {
                     <div className="footer-section">
                         <h3 className="text-lg font-bold text-gray-900 mb-6 font-['Playfair_Display']">Shop</h3>
                         <ul className="space-y-3 font-['Inter']">
+                            <li>
+                                <Link href="/collections" className="text-sm text-gray-500 hover:text-pink-600 transition-colors duration-200 font-medium">
+                                    All Collections
+                                </Link>
+                            </li>
                             <li><Link href="/collections/all" className="text-sm text-gray-500 hover:text-pink-600 transition-colors duration-200">Shop All</Link></li>
                             <li><Link href="/collections/new-arrivals" className="text-sm text-gray-500 hover:text-pink-600 transition-colors duration-200">New In</Link></li>
                             <li><Link href="/collections/best-sellers" className="text-sm text-gray-500 hover:text-pink-600 transition-colors duration-200">Best Sellers</Link></li>

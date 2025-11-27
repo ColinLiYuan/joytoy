@@ -114,7 +114,7 @@ export default async function ProductListPage({ params, searchParams }: PageProp
                     </div>
 
                     {/* 2. 标题区域 */}
-                    <div className="mb-10 text-center md:text-left border-b border-gray-200 pb-8">
+                    <div className="mb-10 text-left border-b border-gray-200 pb-8">
                         <h1 className="text-3xl md:text-5xl font-bold text-gray-900 mb-4 font-['Playfair_Display'] leading-tight">
                             {currentCategory.name}
                         </h1>

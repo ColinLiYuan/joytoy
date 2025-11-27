@@ -9,6 +9,7 @@ import ProductGallery from './productGallery';
 import { getProductImageUrl } from '@/lib/image-utils';
 import Breadcrumb from '@/components/common/breadcrumb';
 import { Z_INDEX } from '@/lib/constants/z-index';
+import ProductCard from '@/components/product/product-card';
 import { ShoppingBag, ShieldCheck, Package, Truck, ChevronDown, ChevronUp, Star } from 'lucide-react';
 
 interface ProductDetailClientProps {
@@ -80,6 +81,8 @@ export default function ProductDetailClient({
     };
 
     const toggleSection = (section: string) => setExpandedSection(expandedSection === section ? null : section);
+
+    const relatedProducts = [product, product, product, product].map((p, i) => ({...p, id: p.id + i}));
 
     return (
         // ✅ 修复：移除内部 max-w-7xl，直接使用 w-full，依赖父级容器对齐
@@ -195,6 +198,17 @@ export default function ProductDetailClient({
                 <button className={`px-8 py-3 rounded-full font-bold text-sm transition-all shadow-md ${!selectedSku || getAvailableStock(selectedSku) <= 0 ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-black text-white hover:bg-gray-800'}`} onClick={handleAddToCart} disabled={addingToCart || !selectedSku || getAvailableStock(selectedSku) <= 0}>
                     {addingToCart ? 'Adding...' : 'Add to Bag'}
                 </button>
+            </div>
+
+            <div className="mt-20 border-t border-gray-100 pt-16">
+                <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-8 font-['Playfair_Display'] text-center">
+                    You May Also Like
+                </h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+                    {relatedProducts.map((p) => (
+                        <ProductCard key={p.id} product={p} />
+                    ))}
+                </div>
             </div>
         </div>
     );

@@ -49,7 +49,6 @@ export default function MobileNavigation({
                 <div className="w-full h-full relative overflow-hidden bg-white">
 
                     {/* === MAIN PANEL (主菜单) === */}
-                    {/* 逻辑修改：主菜单始终在原地，只是被子菜单盖住 */}
                     <div className="absolute inset-0 flex flex-col bg-white w-full h-full">
                         {/* Header */}
                         <div className="flex items-center justify-between p-5 border-b border-gray-100 bg-white">
@@ -57,6 +56,17 @@ export default function MobileNavigation({
                             <button onClick={onClose} className="p-2 text-gray-500 hover:text-black rounded-full hover:bg-gray-100 transition-colors">
                                 <X size={24} />
                             </button>
+                        </div>
+
+                        {/* Global Shop All Link (全局入口) */}
+                        <div className="border-b border-gray-50">
+                            <Link
+                                href="/collections"
+                                onClick={onClose}
+                                className="block px-6 py-4 text-base font-bold text-gray-900 hover:text-pink-600 hover:bg-gray-50 transition-colors"
+                            >
+                                View All Collections
+                            </Link>
                         </div>
 
                         {/* List */}
@@ -102,7 +112,6 @@ export default function MobileNavigation({
                     </div>
 
                     {/* === SUB PANEL (子菜单) === */}
-                    {/* 逻辑修改：子菜单作为一个覆盖层，从右侧滑入盖住主菜单 */}
                     <div
                         className={`absolute inset-0 flex flex-col bg-white transition-transform duration-300 ease-in-out w-full h-full z-10 ${
                             currentPanel === 'sub' ? 'translate-x-0' : 'translate-x-full'
@@ -123,13 +132,19 @@ export default function MobileNavigation({
 
                         {/* List */}
                         <div className="flex-1 overflow-y-auto py-2 bg-white custom-scrollbar">
-                            <Link
-                                href={`/collections/${currentRootCategory?.slug}`}
-                                onClick={onClose}
-                                className="block px-6 py-4 text-sm font-bold text-black bg-gray-50 mb-2"
-                            >
-                                View All {currentRootCategory?.name}
-                            </Link>
+
+                            {/* ✅ 核心修复：这里加回了 "View All [Current Category]" */}
+                            {/* 样式上使用了 bg-gray-50 和加粗，以此区别于下面的子分类 */}
+                            {currentRootCategory && (
+                                <Link
+                                    href={`/collections/${currentRootCategory.slug}`}
+                                    onClick={onClose}
+                                    className="block px-6 py-4 text-sm font-bold text-black bg-gray-50 border-b border-gray-100 hover:bg-gray-100 transition-colors"
+                                >
+                                    View All {currentRootCategory.name}
+                                </Link>
+                            )}
+
                             {currentRootCategory?.categories?.map((sub) => (
                                 <Link
                                     key={sub.slug}
