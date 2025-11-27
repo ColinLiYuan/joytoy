@@ -1,3 +1,5 @@
+// app/sitemap-products.xml
+
 import { NextResponse } from 'next/server'
 import { BACKEND_CONFIG } from '@/lib/api-config'
 

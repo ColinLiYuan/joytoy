@@ -1,3 +1,4 @@
+// app/sitemap.xml
 import { NextResponse } from 'next/server'
 
 export async function GET() {
@@ -6,8 +7,8 @@ export async function GET() {
     const sitemaps = [
         'sitemap-pages.xml',
         'sitemap-categories.xml',
+        'sitemap-products.xml',
         'sitemap-products.xml'
-        // 如果需要博客，可以添加 'sitemap-blog.xml'
     ]
 
     const xml = `<?xml version="1.0" encoding="UTF-8"?>

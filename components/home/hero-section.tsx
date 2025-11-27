@@ -1,20 +1,27 @@
 // components/home/hero-section.tsx
+'use client';
+
 import Link from 'next/link';
+import { ArrowDown } from 'lucide-react';
 
 export default function HeroSection() {
+
+    const scrollToFooter = () => {
+        // 找到 Footer 里的订阅区域 (我们需要确保 Footer 里有 id="footer-subscribe")
+        const footerSubscribe = document.getElementById('footer-subscribe');
+        if (footerSubscribe) {
+            footerSubscribe.scrollIntoView({ behavior: 'smooth' });
+        }
+    };
+
     return (
-        // 1. 最外层：负责全屏背景色 (红色)，确保 w-full
         <section className="relative w-full bg-[#b62337] overflow-hidden">
 
-            {/* 背景装饰层 (绝对定位) */}
+            {/* 背景装饰层 */}
             <div className="absolute inset-0 pointer-events-none">
-                {/* 渐变叠加 */}
                 <div className="absolute inset-0 bg-gradient-to-br from-[#b62337] via-[#a51e32] to-[#941a2d]"></div>
-                {/* 光晕 */}
                 <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#d12a42]/30 via-transparent to-transparent"></div>
-                {/* 顶部高光 */}
                 <div className="absolute top-0 left-0 right-0 h-1/3 bg-gradient-to-b from-white/10 to-transparent"></div>
-                {/* 纹理 */}
                 <div
                     className="absolute inset-0 opacity-[0.03]"
                     style={{
@@ -24,15 +31,15 @@ export default function HeroSection() {
                 ></div>
             </div>
 
-            {/* 2. 内容容器：负责居中和宽度限制 */}
+            {/* 内容容器 */}
             <div className="container relative mx-auto px-4 max-w-7xl z-10">
                 <div className="hero-content w-full min-h-[50vh] md:min-h-[60vh] flex items-center justify-center text-center py-12 md:py-20">
                     <div className="max-w-3xl mx-auto space-y-6">
 
-                        {/* 优惠码标签 */}
-                        <div className="inline-block bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-4 py-1.5 mb-2">
+                        {/* 优惠标签 - 改为诱导文案 */}
+                        <div className="inline-block bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-4 py-1.5 mb-2 animate-fadeIn">
                             <span className="text-white text-xs md:text-sm font-bold tracking-widest uppercase">
-                                Code: MYTH20
+                                New Customer Exclusive
                             </span>
                         </div>
 
@@ -46,17 +53,26 @@ export default function HeroSection() {
                             Your First Order + Free Shipping
                         </p>
 
-                        {/* 按钮区域 */}
-                        <div className="pt-6">
+                        {/* 按钮区域 - 双按钮策略 */}
+                        <div className="pt-8 flex flex-col sm:flex-row gap-4 justify-center items-center">
+                            {/* 1. 直接去购物 */}
                             <Link
                                 href="/collections/all"
-                                className="inline-block bg-black text-white font-bold py-4 px-12 rounded-full transition-all duration-300 hover:bg-gray-900 hover:scale-105 hover:shadow-2xl text-sm md:text-base tracking-widest uppercase"
+                                className="w-full sm:w-auto inline-block bg-black text-white font-bold py-4 px-10 rounded-full transition-all duration-300 hover:bg-gray-900 hover:scale-105 hover:shadow-2xl text-sm md:text-base tracking-widest uppercase"
                             >
                                 Shop Now
                             </Link>
+
+                            {/* 2. 获取折扣码 (滚动到底部) */}
+                            <button
+                                onClick={scrollToFooter}
+                                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white text-[#b62337] font-bold py-4 px-10 rounded-full transition-all duration-300 hover:bg-gray-50 hover:scale-105 hover:shadow-2xl text-sm md:text-base tracking-widest uppercase"
+                            >
+                                Get My Code <ArrowDown size={18} />
+                            </button>
                         </div>
 
-                        <p className="text-white/60 text-xs mt-4">
+                        <p className="text-white/60 text-xs mt-6">
                             *Discrete packaging guaranteed on all orders
                         </p>
                     </div>

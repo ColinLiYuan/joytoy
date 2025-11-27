@@ -1,3 +1,5 @@
+// app/sitemap-pages.xml
+
 import { NextResponse } from 'next/server'
 
 export async function GET() {
