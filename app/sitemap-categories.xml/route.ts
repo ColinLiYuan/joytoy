@@ -2,11 +2,18 @@
 
 import { NextResponse } from 'next/server'
 import { categoryService } from '@/services/category-service';
+import {CategoryResponse} from "@/types/category";
+
+interface CategoryPath {
+    loc: string;
+    changefreq: string;
+    priority: number;
+}
 
 export async function GET() {
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://mythtoy.com'
 
-    let categories = []
+    let categories: CategoryResponse[] = []
     try {
         categories = await categoryService.getCategories()
     } catch (error) {
@@ -14,7 +21,7 @@ export async function GET() {
     }
 
     // 生成分类路径
-    const categoryPaths = []
+    const categoryPaths: CategoryPath[] = []
 
     categories.forEach(subCategory => {
         categoryPaths.push({

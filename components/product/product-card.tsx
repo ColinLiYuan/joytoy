@@ -11,14 +11,14 @@ import { useAuth } from '@/contexts/authContext';
 import { useToast } from '@/contexts/toastContext';
 import { useCartStore } from '@/stores/useCartStore';
 import { getMappedColor } from '@/lib/constants/color-map';
-import { Heart, ShoppingBag, Loader2 } from 'lucide-react'; // ✅ Lucide
+import { Heart, ShoppingBag, Loader2 } from 'lucide-react';
 
 interface ProductCardProps {
     product: ProductResponse;
     onWishlistUpdate?: () => void;
 }
 
-const BLUR_DATA_URL = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q==";
+const BLUR_DATA_URL = "data:image/jpeg;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mN8/+F9PQAI8wNPvd7POQAAAABJRU5ErkJggg==";
 
 export default function ProductCard({ product, onWishlistUpdate }: ProductCardProps) {
     const productDetailPath = `/toys${product.slug}`;
@@ -33,17 +33,14 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
 
     const mainImage = useMemo(() => getProductImageUrl('', product.image), [product.image]);
 
-    // ✅ 安全获取库存 (防止 null 报错)
     const getAvailableStock = useCallback((sku: ProductSku | null | undefined): number => {
         if (!sku) return 0;
         return (sku.stock || 0) - (sku.lockedStock || 0);
     }, []);
 
-    // 初始化 SKU
     useEffect(() => {
         const productSkus = product.productSkus || [];
         if (productSkus.length > 0) {
-            // 优先选有货的
             const availableSku = productSkus.find(sku => getAvailableStock(sku) > 0);
             setSelectedSku(availableSku || productSkus[0]);
         }
@@ -71,12 +68,12 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
                 productImage: product.image,
                 unitPrice: product.currentPrice,
                 quantity: 1,
-                color: selectedSku.color,
-                skuId: selectedSku.id
+                color: selectedSku.color
             });
+            // showToast 已经在 store 里统一处理了，这里不需要加
         } catch (error) {
             console.error(error);
-            showToast('error', 'Error', 'Failed to add to cart');
+            // error toast 也在 store 里处理了
         } finally {
             setAddingToCart(false);
         }
@@ -96,7 +93,7 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
         if (isLoading) return;
         setIsLoading(true);
         const newState = !isFavorited;
-        setIsFavorited(newState); // 乐观更新
+        setIsFavorited(newState);
 
         try {
             if (!userInfo) return;
@@ -116,26 +113,30 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
             }
             onWishlistUpdate?.();
         } catch (error) {
-            setIsFavorited(!newState); // 回滚
+            setIsFavorited(!newState);
             showToast('error', 'Error', 'Failed to update wishlist');
         } finally {
             setIsLoading(false);
         }
     };
 
-    // 判断是否打折
     const isOnSale = product.originalPrice > product.currentPrice;
 
     return (
         <div className="group flex flex-col bg-white rounded-2xl overflow-hidden border border-gray-100 hover:border-gray-200 hover:shadow-xl transition-all duration-300 relative h-full">
-            {/* Image Area */}
+            {/*
+               ✅ Image Area 修改重点：
+               1. bg-gray-50: 浅灰底色，衬托透明底图片
+            */}
             <Link href={productDetailPath} className="block relative aspect-square overflow-hidden bg-gray-50">
                 <Image
                     src={mainImage}
                     alt={product.title}
-                    width={400}
-                    height={400}
-                    className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500"
+                    fill
+                    // ✅ object-contain: 完整显示，不裁切
+                    // ✅ p-6: 增加内边距，让产品悬浮在中间，不顶边
+                    // ✅ mix-blend-multiply: 黑科技，如果你传了白底JPG，这行代码能让白色变透明（仅在灰底下有效）
+                    className="object-contain w-full h-full p-6 group-hover:scale-105 transition-transform duration-500 mix-blend-multiply"
                     placeholder="blur"
                     blurDataURL={BLUR_DATA_URL}
                 />
@@ -148,8 +149,8 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
                     <Heart size={18} fill={isFavorited ? "currentColor" : "none"} />
                 </button>
 
-                {/* Tags (Sale / Out of Stock) */}
-                <div className="absolute top-3 left-3 flex flex-col gap-2">
+                {/* Tags */}
+                <div className="absolute top-3 left-3 flex flex-col gap-2 z-10">
                     {!hasAvailableStock && (
                         <span className="bg-black/80 backdrop-blur-sm text-white text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wide">
                             Sold Out
@@ -171,7 +172,6 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
                     </h3>
                 </Link>
 
-                {/* Colors Preview */}
                 <div className="flex items-center gap-2 mb-3">
                     <div className="flex gap-1 h-3 items-center">
                         {product.productSkus?.slice(0, 3).map(sku => (
@@ -189,7 +189,6 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
 
                 <div className="mt-auto flex items-center justify-between">
                     <div className="flex flex-col">
-                        {/* ✅ 价格逻辑：打折变红，不打折显黑 */}
                         {isOnSale ? (
                             <div className="flex flex-col">
                                 <span className="text-xs text-gray-400 line-through decoration-gray-300">

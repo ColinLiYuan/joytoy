@@ -69,8 +69,7 @@ export default function ProductDetailClient({
                 productImage: getProductImageUrl('', product.image),
                 unitPrice: product.currentPrice,
                 quantity: 1,
-                color: selectedSku.color,
-                skuId: selectedSku.id
+                color: selectedSku.color
             });
         } catch (error) {
             console.error(error);
@@ -190,7 +189,7 @@ export default function ProductDetailClient({
                 </div>
             </div>
 
-            <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-4 shadow-[0_-4px_20px_rgba(0,0,0,0.05)] flex items-center gap-4" style={{ zIndex: Z_INDEX.STICKY }}>
+            <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-4 shadow-[0_-4px_20px_rgba(0,0,0,0.05)] flex items-center gap-4" style={{ zIndex: Z_INDEX.STICKY_CONTENT }}>
                 <div className="flex-1">
                     <p className="text-xs text-gray-500 truncate">{product.title}</p>
                     {isOnSale ? <div className="flex items-center gap-2"><p className="font-bold text-[#b62337]">${product.currentPrice}</p><p className="text-xs text-gray-400 line-through">${product.originalPrice}</p></div> : <p className="font-bold text-gray-900">${product.currentPrice}</p>}

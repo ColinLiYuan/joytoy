@@ -10,7 +10,7 @@ export const CATEGORIES_DATA: CategoriesData = {
                 title: "Shop | Sex Toys & Adult Products",
                 description: "Browse our complete collection of sex toys, lingerie and adult products. New arrivals, best sellers and more.",
                 priority: 0.8,
-                changeFreq: "weekly",
+                changefreq: "weekly",
                 categories: [
                     {
                         slug: "new-arrivals",
@@ -19,7 +19,7 @@ export const CATEGORIES_DATA: CategoriesData = {
                         description: "Discover the newest sex toys and intimate products. Latest releases and innovative designs for ultimate pleasure.",
                         root: "shop",
                         priority: 0.7,
-                        changeFreq: "weekly"
+                        changefreq: "weekly"
                     },
                     {
                         slug: "best-sellers",
@@ -28,7 +28,7 @@ export const CATEGORIES_DATA: CategoriesData = {
                         description: "Shop best selling sex toys and top rated adult products. Premium quality discreet shipping.",
                         root: "shop",
                         priority: 0.7,
-                        changeFreq: "weekly"
+                        changefreq: "weekly"
                     }
                 ]
             },
@@ -38,7 +38,7 @@ export const CATEGORIES_DATA: CategoriesData = {
                 title: "Female Sex Toys | Women's Vibrators & Pleasure Products",
                 description: "Premium sex toys for women. Clit vibrators, rabbit toys, dildos and intimate massagers.",
                 priority: 0.7,
-                changeFreq: "weekly",
+                changefreq: "weekly",
                 categories: [
                     {
                         slug: "female-sex-toys/clit-vibrators",
@@ -47,7 +47,7 @@ export const CATEGORIES_DATA: CategoriesData = {
                         description: "Best clit vibrators for intense orgasms. External stimulation toys for women.",
                         root: "female-sex-toys",
                         priority: 0.7,
-                        changeFreq: "weekly"
+                        changefreq: "weekly"
                     },
                     {
                         slug: "female-sex-toys/nipple-toys",
@@ -56,7 +56,7 @@ export const CATEGORIES_DATA: CategoriesData = {
                         description: "Nipple stimulators and clamps for sensual play. Gentle to intense stimulation.",
                         root: "female-sex-toys",
                         priority: 0.7,
-                        changeFreq: "weekly"
+                        changefreq: "weekly"
                     },
                     {
                         slug: "female-sex-toys/g-spot-vibrators",
@@ -65,7 +65,7 @@ export const CATEGORIES_DATA: CategoriesData = {
                         description: "G-spot vibrators for deep orgasms. Curved toys for internal stimulation.",
                         root: "female-sex-toys",
                         priority: 0.7,
-                        changeFreq: "weekly"
+                        changefreq: "weekly"
                     },
                     {
                         slug: "female-sex-toys/bullet-vibrators",
@@ -74,7 +74,7 @@ export const CATEGORIES_DATA: CategoriesData = {
                         description: "Compact bullet vibrators for targeted stimulation. Quiet and powerful.",
                         root: "female-sex-toys",
                         priority: 0.7,
-                        changeFreq: "weekly"
+                        changefreq: "weekly"
                     },
                     {
                         slug: "female-sex-toys/rabbit-vibrators",
@@ -83,7 +83,7 @@ export const CATEGORIES_DATA: CategoriesData = {
                         description: "Rabbit vibrators for dual stimulation. Internal and clitoral pleasure.",
                         root: "female-sex-toys",
                         priority: 0.7,
-                        changeFreq: "weekly"
+                        changefreq: "weekly"
                     },
                     {
                         slug: "female-sex-toys/wand-vibrators",
@@ -92,7 +92,7 @@ export const CATEGORIES_DATA: CategoriesData = {
                         description: "Powerful wand massagers for deep vibrations. Full body stimulation toys.",
                         root: "female-sex-toys",
                         priority: 0.7,
-                        changeFreq: "weekly"
+                        changefreq: "weekly"
                     },
                     {
                         slug: "female-sex-toys/dildos",
@@ -101,7 +101,7 @@ export const CATEGORIES_DATA: CategoriesData = {
                         description: "Premium dildos in various sizes. Realistic and non-vibrating toys.",
                         root: "female-sex-toys",
                         priority: 0.7,
-                        changeFreq: "weekly"
+                        changefreq: "weekly"
                     }
                 ]
             },
@@ -111,7 +111,7 @@ export const CATEGORIES_DATA: CategoriesData = {
                 title: "Male Sex Toys | Men's Pleasure Products",
                 description: "Advanced sex toys for men. Masturbators, prostate massagers and strokers.",
                 priority: 0.7,
-                changeFreq: "weekly",
+                changefreq: "weekly",
                 categories: [
                     {
                         slug: "male-sex-toys/male-masturbators",
@@ -120,7 +120,7 @@ export const CATEGORIES_DATA: CategoriesData = {
                         description: "Realistic male masturbators and strokers. Textured sleeves for men.",
                         root: "male-sex-toys",
                         priority: 0.7,
-                        changeFreq: "weekly"
+                        changefreq: "weekly"
                     },
                     {
                         slug: "male-sex-toys/pussy-masturbators",
@@ -129,7 +129,7 @@ export const CATEGORIES_DATA: CategoriesData = {
                         description: "Realistic pussy and anal masturbators. Lifelike textures for men.",
                         root: "male-sex-toys",
                         priority: 0.7,
-                        changeFreq: "weekly"
+                        changefreq: "weekly"
                     },
                     {
                         slug: "male-sex-toys/prostate-toys",
@@ -138,7 +138,7 @@ export const CATEGORIES_DATA: CategoriesData = {
                         description: "Prostate massagers for P-spot stimulation. Anal toys for male orgasms.",
                         root: "male-sex-toys",
                         priority: 0.7,
-                        changeFreq: "weekly"
+                        changefreq: "weekly"
                     },
                     {
                         slug: "male-sex-toys/sex-dolls",
@@ -147,7 +147,7 @@ export const CATEGORIES_DATA: CategoriesData = {
                         description: "High-quality sex dolls and love dolls. Lifelike companions for men.",
                         root: "male-sex-toys",
                         priority: 0.7,
-                        changeFreq: "weekly"
+                        changefreq: "weekly"
                     }
                 ]
             },
@@ -157,7 +157,7 @@ export const CATEGORIES_DATA: CategoriesData = {
                 title: "Adult Sex Toys | Vibrators, Dildos & More",
                 description: "Complete collection of adult sex toys. Anal toys, BDSM gear and accessories.",
                 priority: 0.7,
-                changeFreq: "weekly",
+                changefreq: "weekly",
                 categories: [
                     {
                         slug: "sex-toys/anal-beads",
@@ -166,7 +166,7 @@ export const CATEGORIES_DATA: CategoriesData = {
                         description: "Graduated anal beads for beginners and experts. Unique sensations.",
                         root: "sex-toys",
                         priority: 0.7,
-                        changeFreq: "weekly"
+                        changefreq: "weekly"
                     },
                     {
                         slug: "sex-toys/butt-plugs",
@@ -175,7 +175,7 @@ export const CATEGORIES_DATA: CategoriesData = {
                         description: "Comfortable butt plugs in various sizes. Safe anal play products.",
                         root: "sex-toys",
                         priority: 0.7,
-                        changeFreq: "weekly"
+                        changefreq: "weekly"
                     },
                     {
                         slug: "sex-toys/tail-plugs",
@@ -184,7 +184,7 @@ export const CATEGORIES_DATA: CategoriesData = {
                         description: "Playful tail plugs for fantasy play. Fox, cat and bunny tails.",
                         root: "sex-toys",
                         priority: 0.7,
-                        changeFreq: "weekly"
+                        changefreq: "weekly"
                     }
                 ]
             },
@@ -194,7 +194,7 @@ export const CATEGORIES_DATA: CategoriesData = {
                 title: "Sexy Lingerie | Intimate Apparel & Costumes",
                 description: "Seductive lingerie for intimate moments. Babydolls, corsets and sexy wear.",
                 priority: 0.7,
-                changeFreq: "weekly",
+                changefreq: "weekly",
                 categories: [
                     {
                         slug: "lingerie/schoolgirl-lingerie",
@@ -203,7 +203,7 @@ export const CATEGORIES_DATA: CategoriesData = {
                         description: "Schoolgirl lingerie for fantasy roleplay. Plaid skirts and outfits.",
                         root: "lingerie",
                         priority: 0.7,
-                        changeFreq: "weekly"
+                        changefreq: "weekly"
                     }
                 ]
             }

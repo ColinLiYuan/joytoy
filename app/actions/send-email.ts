@@ -21,7 +21,7 @@ export async function sendContactEmail(formData: FormData) {
             from: 'MythToy System <system@mythtoy.com>',
 
             to: 'support@mythtoy.com',
-            reply_to: email,
+            replyTo: email,
 
             subject: `[New Inquiry] ${subject}`,
             html: `

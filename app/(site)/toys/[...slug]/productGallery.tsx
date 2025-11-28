@@ -14,13 +14,14 @@ interface ProductGalleryProps {
     productTitle: string;
 }
 
+const BLUR_DATA_URL = "data:image/jpeg;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mN8/+F9PQAI8wNPvd7POQAAAABJRU5ErkJggg==";
+
 export default function ProductGallery({ images, productTitle }: ProductGalleryProps) {
     const [activeImageIndex, setActiveImageIndex] = useState(0);
     const [isDragging, setIsDragging] = useState(false);
     const [currentTranslate, setCurrentTranslate] = useState(0);
 
     const dragStartX = useRef(0);
-    const dragCurrentX = useRef(0);
     const prevTranslate = useRef(0);
     const galleryRef = useRef<HTMLDivElement>(null);
 
@@ -31,7 +32,6 @@ export default function ProductGallery({ images, productTitle }: ProductGalleryP
         }));
     }, [images, productTitle]);
 
-    // 简单的触摸逻辑
     const handleTouchStart = (clientX: number) => {
         setIsDragging(true);
         dragStartX.current = clientX;
@@ -41,7 +41,6 @@ export default function ProductGallery({ images, productTitle }: ProductGalleryP
     const handleTouchMove = (clientX: number) => {
         if (!isDragging) return;
         const diff = clientX - dragStartX.current;
-        // 增加阻尼感
         const movePercent = (diff / window.innerWidth) * 100;
         setCurrentTranslate(prevTranslate.current + movePercent);
     };
@@ -49,7 +48,7 @@ export default function ProductGallery({ images, productTitle }: ProductGalleryP
     const handleTouchEnd = (clientX: number) => {
         setIsDragging(false);
         const diff = clientX - dragStartX.current;
-        const threshold = 50; // 滑动阈值
+        const threshold = 50;
 
         if (Math.abs(diff) > threshold) {
             if (diff > 0 && activeImageIndex > 0) {
@@ -57,10 +56,12 @@ export default function ProductGallery({ images, productTitle }: ProductGalleryP
             } else if (diff < 0 && activeImageIndex < processedImages.length - 1) {
                 setActiveImageIndex(prev => prev + 1);
             }
+        } else {
+            // 回弹
+            setCurrentTranslate(-activeImageIndex * 100);
         }
     };
 
-    // 监听 activeIndex 变化来重置位置
     useEffect(() => {
         setCurrentTranslate(-activeImageIndex * 100);
     }, [activeImageIndex]);
@@ -69,7 +70,7 @@ export default function ProductGallery({ images, productTitle }: ProductGalleryP
 
     return (
         <div className="flex flex-col-reverse md:flex-row gap-4 w-full">
-            {/* 缩略图 (Desktop: Left, Mobile: Bottom) */}
+            {/* 1. 缩略图区域 (Thumbnails) */}
             {processedImages.length > 1 && (
                 <div className="flex md:flex-col gap-3 overflow-x-auto md:overflow-y-auto md:max-h-[500px] scrollbar-hide p-1">
                     {processedImages.map((image, index) => (
@@ -78,6 +79,8 @@ export default function ProductGallery({ images, productTitle }: ProductGalleryP
                             onClick={() => setActiveImageIndex(index)}
                             className={`
                                 relative flex-shrink-0 w-16 h-16 md:w-20 md:h-20 rounded-xl overflow-hidden border-2 transition-all duration-300
+                                /* ✅ 缩略图也加上灰底和 contain */
+                                bg-gray-50
                                 ${index === activeImageIndex ? 'border-black opacity-100 ring-2 ring-black/5' : 'border-transparent opacity-60 hover:opacity-100'}
                             `}
                         >
@@ -85,16 +88,16 @@ export default function ProductGallery({ images, productTitle }: ProductGalleryP
                                 src={image.url}
                                 alt={image.alt || ''}
                                 fill
-                                className="object-cover"
+                                className="object-contain p-1 mix-blend-multiply" // p-1 稍微留点白
                             />
                         </button>
                     ))}
                 </div>
             )}
 
-            {/* 主图区域 */}
+            {/* 2. 主图区域 (Main Gallery) */}
             <div
-                className="flex-1 relative w-full aspect-square md:aspect-auto md:h-[600px] bg-gray-50 rounded-3xl overflow-hidden cursor-grab active:cursor-grabbing"
+                className="flex-1 relative w-full aspect-square md:aspect-auto md:h-[600px] bg-gray-50 rounded-3xl overflow-hidden cursor-grab active:cursor-grabbing border border-gray-100"
                 ref={galleryRef}
                 onTouchStart={(e) => handleTouchStart(e.touches[0].clientX)}
                 onTouchMove={(e) => handleTouchMove(e.touches[0].clientX)}
@@ -117,17 +120,20 @@ export default function ProductGallery({ images, productTitle }: ProductGalleryP
                                 src={image.url}
                                 alt={image.alt || ''}
                                 fill
-                                className="object-cover"
+                                // ✅ 核心修改：使用 contain + padding + 混合模式
+                                className="object-contain p-4 md:p-8 mix-blend-multiply"
                                 priority={index === 0}
                                 sizes="(max-width: 768px) 100vw, 50vw"
                                 draggable={false}
+                                placeholder="blur"
+                                blurDataURL={BLUR_DATA_URL}
                             />
                         </div>
                     ))}
                 </div>
 
-                {/* 移动端圆点指示器 */}
-                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 md:hidden">
+                {/* 移动端圆点 */}
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 md:hidden z-10">
                     {processedImages.map((_, idx) => (
                         <div
                             key={idx}

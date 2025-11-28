@@ -1,4 +1,7 @@
 // lib/session-utils.ts
+
+import { NextRequest, NextResponse } from 'next/server';
+
 export class SessionManager {
     /**
      * 获取或创建 sessionId

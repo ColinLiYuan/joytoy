@@ -7,7 +7,6 @@ import { Search, X, Loader2, ChevronRight, Sparkles } from 'lucide-react';
 import { Z_INDEX } from '@/lib/constants/z-index';
 import { getProductImageUrl } from '@/lib/image-utils';
 import { ProductResponse } from '@/types/product';
-import { searchService } from '@/services/search-service'; // 假设你已经有了这个服务，如果没有，下面有mock
 
 // 热门搜索词
 const TRENDING = ["Rabbit", "Wand", "Couples", "Lingerie", "G-Spot", "Men"];

@@ -29,6 +29,9 @@ export const useCartStore = create<CartStore>()(
             totalPrice: 0,
 
             getCartId: (): string | undefined => {
+                // 仅在客户端执行
+                if (typeof window === 'undefined') return undefined;
+
                 const userInfoStr = localStorage.getItem('userInfo');
                 if (userInfoStr) {
                     try {
@@ -38,19 +41,20 @@ export const useCartStore = create<CartStore>()(
                         console.error('Failed to parse user info:', error);
                     }
                 }
+                return undefined;
             },
 
             getCart: async (cartId?: string) => {
-                let targetCartId = cartId || get().getCartId();
+                // 如果传入了 cartId 就用传入的，否则尝试获取本地存储的，如果都没有则默认为 '0'
+                const targetCartId = cartId || get().getCartId() || '0';
 
-                // 如果没有 ID，就不发请求了，直接返回
-                if (!targetCartId) return;
+                // 如果是 '0' 且没有传入特定的 ID，通常意味着用户未登录且没有临时购物车，可以选择不请求
+                // 但为了保险起见，还是允许请求空购物车
 
                 set({ loading: true, error: null });
                 try {
                     const cartResponse = await cartService.getCart(targetCartId);
 
-                    // ✅ 核心修复：必须先定义这两个变量，才能在 set 里使用
                     const totalItems = cartResponse.items?.reduce((total, item) => total + item.quantity, 0) || 0;
                     const totalPrice = cartResponse.items?.reduce((total, item) => total + item.totalPrice, 0) || 0;
 
@@ -63,12 +67,13 @@ export const useCartStore = create<CartStore>()(
             },
 
             addItemToCart: async (request: AddToCartRequest) => {
-                const cartId = get().getCartId();
+                // ✅ 修复：如果 getCartId 返回 undefined，则默认为 '0'
+                const cartId = get().getCartId() || '0';
+
                 set({ loading: true, error: null });
                 try {
                     const updatedCart = await cartService.addItemToCart(cartId, request);
 
-                    // 计算
                     const totalItems = updatedCart.items?.reduce((total, item) => total + item.quantity, 0) || 0;
                     const totalPrice = updatedCart.items?.reduce((total, item) => total + item.totalPrice, 0) || 0;
 
@@ -85,12 +90,13 @@ export const useCartStore = create<CartStore>()(
             },
 
             updateItemQuantity: async (itemId: number, quantity: number) => {
-                const cartId = get().getCartId();
+                // ✅ 修复：默认为 '0'
+                const cartId = get().getCartId() || '0';
+
                 set({ loading: true, error: null });
                 try {
                     const updatedCart = await cartService.updateItemQuantity(cartId, itemId, quantity);
 
-                    // 计算
                     const totalItems = updatedCart.items?.reduce((total, item) => total + item.quantity, 0) || 0;
                     const totalPrice = updatedCart.items?.reduce((total, item) => total + item.totalPrice, 0) || 0;
 
@@ -105,13 +111,15 @@ export const useCartStore = create<CartStore>()(
             },
 
             removeItemFromCart: async (itemId: number) => {
-                const cartId = get().getCartId();
+                // ✅ 修复：默认为 '0'
+                const cartId = get().getCartId() || '0';
+
                 set({ loading: true, error: null });
                 try {
                     await cartService.removeItemFromCart(cartId, itemId);
+                    // 删除后重新获取购物车最新状态
                     const updatedCart = await cartService.getCart(cartId);
 
-                    // 计算
                     const totalItems = updatedCart.items?.reduce((total, item) => total + item.quantity, 0) || 0;
                     const totalPrice = updatedCart.items?.reduce((total, item) => total + item.totalPrice, 0) || 0;
 
