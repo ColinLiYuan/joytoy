@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="50" viewBox="0 0 200 50" fill="none">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&amp;display=swap');
+    .logo-text {
+      font-family: 'Playfair Display', 'Times New Roman', serif;
+      font-weight: 600;
+      font-size: 40px;
+      fill: #000000; /* 纯黑色 */
+      letter-spacing: 0.02em; /* 稍微宽一点的间距，显高级 */
+    }
+  </style>
+  <text x="50%" y="65%" dominant-baseline="middle" text-anchor="middle" class="logo-text">
+    MythToy
+  </text>
+</svg>
