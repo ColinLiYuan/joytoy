@@ -1,7 +1,7 @@
-// components/navigation/navigation.tsx (简化版本)
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image'; // ✅ 引入 Image
 import MainCategory from '@/components/navigation/main-category';
 import UserActions from '@/components/common/user-actions';
 import Cart from '@/components/common/cart';
@@ -12,6 +12,7 @@ import { usePathname } from "next/navigation";
 import { useAuth } from '@/contexts/authContext';
 import { useCartStore } from '@/stores/useCartStore';
 import { RootResponse } from '@/types/category';
+import { Menu } from 'lucide-react';
 import { Z_INDEX } from '@/lib/constants/z-index';
 
 interface NavigationProps {
@@ -28,55 +29,23 @@ export default function Navigation({ minimal = false, rootsData = [] }: Navigati
     const [isMounted, setIsMounted] = useState(false);
 
     const isCheckoutPage = pathname === '/checkout';
-
-    // 使用 Zustand store 获取购物车方法
     const getCart = useCartStore(state => state.getCart);
+    const { isLoggedIn, openAuthModal, logout } = useAuth();
 
-    const {
-        isLoggedIn,
-        openAuthModal,
-        logout,
-    } = useAuth();
-
-    // 标记客户端已加载
-    useEffect(() => {
-        setIsMounted(true);
-    }, []);
+    useEffect(() => setIsMounted(true), []);
 
     useEffect(() => {
-        if (isLoggedIn) {
-            getCart();
-        }
+        if (isLoggedIn) getCart();
     }, [isLoggedIn, getCart]);
 
-    // 处理 body 滚动
     useEffect(() => {
-        if (isMobileNavOpen) {
-            document.body.style.overflow = 'hidden';
-        } else {
-            document.body.style.overflow = 'unset';
-        }
-
-        return () => {
-            document.body.style.overflow = 'unset';
-        };
+        document.body.style.overflow = isMobileNavOpen ? 'hidden' : 'unset';
+        return () => { document.body.style.overflow = 'unset'; };
     }, [isMobileNavOpen]);
 
     const toggleCart = async () => {
-        if (!isCartOpen && isLoggedIn) {
-            await getCart();
-        }
+        if (!isCartOpen && isLoggedIn) await getCart();
         setIsCartOpen(!isCartOpen);
-    };
-
-    const closeCart = () => setIsCartOpen(false);
-
-    const toggleMobileNav = () => {
-        setIsMobileNavOpen(!isMobileNavOpen);
-        if (!isMobileNavOpen) {
-            setCurrentPanel('main');
-            setCurrentRootCategory(null);
-        }
     };
 
     const closeMobileNav = () => {
@@ -88,8 +57,7 @@ export default function Navigation({ minimal = false, rootsData = [] }: Navigati
     };
 
     const openSubCategoryPanel = (root: RootResponse) => {
-        const subCategories = root.categories || [];
-        if (subCategories.length > 0) {
+        if (root.categories && root.categories.length > 0) {
             setCurrentRootCategory(root);
             setCurrentPanel('sub');
         } else {
@@ -97,93 +65,68 @@ export default function Navigation({ minimal = false, rootsData = [] }: Navigati
         }
     };
 
-    const backToMainPanel = () => {
-        setCurrentPanel('main');
-        setCurrentRootCategory(null);
-    };
-
-    const handleWishlistClick = (e: React.MouseEvent) => {
-        if (!isLoggedIn) {
-            e.preventDefault();
-            openAuthModal('login', {
-                onSuccess: () => {
-                    window.location.href = '/wishlist';
-                }
-            });
-        }
-    };
-
-    const handleCartClick = () => {
-        if (!isLoggedIn) {
-            openAuthModal('login', {
-                onSuccess: () => {
-                    toggleCart();
-                }
-            });
-        } else {
-            toggleCart();
-        }
-    };
-
-    const handleLogout = () => {
-        logout();
-        setIsCartOpen(false);
-    };
-
-    const getActiveCategory = () => {
-        const pathSegments = pathname.split('/').filter(segment => segment);
-        return pathSegments[pathSegments.length - 1];
-    };
-
-    const activeCategory = getActiveCategory();
-
     if (minimal || isCheckoutPage) {
         return <MinimalNavigation />;
     }
 
     return (
         <>
-            <div className="relative w-full" style={{ zIndex: Z_INDEX.NAVIGATION }}>
-                <div className="bg-white py-3 relative border-b border-gray-200 w-full">
-                    <div className="container mx-auto px-4 max-w-7xl">
-                        <div className="flex justify-between items-center w-full">
-                            {/* Logo - 固定在左边 */}
-                            <Link href="/" className="flex items-center gap-1.5 flex-shrink-0">
-                                <span className="text-base font-bold text-gray-900">MythToy</span>
-                            </Link>
+            <div
+                className="relative w-full bg-white border-b border-gray-100 shadow-sm"
+                style={{ zIndex: Z_INDEX.NAVIGATION }}
+            >
+                <div className="container mx-auto px-4 max-w-7xl">
+                    <div className="flex justify-between items-center h-16 lg:h-20">
 
-                            {/* 桌面版分类导航 */}
-                            <div className="hidden lg:block flex-1 max-w-[600px] mx-5">
-                                <MainCategory rootsData={rootsData} />
-                            </div>
-
-                            {/* 右侧区域 - 用户操作和汉堡菜单紧凑排列 */}
-                            <div className="flex items-center gap-0">
-                                <UserActions
-                                    isLoggedIn={isLoggedIn}
-                                    onCartClick={handleCartClick}
-                                    onWishlistClick={handleWishlistClick}
-                                    onAuthModalOpen={() => openAuthModal('login')}
-                                    onLogout={handleLogout}
+                        {/* Logo 区域 */}
+                        <Link href="/" className="flex-shrink-0 group relative flex items-center">
+                            {/* ✅ 替换文字为图片 */}
+                            {/* w-36 h-8 控制显示大小，根据你 SVG 的长宽比微调 */}
+                            <div className="relative w-36 h-8 sm:w-40 sm:h-10">
+                                <Image
+                                    src="/logo.svg"
+                                    alt="MythToy Logo"
+                                    fill
+                                    className="object-contain object-left"
+                                    priority // 优先加载 LCP
                                 />
+                            </div>
+                        </Link>
 
-                                <div className="lg:hidden flex justify-center items-center flex-shrink-0">
-                                    <button
-                                        onClick={toggleMobileNav}
-                                        className="w-9 h-9 flex items-center justify-center text-gray-700 hover:text-gray-900 transition-colors"
-                                        aria-label="Toggle menu"
-                                    >
-                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                            <path d="M3 12h18M3 6h18M3 18h18"/>
-                                        </svg>
-                                    </button>
-                                </div>
+                        {/* Desktop Navigation */}
+                        <div className="hidden lg:block flex-1 px-8">
+                            <MainCategory rootsData={rootsData} />
+                        </div>
+
+                        {/* Right Actions */}
+                        <div className="flex items-center gap-2">
+                            <UserActions
+                                isLoggedIn={isLoggedIn}
+                                onCartClick={toggleCart}
+                                onWishlistClick={(e) => {
+                                    e.preventDefault();
+                                    if (!isLoggedIn) openAuthModal('login', { onSuccess: () => window.location.href = '/wishlist' });
+                                    else window.location.href = '/wishlist';
+                                }}
+                                onAuthModalOpen={() => openAuthModal('login')}
+                                onLogout={() => { logout(); setIsCartOpen(false); }}
+                            />
+
+                            {/* Mobile Hamburger */}
+                            <div className="lg:hidden ml-2">
+                                <button
+                                    onClick={() => setIsMobileNavOpen(!isMobileNavOpen)}
+                                    className="p-2 text-gray-800 hover:bg-gray-50 rounded-full transition-colors"
+                                    aria-label="Toggle menu"
+                                >
+                                    <Menu size={24} />
+                                </button>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {/* 移动端导航侧边栏 */}
+                {/* Components */}
                 {isMounted && (
                     <MobileNavigation
                         isOpen={isMobileNavOpen}
@@ -191,17 +134,12 @@ export default function Navigation({ minimal = false, rootsData = [] }: Navigati
                         rootsData={rootsData}
                         currentPanel={currentPanel}
                         currentRootCategory={currentRootCategory}
-                        onBackToMain={backToMainPanel}
+                        onBackToMain={() => { setCurrentPanel('main'); setCurrentRootCategory(null); }}
                         onOpenSubCategory={openSubCategoryPanel}
-                        activeCategory={activeCategory}
                     />
                 )}
 
-                {/* 购物车 */}
-                <Cart
-                    isOpen={isCartOpen}
-                    onClose={closeCart}
-                />
+                <Cart isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
             </div>
         </>
     );

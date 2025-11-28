@@ -6,7 +6,7 @@ export interface RootResponse {
     title: string;
     description: string;
     priority?: number;
-    changeFreq?: string;
+    changefreq?: string;
     lastModified?: string;
     categories: CategoryResponse[];
 }
@@ -19,7 +19,7 @@ export interface CategoryResponse {
     description: string;
     root?: string;
     priority?: number;
-    changeFreq?: string;
+    changefreq?: string;
     lastModified?: string;
 }
 
@@ -29,7 +29,7 @@ export interface CategoryItem {
     title: string;
     description: string;
     priority: number;
-    changeFreq: string;
+    changefreq: string;
     root?: string;
     categories?: CategoryItem[];
 }

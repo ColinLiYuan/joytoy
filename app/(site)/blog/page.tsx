@@ -2,8 +2,10 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
 import Pagination from '@/components/common/pagination';
+import Breadcrumb from '@/components/common/breadcrumb'; // ✅ 引入通用面包屑
 import { blogServiceServer } from '@/services/servers/blog-service-server';
 import { BlogResponse, BlogListResponse } from '@/types/site/blog';
+import { BookOpen, Calendar, User, Eye, ArrowRight } from 'lucide-react'; // ✅ Lucide
 
 interface PageProps {
     searchParams: Promise<{
@@ -17,18 +19,14 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
     const pageSuffix = currentPage > 0 ? ` - Page ${currentPage + 1}` : '';
 
     return {
-        title: `Sex Education & Pleasure Guides${pageSuffix} | Your Brand`,
-        description: 'Expert guides on adult toys, sexual wellness, and intimacy. Discover product reviews, how-to guides, and tips to enhance your experience.',
-        keywords: 'adult toys, sex toys, sexual wellness, intimacy guides, product reviews, pleasure products',
+        title: `Pleasure & Wellness Blog${pageSuffix} | MythToy`,
+        description: 'Expert guides on adult toys, sexual wellness, and intimacy tips. Discover product reviews, how-to guides, and education to enhance your experience.',
+        keywords: 'sex education, adult toy reviews, intimacy tips, sexual wellness blog',
         openGraph: {
-            title: `Sex Education & Pleasure Guides${pageSuffix}`,
-            description: 'Expert guides on adult toys and sexual wellness',
+            title: `Pleasure & Wellness Blog${pageSuffix} | MythToy`,
+            description: 'Expert guides on adult toys and sexual wellness.',
             type: 'website',
-            locale: 'en_US',
-        },
-        robots: {
-            index: true,
-            follow: true,
+            url: '/blog',
         },
         alternates: {
             canonical: '/blog',
@@ -36,17 +34,16 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
     };
 }
 
-// Generate structured data for SEO
+// SEO Schema
 function generateStructuredData(posts: BlogResponse[]) {
     if (!posts.length) return null;
-
     return {
         '@context': 'https://schema.org',
         '@type': 'Blog',
-        'name': 'Sex Education & Pleasure Guides',
+        'name': 'MythToy Pleasure & Wellness Blog',
         'description': 'Expert guides on adult toys, sexual wellness, and intimacy tips',
         'url': `${process.env.NEXT_PUBLIC_SITE_URL}/blog`,
-        'blogPost': posts.slice(0, 5).map((post: BlogResponse) => ({
+        'blogPost': posts.map((post) => ({
             '@type': 'BlogPosting',
             'headline': post.title,
             'description': post.summary || post.content.substring(0, 160),
@@ -54,7 +51,7 @@ function generateStructuredData(posts: BlogResponse[]) {
             'dateModified': post.updatedAt,
             'author': {
                 '@type': 'Person',
-                'name': post.author || 'Your Brand'
+                'name': post.author || 'MythToy Editorial'
             },
             'url': `${process.env.NEXT_PUBLIC_SITE_URL}/blog/${post.slug}`
         }))
@@ -66,6 +63,12 @@ export default async function BlogList({ searchParams }: PageProps) {
     const page = parseInt(resolvedSearchParams.page || '0', 10);
     const currentPage = isNaN(page) ? 0 : page;
 
+    // Breadcrumbs
+    const breadcrumbs = [
+        { name: 'Home', path: '/' },
+        { name: 'Blog', path: null }
+    ];
+
     try {
         const response: BlogListResponse = await blogServiceServer.list(currentPage, 12);
         const posts = response.content || [];
@@ -73,7 +76,6 @@ export default async function BlogList({ searchParams }: PageProps) {
 
         return (
             <>
-                {/* Structured Data for SEO */}
                 {structuredData && (
                     <script
                         type="application/ld+json"
@@ -81,118 +83,96 @@ export default async function BlogList({ searchParams }: PageProps) {
                     />
                 )}
 
-                <div className="min-h-screen bg-gray-50 py-8">
-                    <div className="container mx-auto px-4 max-w-7xl">
-                        {/* Page Header - Improved Design */}
-                        <div className="mb-16 text-center">
-                            <div className="inline-block bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-3 rounded-full text-sm font-medium mb-6">
-                                Knowledge Center
+                <div className="min-h-screen bg-white w-full overflow-x-hidden">
+
+                    {/* Header Section */}
+                    <div className="bg-gray-50 py-16 md:py-24 border-b border-gray-100">
+                        <div className="container mx-auto px-4 max-w-7xl text-center">
+                            <div className="mb-8 flex justify-center">
+                                <div className="bg-white px-4 py-1 rounded-full border border-gray-200 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-gray-500">
+                                    <BookOpen size={14} />
+                                    Knowledge Hub
+                                </div>
                             </div>
-                            <h1 className="text-5xl font-bold text-gray-900 mb-6 leading-tight">
-                                Pleasure & Wellness
-                                <span className="block text-3xl text-purple-600 mt-2 font-light">Education Hub</span>
+                            <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6 font-['Playfair_Display']">
+                                The Pleasure Journal
                             </h1>
-                            <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-                                Explore our expert guides on sexual wellness, product insights,
-                                and intimacy tips to enhance your personal journey.
+                            <p className="text-lg text-gray-500 max-w-2xl mx-auto leading-relaxed font-['Inter']">
+                                Expert advice, product guides, and intimacy tips to help you explore with confidence.
                             </p>
-                            <div className="mt-8 text-lg text-purple-600 font-semibold">
-                                {response.totalElements || 0} Expert Guides
-                            </div>
+                        </div>
+                    </div>
+
+                    <div className="container mx-auto px-4 max-w-7xl py-12">
+
+                        {/* Breadcrumb */}
+                        <div className="mb-10">
+                            <Breadcrumb items={breadcrumbs} showLastItem={true} />
                         </div>
 
-                        {/* Blog List - Grid Layout */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 mb-16">
+                        {/* Blog Grid */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-10 mb-16">
                             {posts.length > 0 ? (
                                 posts.map((post) => (
                                     <article
                                         key={post.id}
-                                        className="bg-white rounded-2xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 flex flex-col h-full group"
+                                        className="group flex flex-col h-full bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-xl hover:border-gray-200 transition-all duration-300"
                                     >
-                                        {/* Clickable Cover Image with Overlay Text */}
-                                        <Link
-                                            href={`/blog/${post.slug}`}
-                                            className="relative block"
-                                        >
+                                        <Link href={`/blog/${post.slug}`} className="block relative aspect-[16/9] overflow-hidden bg-gray-100">
                                             {post.coverImage ? (
-                                                <div className="h-48 relative overflow-hidden">
-                                                    <img
-                                                        src={post.coverImage}
-                                                        alt={post.title}
-                                                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                                                        loading="lazy"
-                                                    />
-                                                    {/* Gradient Overlay */}
-                                                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-
-                                                    {/* Title on Image */}
-                                                    <div className="absolute bottom-4 left-4 right-4 text-white">
-                                                        <h3 className="text-lg font-bold mb-1 line-clamp-2 group-hover:text-purple-200 transition-colors">
-                                                            {post.title}
-                                                        </h3>
-                                                        {post.summary && (
-                                                            <p className="text-sm text-gray-200 line-clamp-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                                                {post.summary}
-                                                            </p>
-                                                        )}
-                                                    </div>
-                                                </div>
+                                                <img
+                                                    src={post.coverImage}
+                                                    alt={post.title}
+                                                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                                                    loading="lazy"
+                                                />
                                             ) : (
-                                                // Fallback when no cover image
-                                                <div className="h-48 bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white">
-                                                    <div className="text-center p-4">
-                                                        <h3 className="text-lg font-bold mb-2 line-clamp-2">
-                                                            {post.title}
-                                                        </h3>
-                                                        {post.summary && (
-                                                            <p className="text-sm opacity-90 line-clamp-2">
-                                                                {post.summary}
-                                                            </p>
-                                                        )}
-                                                    </div>
+                                                <div className="w-full h-full flex items-center justify-center bg-gray-50 text-gray-300">
+                                                    <span className="text-4xl font-bold opacity-20">MYTH</span>
                                                 </div>
                                             )}
+                                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-300"></div>
                                         </Link>
 
-                                        {/* Content Below Image */}
-                                        <div className="p-6 flex-1 flex flex-col">
-                                            {/* Title */}
-                                            <Link
-                                                href={`/blog/${post.slug}`}
-                                                className="hover:no-underline group/title mb-3"
-                                            >
-                                                <h2 className="text-xl font-bold text-gray-900 group-hover/title:text-purple-600 transition-colors line-clamp-2">
+                                        <div className="p-6 md:p-8 flex flex-col flex-grow">
+                                            <div className="flex items-center gap-3 text-xs text-gray-400 mb-4 uppercase tracking-wider font-medium">
+                                                <span className="flex items-center gap-1.5">
+                                                    <Calendar size={12} />
+                                                    {new Date(post.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                                </span>
+                                                {/* 如果有分类可以在这里加 */}
+                                            </div>
+
+                                            <Link href={`/blog/${post.slug}`} className="block mb-3">
+                                                <h2 className="text-2xl font-bold text-gray-900 group-hover:text-pink-600 transition-colors font-['Playfair_Display'] leading-tight">
                                                     {post.title}
                                                 </h2>
                                             </Link>
 
-                                            {/* SubTitle */}
-                                            {post.subTitle && (
+                                            <p className="text-gray-500 text-sm leading-relaxed mb-6 line-clamp-3 flex-grow font-['Inter']">
+                                                {post.summary || post.content.substring(0, 150)}...
+                                            </p>
+
+                                            <div className="flex items-center justify-between pt-6 border-t border-gray-50 mt-auto">
+                                                <div className="flex items-center gap-2 text-xs text-gray-500 font-medium">
+                                                    <User size={12} />
+                                                    {post.author || 'Editor'}
+                                                </div>
                                                 <Link
                                                     href={`/blog/${post.slug}`}
-                                                    className="hover:no-underline group/subtitle mb-4"
+                                                    className="text-xs font-bold uppercase tracking-wide text-black group-hover:text-pink-600 flex items-center gap-1 transition-colors"
                                                 >
-                                                    <p className="text-gray-600 group-hover/subtitle:text-purple-500 transition-colors line-clamp-3 leading-relaxed">
-                                                        {post.subTitle}
-                                                    </p>
+                                                    Read Article <ArrowRight size={12} />
                                                 </Link>
-                                            )}
-
-                                            {/* Author and Date */}
-                                            <div className="mt-auto pt-4 border-t border-gray-100">
-                                                <div className="flex justify-between items-center text-sm text-gray-500">
-                                                    <span>By {post.author}</span>
-                                                    <span>{new Date(post.createdAt).toLocaleDateString('en-US')}</span>
-                                                </div>
                                             </div>
                                         </div>
                                     </article>
                                 ))
                             ) : (
-                                <div className="col-span-full text-center py-16">
-                                    <div className="text-6xl mb-4">📚</div>
-                                    <h3 className="text-2xl font-bold text-gray-900 mb-3">No Guides Available</h3>
-                                    <p className="text-gray-600 text-lg">We're preparing new content for you.</p>
+                                <div className="col-span-full text-center py-20 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
+                                    <BookOpen size={48} className="mx-auto text-gray-300 mb-4" />
+                                    <h3 className="text-xl font-bold text-gray-900 mb-2">No Articles Found</h3>
+                                    <p className="text-gray-500">Our editors are working on new content. Check back soon!</p>
                                 </div>
                             )}
                         </div>
@@ -212,15 +192,11 @@ export default async function BlogList({ searchParams }: PageProps) {
         );
     } catch (error) {
         console.error('Error fetching blog list:', error);
-
         return (
-            <div className="min-h-screen bg-gray-50 py-8">
-                <div className="container mx-auto px-4 max-w-7xl">
-                    <div className="text-center py-16">
-                        <div className="text-6xl mb-4">😔</div>
-                        <h3 className="text-2xl font-bold text-gray-900 mb-3">Content Unavailable</h3>
-                        <p className="text-gray-600 text-lg">We're experiencing technical difficulties. Please check back soon.</p>
-                    </div>
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                <div className="text-center">
+                    <h3 className="text-xl font-bold text-gray-900 mb-2">Unable to load blog</h3>
+                    <p className="text-gray-500">Please try again later.</p>
                 </div>
             </div>
         );

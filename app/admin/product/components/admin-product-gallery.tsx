@@ -150,7 +150,7 @@ export default function AdminProductGallery({ product, updateProduct }: ImageUpl
                             <img
                                 id="imagePreview"
                                 className="rounded-lg shadow-md border border-gray-200"
-                                src={mainImagePreview || getProductImageUrl(product.baseUrl || '', product.image || '')}
+                                src={mainImagePreview || getProductImageUrl('', product.image || '')}
                                 alt={product.title}
                                 style={{ width: '200px', height: '200px', objectFit: 'cover' }}
                             />
@@ -199,7 +199,7 @@ export default function AdminProductGallery({ product, updateProduct }: ImageUpl
                                     <div key={gallery.id || index} className="relative group">
                                         <div className="aspect-square bg-gray-100 rounded-lg border border-gray-200 shadow-sm overflow-hidden">
                                             <img
-                                                src={getProductImageUrl(product.baseUrl || '', gallery.url)}
+                                                src={getProductImageUrl('', gallery.url)}
                                                 alt={gallery.alt || gallery.url}
                                                 className="w-full h-full object-contain p-1"
                                             />

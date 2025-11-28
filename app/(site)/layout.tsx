@@ -22,12 +22,34 @@ export default async function SiteLayout({
         rootsData = [];
     }
 
-    // 环境判断
     const gaId = process.env.NODE_ENV === 'production' ? 'G-X0CTZ0DD1Q' : '';
 
+    const organizationStructuredData = {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": "MythToy",
+        "url": "https://mythtoy.com",
+        "logo": "https://mythtoy.com/logo.png",
+        "description": "Premium adult lifestyle products.",
+        "contactPoint": {
+            "@type": "ContactPoint",
+            "email": "support@mythtoy.com",
+            "contactType": "customer service"
+        }
+    };
+
     return (
-        <div>
-            {/* 只有生产环境加载GA脚本 */}
+        // ✅ 核心修复：
+        // 1. max-w-[100vw]: 强制最大宽度为视口宽度
+        // 2. overflow-x-clip: 比 hidden 更强硬的裁剪属性 (Tailwind class)
+        // 3. position: relative: 确保内部绝对定位元素以它为边界
+        <div className="relative flex flex-col min-h-screen w-full max-w-[100vw] overflow-x-clip bg-white">
+
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationStructuredData) }}
+            />
+
             {gaId && (
                 <>
                     <Script
@@ -49,15 +71,25 @@ export default async function SiteLayout({
                 </>
             )}
 
-            {/* 用 Suspense 包装 GARouteTracker */}
             <Suspense fallback={null}>
                 <GARouteTracker />
             </Suspense>
 
-            <Navigation rootsData={rootsData} />
-            <Notice />
-            {children}
-            <Footer />
+            {/* 导航栏区域 */}
+            <div className="w-full relative z-50">
+                <Navigation rootsData={rootsData} />
+                <Notice />
+            </div>
+
+            {/* 主内容区域 - 再次加固 */}
+            <main className="flex-grow w-full max-w-[100vw] overflow-x-clip">
+                {children}
+            </main>
+
+            {/* Footer */}
+            <div className="w-full max-w-[100vw] overflow-x-clip">
+                <Footer />
+            </div>
         </div>
     );
 }

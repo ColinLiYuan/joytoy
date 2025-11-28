@@ -3,6 +3,7 @@ import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { blogServiceServer } from '@/services/servers/blog-service-server';
 import BlogContent from './blog-content';
+import Breadcrumb, { BreadcrumbItem } from '@/components/common/breadcrumb';
 
 interface PageProps {
     params: Promise<{
@@ -10,29 +11,32 @@ interface PageProps {
     }>;
 }
 
+// ✅ SEO: Dynamic Metadata
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
     const resolvedParams = await params;
 
     try {
         const blog = await blogServiceServer.getBySlug(resolvedParams.slug);
-
         return {
-            title: `${blog.title} - 博客文章`,
-            description: blog.summary || blog.content.substring(0, 150) + '...',
+            title: `${blog.title} | MythToy Blog`,
+            description: blog.summary || blog.content.substring(0, 155),
             openGraph: {
                 title: blog.title,
-                description: blog.summary || blog.content.substring(0, 150) + '...',
+                description: blog.summary || blog.content.substring(0, 155),
                 images: blog.coverImage ? [blog.coverImage] : [],
                 type: 'article',
                 publishedTime: blog.createdAt,
                 modifiedTime: blog.updatedAt,
-                authors: [blog.author],
+                authors: [blog.author || 'MythToy'],
+            },
+            alternates: {
+                canonical: `/blog/${blog.slug}`,
             },
         };
     } catch (error) {
         return {
-            title: '博客不存在',
-            description: '请求的博客文章不存在或已被删除',
+            title: 'Article Not Found | MythToy',
+            description: 'The requested article could not be found.',
         };
     }
 }
@@ -43,9 +47,26 @@ export default async function BlogDetailPage({ params }: PageProps) {
     try {
         const blog = await blogServiceServer.getBySlug(resolvedParams.slug);
 
-        return <BlogContent blog={blog} />;
+        // ✅ Breadcrumb Data
+        const breadcrumbs: BreadcrumbItem[] = [
+            { name: 'Home', path: '/' },
+            { name: 'Blog', path: '/blog' },
+            { name: blog.title, path: null } // Current page
+        ];
+
+        return (
+            <div className="min-h-screen bg-white w-full overflow-x-hidden">
+                {/* Breadcrumb Container */}
+                <div className="container mx-auto px-4 max-w-4xl py-6">
+                    <Breadcrumb items={breadcrumbs} showLastItem={false} />
+                </div>
+
+                {/* Content Component */}
+                <BlogContent blog={blog} />
+            </div>
+        );
     } catch (error) {
-        console.error('获取博客失败:', error);
+        console.error('Error fetching blog:', error);
         notFound();
     }
 }

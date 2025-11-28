@@ -1,4 +1,4 @@
-// app/wholesale/page.tsx
+// app/pages/wholesale/page.tsx
 export default function Wholesale() {
     return (
         <div className="min-h-screen bg-gray-50 py-12">

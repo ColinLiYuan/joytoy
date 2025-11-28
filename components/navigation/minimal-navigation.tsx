@@ -1,20 +1,22 @@
-// components/navigation/minimal-header.tsx
 'use client';
 
 import Link from 'next/link';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faHome } from '@fortawesome/free-solid-svg-icons';
+import { ChevronLeft } from 'lucide-react';
 
-export default function MinimalHeader() {
+export default function MinimalNavigation() {
     return (
-        <header className="minimal-header">
-            <div className="container">
-                <div className="minimal-header-content">
-                    <Link href="/" className="logo">
-                        <FontAwesomeIcon icon={faHome} />
-                        MythToy
-                    </Link>
-                </div>
+        <header className="bg-white border-b border-gray-100 py-4">
+            <div className="container mx-auto px-4 flex items-center justify-between">
+                <Link href="/" className="flex items-center gap-2 text-gray-500 hover:text-black transition-colors text-sm font-medium">
+                    <ChevronLeft size={16} />
+                    Back to Home
+                </Link>
+
+                <Link href="/" className="text-xl font-bold text-gray-900 font-['Playfair_Display'] absolute left-1/2 -translate-x-1/2">
+                    MythToy
+                </Link>
+
+                <div className="w-20" /> {/* Spacer */}
             </div>
         </header>
     );

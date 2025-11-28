@@ -1,6 +1,6 @@
 // services/category-service.ts
 import { CategoryResponse, RootResponse } from '@/types/category';
-import { CATEGORIES_DATA } from '@/lib/constants/categories';
+import { CATEGORIES_DATA } from '@/lib/constants/category-data';
 
 class CategoryService {
 
@@ -15,7 +15,7 @@ class CategoryService {
             title: root.title,
             description: root.description,
             priority: root.priority,
-            changeFreq: root.changeFreq,
+            changefreq: root.changefreq,
             categories: root.categories || []
         }));
     }
@@ -33,7 +33,7 @@ class CategoryService {
                 description: root.description,
                 root: root.slug,
                 priority: root.priority,
-                changeFreq: root.changeFreq
+                changefreq: root.changefreq
             });
 
             // 添加子分类
@@ -46,7 +46,7 @@ class CategoryService {
                         description: subCategory.description,
                         root: subCategory.root,
                         priority: subCategory.priority,
-                        changeFreq: subCategory.changeFreq
+                        changefreq: subCategory.changefreq
                     });
                 });
             }

@@ -1,16 +1,11 @@
-// components/common/user-actions.tsx
 'use client';
 
 import Link from 'next/link';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import {
-    faUser,
-    faShoppingCart,
-    faHeart,
-    faUserCircle,
-} from '@fortawesome/free-solid-svg-icons';
+import { User, ShoppingBag, Heart, Search, LogOut, Package, Settings } from 'lucide-react';
 import { useCartStore } from '@/stores/useCartStore';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { Z_INDEX } from '@/lib/constants/z-index';
+import SearchModal from '@/components/navigation/search-modal';
 
 interface UserActionsProps {
     isLoggedIn: boolean;
@@ -28,97 +23,145 @@ export default function UserActions({
                                         onLogout
                                     }: UserActionsProps) {
     const [isMounted, setIsMounted] = useState(false);
-    const totalItems = useCartStore(state => state.totalItems);
-    const isLoadingCart = useCartStore(state => state.loading);
+    const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+    const [isSearchOpen, setIsSearchOpen] = useState(false);
 
+    const userMenuRef = useRef<HTMLDivElement>(null);
+    const totalItems = useCartStore(state => state.totalItems);
+
+    useEffect(() => setIsMounted(true), []);
+
+    // 点击外部关闭菜单
     useEffect(() => {
-        setIsMounted(true);
+        const handleClickOutside = (event: MouseEvent) => {
+            if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+                setIsUserMenuOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    // 只在客户端计算徽章文本
-    const badgeText = isMounted && totalItems > 0
-        ? (totalItems > 99 ? '99+' : totalItems.toString())
-        : '';
-
     return (
-        <div className="flex items-center gap-1">
-            {/* 愿望清单 */}
-            {isLoggedIn ? (
-                <Link
-                    href="/wishlist"
-                    className="w-8 h-8 flex items-center justify-center text-gray-700 hover:text-[var(--danger-color)] hover:bg-[color-mix(in_srgb,var(--primary-color)_10%,transparent)] rounded-full transition-colors cursor-pointer"
-                    aria-label="Wishlist"
-                >
-                    <FontAwesomeIcon icon={faHeart} className="w-3.5 h-3.5" />
-                </Link>
-            ) : (
-                <button
-                    className="w-8 h-8 flex items-center justify-center text-gray-700 hover:text-[var(--danger-color)] hover:bg-[color-mix(in_srgb,var(--primary-color)_10%,transparent)] rounded-full transition-colors cursor-pointer"
-                    aria-label="Wishlist"
-                    onClick={onWishlistClick}
-                    title="Login to view wishlist"
-                >
-                    <FontAwesomeIcon icon={faHeart} className="w-3.5 h-3.5" />
-                </button>
-            )}
+        <div className="flex items-center gap-1 md:gap-3 relative z-50">
 
-            {/* 购物车 */}
+            {/* 1. Search Button */}
             <button
-                className="relative w-8 h-8 flex items-center justify-center text-gray-700 hover:text-[var(--primary-color)] hover:bg-[color-mix(in_srgb,var(--primary-color)_10%,transparent)] rounded-full transition-colors disabled:opacity-50 cursor-pointer"
-                onClick={onCartClick}
-                aria-label="Shopping cart"
-                disabled={isLoadingCart}
+                className="w-10 h-10 flex items-center justify-center text-gray-700 hover:text-black rounded-full hover:bg-gray-100 transition-all duration-200"
+                onClick={() => setIsSearchOpen(true)}
+                aria-label="Search"
             >
-                <FontAwesomeIcon icon={faShoppingCart} className="w-3.5 h-3.5" />
-                {/* 徽章 - 只在有内容时渲染 */}
-                {badgeText && (
-                    <span
-                        className="absolute -top-1 -right-1 bg-[var(--danger-color)] text-white text-xs rounded-full w-3.5 h-3.5 flex items-center justify-center font-semibold text-[9px]"
-                    >
-                        {badgeText}
+                <Search size={22} strokeWidth={1.5} />
+            </button>
+
+            {/* 2. Wishlist Button */}
+            <button
+                className="w-10 h-10 flex items-center justify-center text-gray-700 hover:text-pink-600 rounded-full hover:bg-pink-50 transition-all duration-200"
+                onClick={isLoggedIn ? undefined : onWishlistClick}
+                aria-label="Wishlist"
+            >
+                {isLoggedIn ? (
+                    <Link href="/wishlist" className="flex items-center justify-center w-full h-full">
+                        <Heart size={22} strokeWidth={1.5} />
+                    </Link>
+                ) : (
+                    <Heart size={22} strokeWidth={1.5} />
+                )}
+            </button>
+
+            {/* 3. Cart Button */}
+            <button
+                className="relative w-10 h-10 flex items-center justify-center text-gray-700 hover:text-black rounded-full hover:bg-gray-100 transition-all duration-200"
+                onClick={onCartClick}
+                aria-label="Shopping bag"
+            >
+                <ShoppingBag size={22} strokeWidth={1.5} />
+                {isMounted && totalItems > 0 && (
+                    <span className="absolute top-1.5 right-1 bg-black text-white text-[10px] font-bold h-4 min-w-[16px] px-1 flex items-center justify-center rounded-full ring-2 ring-white">
+                        {totalItems > 99 ? '99+' : totalItems}
                     </span>
                 )}
             </button>
 
-            {/* 用户账户 */}
-            <div className="relative">
-                {isLoggedIn ? (
-                    <div className="group relative">
-                        <button
-                            className="w-8 h-8 flex items-center justify-center text-gray-700 hover:text-[var(--primary-color)] hover:bg-[color-mix(in_srgb,var(--primary-color)_10%,transparent)] rounded-full transition-colors cursor-pointer"
-                            aria-label="User account"
-                        >
-                            <FontAwesomeIcon icon={faUserCircle} className="w-3.5 h-3.5" />
-                        </button>
-                        <div className="absolute top-full right-0 bg-white rounded-xl shadow-lg py-2 min-w-[160px] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform -translate-y-2 group-hover:translate-y-0">
-                            <Link href="/account" className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:text-[var(--primary-color)] hover:bg-[color-mix(in_srgb,var(--primary-color)_10%,transparent)] transition-colors text-sm">
-                                <FontAwesomeIcon icon={faUser} className="w-3 h-3" />
-                                My Account
-                            </Link>
-                            <Link href="/orders" className="block px-3 py-2 text-gray-700 hover:text-[var(--primary-color)] hover:bg-[color-mix(in_srgb,var(--primary-color)_10%,transparent)] transition-colors text-sm">
-                                Orders
-                            </Link>
-                            <Link href="/wishlist" className="block px-3 py-2 text-gray-700 hover:text-[var(--primary-color)] hover:bg-[color-mix(in_srgb,var(--primary-color)_10%,transparent)] transition-colors text-sm">
-                                Wishlist
-                            </Link>
+            {/* 4. User Menu Container (Relative Parent) */}
+            <div className="relative" ref={userMenuRef}>
+                {/* Avatar Button */}
+                <button
+                    className={`w-10 h-10 flex items-center justify-center rounded-full transition-all duration-200 border ${isUserMenuOpen ? 'bg-black text-white border-black' : 'border-transparent text-gray-700 hover:text-black hover:bg-gray-100'}`}
+                    onClick={() => isLoggedIn ? setIsUserMenuOpen(!isUserMenuOpen) : onAuthModalOpen()}
+                    aria-label="Account"
+                >
+                    <User size={22} strokeWidth={1.5} />
+                </button>
+
+                {/* Dropdown Menu (Absolute Position) */}
+                {isLoggedIn && (
+                    <div
+                        className={`
+                            absolute top-full right-0 mt-2 
+                            /* ✅ 核心修复： */
+                            /* !w-60: 强制宽度 240px */
+                            /* !max-w-none: 强制解除父级宽度限制 */
+                            !w-60 !max-w-none
+                            bg-white rounded-xl shadow-xl border border-gray-100 py-2 
+                            origin-top-right transition-all duration-200
+                            ${isUserMenuOpen ? 'opacity-100 scale-100 visible' : 'opacity-0 scale-95 invisible'}
+                        `}
+                        // ✅ Z-Index 60: 保证浮在导航栏(50)之上
+                        style={{ zIndex: Z_INDEX.DROPDOWN }}
+                    >
+                        {/* 小三角 - 完美对齐头像中心 */}
+                        <div className="absolute -top-1.5 right-3.5 w-3 h-3 bg-white border-t border-l border-gray-100 transform rotate-45"></div>
+
+                        <div className="relative bg-white rounded-xl overflow-hidden">
+                            <div className="px-5 py-3 border-b border-gray-50 bg-gray-50/50">
+                                <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Account</p>
+                            </div>
+
+                            <div className="py-1">
+                                <Link
+                                    href="/orders"
+                                    className="flex items-center gap-3 px-5 py-3 text-sm text-gray-700 hover:bg-pink-50 hover:text-pink-600 transition-colors whitespace-nowrap"
+                                    onClick={() => setIsUserMenuOpen(false)}
+                                >
+                                    <Package size={18} strokeWidth={1.5} /> <span>My Orders</span>
+                                </Link>
+                                <Link
+                                    href="/wishlist"
+                                    className="flex items-center gap-3 px-5 py-3 text-sm text-gray-700 hover:bg-pink-50 hover:text-pink-600 transition-colors whitespace-nowrap"
+                                    onClick={() => setIsUserMenuOpen(false)}
+                                >
+                                    <Heart size={18} strokeWidth={1.5} /> <span>Wishlist</span>
+                                </Link>
+                                <Link
+                                    href="/pages/about"
+                                    className="flex items-center gap-3 px-5 py-3 text-sm text-gray-700 hover:bg-pink-50 hover:text-pink-600 transition-colors whitespace-nowrap"
+                                    onClick={() => setIsUserMenuOpen(false)}
+                                >
+                                    <Settings size={18} strokeWidth={1.5} /> <span>Support</span>
+                                </Link>
+                            </div>
+
+                            <div className="h-px bg-gray-100 my-1"></div>
+
                             <button
-                                className="w-full text-left px-3 py-2 text-gray-700 hover:text-[var(--primary-color)] hover:bg-[color-mix(in_srgb,var(--primary-color)_10%,transparent)] transition-colors text-sm border-t border-gray-100 mt-1"
-                                onClick={onLogout}
+                                className="w-full text-left flex items-center gap-3 px-5 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors whitespace-nowrap"
+                                onClick={() => {
+                                    setIsUserMenuOpen(false);
+                                    onLogout();
+                                }}
                             >
-                                Logout
+                                <LogOut size={18} strokeWidth={1.5} /> <span>Log Out</span>
                             </button>
                         </div>
                     </div>
-                ) : (
-                    <button
-                        className="w-8 h-8 flex items-center justify-center text-gray-700 hover:text-[var(--primary-color)] hover:bg-[color-mix(in_srgb,var(--primary-color)_10%,transparent)] rounded-full transition-colors cursor-pointer"
-                        aria-label="Login"
-                        onClick={onAuthModalOpen}
-                    >
-                        <FontAwesomeIcon icon={faUser} className="w-3.5 h-3.5" />
-                    </button>
                 )}
             </div>
+
+            <SearchModal
+                isOpen={isSearchOpen}
+                onClose={() => setIsSearchOpen(false)}
+            />
         </div>
     );
 }

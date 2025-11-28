@@ -2,6 +2,7 @@
 'use client';
 
 import { useState } from 'react';
+import { ChevronDown } from 'lucide-react';
 
 export interface FilterState {
     priceRange: [number, number] | null;
@@ -44,196 +45,128 @@ export default function ProductFilters({ filters, onFiltersChange, availableFilt
     });
 
     const toggleGroup = (group: keyof typeof expandedGroups) => {
-        setExpandedGroups(prev => ({
-            ...prev,
-            [group]: !prev[group]
-        }));
+        setExpandedGroups(prev => ({ ...prev, [group]: !prev[group] }));
     };
 
-    // 处理价格范围选择
     const handlePriceRangeChange = (range: typeof PRICE_RANGES[0]) => {
         const newPriceRange = filters.priceRange?.[0] === range.min && filters.priceRange?.[1] === range.max
             ? null
             : [range.min, range.max] as [number, number];
-
-        onFiltersChange({
-            ...filters,
-            priceRange: newPriceRange
-        });
+        onFiltersChange({ ...filters, priceRange: newPriceRange });
     };
 
-    // 处理多选筛选条件
     const handleMultiSelectChange = (type: 'colors' | 'features' | 'materials', value: string) => {
         const currentArray = filters[type];
         const newArray = currentArray.includes(value)
             ? currentArray.filter(item => item !== value)
             : [...currentArray, value];
-
-        onFiltersChange({
-            ...filters,
-            [type]: newArray
-        });
+        onFiltersChange({ ...filters, [type]: newArray });
     };
 
-    // 箭头图标组件
     const CollapseIcon = ({ isExpanded }: { isExpanded: boolean }) => (
-        <span className="flex items-center justify-center w-6 h-6 text-slate-500 transition-all duration-200 group-hover:text-slate-700">
-            <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                className={`w-4 h-4 transition-transform duration-200 ${isExpanded ? 'rotate-0' : 'rotate-180'}`}
-            >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-            </svg>
+        <span className={`text-gray-400 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}>
+            <ChevronDown size={18} />
         </span>
     );
 
     return (
-        <div className="flex flex-col gap-0 product-filters">
+        <div className="flex flex-col gap-2 product-filters">
             {/* 价格范围 */}
-            <div className="pb-0 mb-0 border-b border-gray-200 last:border-b-0">
-                <div
-                    className="flex justify-between items-center cursor-pointer py-1.5 mb-2 select-none transition-colors duration-200 rounded group hover:bg-gray-50 px-1"
+            <div className="border-b border-gray-100 pb-4 mb-2">
+                <button
+                    className="w-full flex justify-between items-center py-2 group"
                     onClick={() => toggleGroup('price')}
-                    aria-expanded={expandedGroups.price}
                 >
-                    <h4 className="flex items-center gap-2 m-0 text-base font-semibold text-gray-800 filter-group-header">
-                        Price Range
-                    </h4>
+                    <h4 className="font-bold text-gray-900 text-sm">Price Range</h4>
                     <CollapseIcon isExpanded={expandedGroups.price} />
-                </div>
+                </button>
                 {expandedGroups.price && (
-                    <div className="flex flex-col gap-1 animate-slideDown">
+                    <div className="flex flex-col gap-2 mt-2 animate-slideDown">
                         {PRICE_RANGES.map(range => (
-                            <div key={range.label} className="flex items-center gap-2 cursor-pointer py-0.5 px-1.5 transition-colors duration-200 rounded hover:bg-slate-50 filter-option">
-                                <input
-                                    type="radio"
-                                    name="priceRange"
-                                    value={range.label}
-                                    id={`price-${range.label}`}
-                                    checked={filters.priceRange?.[0] === range.min && filters.priceRange?.[1] === range.max}
-                                    onChange={() => handlePriceRangeChange(range)}
-                                    className="w-4 h-4 rounded cursor-pointer transition-all duration-200"
-                                />
-                                <label
-                                    htmlFor={`price-${range.label}`}
-                                    className="text-sm text-gray-700 cursor-pointer select-none flex-1"
-                                >
-                                    ${range.label}
-                                </label>
-                            </div>
+                            <label key={range.label} className="flex items-center gap-3 cursor-pointer group">
+                                <div className="relative flex items-center">
+                                    <input
+                                        type="radio"
+                                        name="priceRange"
+                                        checked={filters.priceRange?.[0] === range.min && filters.priceRange?.[1] === range.max}
+                                        onChange={() => handlePriceRangeChange(range)}
+                                        className="peer h-4 w-4 cursor-pointer appearance-none rounded-full border border-gray-300 checked:border-black checked:bg-black transition-all"
+                                    />
+                                    <div className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white opacity-0 peer-checked:opacity-100">
+                                        <div className="h-1.5 w-1.5 rounded-full bg-white" />
+                                    </div>
+                                </div>
+                                <span className="text-sm text-gray-600 group-hover:text-black transition-colors">${range.label}</span>
+                            </label>
                         ))}
                     </div>
                 )}
             </div>
 
-            {/* 特性 */}
-            <div className="pb-0 mb-0 border-b border-gray-200 last:border-b-0">
-                <div
-                    className="flex justify-between items-center cursor-pointer py-1.5 mb-2 select-none transition-colors duration-200 rounded group hover:bg-gray-50 px-1"
-                    onClick={() => toggleGroup('features')}
-                    aria-expanded={expandedGroups.features}
-                >
-                    <h4 className="flex items-center gap-2 m-0 text-base font-semibold text-gray-800 filter-group-header">
-                        Features
-                    </h4>
+            {/* 特性 (Features) */}
+            <div className="border-b border-gray-100 pb-4 mb-2">
+                <button className="w-full flex justify-between items-center py-2 group" onClick={() => toggleGroup('features')}>
+                    <h4 className="font-bold text-gray-900 text-sm">Features</h4>
                     <CollapseIcon isExpanded={expandedGroups.features} />
-                </div>
+                </button>
                 {expandedGroups.features && (
-                    <div className="flex flex-col gap-1 animate-slideDown">
+                    <div className="flex flex-col gap-2 mt-2 animate-slideDown">
                         {availableFilters.features.map(feature => (
-                            <div key={feature} className="flex items-center gap-2 cursor-pointer py-0.5 px-1.5 transition-colors duration-200 rounded hover:bg-slate-50 filter-option">
+                            <label key={feature} className="flex items-center gap-3 cursor-pointer group">
                                 <input
                                     type="checkbox"
-                                    name="features"
-                                    value={feature}
-                                    id={`features-${feature}`}
                                     checked={filters.features.includes(feature)}
                                     onChange={() => handleMultiSelectChange('features', feature)}
-                                    className="w-4 h-4 rounded cursor-pointer transition-all duration-200"
+                                    className="h-4 w-4 cursor-pointer rounded border-gray-300 text-black focus:ring-black"
                                 />
-                                <label
-                                    htmlFor={`features-${feature}`}
-                                    className="text-sm text-gray-700 cursor-pointer select-none flex-1"
-                                >
-                                    {feature}
-                                </label>
-                            </div>
+                                <span className="text-sm text-gray-600 group-hover:text-black transition-colors">{feature}</span>
+                            </label>
                         ))}
                     </div>
                 )}
             </div>
 
-            {/* 材质 */}
-            <div className="pb-0 mb-0 border-b border-gray-200 last:border-b-0">
-                <div
-                    className="flex justify-between items-center cursor-pointer py-1.5 mb-2 select-none transition-colors duration-200 rounded group hover:bg-gray-50 px-1"
-                    onClick={() => toggleGroup('materials')}
-                    aria-expanded={expandedGroups.materials}
-                >
-                    <h4 className="flex items-center gap-2 m-0 text-base font-semibold text-gray-800 filter-group-header">
-                        Materials
-                    </h4>
+            {/* Materials & Colors (Similar structure) */}
+            {/* ... Repeated logic for Materials and Colors using the same styling above ... */}
+            <div className="border-b border-gray-100 pb-4 mb-2">
+                <button className="w-full flex justify-between items-center py-2 group" onClick={() => toggleGroup('materials')}>
+                    <h4 className="font-bold text-gray-900 text-sm">Materials</h4>
                     <CollapseIcon isExpanded={expandedGroups.materials} />
-                </div>
+                </button>
                 {expandedGroups.materials && (
-                    <div className="flex flex-col gap-1 animate-slideDown">
+                    <div className="flex flex-col gap-2 mt-2 animate-slideDown">
                         {availableFilters.materials.map(material => (
-                            <div key={material} className="flex items-center gap-2 cursor-pointer py-0.5 px-1.5 transition-colors duration-200 rounded hover:bg-slate-50 filter-option">
+                            <label key={material} className="flex items-center gap-3 cursor-pointer group">
                                 <input
                                     type="checkbox"
-                                    name="materials"
-                                    value={material}
-                                    id={`materials-${material}`}
                                     checked={filters.materials.includes(material)}
                                     onChange={() => handleMultiSelectChange('materials', material)}
-                                    className="w-4 h-4 rounded cursor-pointer transition-all duration-200"
+                                    className="h-4 w-4 cursor-pointer rounded border-gray-300 text-black focus:ring-black"
                                 />
-                                <label
-                                    htmlFor={`materials-${material}`}
-                                    className="text-sm text-gray-700 cursor-pointer select-none flex-1"
-                                >
-                                    {material}
-                                </label>
-                            </div>
+                                <span className="text-sm text-gray-600 group-hover:text-black transition-colors">{material}</span>
+                            </label>
                         ))}
                     </div>
                 )}
             </div>
 
-            {/* 颜色 */}
-            <div className="pb-0 mb-0 border-b border-gray-200 last:border-b-0">
-                <div
-                    className="flex justify-between items-center cursor-pointer py-1.5 mb-2 select-none transition-colors duration-200 rounded group hover:bg-gray-50 px-1"
-                    onClick={() => toggleGroup('colors')}
-                    aria-expanded={expandedGroups.colors}
-                >
-                    <h4 className="flex items-center gap-2 m-0 text-base font-semibold text-gray-800 filter-group-header">
-                        Colors
-                    </h4>
+            <div className="border-b border-gray-100 pb-4 mb-2">
+                <button className="w-full flex justify-between items-center py-2 group" onClick={() => toggleGroup('colors')}>
+                    <h4 className="font-bold text-gray-900 text-sm">Colors</h4>
                     <CollapseIcon isExpanded={expandedGroups.colors} />
-                </div>
+                </button>
                 {expandedGroups.colors && (
-                    <div className="flex flex-col gap-1 animate-slideDown">
+                    <div className="flex flex-col gap-2 mt-2 animate-slideDown">
                         {availableFilters.colors.map(color => (
-                            <div key={color} className="flex items-center gap-2 cursor-pointer py-0.5 px-1.5 transition-colors duration-200 rounded hover:bg-slate-50 filter-option">
+                            <label key={color} className="flex items-center gap-3 cursor-pointer group">
                                 <input
                                     type="checkbox"
-                                    name="colors"
-                                    value={color}
-                                    id={`colors-${color}`}
                                     checked={filters.colors.includes(color)}
                                     onChange={() => handleMultiSelectChange('colors', color)}
-                                    className="w-4 h-4 rounded cursor-pointer transition-all duration-200"
+                                    className="h-4 w-4 cursor-pointer rounded border-gray-300 text-black focus:ring-black"
                                 />
-                                <label
-                                    htmlFor={`colors-${color}`}
-                                    className="text-sm text-gray-700 cursor-pointer select-none flex-1"
-                                >
-                                    {color}
-                                </label>
-                            </div>
+                                <span className="text-sm text-gray-600 group-hover:text-black transition-colors">{color}</span>
+                            </label>
                         ))}
                     </div>
                 )}

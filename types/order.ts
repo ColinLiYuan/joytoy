@@ -18,6 +18,7 @@ export interface OrderItemRequest {
     productTitle: string;
     unitPrice: number;
     color: string;
+    productImage?: string;
 }
 
 export interface AddressRequest {
