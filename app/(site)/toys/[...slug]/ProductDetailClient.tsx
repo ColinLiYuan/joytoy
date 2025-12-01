@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { ProductResponse, ProductSku } from '@/types/product';
 import { useToast } from '@/contexts/toastContext';
 import { useCartStore } from '@/stores/useCartStore';
-import ProductGallery from './productGallery';
+import ProductGallery from '../../../../components/product/productGallery';
 import { getProductImageUrl } from '@/lib/image-utils';
 import Breadcrumb from '@/components/common/breadcrumb';
 import { Z_INDEX } from '@/lib/constants/z-index';
@@ -189,13 +189,57 @@ export default function ProductDetailClient({
                 </div>
             </div>
 
-            <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-4 shadow-[0_-4px_20px_rgba(0,0,0,0.05)] flex items-center gap-4" style={{ zIndex: Z_INDEX.STICKY_CONTENT }}>
-                <div className="flex-1">
-                    <p className="text-xs text-gray-500 truncate">{product.title}</p>
-                    {isOnSale ? <div className="flex items-center gap-2"><p className="font-bold text-[#b62337]">${product.currentPrice}</p><p className="text-xs text-gray-400 line-through">${product.originalPrice}</p></div> : <p className="font-bold text-gray-900">${product.currentPrice}</p>}
+            {/* Mobile Sticky Add to Cart Bar */}
+            <div
+                className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-3 shadow-[0_-4px_20px_rgba(0,0,0,0.05)] flex items-center gap-3 safe-area-pb"
+                style={{ zIndex: Z_INDEX.STICKY }}
+            >
+                {/* 左侧信息：标题 + 价格 + 颜色 */}
+                <div className="flex-1 min-w-0 flex flex-col justify-center">
+                    <div className="flex items-center justify-between">
+                        <p className="text-xs font-bold text-gray-900 truncate mr-2">
+                            {product.title}
+                        </p>
+                        {isOnSale ? (
+                            <p className="text-xs font-bold text-[#b62337] whitespace-nowrap">${product.currentPrice}</p>
+                        ) : (
+                            <p className="text-xs font-bold text-gray-900 whitespace-nowrap">${product.currentPrice}</p>
+                        )}
+                    </div>
+
+                    {/* 新增：显示当前选中的颜色 */}
+                    <p className="text-[10px] text-gray-500 truncate flex items-center gap-1 mt-0.5">
+                        {selectedSku ? (
+                            <>
+                    <span
+                        className="w-2 h-2 rounded-full border border-gray-200 inline-block"
+                        style={{ backgroundColor: getMappedColor(selectedSku.color || '') }}
+                    />
+                                {selectedSku.color}
+                            </>
+                        ) : (
+                            "Select Color"
+                        )}
+                    </p>
                 </div>
-                <button className={`px-8 py-3 rounded-full font-bold text-sm transition-all shadow-md ${!selectedSku || getAvailableStock(selectedSku) <= 0 ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-black text-white hover:bg-gray-800'}`} onClick={handleAddToCart} disabled={addingToCart || !selectedSku || getAvailableStock(selectedSku) <= 0}>
-                    {addingToCart ? 'Adding...' : 'Add to Bag'}
+
+                {/* 右侧按钮：固定宽度，防止被挤压 */}
+                <button
+                    className={`
+                                h-10 px-6 rounded-full font-bold text-sm transition-all shadow-md whitespace-nowrap flex-shrink-0 flex items-center justify-center
+                                ${!selectedSku || getAvailableStock(selectedSku) <= 0
+                                            ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                                            : 'bg-black text-white hover:bg-gray-900 active:scale-95'
+                                }
+                            `}
+                    onClick={handleAddToCart}
+                    disabled={addingToCart || !selectedSku || getAvailableStock(selectedSku) <= 0}
+                >
+                    {addingToCart ? (
+                        <Loader2 size={16} className="animate-spin" />
+                    ) : (
+                        getAvailableStock(selectedSku) <= 0 ? 'No Stock' : 'Add to Bag'
+                    )}
                 </button>
             </div>
 
