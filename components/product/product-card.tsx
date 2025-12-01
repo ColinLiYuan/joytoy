@@ -79,8 +79,7 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
                 productImage: product.image,
                 unitPrice: product.currentPrice,
                 quantity: 1,
-                color: selectedSku.color,
-                skuId: selectedSku.id
+                color: selectedSku.color
             });
         } catch (error) {
             console.error(error);

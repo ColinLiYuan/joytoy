@@ -217,8 +217,7 @@ export default function ProductDetailClient({
                 productImage: getProductImageUrl('', product.image),
                 unitPrice: product.currentPrice,
                 quantity: 1,
-                color: selectedSku.color,
-                skuId: selectedSku.id
+                color: selectedSku.color
             });
             return true;
         } catch (error) {
@@ -431,7 +430,7 @@ export default function ProductDetailClient({
             {/* ✅ 修复：Z-Index 设为 30 (高于 Footer 内容，低于 Overlay) */}
             <div
                 className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-3 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] flex items-center gap-3 safe-area-pb"
-                style={{ zIndex: Z_INDEX.STICKY }}
+                style={{ zIndex: Z_INDEX.STICKY_CONTENT }}
             >
                 <div className="flex-1 min-w-0 flex flex-col justify-center">
                     <div className="flex items-center justify-between">

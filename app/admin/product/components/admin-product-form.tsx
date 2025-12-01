@@ -152,10 +152,13 @@ export default function AdminProductForm() {
         if (!data.originalPrice || data.originalPrice <= 0) return "错误：原始价格必须大于 0";
 
         if (!data.image) return "错误：请上传产品主图";
-        if (data.categories.length === 0) return "错误：请至少选择一个产品分类";
-        if (data.colors.length === 0) return "错误：请至少选择一种颜色变体";
+        // 确保 categories 存在
+        if (!data.categories || data.categories.length === 0) return "错误：请至少选择一个产品分类";
 
-        // SKU 校验
+        // 确保 colors 存在
+        if (!data.colors || data.colors.length === 0) return "错误：请至少选择一种颜色变体";
+
+        // SKU 校验 - 确保 productSkus 存在
         if (data.colors.length > 0) {
             if (!data.productSkus || data.productSkus.length === 0) {
                 return "错误：SKU 信息未生成，请在 SKU 管理中检查";
