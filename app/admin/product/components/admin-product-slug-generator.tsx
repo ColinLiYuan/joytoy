@@ -1,4 +1,4 @@
-// /app/admin/products/admin-product-slug-generator.tsx
+// /app/admin/products/components/admin-product-slug-generator.tsx
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';

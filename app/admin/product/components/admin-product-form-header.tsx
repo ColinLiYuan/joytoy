@@ -1,4 +1,4 @@
-// /app/admin/products/admin-product-form-header.tsx
+// /app/admin/products/components/admin-product-form-header.tsx
 
 import Link from 'next/link';
 

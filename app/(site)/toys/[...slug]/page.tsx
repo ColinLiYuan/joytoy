@@ -1,4 +1,4 @@
-// /toys/[slug]/route.tsx (app/(site)/toys/[...slug]/page.tsx)
+// app/toys/[...slug]/page.tsx
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { productServiceServer } from '@/services/servers/product-service-server';
@@ -6,11 +6,6 @@ import { ProductResponse } from '@/types/product';
 import ProductDetailClient from './ProductDetailClient';
 import { getProductImageUrl } from '@/lib/image-utils';
 import { colorMap } from '@/lib/constants/color-map';
-
-interface Breadcrumb {
-    name: string;
-    path: string | null;
-}
 
 interface PageProps {
     params: Promise<{

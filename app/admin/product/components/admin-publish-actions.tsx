@@ -1,4 +1,4 @@
-
+// /app/admin/product/components/components/admin-publish-actions
 
 import Link from 'next/link';
 

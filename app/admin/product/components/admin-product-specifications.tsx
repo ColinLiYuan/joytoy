@@ -1,5 +1,7 @@
-// /app/admin/products/admin-product-specifications.tsx
+// /app/admin/products/components/admin-product-specifications.tsx
 'use client';
+
+import { PRODUCT_SPECS } from '@/lib/constants/product-options';
 
 interface ProductSpecification {
     id?: number;
@@ -16,12 +18,6 @@ interface SpecificationsProps {
     product: Product;
     updateProduct: (updates: Partial<Product>) => void;
 }
-
-const PRODUCT_CONFIG = {
-    materials: ["Body-Safe Silicone", "TPE", "ABS Plastic", "Stainless Steel", "Glass"],
-    powerSources: ["Battery Powered", "USB Rechargeable", "Plug-in", "Manual", "Wireless Charging"],
-    intensityLevels: ["Gentle", "Moderate", "Powerful", "Intense"]
-};
 
 export default function Specifications({ product, updateProduct }: SpecificationsProps) {
     const getSpecValue = (key: string): string => {
@@ -43,9 +39,7 @@ export default function Specifications({ product, updateProduct }: Specification
             newSpecs = [...currentSpecs, { specKey: key, specValue: value }];
         }
 
-        updateProduct({
-            specifications: newSpecs
-        });
+        updateProduct({ specifications: newSpecs });
     };
 
     const handleMaterialChange = (material: string, checked: boolean) => {
@@ -67,158 +61,85 @@ export default function Specifications({ product, updateProduct }: Specification
     };
 
     return (
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden mb-6">
-            {/* Header */}
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4 border-b border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-                    <svg className="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                    </svg>
-                    产品规格
-                </h3>
+        <div className="bg-white rounded-lg shadow-sm border mb-6">
+            <div className="px-6 py-4 border-b">
+                <h3 className="text-lg font-semibold text-gray-900">产品规格</h3>
             </div>
 
             <div className="p-6 space-y-8">
                 {/* 材质选择 */}
-                <div className="space-y-4">
-                    <label className="block text-sm font-medium text-gray-900">
-                        材质 <span className="text-red-500 ml-1">*</span>
+                <div>
+                    <label className="block text-sm font-medium text-gray-900 mb-3">
+                        材质 <span className="text-red-500">*</span>
                     </label>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                        {PRODUCT_CONFIG.materials.map((material) => (
+                    <div className="flex flex-wrap gap-3">
+                        {PRODUCT_SPECS.materials.map((material) => (
                             <label
                                 key={material}
-                                className={`relative flex items-start p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
+                                className={`inline-flex items-center px-4 py-2 rounded-lg border cursor-pointer transition-all ${
                                     isMaterialChecked(material)
-                                        ? 'border-blue-500 bg-blue-50 shadow-sm'
+                                        ? 'border-blue-500 bg-blue-50 text-blue-700'
                                         : 'border-gray-200 bg-white hover:border-gray-300'
                                 }`}
                             >
-                                <div className="flex items-center h-5">
-                                    <input
-                                        type="checkbox"
-                                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                                        checked={isMaterialChecked(material)}
-                                        onChange={(e) => handleMaterialChange(material, e.target.checked)}
-                                    />
-                                </div>
-                                <span className="ml-3 text-sm font-medium text-gray-900">
-                  {material}
-                </span>
+                                <input
+                                    type="checkbox"
+                                    className="hidden"
+                                    checked={isMaterialChecked(material)}
+                                    onChange={(e) => handleMaterialChange(material, e.target.checked)}
+                                />
+                                <span className="text-sm font-medium">{material}</span>
                             </label>
                         ))}
                     </div>
                 </div>
 
-                {/* 尺寸规格 */}
-                <div className="space-y-4">
-                    <h4 className="text-sm font-medium text-gray-900 flex items-center">
-                        <svg className="w-4 h-4 mr-2 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" />
-                        </svg>
-                        尺寸规格
-                    </h4>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                        <div>
-                            <label htmlFor="spec_length" className="block text-sm font-medium text-gray-700 mb-2">
-                                长度
-                            </label>
-                            <input
-                                type="text"
-                                id="spec_length"
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                                value={getSpecValue('length')}
-                                onChange={(e) => handleSpecChange('length', e.target.value)}
-                                placeholder="6 inches"
-                            />
-                        </div>
-                        <div>
-                            <label htmlFor="spec_width" className="block text-sm font-medium text-gray-700 mb-2">
-                                宽度
-                            </label>
-                            <input
-                                type="text"
-                                id="spec_width"
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                                value={getSpecValue('width')}
-                                onChange={(e) => handleSpecChange('width', e.target.value)}
-                                placeholder="1.5 inches"
-                            />
-                        </div>
-                        <div>
-                            <label htmlFor="spec_diameter" className="block text-sm font-medium text-gray-700 mb-2">
-                                直径
-                            </label>
-                            <input
-                                type="text"
-                                id="spec_diameter"
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                                value={getSpecValue('diameter')}
-                                onChange={(e) => handleSpecChange('diameter', e.target.value)}
-                                placeholder="1.5 inches"
-                            />
-                        </div>
-                        <div>
-                            <label htmlFor="spec_weight" className="block text-sm font-medium text-gray-700 mb-2">
-                                重量
-                            </label>
-                            <input
-                                type="text"
-                                id="spec_weight"
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                                value={getSpecValue('weight')}
-                                onChange={(e) => handleSpecChange('weight', e.target.value)}
-                                placeholder="0.5 lbs"
-                            />
-                        </div>
+                {/* 尺寸输入 */}
+                <div>
+                    <h4 className="text-sm font-medium text-gray-900 mb-3">物理尺寸</h4>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        {['Length', 'Width', 'Diameter', 'Weight'].map((label) => (
+                            <div key={label}>
+                                <label className="block text-xs font-medium text-gray-500 mb-1">{label}</label>
+                                <input
+                                    type="text"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                                    value={getSpecValue(label.toLowerCase())}
+                                    onChange={(e) => handleSpecChange(label.toLowerCase(), e.target.value)}
+                                    placeholder={label === 'Weight' ? 'e.g. 200g' : 'e.g. 15cm'}
+                                />
+                            </div>
+                        ))}
                     </div>
                 </div>
 
                 {/* 功能特性 */}
-                <div className="space-y-4">
-                    <h4 className="text-sm font-medium text-gray-900 flex items-center">
-                        <svg className="w-4 h-4 mr-2 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                        </svg>
-                        功能特性
-                    </h4>
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        <div>
-                            <label htmlFor="spec_power" className="block text-sm font-medium text-gray-700 mb-2">
-                                电源类型
-                            </label>
-                            <select
-                                id="spec_power"
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-white"
-                                value={getSpecValue('power_source')}
-                                onChange={(e) => handleSpecChange('power_source', e.target.value)}
-                            >
-                                <option value="">选择电源类型</option>
-                                {PRODUCT_CONFIG.powerSources.map((powerSource) => (
-                                    <option key={powerSource} value={powerSource}>
-                                        {powerSource}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-                        <div>
-                            <label htmlFor="spec_intensity" className="block text-sm font-medium text-gray-700 mb-2">
-                                强度级别
-                            </label>
-                            <select
-                                id="spec_intensity"
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-white"
-                                value={getSpecValue('intensity_level')}
-                                onChange={(e) => handleSpecChange('intensity_level', e.target.value)}
-                            >
-                                <option value="">选择强度级别</option>
-                                {PRODUCT_CONFIG.intensityLevels.map((intensity) => (
-                                    <option key={intensity} value={intensity}>
-                                        {intensity}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">电源类型</label>
+                        <select
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                            value={getSpecValue('power_source')}
+                            onChange={(e) => handleSpecChange('power_source', e.target.value)}
+                        >
+                            <option value="">请选择</option>
+                            {PRODUCT_SPECS.powerSources.map((opt) => (
+                                <option key={opt} value={opt}>{opt}</option>
+                            ))}
+                        </select>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">震动强度</label>
+                        <select
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                            value={getSpecValue('intensity_level')}
+                            onChange={(e) => handleSpecChange('intensity_level', e.target.value)}
+                        >
+                            <option value="">请选择</option>
+                            {PRODUCT_SPECS.intensityLevels.map((opt) => (
+                                <option key={opt} value={opt}>{opt}</option>
+                            ))}
+                        </select>
                     </div>
                 </div>
             </div>

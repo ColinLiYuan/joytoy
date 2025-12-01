@@ -1,4 +1,4 @@
-// /app/admin/product/admin-product-features.tsx
+// /app/admin/product/components/admin-product-features.tsx
 'use client';
 
 import { useState, useEffect } from 'react';

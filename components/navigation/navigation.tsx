@@ -82,7 +82,7 @@ export default function Navigation({ minimal = false, rootsData = [] }: Navigati
                         <Link href="/" className="flex-shrink-0 group relative flex items-center">
                             {/* ✅ 替换文字为图片 */}
                             {/* w-36 h-8 控制显示大小，根据你 SVG 的长宽比微调 */}
-                            <div className="relative w-36 h-8 sm:w-40 sm:h-10">
+                            <div className="relative w-28 h-7 sm:w-36 sm:h-8 lg:w-40 lg:h-10">
                                 <Image
                                     src="/logo.svg"
                                     alt="MythToy Logo"
@@ -94,12 +94,12 @@ export default function Navigation({ minimal = false, rootsData = [] }: Navigati
                         </Link>
 
                         {/* Desktop Navigation */}
-                        <div className="hidden lg:block flex-1 px-8">
+                        <div className="hidden lg:flex flex-1 justify-center px-4">
                             <MainCategory rootsData={rootsData} />
                         </div>
 
                         {/* Right Actions */}
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1 sm:gap-2">
                             <UserActions
                                 isLoggedIn={isLoggedIn}
                                 onCartClick={toggleCart}
