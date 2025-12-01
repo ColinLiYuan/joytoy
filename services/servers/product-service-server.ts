@@ -119,6 +119,7 @@ class ProductServiceServer {
      */
     async getProductBySlug(slug: string): Promise<ProductResponse> {
         try {
+            const userId = await getServerUserId();
             const url = `${SERVER_CONFIG.baseURL}${SERVER_CONFIG.apiRoutes.product}/detail?slug=${encodeURIComponent(slug)}`;
 
             // console.log('getProductBySlug url:', url);

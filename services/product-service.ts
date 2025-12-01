@@ -4,6 +4,7 @@ import { ProductListResponse } from '@/types/product';
 import { FrontApiResponse } from '@/types/api';
 import { ADMIN_CONFIG } from '@/lib/api-config';
 import {AdminProductResponse, ReleaseProductRequest} from "@/types/admin/adminProduct";
+import {ProductResponse} from "@/types/product";
 
 export interface UploadResult {
     url: string;
@@ -152,13 +153,13 @@ class ProductService {
                 formData.append('index', index.toString());
             }
 
-            console.log('上传参数:', {
-                type,
-                finalSlug,
-                fileName,
-                index,
-                originalName: file.name
-            });
+            // console.log('上传参数:', {
+            //     type,
+            //     finalSlug,
+            //     fileName,
+            //     index,
+            //     originalName: file.name
+            // });
 
             const url = `${ADMIN_CONFIG.apiRoutes.product}/upload`;
             const response = await fetch(url, {
@@ -207,6 +208,38 @@ class ProductService {
             return '.jpg';
         }
         return filename.slice(filename.lastIndexOf('.'));
+    }
+
+    async getRelatedProducts(slug: string, userId?: string): Promise<ProductResponse[]> {
+        if (!slug) return [];
+
+        try {
+            const url = `/api/site/product/related?slug=${encodeURIComponent(slug)}&userId=${userId}`;
+            // console.log('getRelatedProducts url : ', url)
+            const res = await fetch(url, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (!res.ok) {
+                console.error('Failed to fetch related products');
+                return [];
+            }
+
+            const result = await res.json();
+
+            // 兼容不同的返回格式：可能是直接数组，也可能是 { success: true, data: [] }
+            if (Array.isArray(result)) {
+                return result;
+            }
+
+            return result.data || [];
+        } catch (error) {
+            console.error('Error in product service client:', error);
+            return [];
+        }
     }
 }
 
