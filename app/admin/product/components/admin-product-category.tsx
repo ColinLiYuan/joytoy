@@ -86,9 +86,9 @@ export default function AdminProductCategory({ product, roots, updateProduct }: 
                         className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm"
                     >
                         <option value="">无徽章</option>
-                        <option value="热销">热销</option>
-                        <option value="新品">新品</option>
-                        <option value="推荐">推荐</option>
+                        <option value="HOT">热销</option>
+                        <option value="NEW">新品</option>
+                        <option value="STAFF_PICK">推荐</option>
                     </select>
                 </div>
             </div>

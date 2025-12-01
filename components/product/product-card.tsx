@@ -20,6 +20,17 @@ interface ProductCardProps {
 
 const BLUR_DATA_URL = "data:image/jpeg;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mN8/+F9PQAI8wNPvd7POQAAAABJRU5ErkJggg==";
 
+// ✅ 1. 配置你的 Badge 映射表
+// Key: 数据库里存的字符串 (建议大写)
+// Value: 显示的文字 + 背景颜色类
+const BADGE_CONFIG: Record<string, { label: string; className: string }> = {
+    'NEW': { label: 'New', className: 'bg-blue-600' },
+    'HOT': { label: 'Best Seller', className: 'bg-amber-500' },
+    'STAFF_PICK': { label: 'Staff Pick', className: 'bg-purple-600' },
+    'LIMITED': { label: 'Limited', className: 'bg-gray-900' },
+    // 你可以在这里随意扩展，比如 'RECOMMEND': ...
+};
+
 export default function ProductCard({ product, onWishlistUpdate }: ProductCardProps) {
     const productDetailPath = `/toys${product.slug}`;
     const [isLoading, setIsLoading] = useState(false);
@@ -68,12 +79,12 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
                 productImage: product.image,
                 unitPrice: product.currentPrice,
                 quantity: 1,
-                color: selectedSku.color
+                color: selectedSku.color,
+                skuId: selectedSku.id
             });
-            // showToast 已经在 store 里统一处理了，这里不需要加
         } catch (error) {
             console.error(error);
-            // error toast 也在 store 里处理了
+            // Toast handled in store
         } finally {
             setAddingToCart(false);
         }
@@ -122,20 +133,19 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
 
     const isOnSale = product.originalPrice > product.currentPrice;
 
+    // ✅ 2. 获取数据库里的 Badge 配置
+    // 假设 product.badge 存的是 "NEW", "HOT" 这种大写字符串
+    // 如果你的字段名不是 badge，请在这里修改 (例如 product.tag)
+    const badgeConfig = product.badge ? BADGE_CONFIG[product.badge.toUpperCase()] : null;
+
     return (
         <div className="group flex flex-col bg-white rounded-2xl overflow-hidden border border-gray-100 hover:border-gray-200 hover:shadow-xl transition-all duration-300 relative h-full">
-            {/*
-               ✅ Image Area 修改重点：
-               1. bg-gray-50: 浅灰底色，衬托透明底图片
-            */}
+            {/* Image Area */}
             <Link href={productDetailPath} className="block relative aspect-square overflow-hidden bg-gray-50">
                 <Image
                     src={mainImage}
                     alt={product.title}
                     fill
-                    // ✅ object-contain: 完整显示，不裁切
-                    // ✅ p-6: 增加内边距，让产品悬浮在中间，不顶边
-                    // ✅ mix-blend-multiply: 黑科技，如果你传了白底JPG，这行代码能让白色变透明（仅在灰底下有效）
                     className="object-contain w-full h-full p-6 group-hover:scale-105 transition-transform duration-500 mix-blend-multiply"
                     placeholder="blur"
                     blurDataURL={BLUR_DATA_URL}
@@ -149,18 +159,23 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
                     <Heart size={18} fill={isFavorited ? "currentColor" : "none"} />
                 </button>
 
-                {/* Tags */}
-                <div className="absolute top-3 left-3 flex flex-col gap-2 z-10">
+                {/* ✅ 3. 标签堆叠显示区域 */}
+                <div className="absolute top-3 left-3 flex flex-col gap-1.5 z-10 items-start">
+
+                    {/* 优先级 1: 售罄 */}
                     {!hasAvailableStock && (
-                        <span className="bg-black/80 backdrop-blur-sm text-white text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wide">
+                        <span className="bg-black/80 backdrop-blur-sm text-white text-[10px] font-bold px-2.5 py-1 rounded uppercase tracking-wider shadow-sm">
                             Sold Out
                         </span>
                     )}
-                    {hasAvailableStock && isOnSale && (
-                        <span className="bg-[#b62337] text-white text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wide">
-                            Sale
+
+                    {/* 优先级 2: 数据库里的自定义 Badge (仅当有货时显示) */}
+                    {hasAvailableStock && badgeConfig && (
+                        <span className={`${badgeConfig.className} text-white text-[10px] font-bold px-2.5 py-1 rounded uppercase tracking-wider shadow-sm`}>
+                            {badgeConfig.label}
                         </span>
                     )}
+
                 </div>
             </Link>
 
