@@ -62,6 +62,8 @@ export default function ProductDetailClient({
     const { openAuthModal, isLoggedIn, userInfo } = useAuth();
     const addItemToCart = useCartStore(state => state.addItemToCart);
 
+    const userId = isLoggedIn && userInfo ? userInfo.id : null;
+
     // 1. 初始化 SKU
     useEffect(() => {
         if (product.productSkus && product.productSkus.length > 0) {
@@ -82,7 +84,7 @@ export default function ProductDetailClient({
             try {
                 setIsRelatedLoading(true);
                 // 调用你提供的 service 方法
-                const products = await productService.getRelatedProducts(product.slug);
+                const products = await productService.getRelatedProducts(product.slug, userId);
                 setRelatedProducts(products);
             } catch (error) {
                 console.error('Failed to load related products', error);
@@ -224,7 +226,7 @@ export default function ProductDetailClient({
                             </div>
                             <div className="flex items-center gap-1">
                                 {[1,2,3,4,5].map(i => <Star key={i} size={14} className="fill-yellow-400 text-yellow-400" />)}
-                                <span className="text-xs text-gray-500 ml-1">(4.9)</span>
+                                <span className="text-xs text-gray-500 ml-1">({product.rating})</span>
                             </div>
                         </div>
                     </div>

@@ -210,12 +210,12 @@ class ProductService {
         return filename.slice(filename.lastIndexOf('.'));
     }
 
-    async getRelatedProducts(slug: string): Promise<ProductResponse[]> {
+    async getRelatedProducts(slug: string, userId?: string): Promise<ProductResponse[]> {
         if (!slug) return [];
 
         try {
-            const url = `/api/site/product/related?slug=${encodeURIComponent(slug)}`;
-            console.log('getRelatedProducts url : ', url)
+            const url = `/api/site/product/related?slug=${encodeURIComponent(slug)}&userId=${userId}`;
+            // console.log('getRelatedProducts url : ', url)
             const res = await fetch(url, {
                 method: 'GET',
                 headers: {

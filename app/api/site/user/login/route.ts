@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
             // 设置用户 token 到 cookie（根据你的 API 返回结构调整）
             const token = result.data?.token || result.data?.access_token;
             const userInfo = result.data?.data || result.data;
-            console.log('login route userInfo2: ', result.data);
+            // console.log('login route userInfo2: ', result.data);
 
             if (token) {
                 response.cookies.set('auth_token', token, {
