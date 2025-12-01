@@ -1,4 +1,4 @@
-// /app/admin/products/admin-product-basic-info.tsx
+// /app/admin/products/components/admin-product-basic-info.tsx
 
 interface CategorySettingsProps {
     product: any;

@@ -1,3 +1,4 @@
+// admin/product/add
 'use client';
 
 import AdminProductForm from '../components/admin-product-form';

@@ -1,4 +1,4 @@
-// /app/admin/products/route.tsx
+// /app/admin/products
 'use client'
 
 import { useState, useEffect } from 'react'
