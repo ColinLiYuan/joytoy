@@ -2,17 +2,19 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { ProductResponse, ProductSku } from '@/types/product';
 import { useToast } from '@/contexts/toastContext';
 import { useAuth } from '@/contexts/authContext';
 import { useCartStore } from '@/stores/useCartStore';
 import { wishlistService } from '@/services/wishlistService';
-import { productService } from '@/services/product-service'; // ✅ 使用你提供的 Service
+import { productService } from '@/services/product-service';
 import ProductGallery from '@/components/product/productGallery';
 import { getProductImageUrl } from '@/lib/image-utils';
-import Breadcrumb from '@/components/common/breadcrumb'; // ✅ 还原：改回你的通用 Breadcrumb 组件
 import { Z_INDEX } from '@/lib/constants/z-index';
 import ProductCard from '@/components/product/product-card';
+// ✅ 引入新的通用面包屑
+import Breadcrumb from '@/components/common/breadcrumb';
 import {
     ShoppingBag,
     ShieldCheck,
@@ -22,7 +24,8 @@ import {
     ChevronUp,
     Star,
     Heart,
-    Loader2
+    Loader2,
+    Zap
 } from 'lucide-react';
 
 interface ProductDetailClientProps {
@@ -46,25 +49,24 @@ export default function ProductDetailClient({
                                                 defaultColor,
                                                 colorMap
                                             }: ProductDetailClientProps) {
+    const router = useRouter();
     const [addingToCart, setAddingToCart] = useState(false);
+    const [buyingNow, setBuyingNow] = useState(false);
     const [selectedSku, setSelectedSku] = useState<ProductSku | null>(null);
     const [expandedSection, setExpandedSection] = useState<string | null>('description');
 
-    // 收藏状态
     const [isFavorited, setIsFavorited] = useState(product.favorited || false);
     const [isWishlistLoading, setIsWishlistLoading] = useState(false);
 
-    // 关联产品状态
     const [relatedProducts, setRelatedProducts] = useState<ProductResponse[]>([]);
+    const [recentlyViewed, setRecentlyViewed] = useState<ProductResponse[]>([]);
     const [isRelatedLoading, setIsRelatedLoading] = useState(true);
 
     const { showToast } = useToast();
     const { openAuthModal, isLoggedIn, userInfo } = useAuth();
     const addItemToCart = useCartStore(state => state.addItemToCart);
 
-    const userId = isLoggedIn && userInfo ? userInfo.id : null;
-
-    // 1. 初始化 SKU
+    // 1. Init SKU
     useEffect(() => {
         if (product.productSkus && product.productSkus.length > 0) {
             if (defaultColor) {
@@ -77,14 +79,13 @@ export default function ProductDetailClient({
         }
     }, [product.productSkus, defaultColor]);
 
-    // 2. ✅ 获取关联产品 (使用你的 productService)
+    // 2. Fetch Related Products
     useEffect(() => {
         const fetchRelated = async () => {
             if (!product.slug) return;
             try {
                 setIsRelatedLoading(true);
-                // 调用你提供的 service 方法
-                const products = await productService.getRelatedProducts(product.slug, userId);
+                const products = await productService.getRelatedProducts(product.slug);
                 setRelatedProducts(products);
             } catch (error) {
                 console.error('Failed to load related products', error);
@@ -92,9 +93,21 @@ export default function ProductDetailClient({
                 setIsRelatedLoading(false);
             }
         };
-
         fetchRelated();
     }, [product.slug]);
+
+    // 3. Recently Viewed (Local Storage)
+    useEffect(() => {
+        try {
+            const stored = localStorage.getItem('recently_viewed');
+            let viewed: ProductResponse[] = stored ? JSON.parse(stored) : [];
+            const newViewed = [product, ...viewed.filter(p => p.id !== product.id)].slice(0, 8);
+            localStorage.setItem('recently_viewed', JSON.stringify(newViewed));
+            setRecentlyViewed(viewed.filter(p => p.id !== product.id).slice(0, 4));
+        } catch (e) {
+            console.error(e);
+        }
+    }, [product]);
 
     const getAvailableStock = (sku: ProductSku | null | undefined) => {
         if (!sku) return 0;
@@ -104,7 +117,7 @@ export default function ProductDetailClient({
     const getMappedColor = (color: string) => colorMap[color.toLowerCase().trim()] || color;
     const isOnSale = product.originalPrice > product.currentPrice;
 
-    // 处理收藏
+    // Wishlist
     const handleToggleFavorite = async () => {
         if (!isLoggedIn) {
             openAuthModal('login', { onSuccess: executeToggleFavorite });
@@ -118,7 +131,6 @@ export default function ProductDetailClient({
         setIsWishlistLoading(true);
         const newState = !isFavorited;
         setIsFavorited(newState);
-
         try {
             if (!userInfo) return;
             if (newState) {
@@ -143,14 +155,11 @@ export default function ProductDetailClient({
         }
     };
 
-    // 处理加入购物车
-    const handleAddToCart = async () => {
-        if (!product || !selectedSku) return;
-        if (getAvailableStock(selectedSku) <= 0) return;
-
+    // Cart Logic
+    const performAddToCart = async () => {
+        if (!product || !selectedSku) return false;
+        if (getAvailableStock(selectedSku) <= 0) return false;
         try {
-            setAddingToCart(true);
-
             await addItemToCart({
                 productId: product.id,
                 productTitle: product.title,
@@ -161,24 +170,38 @@ export default function ProductDetailClient({
                 color: selectedSku.color,
                 skuId: selectedSku.id
             });
-
-            showToast('success', 'Added to Bag', `${product.title} is in your bag.`);
+            return true;
         } catch (error) {
             console.error(error);
             showToast('error', 'Error', 'Failed to add product.');
-        } finally {
-            setAddingToCart(false);
+            return false;
         }
+    };
+
+    const handleAddToCart = async () => {
+        setAddingToCart(true);
+        const success = await performAddToCart();
+        if (success) showToast('success', 'Added to Bag', `${product.title} is in your bag.`);
+        setAddingToCart(false);
+    };
+
+    const handleBuyNow = async () => {
+        setBuyingNow(true);
+        const success = await performAddToCart();
+        if (success) router.push('/checkout');
+        setBuyingNow(false);
     };
 
     const toggleSection = (section: string) => setExpandedSection(expandedSection === section ? null : section);
 
     return (
         <div className="w-full pb-24 lg:pb-10">
-            {/* ✅ 还原：使用你原来的 Breadcrumb 组件 */}
-            <Breadcrumb items={breadcrumbs} showLastItem={false} />
+            {/* ✅ 使用通用 Breadcrumb，并隐藏最后一级（产品名），避免重复 */}
+            <div className="mb-6">
+                <Breadcrumb items={breadcrumbs} showLastItem={false} />
+            </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 mt-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16">
                 {/* Left: Gallery */}
                 <div>
                     <ProductGallery images={galleryImages} productTitle={product.title} />
@@ -187,8 +210,6 @@ export default function ProductDetailClient({
                 {/* Right: Product Info */}
                 <div className="flex flex-col">
                     <div className="border-b border-gray-100 pb-6 mb-6">
-
-                        {/* Title + Heart */}
                         <div className="flex justify-between items-start gap-4 mb-3">
                             <h1 className="text-3xl md:text-4xl font-bold text-gray-900 font-['Playfair_Display'] leading-tight">
                                 {product.title}
@@ -203,15 +224,10 @@ export default function ProductDetailClient({
                                 }
                                 `}
                             >
-                                <Heart
-                                    size={22}
-                                    fill={isFavorited ? "currentColor" : "none"}
-                                    strokeWidth={isFavorited ? 0 : 2}
-                                />
+                                <Heart size={22} fill={isFavorited ? "currentColor" : "none"} strokeWidth={isFavorited ? 0 : 2} />
                             </button>
                         </div>
 
-                        {/* Price & Stars */}
                         <div className="flex items-center justify-between">
                             <div className="flex items-baseline gap-3">
                                 {isOnSale ? (
@@ -226,7 +242,7 @@ export default function ProductDetailClient({
                             </div>
                             <div className="flex items-center gap-1">
                                 {[1,2,3,4,5].map(i => <Star key={i} size={14} className="fill-yellow-400 text-yellow-400" />)}
-                                <span className="text-xs text-gray-500 ml-1">({product.rating})</span>
+                                <span className="text-xs text-gray-500 ml-1">(4.9)</span>
                             </div>
                         </div>
                     </div>
@@ -242,7 +258,6 @@ export default function ProductDetailClient({
                                     const isSelected = selectedSku?.id === sku.id;
                                     const isOutOfStock = getAvailableStock(sku) <= 0;
                                     const colorHex = getMappedColor(sku.color || '');
-
                                     return (
                                         <button
                                             key={sku.id}
@@ -264,70 +279,56 @@ export default function ProductDetailClient({
                         </div>
                     )}
 
-                    {/* Desktop Add to Cart */}
-                    <div className="hidden lg:block mb-8">
+                    {/* Desktop Actions */}
+                    <div className="hidden lg:flex gap-4 mb-8">
                         <button
                             className={`
-                                w-full py-4 rounded-full font-bold text-lg flex items-center justify-center gap-3 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5
+                                flex-1 py-4 rounded-full font-bold text-lg flex items-center justify-center gap-3 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5
                                 ${!selectedSku || getAvailableStock(selectedSku) <= 0
                                 ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
                                 : 'bg-black text-white hover:bg-gray-900'
                             }
                             `}
                             onClick={handleAddToCart}
-                            disabled={addingToCart || !selectedSku || getAvailableStock(selectedSku) <= 0}
+                            disabled={addingToCart || buyingNow || !selectedSku || getAvailableStock(selectedSku) <= 0}
                         >
-                            {addingToCart ? (
-                                <Loader2 size={24} className="animate-spin" />
-                            ) : (
-                                <>
-                                    <ShoppingBag size={20} strokeWidth={2} />
-                                    {getAvailableStock(selectedSku) <= 0 ? 'Out of Stock' : 'Add to Bag'}
-                                </>
-                            )}
+                            {addingToCart ? <Loader2 size={24} className="animate-spin" /> : <><ShoppingBag size={20} strokeWidth={2} /> Add to Bag</>}
+                        </button>
+
+                        <button
+                            className={`
+                                flex-1 py-4 rounded-full font-bold text-lg flex items-center justify-center gap-3 transition-all shadow-sm border-2
+                                ${!selectedSku || getAvailableStock(selectedSku) <= 0
+                                ? 'border-gray-200 text-gray-400 cursor-not-allowed'
+                                : 'border-black text-black hover:bg-gray-50'
+                            }
+                            `}
+                            onClick={handleBuyNow}
+                            disabled={addingToCart || buyingNow || !selectedSku || getAvailableStock(selectedSku) <= 0}
+                        >
+                            {buyingNow ? <Loader2 size={24} className="animate-spin" /> : <><Zap size={20} strokeWidth={2} /> Buy Now</>}
                         </button>
                     </div>
 
                     {/* Trust Signals */}
                     <div className="grid grid-cols-3 gap-4 mb-8 py-6 border-t border-b border-gray-100">
-                        <div className="flex flex-col items-center text-center gap-2">
-                            <div className="p-2 bg-pink-50 rounded-full text-pink-600"><Package size={20} /></div>
-                            <span className="text-xs font-medium text-gray-600">Discreet<br/>Packaging</span>
-                        </div>
-                        <div className="flex flex-col items-center text-center gap-2">
-                            <div className="p-2 bg-purple-50 rounded-full text-purple-600"><ShieldCheck size={20} /></div>
-                            <span className="text-xs font-medium text-gray-600">Body-Safe<br/>Materials</span>
-                        </div>
-                        <div className="flex flex-col items-center text-center gap-2">
-                            <div className="p-2 bg-blue-50 rounded-full text-blue-600"><Truck size={20} /></div>
-                            <span className="text-xs font-medium text-gray-600">Free Shipping<br/>Over $40</span>
-                        </div>
+                        <div className="flex flex-col items-center text-center gap-2"><div className="p-2 bg-pink-50 rounded-full text-pink-600"><Package size={20} /></div><span className="text-xs font-medium text-gray-600">Discreet<br/>Packaging</span></div>
+                        <div className="flex flex-col items-center text-center gap-2"><div className="p-2 bg-purple-50 rounded-full text-purple-600"><ShieldCheck size={20} /></div><span className="text-xs font-medium text-gray-600">Body-Safe<br/>Materials</span></div>
+                        <div className="flex flex-col items-center text-center gap-2"><div className="p-2 bg-blue-50 rounded-full text-blue-600"><Truck size={20} /></div><span className="text-xs font-medium text-gray-600">Free Shipping<br/>Over $40</span></div>
                     </div>
 
                     {/* Accordions */}
                     <div className="border-b border-gray-100">
-                        <button
-                            onClick={() => toggleSection('description')}
-                            className="w-full flex justify-between items-center py-4 text-left font-bold text-gray-900"
-                        >
-                            Description
-                            {expandedSection === 'description' ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                        <button onClick={() => toggleSection('description')} className="w-full flex justify-between items-center py-4 text-left font-bold text-gray-900">
+                            Description {expandedSection === 'description' ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
                         </button>
-                        {expandedSection === 'description' && (
-                            <div className="pb-6 text-gray-600 leading-relaxed whitespace-pre-line animate-fadeIn">
-                                {description}
-                            </div>
-                        )}
+                        {expandedSection === 'description' && <div className="pb-6 text-gray-600 leading-relaxed whitespace-pre-line animate-fadeIn">{description}</div>}
                     </div>
 
                     {specifications.length > 0 && (
                         <div className="border-b border-gray-100">
-                            <button
-                                onClick={() => toggleSection('specs')}
-                                className="w-full flex justify-between items-center py-4 text-left font-bold text-gray-900"
-                            >
-                                Specifications
-                                {expandedSection === 'specs' ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                            <button onClick={() => toggleSection('specs')} className="w-full flex justify-between items-center py-4 text-left font-bold text-gray-900">
+                                Specifications {expandedSection === 'specs' ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
                             </button>
                             {expandedSection === 'specs' && (
                                 <div className="pb-6 grid grid-cols-1 gap-2 animate-fadeIn">
@@ -351,50 +352,28 @@ export default function ProductDetailClient({
             >
                 <div className="flex-1 min-w-0 flex flex-col justify-center">
                     <div className="flex items-center justify-between">
-                        <p className="text-xs font-bold text-gray-900 truncate mr-2">
-                            {product.title}
-                        </p>
-                        {isOnSale ? (
-                            <p className="text-xs font-bold text-[#b62337] whitespace-nowrap">${product.currentPrice}</p>
-                        ) : (
-                            <p className="text-xs font-bold text-gray-900 whitespace-nowrap">${product.currentPrice}</p>
-                        )}
+                        <p className="text-xs font-bold text-gray-900 truncate mr-2">{product.title}</p>
+                        <p className="text-xs font-bold text-[#b62337] whitespace-nowrap">${product.currentPrice}</p>
                     </div>
-
                     <p className="text-[10px] text-gray-500 truncate flex items-center gap-1 mt-0.5">
                         {selectedSku ? (
                             <>
-                                <span
-                                    className="w-2 h-2 rounded-full border border-gray-200 inline-block"
-                                    style={{ backgroundColor: getMappedColor(selectedSku.color || '') }}
-                                />
+                                <span className="w-2 h-2 rounded-full border border-gray-200 inline-block" style={{ backgroundColor: getMappedColor(selectedSku.color || '') }} />
                                 {selectedSku.color}
                             </>
-                        ) : (
-                            "Select Color"
-                        )}
+                        ) : "Select Color"}
                     </p>
                 </div>
                 <button
-                    className={`
-                        h-10 px-6 rounded-full font-bold text-sm transition-all shadow-md whitespace-nowrap flex-shrink-0 flex items-center justify-center
-                        ${!selectedSku || getAvailableStock(selectedSku) <= 0
-                        ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                        : 'bg-black text-white hover:bg-gray-900 active:scale-95'
-                    }
-                    `}
+                    className={`h-10 px-6 rounded-full font-bold text-sm transition-all shadow-md whitespace-nowrap flex-shrink-0 flex items-center justify-center ${!selectedSku || getAvailableStock(selectedSku) <= 0 ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-black text-white hover:bg-gray-900 active:scale-95'}`}
                     onClick={handleAddToCart}
                     disabled={addingToCart || !selectedSku || getAvailableStock(selectedSku) <= 0}
                 >
-                    {addingToCart ? (
-                        <Loader2 size={16} className="animate-spin" />
-                    ) : (
-                        getAvailableStock(selectedSku) <= 0 ? 'No Stock' : 'Add to Bag'
-                    )}
+                    {addingToCart ? <Loader2 size={16} className="animate-spin" /> : 'Add to Bag'}
                 </button>
             </div>
 
-            {/* Related Products Section */}
+            {/* Related Products */}
             {(relatedProducts.length > 0 || isRelatedLoading) && (
                 <div className="mt-20 border-t border-gray-100 pt-16">
                     <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-8 font-['Playfair_Display'] text-center">
@@ -418,6 +397,20 @@ export default function ProductDetailClient({
                             ))}
                         </div>
                     )}
+                </div>
+            )}
+
+            {/* Recently Viewed */}
+            {recentlyViewed.length > 0 && (
+                <div className="mt-16 border-t border-gray-100 pt-16">
+                    <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-8 font-['Playfair_Display'] text-center">
+                        Recently Viewed
+                    </h3>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+                        {recentlyViewed.map((p) => (
+                            <ProductCard key={`recent-${p.id}`} product={p} />
+                        ))}
+                    </div>
                 </div>
             )}
         </div>

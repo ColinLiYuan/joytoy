@@ -159,12 +159,27 @@ export default function ProductList({
             <div className="flex flex-col">
                 <div className="flex-1 min-w-0">
                     {products.length > 0 && (showProductCount || showSortSelect) && (
-                        <div className="flex justify-between items-center mb-1 pt-4 pb-1">
-                            {showProductCount && <span className="text-gray-500 font-normal text-sm">{totalProducts} products</span>}
-                            <div className="flex items-center gap-3">
+                        <div className="flex flex-wrap justify-between items-center mb-4 pt-4 pb-1 gap-2"> {/* ✅ 增加 flex-wrap 和 gap */}
+                            {showProductCount && (
+                                <span className="text-gray-500 font-normal text-sm whitespace-nowrap">
+            {totalProducts} products
+        </span>
+                            )}
+
+                            <div className="flex items-center gap-2 ml-auto"> {/* ✅ ml-auto 靠右对齐 */}
                                 {showSortSelect && <SortSelectModal className="w-auto" />}
-                                <button onClick={handleOpenFilters} className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:border-black hover:text-black transition-all duration-300">
-                                    <SlidersHorizontal size={16} /> Filters {activeFilterCount > 0 && <span className="bg-black text-white text-[10px] px-1.5 py-0.5 rounded-full">{activeFilterCount}</span>}
+
+                                <button
+                                    onClick={handleOpenFilters}
+                                    className="flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:border-black hover:text-black transition-all duration-300 whitespace-nowrap" // ✅ 减小 padding，禁止换行
+                                >
+                                    <SlidersHorizontal size={16} />
+                                    <span className="hidden sm:inline">Filters</span> {/* ✅ 超小屏幕隐藏文字 */}
+                                    {activeFilterCount > 0 && (
+                                        <span className="bg-black text-white text-[10px] px-1.5 py-0.5 rounded-full ml-1">
+                                            {activeFilterCount}
+                                        </span>
+                                    )}
                                 </button>
                             </div>
                         </div>

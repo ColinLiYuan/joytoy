@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Loader2, ShoppingBag, Tag } from 'lucide-react'; // ✅ Tag for coupon
+import { Loader2, ShoppingBag, Tag, Lock, ArrowLeft, LogIn } from 'lucide-react'; // ✅ Lucide Icons
 import ShippingForm from './shipping';
 import OrderSummary from './orderSummary';
 import { useShipping } from '@/hooks/useShipping';
@@ -22,24 +22,49 @@ export default function CheckoutPage() {
     // Coupon & Shipping State
     const [couponCode, setCouponCode] = useState('');
     const [discountAmount, setDiscountAmount] = useState(0);
-    const [shippingFee, setShippingFee] = useState(0);
+    const [shippingFee, setShippingFee] = useState(0); // 默认为 0，后续可根据地址计算
     const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
 
     const { isLoggedIn, openAuthModal, isClient } = useAuth();
     const { cart, getCart, loading: cartLoading } = useCartStore();
     const { getShippingFormData } = useShipping({ userEmail: getUserEmail(), userName: getUserFullName() });
 
+    // 1. 初始化检查
     useEffect(() => {
         const init = async () => {
+            // 等待客户端挂载
+            if (!isClient) return;
+
             try {
                 setIsLoading(true);
-                if (!isLoggedIn) { openAuthModal('login', { onSuccess: () => init() }); return; }
+
+                // 如果没登录，弹窗提示，并停止加载购物车
+                if (!isLoggedIn) {
+                    openAuthModal('login', {
+                        onSuccess: () => {
+                            // 登录成功后重新初始化（获取购物车）
+                            init();
+                        }
+                    });
+                    setIsLoading(false); // 停止 Loading，显示“未登录”状态页
+                    return;
+                }
+
+                // 已登录，获取购物车
                 await getCart();
-            } catch (e) { console.error(e); router.push('/'); } finally { setIsLoading(false); }
+            } catch (e) {
+                console.error(e);
+                router.push('/');
+            } finally {
+                // 如果已登录，数据加载完后取消 Loading
+                if (isLoggedIn) setIsLoading(false);
+            }
         };
-        if (isClient) init();
+
+        init();
     }, [router, getCart, isLoggedIn, openAuthModal, isClient]);
 
+    // 2. 转换购物车数据结构
     useEffect(() => {
         if (cart?.items?.length) {
             setOrderItems(cart.items.map(item => ({
@@ -63,9 +88,9 @@ export default function CheckoutPage() {
             if (couponCode.toUpperCase() === 'MYTH20') {
                 const subtotal = orderItems.reduce((sum, i) => sum + (i.unitPrice * i.quantity), 0);
                 setDiscountAmount(subtotal * 0.2);
-                alert('Coupon Applied!');
+                // alert('Coupon Applied!'); // 建议用 toast 替换 alert
             } else {
-                alert('Invalid Code');
+                // alert('Invalid Code');
                 setDiscountAmount(0);
             }
             setIsApplyingCoupon(false);
@@ -99,22 +124,105 @@ export default function CheckoutPage() {
                 useCartStore.getState().clearCart();
                 router.push(`/payment?orderId=${res.data.id}`);
             }
-        } catch (e) { alert('Order Failed'); } finally { setIsCreatingOrder(false); }
+        } catch (e) {
+            console.error(e);
+            // alert('Order Failed');
+        } finally {
+            setIsCreatingOrder(false);
+        }
     };
 
-    if (!isClient || isLoading) return <div className="h-screen flex items-center justify-center"><Loader2 className="animate-spin" /></div>;
+    // 1. Global Loading
+    if (!isClient || (isLoading && isLoggedIn) || cartLoading) {
+        return (
+            <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center w-full max-w-full overflow-x-hidden">
+                <Loader2 className="w-10 h-10 animate-spin mb-4 text-black" />
+                <p className="text-sm font-medium tracking-wide text-gray-500">SECURE CHECKOUT LOADING...</p>
+            </div>
+        );
+    }
 
+    // 2. ✅ Not Logged In State (强制阻断)
+    // 如果用户未登录（即使关掉了弹窗），显示这个页面，不展示表单
+    if (!isLoggedIn) {
+        return (
+            <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4 w-full max-w-full overflow-x-hidden">
+                <div className="bg-white p-8 md:p-12 rounded-3xl shadow-sm text-center max-w-md w-full border border-gray-100">
+                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <Lock className="w-8 h-8 text-gray-500" />
+                    </div>
+                    <h2 className="text-2xl font-bold text-gray-900 mb-3 font-['Playfair_Display']">Account Required</h2>
+                    <p className="text-gray-500 mb-8 text-sm leading-relaxed">
+                        For security reasons and to manage your order details, please sign in to access checkout.
+                    </p>
+
+                    <div className="flex flex-col gap-3">
+                        <button
+                            onClick={() => openAuthModal('login', { onSuccess: () => window.location.reload() })}
+                            className="w-full bg-black text-white px-6 py-3.5 rounded-xl font-bold hover:bg-gray-900 transition-all flex items-center justify-center gap-2 shadow-lg"
+                        >
+                            <LogIn size={18} />
+                            Sign In / Register
+                        </button>
+                        <button
+                            onClick={() => router.push('/collections/all')}
+                            className="w-full bg-white border border-gray-200 text-gray-700 px-6 py-3.5 rounded-xl font-medium hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
+                        >
+                            <ArrowLeft size={18} />
+                            Continue Shopping
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // 3. Empty Cart State
+    if (orderItems.length === 0) {
+        return (
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 w-full max-w-full overflow-x-hidden">
+                <div className="bg-white p-10 rounded-3xl shadow-sm text-center max-w-md w-full border border-gray-100">
+                    <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <ShoppingBag className="w-10 h-10 text-gray-300" />
+                    </div>
+                    <h2 className="text-2xl font-bold text-gray-900 mb-3 font-['Playfair_Display']">Your bag is empty</h2>
+                    <p className="text-gray-500 mb-8 text-sm">Looks like you haven't added anything yet.</p>
+                    <button
+                        className="w-full bg-black text-white px-8 py-3.5 rounded-xl font-bold hover:bg-gray-900 transition-all shadow-lg"
+                        onClick={() => router.push('/collections/all')}
+                    >
+                        Start Shopping
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    // 4. Main Checkout Content
     return (
-        <div className="min-h-screen bg-gray-50 pb-24 pt-8">
+        <div className="min-h-screen bg-gray-50 pb-24 pt-8 w-full max-w-full overflow-x-hidden">
             <div className="container mx-auto px-4 max-w-6xl">
-                <h1 className="text-3xl font-bold text-gray-900 mb-8 font-['Playfair_Display']">Checkout</h1>
+
+                {/* Header */}
+                <div className="flex items-center justify-between mb-8">
+                    <h1 className="text-3xl font-bold text-gray-900 font-['Playfair_Display']">Checkout</h1>
+                    <button
+                        onClick={() => router.back()}
+                        className="text-sm text-gray-500 hover:text-black flex items-center gap-1 transition-colors"
+                    >
+                        <ArrowLeft size={16} /> Back
+                    </button>
+                </div>
+
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16">
                     {/* Left: Form */}
                     <div className="lg:col-span-7">
-                        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
+                        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-6 md:p-8 lg:p-10">
                             <ShippingForm
-                                userEmail={getUserEmail()} userName={getUserFullName()}
-                                onProceedToPayment={handleProceedToPayment} isCreatingOrder={isCreatingOrder}
+                                userEmail={getUserEmail()}
+                                userName={getUserFullName()}
+                                onProceedToPayment={handleProceedToPayment}
+                                isCreatingOrder={isCreatingOrder}
                             />
                         </div>
                     </div>
@@ -123,8 +231,8 @@ export default function CheckoutPage() {
                     <div className="lg:col-span-5 space-y-6">
                         <OrderSummary
                             orderItems={orderItems}
-                            discount={discountAmount}
-                            shipping={shippingFee}
+                            // discount={discountAmount} // 如果 OrderSummary 组件支持 props 可传入
+                            // shipping={shippingFee}
                         />
 
                         {/* Coupon Input */}
@@ -138,16 +246,21 @@ export default function CheckoutPage() {
                                     value={couponCode}
                                     onChange={(e) => setCouponCode(e.target.value)}
                                     placeholder="Enter code"
-                                    className="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm outline-none focus:border-black uppercase"
+                                    className="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm outline-none focus:border-black focus:ring-1 focus:ring-black transition-all uppercase placeholder:normal-case"
                                 />
                                 <button
                                     onClick={handleApplyCoupon}
                                     disabled={isApplyingCoupon || !couponCode}
-                                    className="bg-black text-white px-5 py-2.5 rounded-lg text-sm font-bold hover:bg-gray-800 disabled:opacity-50"
+                                    className="bg-black text-white px-5 py-2.5 rounded-lg text-sm font-bold hover:bg-gray-800 disabled:opacity-50 transition-all min-w-[80px]"
                                 >
-                                    {isApplyingCoupon ? '...' : 'Apply'}
+                                    {isApplyingCoupon ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : 'Apply'}
                                 </button>
                             </div>
+                            {discountAmount > 0 && (
+                                <p className="text-green-600 text-xs mt-2 font-medium flex items-center gap-1">
+                                    <Tag size={12} /> Coupon applied successfully!
+                                </p>
+                            )}
                         </div>
                     </div>
                 </div>
