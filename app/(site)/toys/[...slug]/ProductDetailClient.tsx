@@ -4,13 +4,26 @@
 import { useState, useEffect } from 'react';
 import { ProductResponse, ProductSku } from '@/types/product';
 import { useToast } from '@/contexts/toastContext';
+import { useAuth } from '@/contexts/authContext';
 import { useCartStore } from '@/stores/useCartStore';
-import ProductGallery from '../../../../components/product/productGallery';
+import { wishlistService } from '@/services/wishlistService';
+import { productService } from '@/services/product-service'; // ✅ 使用你提供的 Service
+import ProductGallery from '@/components/product/productGallery';
 import { getProductImageUrl } from '@/lib/image-utils';
-import Breadcrumb from '@/components/common/breadcrumb';
+import Breadcrumb from '@/components/common/breadcrumb'; // ✅ 还原：改回你的通用 Breadcrumb 组件
 import { Z_INDEX } from '@/lib/constants/z-index';
 import ProductCard from '@/components/product/product-card';
-import { ShoppingBag, ShieldCheck, Package, Truck, ChevronDown, ChevronUp, Star } from 'lucide-react';
+import {
+    ShoppingBag,
+    ShieldCheck,
+    Package,
+    Truck,
+    ChevronDown,
+    ChevronUp,
+    Star,
+    Heart,
+    Loader2
+} from 'lucide-react';
 
 interface ProductDetailClientProps {
     product: ProductResponse;
@@ -36,18 +49,50 @@ export default function ProductDetailClient({
     const [addingToCart, setAddingToCart] = useState(false);
     const [selectedSku, setSelectedSku] = useState<ProductSku | null>(null);
     const [expandedSection, setExpandedSection] = useState<string | null>('description');
+
+    // 收藏状态
+    const [isFavorited, setIsFavorited] = useState(product.favorited || false);
+    const [isWishlistLoading, setIsWishlistLoading] = useState(false);
+
+    // 关联产品状态
+    const [relatedProducts, setRelatedProducts] = useState<ProductResponse[]>([]);
+    const [isRelatedLoading, setIsRelatedLoading] = useState(true);
+
     const { showToast } = useToast();
+    const { openAuthModal, isLoggedIn, userInfo } = useAuth();
     const addItemToCart = useCartStore(state => state.addItemToCart);
 
+    // 1. 初始化 SKU
     useEffect(() => {
         if (product.productSkus && product.productSkus.length > 0) {
             if (defaultColor) {
-                const matchingSku = product.productSkus.find(sku => sku.color?.toLowerCase() === defaultColor.toLowerCase());
+                const matchingSku = product.productSkus.find(sku =>
+                    sku.color?.toLowerCase() === defaultColor.toLowerCase()
+                );
                 if (matchingSku) { setSelectedSku(matchingSku); return; }
             }
             setSelectedSku(product.productSkus[0]);
         }
     }, [product.productSkus, defaultColor]);
+
+    // 2. ✅ 获取关联产品 (使用你的 productService)
+    useEffect(() => {
+        const fetchRelated = async () => {
+            if (!product.slug) return;
+            try {
+                setIsRelatedLoading(true);
+                // 调用你提供的 service 方法
+                const products = await productService.getRelatedProducts(product.slug);
+                setRelatedProducts(products);
+            } catch (error) {
+                console.error('Failed to load related products', error);
+            } finally {
+                setIsRelatedLoading(false);
+            }
+        };
+
+        fetchRelated();
+    }, [product.slug]);
 
     const getAvailableStock = (sku: ProductSku | null | undefined) => {
         if (!sku) return 0;
@@ -57,11 +102,53 @@ export default function ProductDetailClient({
     const getMappedColor = (color: string) => colorMap[color.toLowerCase().trim()] || color;
     const isOnSale = product.originalPrice > product.currentPrice;
 
+    // 处理收藏
+    const handleToggleFavorite = async () => {
+        if (!isLoggedIn) {
+            openAuthModal('login', { onSuccess: executeToggleFavorite });
+            return;
+        }
+        executeToggleFavorite();
+    };
+
+    const executeToggleFavorite = async () => {
+        if (isWishlistLoading) return;
+        setIsWishlistLoading(true);
+        const newState = !isFavorited;
+        setIsFavorited(newState);
+
+        try {
+            if (!userInfo) return;
+            if (newState) {
+                await wishlistService.addItemToWishlist({
+                    userId: userInfo.id,
+                    productId: product.id,
+                    productTitle: product.title,
+                    image: product.image,
+                    currentPrice: product.currentPrice,
+                    slug: product.slug
+                });
+                showToast('success', 'Saved', 'Added to your wishlist');
+            } else {
+                await wishlistService.removeItemFromWishlist({ userId: userInfo.id, productId: product.id });
+                showToast('success', 'Removed', 'Removed from wishlist');
+            }
+        } catch (error) {
+            setIsFavorited(!newState);
+            showToast('error', 'Error', 'Failed to update wishlist');
+        } finally {
+            setIsWishlistLoading(false);
+        }
+    };
+
+    // 处理加入购物车
     const handleAddToCart = async () => {
         if (!product || !selectedSku) return;
         if (getAvailableStock(selectedSku) <= 0) return;
+
         try {
             setAddingToCart(true);
+
             await addItemToCart({
                 productId: product.id,
                 productTitle: product.title,
@@ -69,8 +156,11 @@ export default function ProductDetailClient({
                 productImage: getProductImageUrl('', product.image),
                 unitPrice: product.currentPrice,
                 quantity: 1,
-                color: selectedSku.color
+                color: selectedSku.color,
+                skuId: selectedSku.id
             });
+
+            showToast('success', 'Added to Bag', `${product.title} is in your bag.`);
         } catch (error) {
             console.error(error);
             showToast('error', 'Error', 'Failed to add product.');
@@ -81,11 +171,9 @@ export default function ProductDetailClient({
 
     const toggleSection = (section: string) => setExpandedSection(expandedSection === section ? null : section);
 
-    const relatedProducts = [product, product, product, product].map((p, i) => ({...p, id: p.id + i}));
-
     return (
-        // ✅ 修复：移除内部 max-w-7xl，直接使用 w-full，依赖父级容器对齐
         <div className="w-full pb-24 lg:pb-10">
+            {/* ✅ 还原：使用你原来的 Breadcrumb 组件 */}
             <Breadcrumb items={breadcrumbs} showLastItem={false} />
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 mt-6">
@@ -97,9 +185,31 @@ export default function ProductDetailClient({
                 {/* Right: Product Info */}
                 <div className="flex flex-col">
                     <div className="border-b border-gray-100 pb-6 mb-6">
-                        <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3 font-['Playfair_Display'] leading-tight">
-                            {product.title}
-                        </h1>
+
+                        {/* Title + Heart */}
+                        <div className="flex justify-between items-start gap-4 mb-3">
+                            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 font-['Playfair_Display'] leading-tight">
+                                {product.title}
+                            </h1>
+                            <button
+                                onClick={handleToggleFavorite}
+                                className={`
+                                    p-2.5 rounded-full transition-all flex-shrink-0
+                                    ${isFavorited
+                                    ? 'bg-red-50 text-red-500 hover:bg-red-100'
+                                    : 'bg-gray-50 text-gray-400 hover:bg-gray-100 hover:text-red-500'
+                                }
+                                `}
+                            >
+                                <Heart
+                                    size={22}
+                                    fill={isFavorited ? "currentColor" : "none"}
+                                    strokeWidth={isFavorited ? 0 : 2}
+                                />
+                            </button>
+                        </div>
+
+                        {/* Price & Stars */}
                         <div className="flex items-center justify-between">
                             <div className="flex items-baseline gap-3">
                                 {isOnSale ? (
@@ -119,6 +229,7 @@ export default function ProductDetailClient({
                         </div>
                     </div>
 
+                    {/* Color Selection */}
                     {product.productSkus && product.productSkus.length > 0 && (
                         <div className="mb-8">
                             <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wide mb-3">
@@ -129,12 +240,17 @@ export default function ProductDetailClient({
                                     const isSelected = selectedSku?.id === sku.id;
                                     const isOutOfStock = getAvailableStock(sku) <= 0;
                                     const colorHex = getMappedColor(sku.color || '');
+
                                     return (
                                         <button
                                             key={sku.id}
                                             onClick={() => !isOutOfStock && setSelectedSku(sku)}
                                             disabled={isOutOfStock}
-                                            className={`w-10 h-10 rounded-full flex items-center justify-center transition-all relative ${isSelected ? 'ring-2 ring-offset-2 ring-black scale-110' : 'hover:scale-105'} ${isOutOfStock ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer shadow-sm'}`}
+                                            className={`
+                                                w-10 h-10 rounded-full flex items-center justify-center transition-all relative
+                                                ${isSelected ? 'ring-2 ring-offset-2 ring-black scale-110' : 'hover:scale-105'}
+                                                ${isOutOfStock ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer shadow-sm'}
+                                            `}
                                             style={{ backgroundColor: colorHex === '#FFFFFF' ? '#F3F4F6' : colorHex }}
                                             title={sku.color}
                                         >
@@ -146,33 +262,70 @@ export default function ProductDetailClient({
                         </div>
                     )}
 
+                    {/* Desktop Add to Cart */}
                     <div className="hidden lg:block mb-8">
                         <button
-                            className={`w-full py-4 rounded-full font-bold text-lg flex items-center justify-center gap-3 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 ${!selectedSku || getAvailableStock(selectedSku) <= 0 ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-black text-white hover:bg-gray-900'}`}
+                            className={`
+                                w-full py-4 rounded-full font-bold text-lg flex items-center justify-center gap-3 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5
+                                ${!selectedSku || getAvailableStock(selectedSku) <= 0
+                                ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                                : 'bg-black text-white hover:bg-gray-900'
+                            }
+                            `}
                             onClick={handleAddToCart}
                             disabled={addingToCart || !selectedSku || getAvailableStock(selectedSku) <= 0}
                         >
-                            {addingToCart ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <><ShoppingBag size={20} strokeWidth={2} />{getAvailableStock(selectedSku) <= 0 ? 'Out of Stock' : 'Add to Bag'}</>}
+                            {addingToCart ? (
+                                <Loader2 size={24} className="animate-spin" />
+                            ) : (
+                                <>
+                                    <ShoppingBag size={20} strokeWidth={2} />
+                                    {getAvailableStock(selectedSku) <= 0 ? 'Out of Stock' : 'Add to Bag'}
+                                </>
+                            )}
                         </button>
                     </div>
 
+                    {/* Trust Signals */}
                     <div className="grid grid-cols-3 gap-4 mb-8 py-6 border-t border-b border-gray-100">
-                        <div className="flex flex-col items-center text-center gap-2"><div className="p-2 bg-pink-50 rounded-full text-pink-600"><Package size={20} /></div><span className="text-xs font-medium text-gray-600">Discreet<br/>Packaging</span></div>
-                        <div className="flex flex-col items-center text-center gap-2"><div className="p-2 bg-purple-50 rounded-full text-purple-600"><ShieldCheck size={20} /></div><span className="text-xs font-medium text-gray-600">Body-Safe<br/>Materials</span></div>
-                        <div className="flex flex-col items-center text-center gap-2"><div className="p-2 bg-blue-50 rounded-full text-blue-600"><Truck size={20} /></div><span className="text-xs font-medium text-gray-600">Free Shipping<br/>Over $40</span></div>
+                        <div className="flex flex-col items-center text-center gap-2">
+                            <div className="p-2 bg-pink-50 rounded-full text-pink-600"><Package size={20} /></div>
+                            <span className="text-xs font-medium text-gray-600">Discreet<br/>Packaging</span>
+                        </div>
+                        <div className="flex flex-col items-center text-center gap-2">
+                            <div className="p-2 bg-purple-50 rounded-full text-purple-600"><ShieldCheck size={20} /></div>
+                            <span className="text-xs font-medium text-gray-600">Body-Safe<br/>Materials</span>
+                        </div>
+                        <div className="flex flex-col items-center text-center gap-2">
+                            <div className="p-2 bg-blue-50 rounded-full text-blue-600"><Truck size={20} /></div>
+                            <span className="text-xs font-medium text-gray-600">Free Shipping<br/>Over $40</span>
+                        </div>
                     </div>
 
+                    {/* Accordions */}
                     <div className="border-b border-gray-100">
-                        <button onClick={() => toggleSection('description')} className="w-full flex justify-between items-center py-4 text-left font-bold text-gray-900">
-                            Description {expandedSection === 'description' ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                        <button
+                            onClick={() => toggleSection('description')}
+                            className="w-full flex justify-between items-center py-4 text-left font-bold text-gray-900"
+                        >
+                            Description
+                            {expandedSection === 'description' ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
                         </button>
-                        {expandedSection === 'description' && <div className="pb-6 text-gray-600 leading-relaxed whitespace-pre-line animate-fadeIn">{description}</div>}
+                        {expandedSection === 'description' && (
+                            <div className="pb-6 text-gray-600 leading-relaxed whitespace-pre-line animate-fadeIn">
+                                {description}
+                            </div>
+                        )}
                     </div>
 
                     {specifications.length > 0 && (
                         <div className="border-b border-gray-100">
-                            <button onClick={() => toggleSection('specs')} className="w-full flex justify-between items-center py-4 text-left font-bold text-gray-900">
-                                Specifications {expandedSection === 'specs' ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                            <button
+                                onClick={() => toggleSection('specs')}
+                                className="w-full flex justify-between items-center py-4 text-left font-bold text-gray-900"
+                            >
+                                Specifications
+                                {expandedSection === 'specs' ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
                             </button>
                             {expandedSection === 'specs' && (
                                 <div className="pb-6 grid grid-cols-1 gap-2 animate-fadeIn">
@@ -194,7 +347,6 @@ export default function ProductDetailClient({
                 className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-3 shadow-[0_-4px_20px_rgba(0,0,0,0.05)] flex items-center gap-3 safe-area-pb"
                 style={{ zIndex: Z_INDEX.STICKY }}
             >
-                {/* 左侧信息：标题 + 价格 + 颜色 */}
                 <div className="flex-1 min-w-0 flex flex-col justify-center">
                     <div className="flex items-center justify-between">
                         <p className="text-xs font-bold text-gray-900 truncate mr-2">
@@ -207,14 +359,13 @@ export default function ProductDetailClient({
                         )}
                     </div>
 
-                    {/* 新增：显示当前选中的颜色 */}
                     <p className="text-[10px] text-gray-500 truncate flex items-center gap-1 mt-0.5">
                         {selectedSku ? (
                             <>
-                    <span
-                        className="w-2 h-2 rounded-full border border-gray-200 inline-block"
-                        style={{ backgroundColor: getMappedColor(selectedSku.color || '') }}
-                    />
+                                <span
+                                    className="w-2 h-2 rounded-full border border-gray-200 inline-block"
+                                    style={{ backgroundColor: getMappedColor(selectedSku.color || '') }}
+                                />
                                 {selectedSku.color}
                             </>
                         ) : (
@@ -222,16 +373,14 @@ export default function ProductDetailClient({
                         )}
                     </p>
                 </div>
-
-                {/* 右侧按钮：固定宽度，防止被挤压 */}
                 <button
                     className={`
-                                h-10 px-6 rounded-full font-bold text-sm transition-all shadow-md whitespace-nowrap flex-shrink-0 flex items-center justify-center
-                                ${!selectedSku || getAvailableStock(selectedSku) <= 0
-                                            ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                                            : 'bg-black text-white hover:bg-gray-900 active:scale-95'
-                                }
-                            `}
+                        h-10 px-6 rounded-full font-bold text-sm transition-all shadow-md whitespace-nowrap flex-shrink-0 flex items-center justify-center
+                        ${!selectedSku || getAvailableStock(selectedSku) <= 0
+                        ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                        : 'bg-black text-white hover:bg-gray-900 active:scale-95'
+                    }
+                    `}
                     onClick={handleAddToCart}
                     disabled={addingToCart || !selectedSku || getAvailableStock(selectedSku) <= 0}
                 >
@@ -243,16 +392,32 @@ export default function ProductDetailClient({
                 </button>
             </div>
 
-            <div className="mt-20 border-t border-gray-100 pt-16">
-                <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-8 font-['Playfair_Display'] text-center">
-                    You May Also Like
-                </h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-                    {relatedProducts.map((p) => (
-                        <ProductCard key={p.id} product={p} />
-                    ))}
+            {/* Related Products Section */}
+            {(relatedProducts.length > 0 || isRelatedLoading) && (
+                <div className="mt-20 border-t border-gray-100 pt-16">
+                    <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-8 font-['Playfair_Display'] text-center">
+                        You May Also Like
+                    </h3>
+
+                    {isRelatedLoading ? (
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+                            {[1, 2, 3, 4].map(i => (
+                                <div key={i} className="animate-pulse">
+                                    <div className="bg-gray-200 aspect-square rounded-2xl mb-3"></div>
+                                    <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                                    <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+                            {relatedProducts.map((p) => (
+                                <ProductCard key={p.id} product={p} />
+                            ))}
+                        </div>
+                    )}
                 </div>
-            </div>
+            )}
         </div>
     );
 }

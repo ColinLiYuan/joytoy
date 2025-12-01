@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { apiGet, handleApiError } from '@/lib/api-utils';
 import { FrontApiResponse } from '@/types/api';
 
+// get related products route
 export async function GET(request: NextRequest) {
     try {
         const { searchParams } = new URL(request.url);
