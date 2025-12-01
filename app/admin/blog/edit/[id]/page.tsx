@@ -1,17 +1,15 @@
 // app/admin/blog/edit/[id]/page.tsx
 'use client';
-
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { blogService } from '@/services/blogService';
 import BlogForm from '../../components/admin-blog-form';
-
+import { ChevronLeft } from 'lucide-react'; // 图标优化
 export default function EditBlogPage() {
     const params = useParams();
     const router = useRouter();
     const blogId = parseInt(params.id as string);
-
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [initialData, setInitialData] = useState<any>(null);
@@ -26,6 +24,7 @@ export default function EditBlogPage() {
             const blogData = await blogService.getById(blogId);
             setInitialData({
                 title: blogData.title || '',
+                slug: blogData.slug || '', // 获取 slug
                 subTitle: blogData.subTitle || '',
                 content: blogData.content || '',
                 summary: blogData.summary || '',
@@ -36,7 +35,7 @@ export default function EditBlogPage() {
             });
         } catch (error) {
             console.error('获取博客失败:', error);
-            // 可以添加错误提示
+            alert('获取博客数据失败，请检查网络');
         } finally {
             setLoading(false);
         }
@@ -49,12 +48,13 @@ export default function EditBlogPage() {
                 id: blogId,
                 ...formData
             });
+            // 不立即跳转，而是提示成功，可以给用户继续编辑的机会，或者跳转
+            // 这里选择跳转回列表
             router.push('/admin/blog');
-            // 可以添加成功提示：更新博客成功！
         } catch (error) {
             console.error('更新博客失败:', error);
-            // 可以添加错误提示
-            throw error; // 重新抛出错误让 BlogForm 处理
+            alert('更新失败，请重试');
+            throw error;
         } finally {
             setSaving(false);
         }
@@ -74,32 +74,26 @@ export default function EditBlogPage() {
 
     return (
         <div className="min-h-screen bg-gray-50 py-8">
-            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-                {/* 头部 */}
-                <div className="mb-8">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <h1 className="text-3xl font-bold text-gray-900">编辑博客</h1>
-                            <p className="text-gray-600 mt-2">修改博客文章内容</p>
-                        </div>
-                        <Link
-                            href="/admin/blog"
-                            className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition duration-200"
-                        >
-                            返回列表
+            <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+                {/* 头部优化 */}
+                <div className="mb-6 flex items-center justify-between">
+                    <div>
+                        <Link href="/admin/blog" className="text-sm text-gray-500 hover:text-gray-900 flex items-center mb-2 transition-colors">
+                            <ChevronLeft size={16} className="mr-1"/> 返回博客列表
                         </Link>
+                        <h1 className="text-2xl font-bold text-gray-900">编辑博客</h1>
                     </div>
                 </div>
 
-                {/* 表单 */}
-                <div className="bg-white rounded-lg shadow">
+                {/* 表单容器 */}
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                     <BlogForm
                         initialData={initialData}
                         onSubmit={handleSubmit}
                         onCancel={handleCancel}
                         loading={saving}
-                        submitText="更新博客"
-                        submitLoadingText="更新中..."
+                        submitText="保存更改"
+                        submitLoadingText="正在保存..."
                     />
                 </div>
             </div>
