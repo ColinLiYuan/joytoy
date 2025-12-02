@@ -1,9 +1,10 @@
-// /components/product/product-filters.tsx
+// components/product/product-filters.tsx
 'use client';
 
 import { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 
+// ... (Interface 和 PRICE_RANGES 保持不变) ...
 export interface FilterState {
     priceRange: [number, number] | null;
     priceRanges: string[];
@@ -27,7 +28,6 @@ interface ProductFiltersProps {
     };
 }
 
-// Predefined price ranges with actual min/max values
 const PRICE_RANGES = [
     { label: '0-19.99', min: 0, max: 19.99 },
     { label: '20-39.99', min: 20, max: 39.99 },
@@ -48,11 +48,15 @@ export default function ProductFilters({ filters, onFiltersChange, availableFilt
         setExpandedGroups(prev => ({ ...prev, [group]: !prev[group] }));
     };
 
+    // ✅ 修复：逻辑保持不变，用来判断是否反选
     const handlePriceRangeChange = (range: typeof PRICE_RANGES[0]) => {
-        const newPriceRange = filters.priceRange?.[0] === range.min && filters.priceRange?.[1] === range.max
-            ? null
-            : [range.min, range.max] as [number, number];
-        onFiltersChange({ ...filters, priceRange: newPriceRange });
+        const isSelected = filters.priceRange?.[0] === range.min && filters.priceRange?.[1] === range.max;
+
+        onFiltersChange({
+            ...filters,
+            // 如果已经是选中的，这就设为 null (取消)，否则设为新值
+            priceRange: isSelected ? null : [range.min, range.max]
+        });
     };
 
     const handleMultiSelectChange = (type: 'colors' | 'features' | 'materials', value: string) => {
@@ -71,12 +75,9 @@ export default function ProductFilters({ filters, onFiltersChange, availableFilt
 
     return (
         <div className="flex flex-col gap-2 product-filters">
-            {/* 价格范围 */}
+            {/* Price Range */}
             <div className="border-b border-gray-100 pb-4 mb-2">
-                <button
-                    className="w-full flex justify-between items-center py-2 group"
-                    onClick={() => toggleGroup('price')}
-                >
+                <button className="w-full flex justify-between items-center py-2 group" onClick={() => toggleGroup('price')}>
                     <h4 className="font-bold text-gray-900 text-sm">Price Range</h4>
                     <CollapseIcon isExpanded={expandedGroups.price} />
                 </button>
@@ -85,11 +86,13 @@ export default function ProductFilters({ filters, onFiltersChange, availableFilt
                         {PRICE_RANGES.map(range => (
                             <label key={range.label} className="flex items-center gap-3 cursor-pointer group">
                                 <div className="relative flex items-center">
+                                    {/* ✅ 关键修改：使用 onClick 替代 onChange */}
                                     <input
                                         type="radio"
                                         name="priceRange"
                                         checked={filters.priceRange?.[0] === range.min && filters.priceRange?.[1] === range.max}
-                                        onChange={() => handlePriceRangeChange(range)}
+                                        onClick={() => handlePriceRangeChange(range)}
+                                        onChange={() => {}} // 必须加个空的 onChange 以避免 React 警告
                                         className="peer h-4 w-4 cursor-pointer appearance-none rounded-full border border-gray-300 checked:border-black checked:bg-black transition-all"
                                     />
                                     <div className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white opacity-0 peer-checked:opacity-100">
@@ -103,7 +106,7 @@ export default function ProductFilters({ filters, onFiltersChange, availableFilt
                 )}
             </div>
 
-            {/* 特性 (Features) */}
+            {/* Features (Checkbox 逻辑本来就是对的，保持不变) */}
             <div className="border-b border-gray-100 pb-4 mb-2">
                 <button className="w-full flex justify-between items-center py-2 group" onClick={() => toggleGroup('features')}>
                     <h4 className="font-bold text-gray-900 text-sm">Features</h4>
@@ -126,8 +129,7 @@ export default function ProductFilters({ filters, onFiltersChange, availableFilt
                 )}
             </div>
 
-            {/* Materials & Colors (Similar structure) */}
-            {/* ... Repeated logic for Materials and Colors using the same styling above ... */}
+            {/* Materials */}
             <div className="border-b border-gray-100 pb-4 mb-2">
                 <button className="w-full flex justify-between items-center py-2 group" onClick={() => toggleGroup('materials')}>
                     <h4 className="font-bold text-gray-900 text-sm">Materials</h4>
@@ -150,6 +152,7 @@ export default function ProductFilters({ filters, onFiltersChange, availableFilt
                 )}
             </div>
 
+            {/* Colors */}
             <div className="border-b border-gray-100 pb-4 mb-2">
                 <button className="w-full flex justify-between items-center py-2 group" onClick={() => toggleGroup('colors')}>
                     <h4 className="font-bold text-gray-900 text-sm">Colors</h4>
