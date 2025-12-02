@@ -4,8 +4,9 @@ import { CATEGORIES_DATA } from '@/lib/constants/category-data';
 
 class CategoryService {
 
-    private readonly ROOTS_STORAGE_KEY = 'category_roots';
-    private readonly ALL_CATEGORIES_STORAGE_KEY = 'all_categories';
+    private readonly DATA_VERSION = 'v1.0.4'; // 每次数据更新就改这个版本号
+    private readonly ROOTS_STORAGE_KEY = `category_roots_${this.DATA_VERSION}`;
+    private readonly ALL_CATEGORIES_STORAGE_KEY = `all_categories_${this.DATA_VERSION}`;
 
     // 从常量数据生成roots数据
     private generateRoots(): RootResponse[] {
@@ -55,27 +56,39 @@ class CategoryService {
         return allCategories;
     }
 
+    private cleanupOldCache() {
+        if (typeof window === 'undefined') return;
+
+        Object.keys(localStorage).forEach(key => {
+            if (key.startsWith('category_roots_v') &&
+                key !== this.ROOTS_STORAGE_KEY) {
+                localStorage.removeItem(key);
+            }
+            if (key.startsWith('all_categories_v') &&
+                key !== this.ALL_CATEGORIES_STORAGE_KEY) {
+                localStorage.removeItem(key);
+            }
+        });
+    }
+
     async getRoots(): Promise<RootResponse[]> {
-        // 如果是服务端渲染，直接返回生成的数据
+        this.cleanupOldCache();
+
         if (typeof window === 'undefined') {
             return this.generateRoots();
         }
 
         try {
-            // 检查localStorage中是否有缓存
             const cached = localStorage.getItem(this.ROOTS_STORAGE_KEY);
             if (cached) {
                 return JSON.parse(cached);
             }
 
-            // 生成新数据并永久缓存
             const roots = this.generateRoots();
             localStorage.setItem(this.ROOTS_STORAGE_KEY, JSON.stringify(roots));
-
-            console.log('getRoots roots: ', roots)
             return roots;
         } catch (error) {
-            console.error('Error getting roots from cache, using generated data:', error);
+            console.error('Error getting roots:', error);
             return this.generateRoots();
         }
     }
