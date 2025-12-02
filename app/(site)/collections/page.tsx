@@ -5,17 +5,22 @@ import { categoryService } from '@/services/category-service';
 import { ArrowRight, Sparkles } from 'lucide-react';
 import { Metadata } from 'next';
 import { getProductImageUrl } from '@/lib/image-utils';
-import Image from 'next/image'; // 补上 Image 引入
+// import Image from 'next/image'; // 如果后续要用真实图片，请取消注释
 
 // SEO Metadata
 export const metadata: Metadata = {
     title: "Collections | MythToy - Premium Adult Pleasure",
     description: "Explore our curated collections of premium adult products. From intimate massagers to luxury lingerie, find exactly what you desire.",
+    // ✅ 补回 Canonical
+    alternates: {
+        canonical: 'https://mythtoy.com/collections',
+    },
     openGraph: {
         title: "Collections | MythToy",
         description: "Explore our curated collections of premium adult products.",
         type: "website",
-        url: "/collections",
+        url: "https://mythtoy.com/collections",
+        siteName: 'MythToy',
     },
 };
 
@@ -39,24 +44,20 @@ export default async function CollectionPage() {
         rootsData = [];
     }
 
+    // 过滤掉 best-sellers
     const filteredRoots = rootsData.filter(root => root.slug !== 'best-sellers');
 
     return (
-        // ✅ 修复1：最外层强制 overflow-hidden，防止任何子元素撑开
+        // ✅ 保持防溢出修复：w-full overflow-x-hidden
         <div className="min-h-screen bg-white w-full overflow-x-hidden">
 
             {/* Hero Section */}
             <section className="relative py-20 md:py-28 bg-gray-50 w-full">
 
-                {/* ✅ 修复2：装饰背景层 - 双重锁定 */}
-                {/* 使用 absolute inset-0 + overflow-hidden 确保光晕绝不跑出这个盒子 */}
+                {/* 背景装饰层 - 双重锁定防溢出 */}
                 <div className="absolute inset-0 overflow-hidden pointer-events-none">
                     <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-white to-gray-50"></div>
-
-                    {/* 右上角光晕 - 限制 max-w 避免撑开 */}
                     <div className="absolute -right-20 -top-20 w-96 h-96 bg-pink-100/40 rounded-full blur-3xl"></div>
-
-                    {/* 左下角光晕 */}
                     <div className="absolute -left-20 -bottom-20 w-96 h-96 bg-purple-100/40 rounded-full blur-3xl"></div>
                 </div>
 
@@ -114,8 +115,8 @@ export default async function CollectionPage() {
                                         >
                                             {/* Image / Placeholder Container */}
                                             <div className={`relative h-48 overflow-hidden bg-gradient-to-br ${gradientClass} flex items-center justify-center group-hover:opacity-90 transition-opacity`}>
-                                                {/* 这里使用了占位逻辑，如果你有图片字段，请替换注释部分 */}
                                                 {/*
+                                                // 如果以后有图片，取消注释这里：
                                                 <Image
                                                     src={getProductImageUrl('', subcategory.image || '')}
                                                     alt={subcategory.name}
@@ -171,11 +172,10 @@ export default async function CollectionPage() {
             </div>
 
             {/* Footer CTA */}
-            <section className="relative w-full bg-gray-900 text-white py-20 px-4 overflow-hidden">
-                {/* ✅ 修复3：底部光晕也加锁 */}
+            <section className="bg-gray-900 text-white py-20 px-4 relative overflow-hidden w-full">
                 <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                    <div className="absolute -right-20 -top-20 w-64 h-64 bg-pink-600 rounded-full mix-blend-overlay filter blur-3xl opacity-20"></div>
-                    <div className="absolute -left-20 -bottom-20 w-64 h-64 bg-purple-600 rounded-full mix-blend-overlay filter blur-3xl opacity-20"></div>
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-pink-600 rounded-full mix-blend-overlay filter blur-3xl opacity-20"></div>
+                    <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-600 rounded-full mix-blend-overlay filter blur-3xl opacity-20"></div>
                 </div>
 
                 <div className="container mx-auto max-w-4xl text-center relative z-10">
