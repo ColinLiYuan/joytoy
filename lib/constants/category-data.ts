@@ -14,7 +14,7 @@ export const CATEGORIES_DATA: CategoriesData = {
                 categories: [
                     {
                         slug: "new-arrivals",
-                        name: "New In",
+                        name: "New In22",
                         title: "New Arrivals | Latest Sex Toys & Adult Products",
                         description: "Discover the newest sex toys and intimate products. Latest releases and innovative designs for ultimate pleasure.",
                         root: "shop",
