@@ -1,4 +1,4 @@
-// /app/admin/products
+// /app/admin/products/page.tsx
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -196,30 +196,26 @@ export default function ProductList() {
                         <table className="w-full">
                             <thead className="bg-gray-50 border-b border-gray-200">
                             <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">
                                     图片
                                 </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider max-w-xs">
                                     标题
                                 </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                {/* 移除了不需要显示的供应商列，如果需要可以取消注释并调整宽度 */}
+                                {/*<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     供应商
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    源标题
-                                </th>
+                                </th>*/}
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     分类
                                 </th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     价格
                                 </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                {/* 状态列当前被注释了，根据需要启用 */}
+                                {/*<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     状态
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    创建时间
-                                </th>
+                                </th>*/}
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     操作
                                 </th>
@@ -241,17 +237,20 @@ export default function ProductList() {
                                             </div>
                                         )}
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                        {product.title}
+
+                                    {/* 修改部分：标题截断处理 */}
+                                    <td className="px-6 py-4 text-sm font-medium text-gray-900">
+                                        <div className="max-w-xs truncate" title={product.title}>
+                                            {product.title}
+                                        </div>
                                     </td>
+
                                     {/*<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">*/}
                                     {/*    {product.sourceVendor || '-'}*/}
                                     {/*</td>*/}
-                                    {/*<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">*/}
-                                    {/*    {product.sourceTitle || '-'}*/}
-                                    {/*</td>*/}
+
                                     <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="flex flex-wrap gap-1">
+                                        <div className="flex flex-wrap gap-1 max-w-[200px]">
                                             {product.categories?.map((category, index) => (
                                                 <span
                                                     key={index}
@@ -267,9 +266,6 @@ export default function ProductList() {
                                     </td>
                                     {/*<td className="px-6 py-4 whitespace-nowrap">*/}
                                     {/*    {getStatusBadge(product.status)}*/}
-                                    {/*</td>*/}
-                                    {/*<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">*/}
-                                    {/*    {new Date(product.createdAt).toLocaleDateString()}*/}
                                     {/*</td>*/}
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="flex items-center space-x-2">
