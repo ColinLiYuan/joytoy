@@ -17,25 +17,55 @@ interface PageProps {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
     const resolvedParams = await params;
     const categoryParam = resolvedParams.category;
-    let slug = Array.isArray(categoryParam) ? categoryParam.join('/') : categoryParam;
+
+    // 处理 slug 数组或字符串
+    let slug = '';
+    if (Array.isArray(categoryParam)) {
+        slug = categoryParam.join('/');
+    } else {
+        slug = categoryParam;
+    }
+
+    // 确保 slug 前面没有多余的斜杠，后面也没有
+    const cleanSlug = slug.replace(/^\/+|\/+$/g, '');
+
+    // ✅ 核心：构建绝对纯净的 URL，不带任何查询参数
+    const canonicalUrl = `https://mythtoy.com/collections/${cleanSlug}`;
 
     try {
-        const categoryData = await categoryService.getCategoryBySlug(slug);
+        const categoryData = await categoryService.getCategoryBySlug(cleanSlug);
+
         if (categoryData) {
             return {
                 title: `${categoryData.name} - Myth Toy`,
                 description: categoryData.description || `Shop ${categoryData.name} at MythToy.`,
+
+                // ✅ 确认这里配置了 Canonical
+                alternates: {
+                    canonical: canonicalUrl,
+                },
+
                 openGraph: {
                     title: categoryData.name,
                     description: categoryData.description,
+                    url: canonicalUrl, // OG URL 也要用纯净版
                     type: 'website',
+                    siteName: 'Myth Toy',
                 },
+                // ...
             };
         }
     } catch (error) {
-        console.error(error);
+        console.error('Error in generateMetadata:', error);
     }
-    return { title: 'Collection - Myth Toy' };
+
+    // 兜底 Metadata
+    return {
+        title: 'Collection - Myth Toy',
+        alternates: {
+            canonical: canonicalUrl,
+        },
+    };
 }
 
 function parsePriceRange(priceRangeParam: string | string[] | undefined): [number, number] | null {

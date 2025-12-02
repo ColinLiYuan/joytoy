@@ -17,6 +17,10 @@ export async function generateMetadata() {
     description: "Discover premium, body-safe adult toys and lingerie for exploration, pleasure, and wellness. Discreet shipping and secure checkout.",
     keywords: "adult toys, lingerie, body-safe, discreet shipping, MythToy",
 
+    alternates: {
+      canonical: siteUrl,
+    },
+
     // Open Graph
     openGraph: {
       title: "MythToy - Premium Adult Lifestyle Products",

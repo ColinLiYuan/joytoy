@@ -2,8 +2,15 @@
 'use client';
 
 import { useState } from 'react';
+import dynamic from 'next/dynamic'; // 新增
 import { VENDORS, COLOR_GROUPS_PRESET } from '@/lib/constants/product-options';
 import { getMappedColor, getColorDisplayText } from '@/lib/constants/color-map';
+
+// 动态导入 MD 编辑器，避免 SSR 问题
+const MDEditor = dynamic(
+    () => import('@uiw/react-md-editor').then((mod) => mod.default),
+    { ssr: false }
+);
 
 interface BasicInfoProps {
     product: any;
@@ -221,16 +228,22 @@ export default function AdminProductBasicInfo({ product, updateProduct }: BasicI
                     </div>
                 </div>
 
-                {/* 描述 */}
+                {/* 描述 - 替换为 MDEditor */}
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">产品描述</label>
-                    <textarea
-                        rows={6}
-                        value={product.description || ''}
-                        onChange={(e) => handleInputChange('description', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                        placeholder="支持 HTML 格式..."
-                    />
+                    <div className="border border-gray-300 rounded-lg overflow-hidden shadow-sm">
+                        <div data-color-mode="light">
+                            <MDEditor
+                                value={product.description || ''}
+                                onChange={(value) => handleInputChange('description', value || '')}
+                                height={400}
+                                preview="edit"
+                                textareaProps={{
+                                    placeholder: '请输入产品详细描述...'
+                                }}
+                            />
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

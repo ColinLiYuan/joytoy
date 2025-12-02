@@ -1,7 +1,7 @@
 // contexts/authContext.tsx
 'use client';
 
-import { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { LoginResponse, LoginRequest, RegisterRequest, RegisterResponse } from '@/types/auth';
 import authService from '@/services/authService';
 import AuthModal from '@/components/common/auth-modal';
@@ -145,18 +145,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return registerResponse;
     }, [showToast]);
 
-    const value = {
+    const value = useMemo(() => ({
         isAuthModalOpen,
         openAuthModal,
         closeAuthModal,
-        isLoggedIn: isClient ? isLoggedIn : false, // 服务器端返回 false
-        userInfo: isClient ? userInfo : null, // 服务器端返回 null
+        isLoggedIn: isClient ? isLoggedIn : false,
+        userInfo: isClient ? userInfo : null,
         login,
         logout,
         register,
         authModalMode,
-        isClient, // 导出客户端状态
-    };
+        isClient,
+    }), [
+        isAuthModalOpen,
+        openAuthModal,
+        closeAuthModal,
+        isLoggedIn,
+        userInfo,
+        login,
+        logout,
+        register,
+        authModalMode,
+        isClient
+    ]);
 
     // console.log('AuthProvider rendering:', { isClient, isLoggedIn, userInfo });
 
