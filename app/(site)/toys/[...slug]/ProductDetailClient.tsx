@@ -219,7 +219,7 @@ export default function ProductDetailClient({
         if (!product || !selectedSku) return false;
         if (getAvailableStock(selectedSku) <= 0) return false;
         try {
-            await addItemToCart({ productId: product.id, productTitle: product.title, productSku: selectedSku.sku, productImage: getProductImageUrl('', product.image), unitPrice: product.currentPrice, quantity: 1, color: selectedSku.color, skuId: selectedSku.id });
+            await addItemToCart({ productId: product.id, productTitle: product.title, productSku: selectedSku.sku, productImage: getProductImageUrl('', product.image), unitPrice: product.currentPrice, quantity: 1, color: selectedSku.color });
             return true;
         } catch (error) { console.error(error); showToast('error', 'Error', 'Failed to add product.'); return false; }
     };
