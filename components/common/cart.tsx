@@ -16,6 +16,13 @@ interface CartProps {
     onClose: () => void;
 }
 
+// 截断文本的辅助函数
+const truncateText = (text: string, maxLength: number = 30): string => {
+    if (!text) return '';
+    if (text.length <= maxLength) return text;
+    return text.substring(0, maxLength) + '...';
+};
+
 export default function Cart({ isOpen, onClose }: CartProps) {
     const { cart, error, totalItems, getCart, updateItemQuantity, removeItemFromCart } = useCartStore();
     const { showToast } = useToast();
@@ -96,17 +103,22 @@ export default function Cart({ isOpen, onClose }: CartProps) {
                                     <div className="relative w-24 h-24 flex-shrink-0 border border-gray-100 rounded-lg overflow-hidden bg-gray-50">
                                         {item.productImage ? <Image src={getProductImageUrl('', item.productImage)} alt={item.productTitle} fill className="object-cover" /> : null}
                                     </div>
-                                    <div className="flex-1 flex flex-col justify-between">
-                                        <div>
+                                    <div className="flex-1 flex flex-col justify-between min-w-0"> {/* 添加 min-w-0 防止 flex 子元素溢出 */}
+                                        <div className="min-w-0"> {/* 添加 min-w-0 确保截断生效 */}
                                             <div className="flex justify-between items-start gap-2">
-                                                <h4 className="font-medium text-sm text-gray-900 line-clamp-2">{item.productTitle}</h4>
-                                                <button className="text-gray-400 hover:text-red-500 p-1" onClick={() => handleRemoveItem(item.itemId)} disabled={isUpdating === item.itemId}>
+                                                <h4
+                                                    className="font-medium text-sm text-gray-900 line-clamp-2"
+                                                    title={item.productTitle} // 添加完整标题作为 tooltip
+                                                >
+                                                    {truncateText(item.productTitle, 35)} {/* 截断文本，最多35字符 */}
+                                                </h4>
+                                                <button className="text-gray-400 hover:text-red-500 p-1 flex-shrink-0" onClick={() => handleRemoveItem(item.itemId)} disabled={isUpdating === item.itemId}>
                                                     {isUpdating === item.itemId ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
                                                 </button>
                                             </div>
                                             {item.color && <div className="mt-1.5">{formatColorDisplay(item.color)}</div>}
                                         </div>
-                                        <div className="flex justify-between items-end">
+                                        <div className="flex justify-between items-end mt-2">
                                             <div className="flex items-center border border-gray-200 rounded-md"><button onClick={() => handleDecreaseQuantity(item.itemId, item.quantity)} className="w-7 h-7 flex items-center justify-center hover:bg-gray-50"><Minus size={14} /></button><span className="text-sm w-6 text-center">{item.quantity}</span><button onClick={() => handleIncreaseQuantity(item.itemId, item.quantity)} className="w-7 h-7 flex items-center justify-center hover:bg-gray-50"><Plus size={14} /></button></div>
                                             <p className="font-bold text-gray-900">${item.unitPrice.toFixed(2)}</p>
                                         </div>
