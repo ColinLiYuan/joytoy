@@ -3,22 +3,36 @@ import { apiGet, apiPost, apiPut, apiDelete, RequestOptions } from './api-utils'
 import { FrontApiResponse } from '@/types/api';
 
 export interface BackendApiOptions extends RequestOptions {
+
+    requiresAuth?: boolean;
+
     /**
-     * 是否自动处理业务异常（默认 true）
-     * true: 业务异常直接返回错误信息
-     * false: 抛出异常
+     * Whether to automatically handle business exceptions (default: true)
+     * true: Business exceptions return error information directly
+     * false: Throw exception
      */
     handleBusinessError?: boolean;
 
     /**
-     * 默认错误消息（系统异常时使用）
+     * Default error message (used for system exceptions)
      */
     defaultErrorMessage?: string;
 }
 
+async function getAuthToken(): Promise<string | null> {
+    try {
+        // 动态导入，避免在客户端构建时出错
+        const { getToken } = await import('@/lib/cookie-utils');
+        return getToken();
+    } catch (error) {
+        console.error('Failed to get auth token:', error);
+        return null;
+    }
+}
+
 /**
- * 基于现有 api-utils 的后端 API 调用函数
- * 返回 FrontApiResponse 格式
+ * Backend API call function based on existing api-utils
+ * Returns FrontApiResponse format
  */
 export async function callBackendApi<T = any>(
     endpoint: string,
@@ -26,61 +40,86 @@ export async function callBackendApi<T = any>(
 ): Promise<FrontApiResponse<T>> {
     const {
         handleBusinessError = true,
-        defaultErrorMessage = '系统繁忙，请稍后重试',
+        defaultErrorMessage = 'System busy, please try again later',
         method = 'GET',
+        requiresAuth = false,
         ...restOptions
     } = options;
 
     try {
         let response: FrontApiResponse<T>;
 
-        // 根据方法调用现有的 api-utils
+        // 如果需要认证，获取token并添加到headers
+        const headers: Record<string, string> = { ...(restOptions.headers as Record<string, string>) };
+
+        if (requiresAuth) {
+            const token = await getAuthToken();
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+        }
+
+        const apiOptions = {
+            ...restOptions,
+            headers: headers
+        };
+
+        // Call existing api-utils based on method
         switch (method.toUpperCase()) {
             case 'POST':
-                response = await apiPost<T>(endpoint, restOptions.body, restOptions);
+                response = await apiPost<T>(endpoint, restOptions.body, apiOptions); // ✅ 传递 apiOptions
                 break;
             case 'PUT':
-                response = await apiPut<T>(endpoint, restOptions.body, restOptions);
+                response = await apiPut<T>(endpoint, restOptions.body, apiOptions); // ✅ 传递 apiOptions
                 break;
             case 'DELETE':
-                response = await apiDelete<T>(endpoint, restOptions);
+                response = await apiDelete<T>(endpoint, apiOptions); // ✅ 传递 apiOptions
                 break;
             case 'GET':
             default:
-                response = await apiGet<T>(endpoint, restOptions);
+                response = await apiGet<T>(endpoint, apiOptions); // ✅ 传递 apiOptions
                 break;
         }
 
-        // 如果不需要自动处理业务异常，直接返回
-        if (!handleBusinessError) {
-            return response;
-        }
-
-        // 如果 API 调用成功，直接返回
+        // If API call successful, return directly
         if (response.success) {
             return response;
         }
 
-        // 业务异常：使用后端返回的错误信息
-        console.warn(`业务异常 [${endpoint}]:`, response.error);
+        // Business exception: use backend error information
+        const errorMessage = response.error || 'Operation failed';
+        console.warn(`Business exception [${endpoint}]:`, errorMessage);
+
+        if (!handleBusinessError) {
+            throw new Error(errorMessage);
+        }
+
         return {
             success: false,
-            error: response.error || '操作失败',
+            error: errorMessage,
             data: response.data
         };
 
     } catch (error) {
-        // 系统异常：网络错误、超时、服务器错误等
-        console.error(`系统异常 [${endpoint}]:`, error);
+        // System exception: network error, timeout, server error, etc.
+        console.error(`System exception [${endpoint}]:`, error);
+
+        // Throw all exceptions
+        if (!handleBusinessError) {
+            throw error;
+        }
 
         let errorMessage = defaultErrorMessage;
 
-        // 如果是已知的错误类型，可以给出更具体的提示
+        // Provide more specific prompts for known error types
         if (error instanceof Error) {
             if (error.name === 'AbortError' || error.message.includes('timeout')) {
-                errorMessage = '请求超时，请检查网络连接';
+                errorMessage = 'Request timeout, please check network connection';
             } else if (error.message.includes('Network')) {
-                errorMessage = '网络连接失败，请检查网络设置';
+                errorMessage = 'Network connection failed, please check network settings';
+            } else {
+                // Use the original error message if available
+                errorMessage = error.message || errorMessage;
             }
         }
 
@@ -93,7 +132,7 @@ export async function callBackendApi<T = any>(
 }
 
 /**
- * GET 请求的快捷方式
+ * Shortcut for GET request
  */
 export async function callBackendGet<T = any>(
     endpoint: string,
@@ -103,7 +142,7 @@ export async function callBackendGet<T = any>(
 }
 
 /**
- * POST 请求的快捷方式
+ * Shortcut for POST request
  */
 export async function callBackendPost<T = any>(
     endpoint: string,
@@ -118,7 +157,7 @@ export async function callBackendPost<T = any>(
 }
 
 /**
- * PUT 请求的快捷方式
+ * Shortcut for PUT request
  */
 export async function callBackendPut<T = any>(
     endpoint: string,
@@ -133,7 +172,7 @@ export async function callBackendPut<T = any>(
 }
 
 /**
- * DELETE 请求的快捷方式
+ * Shortcut for DELETE request
  */
 export async function callBackendDelete<T = any>(
     endpoint: string,

@@ -19,7 +19,7 @@ class ApiError extends Error {
 }
 
 /**
- * 统一的 API 请求函数
+ * Unified API request function
  */
 export async function proxyRequest(
     endpoint: string,
@@ -51,7 +51,7 @@ export async function proxyRequest(
         clearTimeout(timeoutId);
 
         if (!response.ok) {
-            // 克隆响应来处理错误，避免消耗原始响应体
+            // Clone response to handle errors without consuming original response body
             const errorResponse = response.clone();
             let errorData;
 
@@ -66,7 +66,7 @@ export async function proxyRequest(
                 }
             }
 
-            process.stdout.write('proxyRequest HTTP错误: ${errorData}');
+            console.error('proxyRequest HTTP error:', errorData);
 
             throw new ApiError(
                 response.status,
@@ -79,66 +79,64 @@ export async function proxyRequest(
     } catch (error) {
         clearTimeout(timeoutId);
 
-        // 安全地处理错误信息
+        // Safely handle error messages
         const errorMessage = error instanceof Error ? error.message : String(error);
-        process.stdout.write('proxyRequest 捕获错误: ${ error: errorMessage }\n');
+        console.error('proxyRequest caught error:', errorMessage);
 
-        // 重试逻辑
+        // Retry logic
         if (retry > 0 && shouldRetry(error)) {
-            process.stdout.write('apiGet 捕获错误: ${ error: errorMessage } API调用失败，重试中... 剩余 ${retry} 次\n');
+            console.warn(`API call failed, retrying... ${retry} attempts left`);
             return proxyRequest(endpoint, {
                 ...options,
                 retry: retry - 1,
             });
         }
 
+        // Throw all exceptions
         throw error;
     }
 }
 
 /**
- * 处理 API 错误
+ * Handle API errors
  */
 export function handleApiError(error: unknown): { error: string } {
     console.error('API Error:', error);
 
     if (error instanceof ApiError) {
-        return { error: error.message };
+        throw error; // Throw ApiError
     }
 
     if (error instanceof Error) {
         if (error.name === 'AbortError') {
-            return { error: 'Request timeout' };
+            throw new Error('Request timeout'); // Throw timeout error
         }
-        return { error: error.message };
+        throw error; // Throw other Error instances
     }
 
-    return { error: 'An unexpected error occurred' };
+    throw new Error('An unexpected error occurred'); // Throw generic error
 }
 
 /**
- * 统一的 API 响应处理器
+ * Unified API response handler
  */
 export async function handleApiResponse<T>(
     response: Response
 ): Promise<FrontApiResponse<T>> {
     try {
-        // 克隆响应来检查内容
+        // Clone response to check content
         const responseClone = response.clone();
         const responseText = await responseClone.text();
 
-        // 如果响应体为空但请求成功，认为是更新成功
+        // If response body is empty but request succeeded, consider it an update success
         if (!responseText.trim()) {
             if (response.ok) {
                 return {
                     success: true,
-                    data: undefined as T  // 或者 {} as T
+                    data: undefined as T
                 };
             } else {
-                return {
-                    success: false,
-                    error: 'Empty response body',
-                };
+                throw new Error('Empty response body');
             }
         }
 
@@ -146,19 +144,16 @@ export async function handleApiResponse<T>(
         try {
             data = JSON.parse(responseText);
         } catch (parseError) {
-            console.error('🔍 JSON 解析错误:', parseError);
-            return {
-                success: false,
-                error: 'Failed to parse response as JSON',
-            };
+            console.error('JSON parsing error:', parseError);
+            throw new Error('Failed to parse response as JSON');
         }
 
         if (!response.ok) {
-            return {
-                success: false,
-                error: data?.message || 'Request failed',
-                data: data,
-            };
+            throw new ApiError(
+                response.status,
+                data?.message || 'Request failed',
+                data
+            );
         }
 
         return {
@@ -166,29 +161,27 @@ export async function handleApiResponse<T>(
             data,
         };
     } catch (error) {
-        console.error('🔍 handleApiResponse 捕获错误:', error);
-        return {
-            success: false,
-            error: 'Failed to process response',
-        };
+        console.error('handleApiResponse caught error:', error);
+        // Re-throw the error
+        throw error;
     }
 }
 
 /**
- * 判断是否应该重试
+ * Determine if retry should be attempted
  */
 function shouldRetry(error: unknown): boolean {
     if (error instanceof ApiError) {
-        // 只对服务器错误进行重试
+        // Only retry on server errors
         return error.status >= 500;
     }
 
-    // 对网络错误进行重试
+    // Retry on network errors
     return error instanceof TypeError && error.message.includes('fetch');
 }
 
 /**
- * 便捷的 GET 请求
+ * Convenient GET request
  */
 export async function apiGet<T>(
     endpoint: string,
@@ -201,22 +194,16 @@ export async function apiGet<T>(
         });
 
         const result = await handleApiResponse<T>(response);
-
         return result;
     } catch (error) {
-        // 安全地处理 error 对象
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        process.stdout.write('apiGet 捕获错误:  ${ error: errorMessage }\n');
-
-        return {
-            success: false,
-            ...handleApiError(error),
-        };
+        console.error('apiGet caught error:', error);
+        // Throw the exception
+        throw error;
     }
 }
 
 /**
- * 便捷的 POST 请求
+ * Convenient POST request
  */
 export async function apiPost<T>(
     endpoint: string,
@@ -231,15 +218,13 @@ export async function apiPost<T>(
         });
         return handleApiResponse<T>(response);
     } catch (error) {
-        return {
-            success: false,
-            ...handleApiError(error),
-        };
+        console.error('apiPost caught error:', error);
+        throw error;
     }
 }
 
 /**
- * 便捷的 PUT 请求
+ * Convenient PUT request
  */
 export async function apiPut<T>(
     endpoint: string,
@@ -254,31 +239,26 @@ export async function apiPut<T>(
         });
         return handleApiResponse<T>(response);
     } catch (error) {
-        return {
-            success: false,
-            ...handleApiError(error),
-        };
+        console.error('apiPut caught error:', error);
+        throw error;
     }
 }
 
 /**
- * 便捷的 DELETE 请求
+ * Convenient DELETE request
  */
 export async function apiDelete<T>(
     endpoint: string,
     options?: RequestOptions
 ): Promise<FrontApiResponse<T>> {
     try {
-        // console.log('api- utils ')
         const response = await proxyRequest(endpoint, {
             method: 'DELETE',
             ...options,
         });
         return handleApiResponse<T>(response);
     } catch (error) {
-        return {
-            success: false,
-            ...handleApiError(error),
-        };
+        console.error('apiDelete caught error:', error);
+        throw error;
     }
 }
