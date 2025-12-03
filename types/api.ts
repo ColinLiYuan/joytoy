@@ -4,12 +4,22 @@
 export interface FrontApiResponse<T = any> {
     success: boolean;
     message?: string;
-    data?: T;
+    data?: ApiResponse<T>;
     error?: string;
     code?: number;
     timestamp?: string;
 }
 
+/**
+ * 后端API响应格式
+ * 这个被包裹在 FrontApiResponse.data 里
+ */
+export interface ApiResponse<T = any> {
+    success: boolean;
+    message?: string;
+    data?: T;
+    errorCode?: string;
+}
 
 // 分页响应类型
 export interface PaginatedResponse<T> extends FrontApiResponse<T[]> {

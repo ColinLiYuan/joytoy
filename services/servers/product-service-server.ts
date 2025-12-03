@@ -51,7 +51,7 @@ class ProductServiceServer {
             requiresAuth: true
         });
 
-        console.log('getProductsByCategory result:', result.data)
+        // console.log('getProductsByCategory result:', result.data)
 
         const data = result.data?.data || result.data || {};
 
@@ -76,7 +76,7 @@ class ProductServiceServer {
         const result = await callBackendGet<ProductResponse>(url, {
             requiresAuth: true
         });
-        console.log('getProductBySlug result:', result.data)
+        // console.log('getProductBySlug result:', result.data)
 
         // 直接返回 data
         return result.data.data!;
