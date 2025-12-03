@@ -21,10 +21,13 @@ export interface LoginResponse {
     email: string;
     firstName: string;
     lastName: string;
+    displayName?: string;
     token: string;
+    tokenType: string;
+    expiresIn: number;
     status: string;
     emailVerified: boolean;
-    cartId: number,
+    cartId: number;
     lastLoginAt?: string;
 }
 

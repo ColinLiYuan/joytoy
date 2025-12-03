@@ -2,9 +2,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { apiGet, handleApiError } from '@/lib/api-utils';
 import { FrontApiResponse } from '@/types/api';
+import { getToken } from '@/lib/cookie-utils';
 
 export async function GET(request: NextRequest) {
     try {
+        const token = await getToken();
+        console.log('getProductsByCategory route token: ', token)
         const { searchParams } = new URL(request.url);
         const category = searchParams.get('category');
         const userId = searchParams.get('userId');

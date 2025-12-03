@@ -2,7 +2,7 @@
 import { ProductResponse } from '@/types/product';
 import { FrontApiResponse } from '@/types/api';
 import { SERVER_CONFIG } from '@/lib/api-config';
-import { getServerUserId } from '@/lib/cookie-utils';
+import { getServerUserId, getToken } from '@/lib/cookie-utils';
 
 interface ProductListResponse {
     content: ProductResponse[];
@@ -33,7 +33,9 @@ class ProductServiceServer {
     ): Promise<ProductListResponse> {
         try {
             const userId = await getServerUserId();
+            const token = await getToken();
             // console.log('product service getProductsByCategory userId: ', userId)
+            console.log('product service getProductsByCategory token: ', token)
             const queryParams = new URLSearchParams({
                 page: page.toString(),
                 size: size.toString(),

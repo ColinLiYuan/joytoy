@@ -25,20 +25,8 @@ export async function POST(request: NextRequest) {
             // 登录成功，设置 cookie
             const response = NextResponse.json(result.data);
 
-            // 设置用户 token 到 cookie（根据你的 API 返回结构调整）
-            const token = result.data?.token || result.data?.access_token;
             const userInfo = result.data?.data || result.data;
             // console.log('login route userInfo2: ', result.data);
-
-            if (token) {
-                response.cookies.set('auth_token', token, {
-                    httpOnly: true, // 防止 XSS 攻击
-                    secure: process.env.NODE_ENV === 'production', // 生产环境使用 HTTPS
-                    sameSite: 'lax',
-                    maxAge: 60 * 60 * 24 * 7, // 7 天
-                    path: '/',
-                });
-            }
 
             // 如果需要存储用户基本信息（非敏感信息）
             if (userInfo) {
@@ -55,6 +43,17 @@ export async function POST(request: NextRequest) {
                     maxAge: 60 * 60 * 24 * 7, // 7 天
                     path: '/',
                 });
+
+                const token = userInfo?.token;
+                if (token) {
+                    response.cookies.set('auth_token', token, {
+                        httpOnly: true, // 防止 XSS 攻击
+                        secure: process.env.NODE_ENV === 'production', // 生产环境使用 HTTPS
+                        sameSite: 'lax',
+                        maxAge: 60 * 60 * 24 * 7, // 7 天
+                        path: '/',
+                    });
+                }
             }
 
             // 设置或更新 sessionId Cookie（如果是新session或者需要更新）
