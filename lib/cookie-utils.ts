@@ -39,9 +39,8 @@ export async function getToken(): Promise<string | null> {
         const cookieStore = await cookies();
 
         const authToken = cookieStore.get('auth_token')?.value;
-        if (authToken) {
-            return authToken;
-        }
+
+        return authToken || null;
     } catch (error) {
         console.error('Failed to get token from cookies:', error);
         return null;

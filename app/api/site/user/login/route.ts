@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
             SessionManager.setSessionCookie(response, sessionId);
 
             const setCookies = response.cookies.getAll();
-            console.log('🔐 Response cookies set:', setCookies);
+            // console.log('🔐 Response cookies set:', setCookies);
 
             return response;
         } else {

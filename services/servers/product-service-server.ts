@@ -33,9 +33,9 @@ class ProductServiceServer {
     ): Promise<ProductListResponse> {
         try {
             const userId = await getServerUserId();
-            const token = await getToken();
+            // const token = await getToken();
             // console.log('product service getProductsByCategory userId: ', userId)
-            console.log('product service getProductsByCategory token: ', token)
+            // console.log('product service getProductsByCategory token: ', token)
             const queryParams = new URLSearchParams({
                 page: page.toString(),
                 size: size.toString(),
