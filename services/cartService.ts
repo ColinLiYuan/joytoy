@@ -6,7 +6,7 @@ class CartService {
     /**
      * 获取购物车
      */
-    async getCart(cartId: string): Promise<CartResponse> {
+    async getCart(): Promise<CartResponse> {
         try {
             let url = `${SERVER_CONFIG.apiRoutes.cart}/get`;
             const response = await fetch(url);
@@ -27,12 +27,8 @@ class CartService {
     /**
      * 添加商品到购物车
      */
-    async addItemToCart(cartId: string, request: AddToCartRequest): Promise<CartResponse> {
+    async addItemToCart(request: AddToCartRequest): Promise<CartResponse> {
         try {
-            if (!cartId) {
-                cartId = '0';
-            }
-
             let url = `${SERVER_CONFIG.apiRoutes.cart}/add`;
             const response = await fetch(url, {
                 method: 'POST',
@@ -57,7 +53,7 @@ class CartService {
     /**
      * 从购物车移除商品
      */
-    async removeItemFromCart(cartId: string, itemId: number): Promise<CartResponse> {
+    async removeItemFromCart(itemId: number): Promise<CartResponse> {
         try {
             let url = `${SERVER_CONFIG.apiRoutes.cart}/remove`;
             const response = await fetch(url, {
@@ -82,7 +78,7 @@ class CartService {
     /**
      * 更新购物车商品数量
      */
-    async updateItemQuantity(cartId: string, itemId: number, quantity: number): Promise<CartResponse> {
+    async updateItemQuantity(itemId: number, quantity: number): Promise<CartResponse> {
         try {
             const url = `${SERVER_CONFIG.apiRoutes.cart}/update`;
             // console.log('updateItemQuantity url: ', url)
