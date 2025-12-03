@@ -1,22 +1,47 @@
-// /app/api/product/list/route.ts
+// api/product/list/route.ts
+
 import { NextRequest, NextResponse } from 'next/server';
 import { apiGet, handleApiError } from '@/lib/api-utils';
 import { FrontApiResponse } from '@/types/api';
-import { getToken } from '@/lib/cookie-utils';
+import {cookies} from "next/headers";
 
-// ✅ 关键：强制动态，确保每次都读取最新的 Cookies
+// ✅ 保持强制动态
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
     try {
-        // 1. 再次尝试获取 token
-        const token = await getToken();
+        // 🔍 暴力调试：直接从 Request Header 里拿，不经过 Next.js 的 cookies() 封装
+        // 这样能排除所有 Next.js 版本兼容性问题
 
-        // Debug: 打印一下看看 (调试完可删除)
-        console.log('API Route Token Check:', token ? 'Available' : 'Missing');
+        const cookieStore = await cookies();
+        const allCookies = cookieStore.getAll();
+        // console.log('🔍 ALL COOKIES:', allCookies);
+
+        const allCookies2 = request.cookies;
+        // console.log('🔍 ALL COOKIES222:', allCookies2);
+
+        // 方法 A: 从 nextUrl cookies 拿
+        let token = request.cookies.get('auth_token')?.value;
+
+        // 方法 B: 如果 A 也没有，直接解析 Header 字符串 (最底层的方法)
+        if (!token) {
+            const cookieHeader = request.headers.get('cookie') || '';
+            const match = cookieHeader.match(/auth_token=([^;]+)/);
+            if (match) {
+                token = match[1];
+                console.log('✅ 居然是从 Header 字符串里硬解出来的！');
+            }
+        }
+
+        // 🖨️ 打印调试结果
+        console.log('------------------------------------------------');
+        console.log('🍪 API Route Debug Info:');
+        console.log('👉 URL:', request.url);
+        console.log('👉 All Cookies Names:', request.cookies.getAll().map(c => c.name).join(', '));
+        console.log('👉 auth_token found?', !!token);
+        console.log('------------------------------------------------');
 
         const { searchParams } = new URL(request.url);
-        // ... 获取其他参数 (保持你原有的代码) ...
         const category = searchParams.get('category');
         const userId = searchParams.get('userId');
         const page = searchParams.get('page') || '0';
@@ -31,7 +56,6 @@ export async function GET(request: NextRequest) {
 
         let url = `/api/V1/product/queryByCategory?category=${category}&page=${page}&size=${size}`;
 
-        // ... 拼接 URL (保持你原有的代码) ...
         if (userId) url += `&userId=${userId}`;
         if (minPrice) url += `&minPrice=${minPrice}`;
         if (maxPrice) url += `&maxPrice=${maxPrice}`;
@@ -41,16 +65,15 @@ export async function GET(request: NextRequest) {
         if (sortBy) url += `&sortBy=${sortBy}`;
         if (sortDirection) url += `&sortDirection=${sortDirection}`;
 
-        // ✅ 2. 显式构造 Headers 并传给 apiGet
+        // ✅ 3. 构造 Headers
         const headers: Record<string, string> = {};
+
+        // 如果这里 token 有值，就一定会发给后端
         if (token) {
             headers['Authorization'] = `Bearer ${token}`;
-            // 如果后端认 auth_token 这个 Cookie，也加上
             headers['Cookie'] = `auth_token=${token}`;
         }
 
-        // 调用 apiGet (注意：确保你的 lib/api-utils.ts 的 apiGet 支持第二个参数 headers)
-        // 如果 apiGet 不支持，你需要去修改 lib/api-utils.ts
         const result: FrontApiResponse = await apiGet(url, headers);
 
         if (!result.success) {

@@ -1,8 +1,8 @@
 // services/servers/product-service-server.ts
 import { ProductResponse } from '@/types/product';
+import { getServerUserId } from '@/lib/cookie-utils';
+import { callBackendGet } from '@/lib/backend-utils';
 import { FrontApiResponse } from '@/types/api';
-import { SERVER_CONFIG } from '@/lib/api-config';
-import { getServerUserId, getToken } from '@/lib/cookie-utils';
 
 interface ProductListResponse {
     content: ProductResponse[];
@@ -30,24 +30,22 @@ class ProductServiceServer {
             sortBy?: string;
             sortDirection?: string;
         }
-    ): Promise<ProductListResponse> {
+    ): Promise<FrontApiResponse<ProductListResponse>> {
         try {
             const userId = await getServerUserId();
-            // const token = await getToken();
-            // console.log('product service getProductsByCategory userId: ', userId)
-            // console.log('product service getProductsByCategory token: ', token)
+
             const queryParams = new URLSearchParams({
                 page: page.toString(),
                 size: size.toString(),
-                userId: userId? userId.toString() : '',
-                category: slug ? slug : '',
+                userId: userId ? userId.toString() : '',
+                category: slug || '',
                 sortBy: filters?.sortBy || 'createdAt',
                 sortDirection: filters?.sortDirection || 'DESC'
             });
 
             // 添加筛选参数
             if (filters) {
-                if (filters.priceRange && filters.priceRange.length > 0) {
+                if (filters.priceRange && filters.priceRange.length === 2) {
                     queryParams.append('minPrice', filters.priceRange[0].toString());
                     queryParams.append('maxPrice', filters.priceRange[1].toString());
                 }
@@ -62,124 +60,115 @@ class ProductServiceServer {
                 }
             }
 
-            // console.log('🔄 productService getProductsByCategory - 请求参数:', {
-            //     slug,
-            //     page,
-            //     size,
-            //     filters,
-            //     queryParams: queryParams.toString()
-            // });
-            const url = `${SERVER_CONFIG.baseURL}${SERVER_CONFIG.apiRoutes.product}/list?${queryParams}`;
-            // console.log('getProductsByCategory url:', url)
-            const response = await fetch(url, {
-                cache: 'no-store',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+            const url = `/api/V1/product/queryByCategory?${queryParams}`;
+
+            // 使用 callBackendGet，需要认证
+            const result = await callBackendGet<any>(url, {
+                requiresAuth: true,
+                defaultErrorMessage: '获取产品列表失败，请稍后重试'
             });
 
-            if (!response.ok) {
-                throw new Error('Failed to fetch products');
+            // 如果失败，直接返回错误
+            if (!result.success) {
+                return result;
             }
 
-            // console.log('productService response ' + response.ok)
-            const apiResponse = await response.json();
+            const data = result.data.data;
+            console.log('data: ', data)
 
-            // console.log('✅ productService - API响应:', {
-            //     success: apiResponse.success,
-            //     data结构: apiResponse.data ? {
-            //         content长度: apiResponse.data.content?.length,
-            //         currentPage: apiResponse.data.currentPage,
-            //         totalPages: apiResponse.data.totalPages,
-            //         totalElements: apiResponse.data.totalElements
-            //     } : '无数据'
-            // });
-
-            if (!apiResponse.success) {
-                throw new Error(apiResponse.error || 'Failed to fetch products');
-            }
-
-            // console.log('productService apiResponse ' + apiResponse.success)
-            // 返回完整的分页响应
-            return apiResponse.data || {
-                content: [],
-                currentPage: page,
-                pageSize: size,
-                totalElements: 0,
-                totalPages: 0,
-                hasNext: false,
-                hasPrevious: false
+            // 格式化数据
+            const formattedData: ProductListResponse = {
+                content: Array.isArray(data.content) ? data.content : [],
+                currentPage: data.currentPage || data.page || page,
+                pageSize: data.pageSize || data.size || size,
+                totalElements: data.totalElements || data.total || 0,
+                totalPages: data.totalPages || Math.ceil((data.totalElements || 0) / size),
+                hasNext: data.hasNext || (page + 1) * size < (data.totalElements || 0),
+                hasPrevious: data.hasPrevious || page > 0,
             };
+
+            return formattedData;
+
         } catch (error) {
-            console.error('Error fetching products:', error);
-            throw error;
+            // 这里是 service 层的意外异常
+            console.error('Service layer error - getProductsByCategory:', error);
+            return {
+                success: false,
+                error: '获取产品列表时发生意外错误',
+                data: undefined
+            };
         }
     }
 
     /**
-     * 根据slug获取单个产品详情
+     * 根据slug获取单个产品详情 - 公共接口
      */
-    async getProductBySlug(slug: string): Promise<ProductResponse> {
+    async getProductBySlug(slug: string): Promise<FrontApiResponse<ProductResponse>> {
         try {
-            const userId = await getServerUserId();
-            const url = `${SERVER_CONFIG.baseURL}${SERVER_CONFIG.apiRoutes.product}/detail?slug=${encodeURIComponent(slug)}`;
+            const url = `/api/V1/product?slug=${encodeURIComponent(slug)}`;
 
-            // console.log('getProductBySlug url:', url);
-
-            const response = await fetch(url, {
-                cache: 'no-store',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+            // 公共接口，不需要认证
+            return await callBackendGet<ProductResponse>(url, {
+                requiresAuth: false,
+                defaultErrorMessage: '获取产品详情失败'
             });
-            if (!response.ok) {
-                throw new Error('Failed to fetch product by slug');
-            }
-            const apiResponse: FrontApiResponse = await response.json();
-            if (!apiResponse.success) {
-                throw new Error(apiResponse.message || 'Get product by slug failed');
-            }
 
-            const productResponse: ProductResponse = apiResponse.data;
-
-            return productResponse;
         } catch (error) {
-            console.error('Get product by slug failed:', error);
-            throw error;
+            console.error('Service layer error - getProductBySlug:', error);
+            return {
+                success: false,
+                error: '获取产品详情时发生意外错误',
+                data: undefined
+            };
         }
     }
 
     /**
-     * 获取英雄产品列表（首页推荐）
+     * 获取英雄产品列表（首页推荐）- 公共接口
      */
-    async getHeroProducts(): Promise<ProductResponse[]> {
+    async getHeroProducts(): Promise<FrontApiResponse<ProductResponse[]>> {
         try {
-            const url = `${SERVER_CONFIG.baseURL}${SERVER_CONFIG.apiRoutes.product}/hero`;
-            const response = await fetch(url, {
-                cache: 'no-store',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+            const url = `/api/V1/product/hero`;
+
+            // 公共接口，不需要认证
+            const result = await callBackendGet<any>(url, {
+                requiresAuth: false,
+                defaultErrorMessage: '获取推荐产品失败'
             });
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => null);
-                throw new Error(errorData?.error || `Failed to fetch hero products`);
+
+            // 如果失败，直接返回错误
+            if (!result.success) {
+                return result;
             }
 
-            // console.log("getHeroProducts response " + response.ok);
+            const data = result.data;
 
-            const apiResponse: FrontApiResponse = await response.json();
-            if (!apiResponse.success) {
-                throw new Error(apiResponse.message || 'Failed to get products');
+            // 处理不同的响应格式
+            let products: ProductResponse[] = [];
+
+            if (Array.isArray(data)) {
+                products = data;
+            } else if (data && Array.isArray(data.content)) {
+                products = data.content;
+            } else if (data && Array.isArray(data.data)) {
+                products = data.data;
             }
 
-            // console.log("getHeroProducts apiResponse " + apiResponse.success);
-            return Array.isArray(apiResponse.data) ? apiResponse.data : [apiResponse.data];
+            return {
+                success: true,
+                data: products
+            };
+
         } catch (error) {
-            console.error('Get hero products failed:', error);
-            throw error;
+            console.error('Service layer error - getHeroProducts:', error);
+            return {
+                success: false,
+                error: '获取推荐产品时发生意外错误',
+                data: undefined
+            };
         }
     }
+
 }
 
 export const productServiceServer = new ProductServiceServer();
