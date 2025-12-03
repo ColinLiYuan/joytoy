@@ -90,18 +90,10 @@ class ProductServiceServer {
 
         // 拿到 FrontApiResponse，不管 success
         const result = await callBackendGet<any>(url, {
-            requiresAuth: false
+            requiresAuth: true
         });
 
-        const data = result.data || result.data?.data || result.data?.content || result.data?.data?.content;
-
-        if (Array.isArray(data)) {
-            return data;
-        } else if (Array.isArray(result.data)) {
-            return result.data;
-        }
-
-        return [];
+        return result.data.data!;
     }
 }
 

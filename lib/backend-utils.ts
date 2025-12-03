@@ -21,11 +21,50 @@ export interface BackendApiOptions extends RequestOptions {
 
 async function getAuthToken(): Promise<string | null> {
     try {
-        // 动态导入，避免在客户端构建时出错
-        const { getToken } = await import('@/lib/cookie-utils');
-        return getToken();
+        // 检查是否在客户端环境
+        if (typeof window !== 'undefined') {
+            // 客户端环境
+            return getClientAuthToken();
+        } else {
+            // 服务端环境
+            const { getToken } = await import('@/lib/cookie-utils');
+            return getToken();
+        }
     } catch (error) {
         console.error('Failed to get auth token:', error);
+        return null;
+    }
+}
+
+function getClientAuthToken(): string | null {
+    try {
+        const userInfoStr = localStorage.getItem('userInfo');
+
+        if (userInfoStr) {
+            try {
+                const userInfo = JSON.parse(userInfoStr);
+                // 检查 token 是否存在
+                if (userInfo?.token) {
+                    return userInfo.token;
+                }
+            } catch (parseError) {
+                console.error('Failed to parse userInfo from localStorage:', parseError);
+                // 清理无效数据
+                localStorage.removeItem('userInfo');
+                localStorage.removeItem('isLoggedIn');
+            }
+        }
+
+        const cookies = document.cookie.split('; ');
+        for (const cookie of cookies) {
+            if (cookie.startsWith('auth_token=')) {
+                return cookie.substring('auth_token='.length);
+            }
+        }
+
+        return null;
+    } catch (error) {
+        console.error('Failed to get client auth token:', error);
         return null;
     }
 }
