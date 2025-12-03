@@ -1,9 +1,14 @@
 // app/api/product/related/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { productServiceServer } from '@/services/servers/product-service-server';
+import { getToken } from '@/lib/cookie-utils';
 
 export async function GET(request: NextRequest) {
     try {
+        const token = await getToken();
+        console.log('related121212 :' , token)
+
+
         const { searchParams } = new URL(request.url);
         const currentSlug = searchParams.get('slug');
 

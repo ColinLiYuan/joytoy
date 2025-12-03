@@ -33,14 +33,11 @@ export class SessionManager {
     /**
      * 为会话购物车准备请求头
      */
-    static prepareSessionHeaders(cartId: string, sessionId: string): any {
-        if (cartId === '0') {
-            return {
-                headers: {
-                    'X-Session-Id': sessionId
-                }
-            };
-        }
-        return {};
+    static prepareSessionHeaders(sessionId: string): any {
+        return {
+            headers: {
+                'X-Session-Id': sessionId
+            }
+        };
     }
 }
