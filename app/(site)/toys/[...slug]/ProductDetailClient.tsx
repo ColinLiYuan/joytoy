@@ -131,7 +131,7 @@ export default function ProductDetailClient({
     const [recentlyViewed, setRecentlyViewed] = useState<ProductResponse[]>([]);
 
     const { showToast } = useToast();
-    const { openAuthModal, isLoggedIn, userInfo } = useAuth();
+    const { openAuthModal, isLoggedIn } = useAuth();
     const addItemToCart = useCartStore(state => state.addItemToCart);
 
     useEffect(() => {
@@ -204,12 +204,11 @@ export default function ProductDetailClient({
         const newState = !isFavorited;
         setIsFavorited(newState);
         try {
-            if (!userInfo) return;
             if (newState) {
-                await wishlistService.addItemToWishlist({ userId: userInfo.id, productId: product.id, productTitle: product.title, image: product.image, currentPrice: product.currentPrice, slug: product.slug });
+                await wishlistService.addItemToWishlist({ productId: product.id, productTitle: product.title, image: product.image, currentPrice: product.currentPrice, slug: product.slug });
                 showToast('success', 'Saved', 'Added to your wishlist');
             } else {
-                await wishlistService.removeItemFromWishlist({ userId: userInfo.id, productId: product.id });
+                await wishlistService.removeItemFromWishlist({ productId: product.id });
                 showToast('success', 'Removed', 'Removed from wishlist');
             }
         } catch (error) { setIsFavorited(!newState); showToast('error', 'Error', 'Failed to update wishlist'); } finally { setIsWishlistLoading(false); }

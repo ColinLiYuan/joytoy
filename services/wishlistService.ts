@@ -40,7 +40,6 @@ class WishlistService {
     async removeItemFromWishlist(request: WishlistRequest): Promise<void> {
         try {
             const params = new URLSearchParams({
-                userId: request.userId.toString(), // 转换为字符串
                 productId: request.productId.toString() // 转换为字符串
             });
             const url = `${SERVER_CONFIG.apiRoutes.wishlist}/remove?${params.toString()}`;
@@ -66,35 +65,6 @@ class WishlistService {
             throw error;
         }
     }
-
-    /**
-     * 清空心愿单
-     */
-    async clearWishlist(): Promise<void> {
-        try {
-            const response = await fetch(`${SERVER_CONFIG.apiRoutes.wishlist}/wishlist/clear`, {
-                method: 'DELETE',
-            });
-
-            // console.log('after clear wishlist ' + response.status);
-
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => null);
-                throw new Error(errorData?.error || 'Failed to clear wishlist');
-            }
-
-            const apiResponse = await response.json();
-
-            if (!apiResponse.success) {
-                throw new Error(apiResponse.message || 'Failed to clear wishlist');
-            }
-
-        } catch (error) {
-            console.error('❌ Clear wishlist failed:', error);
-            throw error;
-        }
-    }
-
 }
 
 export const wishlistService = new WishlistService();
