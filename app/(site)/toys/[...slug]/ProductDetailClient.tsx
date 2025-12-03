@@ -223,7 +223,7 @@ export default function ProductDetailClient({
         } catch (error) { console.error(error); showToast('error', 'Error', 'Failed to add product.'); return false; }
     };
 
-    const handleAddToCart = async () => { setAddingToCart(true); const success = await performAddToCart(); if (success) showToast('success', 'Added to Bag', `${product.title} is in your bag.`); setAddingToCart(false); };
+    const handleAddToCart = async () => { setAddingToCart(true); const success = await performAddToCart(); setAddingToCart(false); };
     const handleBuyNow = async () => { setBuyingNow(true); const success = await performAddToCart(); if (success) router.push('/checkout'); setBuyingNow(false); };
     const toggleSection = (section: string) => setExpandedSection(expandedSection === section ? null : section);
 

@@ -2,19 +2,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { apiPost, handleApiError } from '@/lib/api-utils';
 import { OrderCreateRequest, OrderItemRequest, AddressRequest } from '@/types/order';
+import { getToken } from '@/lib/cookie-utils';
 
 export async function POST(request: NextRequest) {
-    // console.log('🟢 ORDER CREATE route HIT!');
+    console.log('🟢 ORDER CREATE route HIT!');
     try {
         const body: OrderCreateRequest = await request.json();
-        // console.log('🟢 Order create request body:', body);
+        console.log('🟢 Order create request body:', body);
 
         // 验证必需字段
-        if (!body.userId || !body.items || !body.shippingAddress || !body.paymentMethod || !body.shippingMethod) {
+        if (!body.items || !body.shippingAddress || !body.paymentMethod || !body.shippingMethod) {
             return NextResponse.json(
                 {
                     success: false,
-                    error: 'Missing required fields: userId, items, shippingAddress, paymentMethod, shippingMethod'
+                    error: 'Missing required fields: items, shippingAddress, paymentMethod, shippingMethod'
                 },
                 { status: 400 }
             );
@@ -31,7 +32,6 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // console.log('111111111');
         // 验证每个商品项的必需字段
         for (let i = 0; i < body.items.length; i++) {
             const item = body.items[i];
@@ -67,51 +67,6 @@ export async function POST(request: NextRequest) {
             }
         }
 
-        // console.log('222222222222222222*****');
-        // 验证配送地址
-        // const address = body.shippingAddress;
-        // const requiredAddressFields = ['firstName', 'lastName', 'email', 'phone', 'country', 'province', 'city', 'addressLine1', 'zipCode'] as const;
-        //
-        // for (const field of requiredAddressFields) {
-        //     const value = address[field as keyof AddressRequest];
-        //     if (!value) {
-        //         return NextResponse.json(
-        //             {
-        //                 success: false,
-        //                 error: `Missing required shipping address field: ${field}`
-        //             },
-        //             { status: 400 }
-        //         );
-        //     }
-        // }
-
-        // console.log('33333333333333333');
-        // 验证邮箱格式
-        // const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        // if (!emailRegex.test(address.email)) {
-        //     return NextResponse.json(
-        //         {
-        //             success: false,
-        //             error: 'Invalid email format in shipping address'
-        //         },
-        //         { status: 400 }
-        //     );
-        // }
-        //
-        // console.log('444444444444444');
-        // // 验证电话号码格式（基础验证）
-        // const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
-        // if (!phoneRegex.test(address.phone.replace(/[\s\-\(\)]/g, ''))) {
-        //     return NextResponse.json(
-        //         {
-        //             success: false,
-        //             error: 'Invalid phone number format in shipping address'
-        //         },
-        //         { status: 400 }
-        //     );
-        // }
-
-        // console.log('55555555555');
         // 设置默认值（如果未提供）
         const orderData: OrderCreateRequest = {
             ...body,
@@ -120,11 +75,30 @@ export async function POST(request: NextRequest) {
             customerNote: body.customerNote ?? ''
         };
 
+        // 获取 token
+        const token = await getToken();
+        if (!token) {
+            return NextResponse.json(
+                {
+                    success: false,
+                    error: '用户未登录，无法创建订单'
+                },
+                { status: 401 }
+            );
+        }
+
+        // 准备请求头，添加 Authorization
+        const requestOptions = {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            },
+        };
 
         // 调用后端API创建订单
-        // console.log('🟢 Order create API before:');
-        const result = await apiPost('/api/V1/order', orderData);
-        // console.log('🟢 Order create API result:', result);
+        console.log('🟢 Calling backend API to create order');
+        const result = await apiPost('/api/V1/order', orderData, requestOptions);
+        console.log('🟢 Backend API response:', result);
 
         if (!result.success) {
             return NextResponse.json(
