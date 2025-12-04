@@ -4,7 +4,7 @@
 export interface FrontApiResponse<T = any> {
     success: boolean;
     message?: string;
-    data?: ApiResponse<T>;
+    data?: BackendApiResponse<T>;
     error?: string;
     code?: number;
     timestamp?: string;
@@ -14,7 +14,7 @@ export interface FrontApiResponse<T = any> {
  * 后端API响应格式
  * 这个被包裹在 FrontApiResponse.data 里
  */
-export interface ApiResponse<T = any> {
+export interface BackendApiResponse<T = any> {
     success: boolean;
     message?: string;
     data?: T;

@@ -1,6 +1,6 @@
 // lib/backend-utils.ts
 import { apiGet, apiPost, apiPut, apiDelete, RequestOptions } from './api-utils';
-import { FrontApiResponse } from '@/types/api';
+import { BackendApiResponse } from '@/types/api';
 
 export interface BackendApiOptions extends RequestOptions {
 
@@ -71,12 +71,12 @@ function getClientAuthToken(): string | null {
 
 /**
  * Backend API call function based on existing api-utils
- * Returns FrontApiResponse format
+ * Returns BackendApiResponse format
  */
 export async function callBackendApi<T = any>(
     endpoint: string,
     options: BackendApiOptions = {}
-): Promise<FrontApiResponse<T>> {
+): Promise<BackendApiResponse<T>> {
     const {
         handleBusinessError = true,
         defaultErrorMessage = 'System busy, please try again later',
@@ -86,7 +86,7 @@ export async function callBackendApi<T = any>(
     } = options;
 
     try {
-        let response: FrontApiResponse<T>;
+        let response: BackendApiResponse<T>;
 
         // 如果需要认证，获取token并添加到headers
         const headers: Record<string, string> = { ...(restOptions.headers as Record<string, string>) };
@@ -176,7 +176,7 @@ export async function callBackendApi<T = any>(
 export async function callBackendGet<T = any>(
     endpoint: string,
     options: Omit<BackendApiOptions, 'method'> = {}
-): Promise<FrontApiResponse<T>> {
+): Promise<BackendApiResponse<T>> {
     return callBackendApi<T>(endpoint, { method: 'GET', ...options });
 }
 
@@ -187,7 +187,7 @@ export async function callBackendPost<T = any>(
     endpoint: string,
     data?: any,
     options: Omit<BackendApiOptions, 'method' | 'body'> = {}
-): Promise<FrontApiResponse<T>> {
+): Promise<BackendApiResponse<T>> {
     return callBackendApi<T>(endpoint, {
         method: 'POST',
         body: data ? JSON.stringify(data) : undefined,
@@ -202,7 +202,7 @@ export async function callBackendPut<T = any>(
     endpoint: string,
     data?: any,
     options: Omit<BackendApiOptions, 'method' | 'body'> = {}
-): Promise<FrontApiResponse<T>> {
+): Promise<BackendApiResponse<T>> {
     return callBackendApi<T>(endpoint, {
         method: 'PUT',
         body: data ? JSON.stringify(data) : undefined,
@@ -216,6 +216,6 @@ export async function callBackendPut<T = any>(
 export async function callBackendDelete<T = any>(
     endpoint: string,
     options: Omit<BackendApiOptions, 'method'> = {}
-): Promise<FrontApiResponse<T>> {
+): Promise<BackendApiResponse<T>> {
     return callBackendApi<T>(endpoint, { method: 'DELETE', ...options });
 }

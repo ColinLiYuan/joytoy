@@ -51,7 +51,7 @@ class ProductServiceServer {
             requiresAuth: true
         });
 
-        // console.log('getProductsByCategory result:', result.data)
+        console.log('getProductsByCategory result:', result.data)
 
         const data = result.data?.data || result.data || {};
 
@@ -72,14 +72,12 @@ class ProductServiceServer {
     async getProductBySlug(slug: string): Promise<ProductResponse> {
         const url = `/api/V1/product?slug=${encodeURIComponent(slug)}`;
 
-        // 拿到 FrontApiResponse，不管 success
         const result = await callBackendGet<ProductResponse>(url, {
             requiresAuth: true
         });
         // console.log('getProductBySlug result:', result.data)
 
-        // 直接返回 data
-        return result.data.data!;
+        return result.data!;
     }
 
     /**
@@ -88,12 +86,11 @@ class ProductServiceServer {
     async getHeroProducts(): Promise<ProductResponse[]> {
         const url = `/api/V1/product/hero`;
 
-        // 拿到 FrontApiResponse，不管 success
-        const result = await callBackendGet<any>(url, {
+        const result = await callBackendGet<ProductResponse[]>(url, {
             requiresAuth: true
         });
 
-        return result.data.data!;
+        return result.data!;
     }
 }
 

@@ -15,8 +15,7 @@ class WishlistServiceServer {
                 requiresAuth: true
             });
 
-            // 返回数据，类似 product-service-server 的模式
-            return result.data?.data || result.data || [];
+            return result.data!;
         } catch (error) {
             console.error('❌ Get wishlist failed:', error);
             throw error;
