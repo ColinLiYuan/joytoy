@@ -1,14 +1,13 @@
 // app/api/order/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { apiPost, handleApiError } from '@/lib/api-utils';
-import { OrderCreateRequest, OrderItemRequest, AddressRequest } from '@/types/order';
+import { OrderCreateRequest } from '@/types/order';
 import { getToken } from '@/lib/cookie-utils';
+import { FrontApiResponse } from '@/types/api';
 
 export async function POST(request: NextRequest) {
-    console.log('🟢 ORDER CREATE route HIT!');
     try {
         const body: OrderCreateRequest = await request.json();
-        console.log('🟢 Order create request body:', body);
 
         // 验证必需字段
         if (!body.items || !body.shippingAddress || !body.paymentMethod || !body.shippingMethod) {
@@ -96,30 +95,21 @@ export async function POST(request: NextRequest) {
         };
 
         // 调用后端API创建订单
-        console.log('🟢 Calling backend API to create order');
-        const result = await apiPost('/api/V1/order', orderData, requestOptions);
-        console.log('🟢 Backend API response:', result);
+        const result: FrontApiResponse<any> = await apiPost('/api/V1/order', orderData, requestOptions);
+        // console.log('🟢 Backend API response:', result);
 
-        if (!result.success) {
-            return NextResponse.json(
-                {
-                    success: false,
-                    error: result.error || 'Failed to create order'
-                },
-                { status: 400 }
-            );
-        }
-
-        return NextResponse.json({
-            success: true,
-            data: result.data
-        });
+        // 关键修复：直接返回 result，而不是 result.data
+        // result 已经是 FrontApiResponse 格式
+        return NextResponse.json(result.data);
 
     } catch (error) {
         console.error('🔴 ORDER CREATE Error:', error);
         const { error: errorMessage } = handleApiError(error);
         return NextResponse.json(
-            { success: false, error: errorMessage },
+            {
+                success: false,
+                error: errorMessage
+            },
             { status: 500 }
         );
     }

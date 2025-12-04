@@ -12,6 +12,7 @@ import { OrderCreateRequest, OrderItemRequest } from '@/types/order';
 import { getUserFullName, getUserEmail } from '@/lib/user-utils';
 import { useCartStore } from '@/stores/useCartStore';
 import { useAuth } from '@/contexts/authContext';
+import { useToast } from '@/contexts/toastContext';
 
 export default function CheckoutPage() {
     const router = useRouter();
@@ -28,6 +29,8 @@ export default function CheckoutPage() {
     const { isLoggedIn, openAuthModal, isClient } = useAuth();
     const { cart, getCart, loading: cartLoading } = useCartStore();
     const { getShippingFormData } = useShipping({ userEmail: getUserEmail(), userName: getUserFullName() });
+
+    const { showToast } = useToast();
 
     // 1. 初始化检查
     useEffect(() => {
@@ -123,10 +126,12 @@ export default function CheckoutPage() {
                 }));
                 useCartStore.getState().clearCart();
                 router.push(`/payment?orderId=${res.data.id}`);
+            } else {
+                console.log('dfd   ', res)
+                showToast('error', 'Error', res.message || 'System Error');
             }
         } catch (e) {
             console.error(e);
-            // 可以添加 toast 提示
         } finally {
             setIsCreatingOrder(false);
         }

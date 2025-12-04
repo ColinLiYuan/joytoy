@@ -6,63 +6,23 @@ import { SERVER_CONFIG } from '@/lib/api-config';
 class OrderService {
     // 创建订单
     async createOrder(orderCreateRequest: OrderCreateRequest): Promise<{ success: boolean; data?: any; error?: string }> {
-        try {
-            const url = `${SERVER_CONFIG.apiRoutes.order}/add`;
-            console.log('🟢 Creating order, URL:', url);
+        const url = `${SERVER_CONFIG.apiRoutes.order}/add`;
+        // console.log('🟢 Creating order, URL:', url);
 
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(orderCreateRequest),
-                credentials: 'include', // 添加这行，确保发送 cookie/token
-            });
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(orderCreateRequest),
+            credentials: 'include',
+        });
 
-            console.log('🟢 Order creation response status:', response.status, response.statusText);
+        const apiResponse = await response.json();
 
-            // 先尝试读取响应文本，再解析 JSON
-            const responseText = await response.text();
-            console.log('🟢 Order creation response body:', responseText);
+        console.log('createOrder service: ', apiResponse)
+        return apiResponse;
 
-            if (!response.ok) {
-                // 尝试解析错误信息
-                let errorData;
-                try {
-                    errorData = responseText ? JSON.parse(responseText) : {};
-                } catch (e) {
-                    console.error('🟡 Failed to parse error response as JSON:', e);
-                    errorData = { error: responseText || `HTTP error ${response.status}` };
-                }
-
-                console.error('🔴 Order creation failed:', errorData);
-                throw new Error(errorData.error || errorData.message || `Failed to create order: ${response.status}`);
-            }
-
-            // 解析成功响应
-            let apiResponse: FrontApiResponse;
-            try {
-                apiResponse = responseText ? JSON.parse(responseText) : {};
-            } catch (e) {
-                console.error('🟡 Failed to parse success response as JSON:', e);
-                throw new Error('Invalid JSON response from server');
-            }
-
-            if (!apiResponse.success) {
-                throw new Error(apiResponse.message || apiResponse.error || 'Failed to create order');
-            }
-
-            return {
-                success: true,
-                data: apiResponse.data
-            };
-        } catch (error) {
-            console.error('🔴 Order creation error:', error);
-            return {
-                success: false,
-                error: error instanceof Error ? error.message : 'Network error while creating order'
-            };
-        }
     }
 
     // 获取订单详情
@@ -121,10 +81,10 @@ class OrderService {
                 credentials: 'include', // 添加这行
             });
 
-            console.log('🟢 Getting user orders, status:', response.status);
+            // console.log('🟢 Getting user orders, status:', response.status);
 
             const responseText = await response.text();
-            console.log('🟢 Orders response body:', responseText);
+            // console.log('🟢 Orders response body:', responseText);
 
             if (!response.ok) {
                 let errorData;
