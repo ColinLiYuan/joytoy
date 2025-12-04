@@ -34,7 +34,7 @@ export default function Notice({ onCloseMenu }: PromotionBarProps) {
     // 1. 修复：更稳健的首页隐藏逻辑
     // 使用 useEffect 确保只在客户端判断，避免服务端渲染不一致导致的闪烁
     useEffect(() => {
-        if (pathname === '/' || pathname === '/checkout') {
+        if (pathname === '/' || pathname === '/checkout' || pathname === '/pages/wholesale') {
             setIsVisible(false);
         } else {
             setIsVisible(true);
