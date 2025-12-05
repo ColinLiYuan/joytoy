@@ -51,9 +51,9 @@ class ProductServiceServer {
             requiresAuth: true
         });
 
-        console.log('getProductsByCategory result:', result.data)
+        // console.log('getProductsByCategory result:', result.data)
 
-        const data = result.data?.data || result.data || {};
+        const data = result.data || {};
 
         return {
             content: Array.isArray(data.content) ? data.content : [],
@@ -90,6 +90,7 @@ class ProductServiceServer {
             requiresAuth: true
         });
 
+        // console.log('getHeroProducts result:', result.data)
         return result.data!;
     }
 }
