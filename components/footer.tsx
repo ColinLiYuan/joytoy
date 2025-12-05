@@ -178,6 +178,7 @@ export default function Footer() {
                         <CreditCard size={24} />
                         <span className="text-xs font-bold text-gray-400 tracking-widest border border-gray-200 px-2 py-1 rounded">VISA</span>
                         <span className="text-xs font-bold text-gray-400 tracking-widest border border-gray-200 px-2 py-1 rounded">MASTERCARD</span>
+                        <span className="border border-gray-200 px-2 py-1 rounded font-bold italic text-blue-900">PayPal</span>
                     </div>
                 </div>
             </div>

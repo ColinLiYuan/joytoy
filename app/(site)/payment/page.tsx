@@ -1,518 +1,195 @@
-// payment/route.tsx
+// app/(site)/payment/page.tsx
 'use client';
 
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import Link from 'next/link';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import {
-    faArrowLeft,
-    faLock,
-    faCreditCard,
-    faShieldAlt,
-    faCheckCircle,
-    faExclamationTriangle,
-    faUser,
-    faEnvelope,
-    faReceipt
-} from '@fortawesome/free-solid-svg-icons';
-import './payment.css';
+import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
+import { Loader2, CheckCircle2, AlertCircle, ShieldCheck, Lock } from 'lucide-react';
+import { orderService } from '@/services/orderService';
 
-interface PaymentData {
-    cardNumber: string;
-    expiryDate: string;
-    cvv: string;
-    nameOnCard: string;
-    saveCard: boolean;
-}
-
-interface OrderSummary {
-    id: string;
-    items: Array<{
-        id: number;
-        title: string;
-        quantity: number;
-        price: number;
-        image?: string;
-    }>;
-    subtotal: number;
-    shipping: number;
-    tax: number;
-    total: number;
-    customerName: string;
-    customerEmail: string;
-}
-
-// 将主要内容提取到一个组件中，以便使用 useSearchParams
 function PaymentContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const orderId = searchParams.get('orderId');
 
-    const [isProcessing, setIsProcessing] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
-    const [paymentMethod, setPaymentMethod] = useState<'card' | 'paypal'>('card');
-    const [orderSummary, setOrderSummary] = useState<OrderSummary | null>(null);
-    const [errors, setErrors] = useState<Record<string, string>>({});
-    const [showPaymentNotice, setShowPaymentNotice] = useState(false);
+    const [orderData, setOrderData] = useState<any>(null);
+    const [paymentStatus, setPaymentStatus] = useState<'pending' | 'success' | 'error'>('pending');
+    const [errorMessage, setErrorMessage] = useState('');
 
-    const [paymentData, setPaymentData] = useState<PaymentData>({
-        cardNumber: '',
-        expiryDate: '',
-        cvv: '',
-        nameOnCard: '',
-        saveCard: false
-    });
+    const clientId = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID;
 
-    // 显示支付功能暂不可用提示并跳转
     useEffect(() => {
-        const timer = setTimeout(() => {
-            setShowPaymentNotice(true);
+        const fetchOrder = async () => {
+            if (!clientId) {
+                setErrorMessage("Configuration Error: PayPal Client ID missing");
+                setIsLoading(false);
+                return;
+            }
 
-            // 2秒后跳转到订单页面
-            const redirectTimer = setTimeout(() => {
-                router.push('/orders');
-            }, 2000);
+            if (!orderId) {
+                setIsLoading(false);
+                return;
+            }
 
-            return () => clearTimeout(redirectTimer);
-        }, 500); // 稍微延迟一下，确保页面加载完成
-
-        return () => clearTimeout(timer);
-    }, [router]);
-
-    // 从后端获取订单数据
-    useEffect(() => {
-        const fetchOrderData = async () => {
             try {
-                setIsLoading(true);
+                // 1. 尝试从 LocalStorage 获取（最快）
+                const storedOrder = localStorage.getItem('currentOrder');
+                if (storedOrder) {
+                    const parsed = JSON.parse(storedOrder);
+                    // 强制转字符串对比，防止类型不一致
+                    if (String(parsed.orderId) === String(orderId)) {
+                        setOrderData(parsed);
+                        setIsLoading(false);
+                        return;
+                    }
+                }
 
-                // 实际项目中这里应该是真实的 API 调用
-                // 由于支付功能暂不可用，我们模拟一些数据
-                const mockOrderData: OrderSummary = {
-                    id: orderId || 'ORD-12345',
-                    items: [
-                        {
-                            id: 1,
-                            title: 'Premium Action Figure',
-                            quantity: 2,
-                            price: 29.99,
-                            image: '/products/figure-1.jpg'
-                        },
-                        {
-                            id: 2,
-                            title: 'Collector\'s Edition Set',
-                            quantity: 1,
-                            price: 59.99,
-                            image: '/products/set-1.jpg'
-                        }
-                    ],
-                    subtotal: 119.97,
-                    shipping: 9.99,
-                    tax: 9.60,
-                    total: 139.56,
-                    customerName: 'John Doe',
-                    customerEmail: 'john.doe@example.com'
-                };
+                // 2. 如果 LocalStorage 没有，或者 ID 不匹配，尝试从后端获取
+                // const data = await orderService.getOrderById(orderId);
+                // setOrderData(data);
+                // setIsLoading(false);
 
-                // 模拟 API 调用延迟
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                setOrderSummary(mockOrderData);
+                // 暂时这就样：
+                setIsLoading(false);
 
             } catch (error) {
-                console.error('Failed to load order data:', error);
-                setErrors({ general: 'Failed to load order information' });
-            } finally {
+                console.error(error);
+                setErrorMessage('Failed to load order details');
                 setIsLoading(false);
             }
         };
+        fetchOrder();
+    }, [orderId, clientId]);
 
-        if (orderId) {
-            fetchOrderData();
-        } else {
-            setErrors({ general: 'Order ID is missing' });
-            setIsLoading(false);
-        }
-    }, [orderId]);
-
-    // 格式化卡号显示
-    const formatCardNumber = (value: string) => {
-        const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
-        const matches = v.match(/\d{4,16}/g);
-        const match = matches ? matches[0] : '';
-        const parts = [];
-
-        for (let i = 0, len = match.length; i < len; i += 4) {
-            parts.push(match.substring(i, i + 4));
-        }
-
-        return parts.length ? parts.join(' ') : value;
+    const createPayPalOrder = (data: any, actions: any) => {
+        return actions.order.create({
+            purchase_units: [
+                {
+                    reference_id: orderId || 'unknown',
+                    description: `Order #${orderData?.orderNumber}`,
+                    amount: {
+                        currency_code: "USD",
+                        value: orderData?.totalAmount ? Number(orderData.totalAmount).toFixed(2) : "0.00",
+                    },
+                },
+            ],
+        });
     };
 
-    // 格式化过期日期
-    const formatExpiryDate = (value: string) => {
-        const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
-        if (v.length >= 2) {
-            return v.substring(0, 2) + (v.length > 2 ? '/' + v.substring(2, 4) : '');
-        }
-        return v;
-    };
+    const onApprove = async (data: any, actions: any) => {
+        try {
+            const details = await actions.order.capture();
+            setPaymentStatus('success');
 
-    const handleInputChange = (field: keyof PaymentData, value: string | boolean) => {
-        setPaymentData(prev => ({
-            ...prev,
-            [field]: value
-        }));
+            // 后端更新状态
+            // if (orderId) {
+            //     await orderService.updateOrderStatus(orderId, 'PAID', details.id);
+            // }
 
-        // 清除该字段的错误
-        if (errors[field]) {
-            setErrors(prev => {
-                const newErrors = { ...prev };
-                delete newErrors[field];
-                return newErrors;
-            });
+            localStorage.removeItem('currentOrder');
+
+            // ✅ 支付成功后，跳转到订单详情页，并带上 success 参数
+            setTimeout(() => {
+                router.push(`/orders/${orderId}?payment_success=1`);
+            }, 2000);
+
+        } catch (error) {
+            console.error("Payment failed:", error);
+            setErrorMessage("Payment capture failed. Please try again.");
+            setPaymentStatus('error');
         }
     };
-
-    const validateForm = () => {
-        const newErrors: Record<string, string> = {};
-
-        if (paymentMethod === 'card') {
-            if (!paymentData.cardNumber || paymentData.cardNumber.replace(/\s/g, '').length !== 16) {
-                newErrors.cardNumber = 'Please enter a valid 16-digit card number';
-            }
-
-            if (!paymentData.expiryDate || !/^\d{2}\/\d{2}$/.test(paymentData.expiryDate)) {
-                newErrors.expiryDate = 'Please enter a valid expiry date (MM/YY)';
-            }
-
-            if (!paymentData.cvv || paymentData.cvv.length !== 3) {
-                newErrors.cvv = 'Please enter a valid CVV';
-            }
-
-            if (!paymentData.nameOnCard.trim()) {
-                newErrors.nameOnCard = 'Please enter the name on card';
-            }
-        }
-
-        setErrors(newErrors);
-        return Object.keys(newErrors).length === 0;
-    };
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        // 阻止表单提交，因为支付功能暂不可用
-        return;
-    };
-
-    const handlePayPalPayment = async () => {
-        // 阻止 PayPal 支付，因为支付功能暂不可用
-        return;
-    };
-
-    // 显示支付功能暂不可用提示
-    if (showPaymentNotice) {
-        return (
-            <div className="payment-notice">
-                <div className="notice-content">
-                    <FontAwesomeIcon icon={faExclamationTriangle} size="3x" />
-                    <h2>Payment Feature Coming Soon</h2>
-                    <p>The payment functionality is currently under development and will be available soon.</p>
-                    <p>Redirecting to orders page...</p>
-                    <div className="loading-spinner"></div>
-                </div>
-            </div>
-        );
-    }
 
     if (isLoading) {
         return (
-            <div className="payment-loading">
-                <div className="loading-spinner"></div>
-                <p>Loading payment information...</p>
+            <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center">
+                <Loader2 className="w-10 h-10 animate-spin text-gray-400 mb-4" />
+                <p className="text-gray-500 font-medium">Loading secure payment...</p>
             </div>
         );
     }
 
-    if (!orderSummary) {
+    if (!orderData) {
         return (
-            <div className="payment-error">
-                <FontAwesomeIcon icon={faExclamationTriangle} />
-                <h2>Order Not Found</h2>
-                <p>Unable to load order information. Please check your order ID and try again.</p>
-                <Link href="/cart" className="btn btn-primary">
-                    Return to Cart
-                </Link>
+            <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
+                <div className="bg-white p-8 rounded-2xl shadow-sm text-center max-w-md">
+                    <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+                    <h2 className="text-xl font-bold text-gray-900 mb-2">Order Not Found</h2>
+                    <p className="text-gray-500 mb-6">We couldn't retrieve the order details.</p>
+                    <button onClick={() => router.push('/checkout')} className="bg-black text-white px-6 py-3 rounded-lg font-bold">
+                        Return to Checkout
+                    </button>
+                </div>
             </div>
         );
     }
 
     return (
-        <div className="payment-page">
-            <div className="container">
-                <div className="payment-content">
-                    <div className="payment-main">
-                        {errors.general && (
-                            <div className="error-message">
-                                <FontAwesomeIcon icon={faExclamationTriangle} />
-                                <span>{errors.general}</span>
-                            </div>
-                        )}
-
-                        <form onSubmit={handleSubmit} className="payment-form">
-                            {/* 支付方式选择 */}
-                            <div className="payment-method-selection">
-                                <h2>
-                                    <FontAwesomeIcon icon={faCreditCard} />
-                                    Select Payment Method
-                                </h2>
-                                <div className="method-tabs">
-                                    <button
-                                        type="button"
-                                        className={`method-tab ${paymentMethod === 'card' ? 'active' : ''}`}
-                                        onClick={() => setPaymentMethod('card')}
-                                    >
-                                        <FontAwesomeIcon icon={faCreditCard} />
-                                        Credit/Debit Card
-                                    </button>
-                                    <button
-                                        type="button"
-                                        className={`method-tab ${paymentMethod === 'paypal' ? 'active' : ''}`}
-                                        onClick={() => setPaymentMethod('paypal')}
-                                    >
-                                        <div className="paypal-logo-placeholder">PayPal</div>
-                                        PayPal
-                                    </button>
-                                </div>
-                            </div>
-
-                            {/* 信用卡支付表单 */}
-                            {paymentMethod === 'card' && (
-                                <div className="card-payment-form">
-                                    <div className="form-section">
-                                        <h3>Card Information</h3>
-
-                                        <div className="form-group">
-                                            <label htmlFor="cardNumber">Card Number *</label>
-                                            <input
-                                                type="text"
-                                                id="cardNumber"
-                                                value={paymentData.cardNumber}
-                                                onChange={(e) => handleInputChange('cardNumber', formatCardNumber(e.target.value))}
-                                                placeholder="1234 5678 9012 3456"
-                                                maxLength={19}
-                                                className={errors.cardNumber ? 'error' : ''}
-                                                disabled
-                                            />
-                                            {errors.cardNumber && (
-                                                <span className="field-error">{errors.cardNumber}</span>
-                                            )}
-                                        </div>
-
-                                        <div className="form-row">
-                                            <div className="form-group">
-                                                <label htmlFor="expiryDate">Expiry Date *</label>
-                                                <input
-                                                    type="text"
-                                                    id="expiryDate"
-                                                    value={paymentData.expiryDate}
-                                                    onChange={(e) => handleInputChange('expiryDate', formatExpiryDate(e.target.value))}
-                                                    placeholder="MM/YY"
-                                                    maxLength={5}
-                                                    className={errors.expiryDate ? 'error' : ''}
-                                                    disabled
-                                                />
-                                                {errors.expiryDate && (
-                                                    <span className="field-error">{errors.expiryDate}</span>
-                                                )}
-                                            </div>
-
-                                            <div className="form-group">
-                                                <label htmlFor="cvv">CVV *</label>
-                                                <input
-                                                    type="text"
-                                                    id="cvv"
-                                                    value={paymentData.cvv}
-                                                    onChange={(e) => handleInputChange('cvv', e.target.value.replace(/\D/g, ''))}
-                                                    placeholder="123"
-                                                    maxLength={3}
-                                                    className={errors.cvv ? 'error' : ''}
-                                                    disabled
-                                                />
-                                                {errors.cvv && (
-                                                    <span className="field-error">{errors.cvv}</span>
-                                                )}
-                                            </div>
-                                        </div>
-
-                                        <div className="form-group">
-                                            <label htmlFor="nameOnCard">Name on Card *</label>
-                                            <input
-                                                type="text"
-                                                id="nameOnCard"
-                                                value={paymentData.nameOnCard}
-                                                onChange={(e) => handleInputChange('nameOnCard', e.target.value)}
-                                                placeholder="John Doe"
-                                                className={errors.nameOnCard ? 'error' : ''}
-                                                disabled
-                                            />
-                                            {errors.nameOnCard && (
-                                                <span className="field-error">{errors.nameOnCard}</span>
-                                            )}
-                                        </div>
-
-                                        <div className="form-group checkbox-group">
-                                            <label className="checkbox-label">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={paymentData.saveCard}
-                                                    onChange={(e) => handleInputChange('saveCard', e.target.checked)}
-                                                    disabled
-                                                />
-                                                <span className="checkmark"></span>
-                                                Save card for future purchases
-                                            </label>
-                                        </div>
-                                    </div>
-
-                                    {/* 账单地址 */}
-                                    <div className="form-section">
-                                        <h3>Billing Address</h3>
-                                        <div className="billing-address-note">
-                                            <FontAwesomeIcon icon={faCheckCircle} />
-                                            <span>Same as shipping address</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* PayPal 支付 */}
-                            {paymentMethod === 'paypal' && (
-                                <div className="paypal-payment-section">
-                                    <div className="paypal-info">
-                                        <h3>Pay with PayPal</h3>
-                                        <p>You will be redirected to PayPal to complete your payment securely.</p>
-                                        <div className="paypal-benefits">
-                                            <div className="benefit">
-                                                <FontAwesomeIcon icon={faShieldAlt} />
-                                                <span>Buyer Protection Included</span>
-                                            </div>
-                                            <div className="benefit">
-                                                <FontAwesomeIcon icon={faCreditCard} />
-                                                <span>Pay with your balance or card</span>
-                                            </div>
-                                            <div className="benefit">
-                                                <FontAwesomeIcon icon={faCheckCircle} />
-                                                <span>Fast and Secure</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* 支付按钮 */}
-                            <div className="payment-actions">
-                                {paymentMethod === 'card' ? (
-                                    <button
-                                        type="submit"
-                                        className="btn btn-primary pay-now-btn"
-                                        disabled={true}
-                                    >
-                                        <FontAwesomeIcon icon={faLock} />
-                                        Payment Coming Soon
-                                    </button>
-                                ) : (
-                                    <button
-                                        type="button"
-                                        className="btn btn-paypal"
-                                        onClick={handlePayPalPayment}
-                                        disabled={true}
-                                    >
-                                        <div className="paypal-logo-placeholder">PayPal</div>
-                                        Payment Coming Soon
-                                    </button>
-                                )}
-
-                                <div className="payment-security">
-                                    <FontAwesomeIcon icon={faLock} />
-                                    <span>Payment functionality will be available soon</span>
-                                </div>
-                            </div>
-                        </form>
+        <div className="min-h-screen bg-gray-50 py-12 w-full overflow-x-hidden">
+            <div className="container mx-auto px-4 max-w-lg">
+                <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div className="bg-black p-8 text-white text-center">
+                        <p className="text-sm opacity-80 uppercase tracking-widest mb-2">Total to Pay</p>
+                        <h1 className="text-5xl font-bold font-['Playfair_Display']">
+                            ${Number(orderData.totalAmount).toFixed(2)}
+                        </h1>
+                        <p className="text-xs mt-3 opacity-60">Order Ref: {orderData.orderNumber}</p>
                     </div>
 
-                    {/* 订单摘要侧边栏 */}
-                    <div className="order-summary-sidebar">
-                        <div className="summary-card">
-                            <h3>
-                                <FontAwesomeIcon icon={faReceipt} />
-                                Order Summary
-                            </h3>
-
-                            <div className="order-items">
-                                {orderSummary.items.map(item => (
-                                    <div key={item.id} className="order-item">
-                                        <div className="item-image">
-                                            {item.image ? (
-                                                <img src={item.image} alt={item.title} />
-                                            ) : (
-                                                <div className="image-placeholder">
-                                                    {item.title.charAt(0)}
-                                                </div>
-                                            )}
-                                        </div>
-                                        <div className="item-details">
-                                            <h4>{item.title}</h4>
-                                            <p>Qty: {item.quantity}</p>
-                                        </div>
-                                        <div className="item-price">
-                                            ${(item.price * item.quantity).toFixed(2)}
-                                        </div>
-                                    </div>
-                                ))}
+                    <div className="p-8">
+                        {paymentStatus === 'success' ? (
+                            <div className="text-center py-8 animate-in fade-in zoom-in">
+                                <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                                    <CheckCircle2 size={40} />
+                                </div>
+                                <h3 className="text-2xl font-bold text-gray-900 mb-2">Payment Successful!</h3>
+                                <p className="text-gray-500">Redirecting to your receipt...</p>
                             </div>
+                        ) : paymentStatus === 'error' ? (
+                            <div className="text-center py-8">
+                                <div className="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <AlertCircle size={32} />
+                                </div>
+                                <h3 className="text-xl font-bold text-gray-900 mb-2">Payment Failed</h3>
+                                <p className="text-red-500 mb-4 text-sm">{errorMessage}</p>
+                                <button onClick={() => window.location.reload()} className="text-sm font-bold text-black underline">Try Again</button>
+                            </div>
+                        ) : (
+                            <div className="space-y-6">
+                                <div className="flex items-center justify-center gap-2 text-xs text-gray-500 bg-gray-50 p-3 rounded-xl border border-gray-100">
+                                    <Lock size={14} />
+                                    <span>Secure 256-bit SSL Encrypted</span>
+                                </div>
 
-                            <div className="order-totals">
-                                <div className="total-row">
-                                    <span>Subtotal</span>
-                                    <span>${orderSummary.subtotal.toFixed(2)}</span>
+                                <div className="relative z-0">
+                                    <PayPalScriptProvider options={{
+                                        clientId: clientId!,
+                                        currency: "USD",
+                                        intent: "capture"
+                                    }}>
+                                        <PayPalButtons
+                                            style={{ layout: "vertical", shape: "rect", borderRadius: 12, height: 48 }}
+                                            createOrder={createPayPalOrder}
+                                            onApprove={onApprove}
+                                        />
+                                    </PayPalScriptProvider>
                                 </div>
-                                <div className="total-row">
-                                    <span>Shipping</span>
-                                    <span>${orderSummary.shipping.toFixed(2)}</span>
-                                </div>
-                                <div className="total-row">
-                                    <span>Tax</span>
-                                    <span>${orderSummary.tax.toFixed(2)}</span>
-                                </div>
-                                <div className="total-row grand-total">
-                                    <span>Total</span>
-                                    <span>${orderSummary.total.toFixed(2)}</span>
+
+                                <div className="text-center">
+                                    <button onClick={() => router.back()} className="text-sm text-gray-400 hover:text-gray-600 transition-colors">
+                                        Cancel Payment
+                                    </button>
                                 </div>
                             </div>
+                        )}
+                    </div>
+                </div>
 
-                            <div className="order-info">
-                                <div className="info-item">
-                                    <FontAwesomeIcon icon={faUser} />
-                                    <span>Customer: {orderSummary.customerName}</span>
-                                </div>
-                                <div className="info-item">
-                                    <FontAwesomeIcon icon={faEnvelope} />
-                                    <span>Email: {orderSummary.customerEmail}</span>
-                                </div>
-                                <div className="info-item">
-                                    <FontAwesomeIcon icon={faReceipt} />
-                                    <span>Order: {orderSummary.id}</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="security-guarantee">
-                            <FontAwesomeIcon icon={faShieldAlt} />
-                            <div className="guarantee-content">
-                                <h4>Security Guarantee</h4>
-                                <p>Your payment is protected with bank-level security and encryption.</p>
-                            </div>
-                        </div>
+                <div className="mt-8 text-center opacity-60">
+                    <div className="inline-flex items-center gap-2 text-xs text-gray-500">
+                        <ShieldCheck size={14} />
+                        <span>Guaranteed Safe & Discreet Checkout</span>
                     </div>
                 </div>
             </div>
@@ -520,20 +197,9 @@ function PaymentContent() {
     );
 }
 
-// 加载组件
-function PaymentLoading() {
-    return (
-        <div className="payment-loading">
-            <div className="loading-spinner"></div>
-            <p>Loading payment information...</p>
-        </div>
-    );
-}
-
-// 主页面组件
 export default function PaymentPage() {
     return (
-        <Suspense fallback={<PaymentLoading />}>
+        <Suspense fallback={<div className="min-h-screen bg-gray-50" />}>
             <PaymentContent />
         </Suspense>
     );

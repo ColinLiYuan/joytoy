@@ -1,3 +1,5 @@
+// pages/payment-policy.tsx
+
 import { Metadata } from 'next';
 import PolicyNav from '@/components/policy-nav';
 

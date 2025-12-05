@@ -1,385 +1,236 @@
-// app/orders/[id]/route.tsx
+// app/(site)/orders/[id]/page.tsx
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useState, useEffect, use } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
+import { orderService } from '@/services/orderService';
 import { OrderResponse } from '@/types/order';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { getProductImageUrl } from '@/lib/image-utils';
+import Image from 'next/image';
 import {
-    faArrowLeft,
-    faBox,
-    faTruck,
-    faCheckCircle,
-    faTimesCircle,
-    faClock,
-    faReceipt,
-    faCreditCard,
-    faUser,
-    faPhone,
-    faEnvelope,
-    faMapMarkerAlt,
-    faDownload,
-    faPrint,
-    faShoppingBag
-} from '@fortawesome/free-solid-svg-icons';
+    Loader2,
+    ArrowLeft,
+    CheckCircle2,
+    Package,
+    MapPin,
+    Calendar,
+    ShieldCheck,
+    CreditCard,
+    Receipt
+} from 'lucide-react';
 
-const statusConfig: Record<string, { label: string; icon: any; color: string; bgColor: string; description: string }> = {
-    'PENDING': {
-        label: 'Pending',
-        icon: faClock,
-        color: 'text-yellow-600',
-        bgColor: 'bg-yellow-50 border-yellow-200',
-        description: 'Your order is being processed'
-    },
-    'CONFIRMED': {
-        label: 'Confirmed',
-        icon: faReceipt,
-        color: 'text-blue-600',
-        bgColor: 'bg-blue-50 border-blue-200',
-        description: 'Order has been confirmed'
-    },
-    'PROCESSING': {
-        label: 'Processing',
-        icon: faBox,
-        color: 'text-purple-600',
-        bgColor: 'bg-purple-50 border-purple-200',
-        description: 'Your items are being prepared for shipment'
-    },
-    'SHIPPED': {
-        label: 'Shipped',
-        icon: faTruck,
-        color: 'text-orange-600',
-        bgColor: 'bg-orange-50 border-orange-200',
-        description: 'Your order is on the way'
-    },
-    'DELIVERED': {
-        label: 'Delivered',
-        icon: faCheckCircle,
-        color: 'text-green-600',
-        bgColor: 'bg-green-50 border-green-200',
-        description: 'Order has been delivered'
-    },
-    'CANCELLED': {
-        label: 'Cancelled',
-        icon: faTimesCircle,
-        color: 'text-red-600',
-        bgColor: 'bg-red-50 border-red-200',
-        description: 'Order has been cancelled'
-    }
-};
+export default function OrderDetailsPage({ params }: { params: Promise<{ id: string }> }) {
+    // Next.js 15: 解包异步 params
+    const { id } = use(params);
+    const searchParams = useSearchParams();
 
-const statusSteps = ['PENDING', 'CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED'];
+    // 获取 URL 参数判断是否刚支付成功
+    const isJustPaid = searchParams.get('payment_success') === '1';
 
-export default function OrderDetailPage() {
-    const params = useParams();
-    const router = useRouter();
     const [order, setOrder] = useState<OrderResponse | null>(null);
     const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<string>('');
-
-    const orderId = params.id as string;
 
     useEffect(() => {
-        if (orderId) {
-            fetchOrderDetail();
-        }
-    }, [orderId]);
-
-    const fetchOrderDetail = async () => {
-        try {
-            setIsLoading(true);
-            setError('');
-
-            const token = localStorage.getItem('authToken');
-            const response = await fetch(`/api/orders/${orderId}`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            if (response.ok) {
-                const orderData = await response.json();
-                setOrder(orderData);
-            } else if (response.status === 404) {
-                setError('Order not found');
-            } else {
-                setError('Failed to load order details');
+        const fetchOrder = async () => {
+            try {
+                const data = await orderService.getOrderById(id);
+                setOrder(data);
+            } catch (error) {
+                console.error('Failed to load order:', error);
+            } finally {
+                setIsLoading(false);
             }
-        } catch (error) {
-            console.error('Error fetching order:', error);
-            setError('An error occurred while loading the order');
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-    };
-
-    const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency: 'USD'
-        }).format(amount);
-    };
-
-    const getStatusStep = (status: string) => {
-        return statusSteps.indexOf(status);
-    };
-
-    const handlePrint = () => {
-        window.print();
-    };
+        };
+        fetchOrder();
+    }, [id]);
 
     if (isLoading) {
         return (
-            <div className="min-h-screen bg-gray-50 py-8">
-                <div className="container mx-auto px-4">
-                    <div className="animate-pulse">
-                        <div className="h-6 bg-gray-200 rounded w-1/4 mb-6"></div>
-                        <div className="bg-white rounded-lg shadow-sm p-6">
-                            <div className="h-4 bg-gray-200 rounded w-1/3 mb-4"></div>
-                            <div className="h-3 bg-gray-200 rounded w-1/4"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        );
-    }
-
-    if (error && !order) {
-        return (
-            <div className="min-h-screen bg-gray-50 py-8">
-                <div className="container mx-auto px-4">
-                    <div className="bg-white rounded-lg shadow-sm p-8 text-center">
-                        <FontAwesomeIcon icon={faTimesCircle} className="text-red-500 text-4xl mb-4" />
-                        <h3 className="text-lg font-medium text-gray-900 mb-2">Order Not Found</h3>
-                        <p className="text-gray-500 mb-4">{error}</p>
-                        <Link
-                            href="/orders"
-                            className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                        >
-                            <FontAwesomeIcon icon={faArrowLeft} className="w-4 h-4 mr-2" />
-                            Back to Orders
-                        </Link>
-                    </div>
-                </div>
+            <div className="min-h-screen flex items-center justify-center bg-gray-50 w-full max-w-full overflow-x-hidden">
+                <Loader2 className="animate-spin text-gray-400 w-8 h-8" />
             </div>
         );
     }
 
     if (!order) {
-        return null;
+        return (
+            <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 w-full max-w-full overflow-x-hidden">
+                <h2 className="text-xl font-bold text-gray-900 mb-2">Order Not Found</h2>
+                <Link href="/orders" className="text-pink-600 hover:underline">Return to My Orders</Link>
+            </div>
+        );
     }
 
-    const statusInfo = statusConfig[order.status] || statusConfig.PENDING;
-    const currentStep = getStatusStep(order.status);
+    // 格式化日期
+    const formattedDate = new Date(order.createdAt).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+    });
 
     return (
-        <div className="min-h-screen bg-gray-50 py-8">
-            <div className="container mx-auto px-4">
-                {/* Header */}
-                <div className="mb-6">
-                    <Link
-                        href="/orders"
-                        className="inline-flex items-center text-blue-600 hover:text-blue-700 mb-4"
-                    >
-                        <FontAwesomeIcon icon={faArrowLeft} className="w-4 h-4 mr-2" />
+        <div className="min-h-screen bg-gray-50 py-12 w-full max-w-full overflow-x-hidden">
+            <div className="container mx-auto px-4 max-w-4xl">
+
+                {/* 顶部返回导航 */}
+                <div className="mb-8">
+                    <Link href="/orders" className="inline-flex items-center text-sm text-gray-500 hover:text-black transition-colors">
+                        <ArrowLeft size={16} className="mr-2" />
                         Back to Orders
                     </Link>
-                    <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-                        <div>
-                            <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                                Order {order.orderNumber}
-                            </h1>
-                            <p className="text-gray-600">
-                                Placed on {formatDate(order.createdAt)}
-                            </p>
-                        </div>
-                        <div className="flex gap-2 mt-4 md:mt-0">
-                            <button
-                                onClick={handlePrint}
-                                className="inline-flex items-center px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-                            >
-                                <FontAwesomeIcon icon={faPrint} className="w-4 h-4 mr-2" />
-                                Print
-                            </button>
-                            <button className="inline-flex items-center px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
-                                <FontAwesomeIcon icon={faDownload} className="w-4 h-4 mr-2" />
-                                Invoice
-                            </button>
-                        </div>
-                    </div>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    {/* Main Content */}
-                    <div className="lg:col-span-2 space-y-6">
-                        {/* Order Status */}
-                        <div className="bg-white rounded-lg shadow-sm p-6">
-                            <h2 className="text-lg font-semibold text-gray-900 mb-4">Order Status</h2>
-
-                            {/* Status Badge */}
-                            <div className="flex items-center gap-3 mb-6">
-                                <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${statusInfo.bgColor} ${statusInfo.color} border`}>
-                                    <FontAwesomeIcon icon={statusInfo.icon} className="w-4 h-4 mr-2" />
-                                    {statusInfo.label}
-                                </span>
-                                <p className="text-gray-600 text-sm">{statusInfo.description}</p>
-                            </div>
-
-                            {/* Progress Steps */}
-                            <div className="relative">
-                                <div className="absolute top-4 left-0 right-0 h-0.5 bg-gray-200"></div>
-                                <div
-                                    className="absolute top-4 left-0 h-0.5 bg-blue-600 transition-all duration-500"
-                                    style={{ width: `${(currentStep / (statusSteps.length - 1)) * 100}%` }}
-                                ></div>
-
-                                <div className="relative flex justify-between">
-                                    {statusSteps.map((step, index) => {
-                                        const stepConfig = statusConfig[step];
-                                        const isCompleted = index <= currentStep;
-                                        const isCurrent = index === currentStep;
-
-                                        return (
-                                            <div key={step} className="flex flex-col items-center">
-                                                <div className={`w-8 h-8 rounded-full flex items-center justify-center z-10 ${
-                                                    isCompleted
-                                                        ? 'bg-blue-600 text-white'
-                                                        : 'bg-gray-200 text-gray-400'
-                                                } ${isCurrent ? 'ring-4 ring-blue-100' : ''}`}>
-                                                    <FontAwesomeIcon
-                                                        icon={stepConfig.icon}
-                                                        className="w-3 h-3"
-                                                    />
-                                                </div>
-                                                <span className={`text-xs mt-2 text-center ${
-                                                    isCompleted ? 'text-blue-600 font-medium' : 'text-gray-500'
-                                                }`}>
-                                                    {stepConfig.label}
-                                                </span>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            </div>
+                {/* ✅ 支付成功后的感谢横幅 (仅在刚支付完显示) */}
+                {isJustPaid && (
+                    <div className="bg-green-600 text-white rounded-3xl p-8 mb-8 text-center shadow-lg animate-in slide-in-from-top-4 fade-in duration-500">
+                        <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <CheckCircle2 size={32} className="text-white" />
                         </div>
+                        <h1 className="text-3xl font-bold font-['Playfair_Display'] mb-2">Thank You!</h1>
+                        <p className="text-green-50 text-lg">Your order #{order.orderNumber} has been confirmed.</p>
+                        <p className="text-green-100 text-sm mt-4 bg-green-700/50 inline-block px-4 py-1.5 rounded-full">
+                            A confirmation email has been sent to {order.shippingAddress.email}
+                        </p>
+                    </div>
+                )}
 
-                        {/* Order Items */}
-                        <div className="bg-white rounded-lg shadow-sm p-6">
-                            <h2 className="text-lg font-semibold text-gray-900 mb-4">Order Items</h2>
-                            <div className="space-y-4">
-                                {order.items.map((item) => (
-                                    <div key={item.id} className="flex items-center gap-4 py-4 border-b border-gray-100 last:border-b-0">
-                                        <img
-                                            src={item.productImage || '/images/placeholder-product.jpg'}
-                                            alt={item.productTitle}
-                                            className="w-16 h-16 object-cover rounded-lg"
-                                        />
-                                        <div className="flex-1">
-                                            <Link
-                                                href={item.productDetailUrl || '#'}
-                                                className="font-medium text-gray-900 hover:text-blue-600"
-                                            >
-                                                {item.productTitle}
-                                            </Link>
-                                            <p className="text-sm text-gray-500">SKU: {item.productSku}</p>
-                                            {item.stockStatus && (
-                                                <span className={`inline-block text-xs px-2 py-1 rounded ${
-                                                    item.stockStatus === 'In Stock'
-                                                        ? 'bg-green-100 text-green-800'
-                                                        : 'bg-yellow-100 text-yellow-800'
-                                                }`}>
-                                                    {item.stockStatus}
-                                                </span>
+                {/* 主卡片 */}
+                <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+
+                    {/* Header */}
+                    <div className="p-6 md:p-8 border-b border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-gray-50/30">
+                        <div>
+                            <p className="text-xs text-gray-500 uppercase tracking-widest mb-1">Order Number</p>
+                            <h2 className="text-2xl font-bold text-gray-900 font-['Playfair_Display']">#{order.orderNumber}</h2>
+                            <p className="text-sm text-gray-500 mt-1 flex items-center gap-2">
+                                <Calendar size={14} /> {formattedDate}
+                            </p>
+                        </div>
+                        <div className="flex flex-col items-end gap-2">
+                             <span className="px-4 py-1.5 bg-black text-white text-xs font-bold rounded-full uppercase tracking-wide">
+                                {order.status}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div className="p-6 md:p-8">
+                        {/* 商品列表 */}
+                        <div className="mb-10">
+                            <h3 className="font-bold text-gray-900 mb-6 flex items-center gap-2 text-lg">
+                                <Package size={20} className="text-pink-600" /> Items
+                            </h3>
+                            <div className="space-y-6">
+                                {order.items.map((item, idx) => (
+                                    <div key={idx} className="flex gap-4 items-center">
+                                        <div className="relative w-20 h-20 bg-gray-50 rounded-xl overflow-hidden border border-gray-100 flex-shrink-0">
+                                            {item.productImage ? (
+                                                <Image
+                                                    src={getProductImageUrl('', item.productImage)}
+                                                    alt={item.productTitle}
+                                                    fill
+                                                    className="object-cover"
+                                                />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center text-gray-300 font-bold">
+                                                    {item.productTitle.charAt(0)}
+                                                </div>
+                                            )}
+                                            <span className="absolute bottom-0 right-0 bg-gray-100 text-gray-600 text-[10px] font-bold px-1.5 py-0.5 rounded-tl-md">
+                                                x{item.quantity}
+                                            </span>
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="font-bold text-gray-900 line-clamp-2">{item.productTitle}</p>
+                                            {item.color && (
+                                                <p className="text-sm text-gray-500 mt-1 capitalize">Color: {item.color}</p>
                                             )}
                                         </div>
-                                        <div className="text-right">
-                                            <p className="font-medium text-gray-900">
-                                                {formatCurrency(item.unitPrice)} × {item.quantity}
-                                            </p>
-                                            <p className="text-lg font-semibold text-gray-900">
-                                                {formatCurrency(item.totalPrice)}
-                                            </p>
-                                        </div>
+                                        <p className="font-bold text-gray-900 text-lg">${item.price.toFixed(2)}</p>
                                     </div>
                                 ))}
                             </div>
                         </div>
-                    </div>
 
-                    {/* Sidebar */}
-                    <div className="space-y-6">
-                        {/* Order Summary */}
-                        <div className="bg-white rounded-lg shadow-sm p-6">
-                            <h2 className="text-lg font-semibold text-gray-900 mb-4">Order Summary</h2>
-                            <div className="space-y-3">
-                                <div className="flex justify-between">
-                                    <span className="text-gray-600">Subtotal</span>
-                                    <span className="font-medium">{formatCurrency(order.totalAmount)}</span>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span className="text-gray-600">Shipping</span>
-                                    <span className="font-medium">{formatCurrency(order.shippingFee)}</span>
-                                </div>
-                                {order.discountAmount > 0 && (
-                                    <div className="flex justify-between">
-                                        <span className="text-gray-600">Discount</span>
-                                        <span className="font-medium text-green-600">
-                                            -{formatCurrency(order.discountAmount)}
-                                        </span>
-                                    </div>
-                                )}
-                                <div className="border-t border-gray-200 pt-3">
-                                    <div className="flex justify-between">
-                                        <span className="text-lg font-semibold text-gray-900">Total</span>
-                                        <span className="text-lg font-semibold text-gray-900">
-                                            {formatCurrency(order.finalAmount)}
-                                        </span>
-                                    </div>
+                        <div className="grid md:grid-cols-2 gap-10 border-t border-gray-100 pt-8">
+
+                            {/* 左侧：配送信息 */}
+                            <div>
+                                <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                                    <MapPin size={20} className="text-gray-400" /> Shipping Details
+                                </h3>
+                                <div className="bg-gray-50 rounded-2xl p-6 text-sm text-gray-600 leading-relaxed border border-gray-100">
+                                    <p className="font-bold text-gray-900 mb-1">
+                                        {order.shippingAddress.firstName} {order.shippingAddress.lastName}
+                                    </p>
+                                    <p>{order.shippingAddress.addressLine1}</p>
+                                    {order.shippingAddress.addressLine2 && <p>{order.shippingAddress.addressLine2}</p>}
+                                    <p>
+                                        {order.shippingAddress.city}, {order.shippingAddress.province} {order.shippingAddress.zipCode}
+                                    </p>
+                                    <p>{order.shippingAddress.country}</p>
+                                    <p className="mt-4 pt-4 border-t border-gray-200 text-xs text-gray-400">
+                                        Phone: {order.shippingAddress.phone}
+                                    </p>
                                 </div>
                             </div>
-                        </div>
 
-                        {/* Actions */}
-                        <div className="bg-white rounded-lg shadow-sm p-6">
-                            <h2 className="text-lg font-semibold text-gray-900 mb-4">Order Actions</h2>
-                            <div className="space-y-2">
-                                {order.status === 'DELIVERED' && (
-                                    <>
-                                        <button className="w-full text-left py-2 px-3 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
-                                            Return Items
-                                        </button>
-                                        <button className="w-full text-left py-2 px-3 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
-                                            Write a Review
-                                        </button>
-                                    </>
-                                )}
-                                {order.status === 'SHIPPED' && (
-                                    <button className="w-full text-left py-2 px-3 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
-                                        Track Package
-                                    </button>
-                                )}
-                                <button className="w-full text-left py-2 px-3 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
-                                    Contact Support
-                                </button>
-                                <button className="w-full text-left py-2 px-3 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
-                                    Reorder Items
-                                </button>
+                            {/* 右侧：支付摘要 */}
+                            <div>
+                                <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                                    <Receipt size={20} className="text-gray-400" /> Payment Summary
+                                </h3>
+                                <div className="space-y-3 text-sm mb-6">
+                                    <div className="flex justify-between text-gray-600">
+                                        <span>Subtotal</span>
+                                        <span>${order.totalAmount.toFixed(2)}</span>
+                                    </div>
+                                    <div className="flex justify-between text-gray-600">
+                                        <span>Shipping</span>
+                                        <span className="text-green-600 font-medium">Free & Discreet</span>
+                                    </div>
+                                    <div className="flex justify-between text-gray-600">
+                                        <span>Tax</span>
+                                        <span>$0.00</span>
+                                    </div>
+                                    <div className="flex justify-between font-bold text-gray-900 text-xl border-t border-gray-100 pt-3 mt-1">
+                                        <span>Total</span>
+                                        <span>${order.totalAmount.toFixed(2)}</span>
+                                    </div>
+                                </div>
+
+                                {/* ✅ 支付方式 & 隐私账单提示 (核心优化) */}
+                                <div className="bg-blue-50/50 rounded-xl p-4 border border-blue-100">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <CreditCard size={16} className="text-blue-900" />
+                                        <span className="font-bold text-blue-900 text-sm">
+                                            Paid via {order.paymentMethod === 'PAYPAL' ? 'PayPal' : 'Credit Card'}
+                                        </span>
+                                    </div>
+
+                                    {/* 隐私安抚文案 */}
+                                    <div className="flex gap-2 items-start mt-3 pt-3 border-t border-blue-100/50">
+                                        <ShieldCheck size={14} className="text-blue-400 mt-0.5 flex-shrink-0" />
+                                        <p className="text-xs text-blue-800/70 leading-relaxed">
+                                            <strong>Privacy Note:</strong> This charge will appear discreetly as
+                                            <span className="font-mono bg-white px-1 py-0.5 rounded mx-1 text-black border border-blue-100">M-Tech Global</span>
+                                            (or similar generic name) on your bank statement. No product details are listed.
+                                        </p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
+
+                {/* 底部帮助 */}
+                <div className="text-center mt-12 mb-8">
+                    <p className="text-gray-400 text-sm">Need help with this order?</p>
+                    <a href="mailto:support@mythtoy.com" className="text-black font-bold text-sm hover:underline mt-1 inline-block">
+                        Contact Support
+                    </a>
+                </div>
+
             </div>
         </div>
     );
