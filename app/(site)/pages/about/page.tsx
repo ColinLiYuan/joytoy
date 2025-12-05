@@ -1,3 +1,5 @@
+// pages/about/page.tsx
+
 import { Metadata } from 'next';
 import Link from 'next/link';
 import { Diamond, HeartHandshake, ShieldCheck, Factory } from 'lucide-react'; // ✅ 替换为 Lucide
