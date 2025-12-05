@@ -3,6 +3,8 @@
 
 import { useState, useRef, useEffect, useMemo } from 'react';
 import Image from 'next/image';
+import Zoom from 'react-medium-image-zoom'; // ✅ 引入 Zoom
+import 'react-medium-image-zoom/dist/styles.css'; // ✅ 引入样式
 
 interface GalleryImage {
     url: string;
@@ -12,7 +14,7 @@ interface GalleryImage {
 interface ProductGalleryProps {
     images: GalleryImage[];
     productTitle: string;
-    badges?: React.ReactNode; // ✅ 新增：接收徽章组件
+    badges?: React.ReactNode;
 }
 
 const BLUR_DATA_URL = "data:image/jpeg;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mN8/+F9PQAI8wNPvd7POQAAAABJRU5ErkJggg==";
@@ -21,6 +23,7 @@ export default function ProductGallery({ images, productTitle, badges }: Product
     const [activeImageIndex, setActiveImageIndex] = useState(0);
     const [isDragging, setIsDragging] = useState(false);
     const [currentTranslate, setCurrentTranslate] = useState(0);
+    const [isZoomed, setIsZoomed] = useState(false); // ✅ 追踪放大状态
 
     const dragStartX = useRef(0);
     const prevTranslate = useRef(0);
@@ -33,20 +36,23 @@ export default function ProductGallery({ images, productTitle, badges }: Product
         }));
     }, [images, productTitle]);
 
+    // --- 触摸逻辑 (保持不变) ---
     const handleTouchStart = (clientX: number) => {
+        if (isZoomed) return; // 放大时不处理滑动
         setIsDragging(true);
         dragStartX.current = clientX;
         prevTranslate.current = -activeImageIndex * 100;
     };
 
     const handleTouchMove = (clientX: number) => {
-        if (!isDragging) return;
+        if (!isDragging || isZoomed) return;
         const diff = clientX - dragStartX.current;
         const movePercent = (diff / window.innerWidth) * 100;
         setCurrentTranslate(prevTranslate.current + movePercent);
     };
 
     const handleTouchEnd = (clientX: number) => {
+        if (!isDragging || isZoomed) return;
         setIsDragging(false);
         const diff = clientX - dragStartX.current;
         const threshold = 50;
@@ -57,9 +63,13 @@ export default function ProductGallery({ images, productTitle, badges }: Product
             } else if (diff < 0 && activeImageIndex < processedImages.length - 1) {
                 setActiveImageIndex(prev => prev + 1);
             }
+        } else {
+            // 回弹
+            setCurrentTranslate(-activeImageIndex * 100);
         }
     };
 
+    // 监听 activeIndex 变化来重置位置
     useEffect(() => {
         setCurrentTranslate(-activeImageIndex * 100);
     }, [activeImageIndex]);
@@ -94,7 +104,7 @@ export default function ProductGallery({ images, productTitle, badges }: Product
 
             {/* 主图区域 (右侧) */}
             <div
-                className="flex-1 relative w-full aspect-square md:aspect-auto md:h-[600px] bg-gray-50 rounded-3xl overflow-hidden cursor-grab active:cursor-grabbing border border-gray-100 touch-pan-y"
+                className="flex-1 relative w-full aspect-square md:aspect-auto md:h-[600px] bg-gray-50 rounded-3xl overflow-hidden border border-gray-100 touch-pan-y"
                 ref={galleryRef}
                 onTouchStart={(e) => handleTouchStart(e.touches[0].clientX)}
                 onTouchMove={(e) => handleTouchMove(e.touches[0].clientX)}
@@ -104,13 +114,14 @@ export default function ProductGallery({ images, productTitle, badges }: Product
                 onMouseUp={(e) => handleTouchEnd(e.clientX)}
                 onMouseLeave={() => setIsDragging(false)}
             >
-                {/* ✅ 修复：徽章现在渲染在主图容器内部，绝对定位是相对于主图的 */}
+                {/* 徽章 */}
                 {badges && (
                     <div className="absolute top-4 left-4 flex flex-col gap-2 z-20 pointer-events-none">
                         {badges}
                     </div>
                 )}
 
+                {/* 图片容器 */}
                 <div
                     className="flex h-full ease-out"
                     style={{
@@ -119,18 +130,30 @@ export default function ProductGallery({ images, productTitle, badges }: Product
                     }}
                 >
                     {processedImages.map((image, index) => (
-                        <div key={index} className="w-full h-full flex-shrink-0 relative">
-                            <Image
-                                src={image.url}
-                                alt={image.alt || ''}
-                                fill
-                                className="object-contain p-4 md:p-12 mix-blend-multiply"
-                                priority={index === 0}
-                                sizes="(max-width: 768px) 100vw, 50vw"
-                                draggable={false}
-                                placeholder="blur"
-                                blurDataURL={BLUR_DATA_URL}
-                            />
+                        <div key={index} className="w-full h-full flex-shrink-0 relative flex items-center justify-center">
+                            {/* ✅ 核心：使用 Zoom 包裹 Image */}
+                            {/* onZoomChange 用于禁用滑动，防止在放大时意外切图 */}
+                            <Zoom
+                                onZoomChange={(isZoomed) => setIsZoomed(isZoomed)}
+                                zoomMargin={40} // 放大后的边距
+                            >
+                                <div className="relative w-full h-full flex items-center justify-center">
+                                    {/* 注意：为了让 Zoom 正常工作，这里的 Image 不能用 fill，或者需要包在一个明确大小的 div 里 */}
+                                    {/* 这里的技巧是：在 Zoom 内部渲染一个看起来和原来一样的 Image */}
+                                    <Image
+                                        src={image.url}
+                                        alt={image.alt || ''}
+                                        width={800} // 稍微给大一点，保证清晰度
+                                        height={800}
+                                        className="object-contain p-4 md:p-12 mix-blend-multiply max-h-[600px] w-auto h-auto"
+                                        priority={index === 0}
+                                        draggable={false}
+                                        placeholder="blur"
+                                        blurDataURL={BLUR_DATA_URL}
+                                        style={{ width: 'auto', height: '100%', maxHeight: '100%' }} // 强制 CSS 约束
+                                    />
+                                </div>
+                            </Zoom>
                         </div>
                     ))}
                 </div>

@@ -1,7 +1,6 @@
 // /app/api/admin/blog/list/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { apiGet, handleApiError } from '@/lib/api-utils';
-import { FrontApiResponse } from '@/types/api';
 
 export async function GET(request: NextRequest) {
     try {
@@ -14,21 +13,14 @@ export async function GET(request: NextRequest) {
         if (status) url += `&status=${status}`;
 
         // console.log('query list url ' + url)
-        const result:FrontApiResponse = await apiGet(url);
+        const result = await apiGet(url);
 
-        if (!result.success) {
-            return NextResponse.json(
-                {error: result.error},
-                { status: 400 }
-            );
-        }
-
-        return NextResponse.json(result.data);
+        return NextResponse.json(result);
     } catch (error) {
         console.error('🔴 Blog LIST Error:', error);
-        const { error: errorMessage } = handleApiError(error);
+        const { errorMessage } = handleApiError(error);
         return NextResponse.json(
-            { success: false, error: errorMessage },
+            { success: false, errorMessage },
             { status: 500 }
         );
     }

@@ -1,5 +1,4 @@
 export interface WishlistRequest {
-    userId: number;
     productId: number;
     slug?: string;
     productTitle?: string;
@@ -18,5 +17,4 @@ export interface WishlistResponse {
     image: string;
     category?: string;
     quantity?: number;
-    baseUrl: string;
 }

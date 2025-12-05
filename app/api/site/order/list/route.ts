@@ -1,51 +1,45 @@
 // app/api/order/list/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { apiGet, handleApiError } from '@/lib/api-utils';
+import { getToken } from '@/lib/cookie-utils';
 
 export async function GET(request: NextRequest) {
-    console.log('🟢 ORDERS LIST route HIT!');
     try {
         const { searchParams } = new URL(request.url);
-        const userId = searchParams.get('userId');
         const page = searchParams.get('page') || '0';
         const size = searchParams.get('size') || '20';
 
-        // console.log('🟢 Getting orders for user:', userId);
+        // 1. 获取 token
+        const token = await getToken();
 
-        if (!userId) {
+        if (!token) {
             return NextResponse.json(
                 {
                     success: false,
-                    error: 'User ID is required'
+                    errorMessage: '用户未登录，无法获取订单列表'
                 },
-                { status: 400 }
+                { status: 401 }
             );
         }
 
-        // 调用后端API获取订单列表
-        const result = await apiGet(`/api/V1/order/user/${userId}?page=${page}&size=${size}`);
-        // console.log('🟢 Orders list API result:', result);
+        // 2. 准备请求头，添加 Authorization
+        const requestOptions = {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            },
+        };
 
-        if (!result.success) {
-            return NextResponse.json(
-                {
-                    success: false,
-                    error: result.error || 'Failed to get orders'
-                },
-                { status: 400 }
-            );
-        }
+        // 3. 调用后端API获取订单列表（不需要传 userId）
+        const result = await apiGet(`/api/V1/order/list?page=${page}&size=${size}`, requestOptions);
 
-        return NextResponse.json({
-            success: true,
-            data: result.data
-        });
+        return NextResponse.json(result);
 
     } catch (error) {
         console.error('🔴 ORDERS LIST Error:', error);
-        const { error: errorMessage } = handleApiError(error);
+        const { errorMessage } = handleApiError(error);
         return NextResponse.json(
-            { success: false, error: errorMessage },
+            { success: false, errorMessage },
             { status: 500 }
         );
     }

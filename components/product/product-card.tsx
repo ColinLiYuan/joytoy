@@ -109,7 +109,6 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
             if (!userInfo) return;
             if (newState) {
                 await wishlistService.addItemToWishlist({
-                    userId: userInfo.id,
                     productId: product.id,
                     productTitle: product.title,
                     image: product.image,
@@ -118,7 +117,7 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
                 });
                 showToast('success', 'Added', 'Added to wishlist');
             } else {
-                await wishlistService.removeItemFromWishlist({ userId: userInfo.id, productId: product.id });
+                await wishlistService.removeItemFromWishlist({ productId: product.id });
                 showToast('success', 'Removed', 'Removed from wishlist');
             }
             onWishlistUpdate?.();

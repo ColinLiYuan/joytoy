@@ -30,6 +30,7 @@ export async function GET(request: NextRequest) {
 
         // 3. 获取同分类产品 (多取一点，比如 16 个，方便随机)
         const listResponse = await productServiceServer.getProductsByCategory(targetCategorySlug, 0, 16);
+        // console.log('related route byCategory: ', listResponse.content)
         let products = listResponse.content || [];
 
         // 4. 过滤掉当前商品自己
@@ -56,6 +57,7 @@ export async function GET(request: NextRequest) {
 
         // 7. 只取前 4 个
         const finalRelated = products.slice(0, 4);
+        // console.log('related route finalRelated: ', finalRelated)
 
         return NextResponse.json(finalRelated);
 

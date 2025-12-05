@@ -6,14 +6,9 @@ class CartService {
     /**
      * 获取购物车
      */
-    async getCart(cartId: string): Promise<CartResponse> {
+    async getCart(): Promise<CartResponse> {
         try {
-            if (!cartId) {
-                cartId = '0';
-            }
-
-            let url = `${SERVER_CONFIG.apiRoutes.cart}/${cartId}`;
-            // console.log('getCart url: ', url)
+            let url = `${SERVER_CONFIG.apiRoutes.cart}/get`;
             const response = await fetch(url);
 
             if (!response.ok) {
@@ -32,13 +27,9 @@ class CartService {
     /**
      * 添加商品到购物车
      */
-    async addItemToCart(cartId: string, request: AddToCartRequest): Promise<CartResponse> {
+    async addItemToCart(request: AddToCartRequest): Promise<CartResponse> {
         try {
-            if (!cartId) {
-                cartId = '0';
-            }
-
-            let url = `${SERVER_CONFIG.apiRoutes.cart}/${cartId}/items`;
+            let url = `${SERVER_CONFIG.apiRoutes.cart}/add`;
             const response = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -62,13 +53,13 @@ class CartService {
     /**
      * 从购物车移除商品
      */
-    async removeItemFromCart(cartId: string, itemId: number): Promise<CartResponse> {
+    async removeItemFromCart(itemId: number): Promise<CartResponse> {
         try {
-            let url = `${SERVER_CONFIG.apiRoutes.cart}/items/${itemId}`;
+            let url = `${SERVER_CONFIG.apiRoutes.cart}/remove`;
             const response = await fetch(url, {
                 method: 'DELETE',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ cartId }),
+                body: JSON.stringify({ itemId }),
             });
 
             if (!response.ok) {
@@ -87,14 +78,14 @@ class CartService {
     /**
      * 更新购物车商品数量
      */
-    async updateItemQuantity(cartId: string, itemId: number, quantity: number): Promise<CartResponse> {
+    async updateItemQuantity(itemId: number, quantity: number): Promise<CartResponse> {
         try {
-            const url = `${SERVER_CONFIG.apiRoutes.cart}/items/${itemId}`;
+            const url = `${SERVER_CONFIG.apiRoutes.cart}/update`;
             // console.log('updateItemQuantity url: ', url)
             const response = await fetch(url, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ quantity, cartId }),
+                body: JSON.stringify({ quantity, itemId }),
             });
 
             if (!response.ok) {
@@ -103,7 +94,7 @@ class CartService {
             }
 
             const apiResponse = await response.json();
-            console.log('updateItemQuantity apiResponse:', apiResponse)
+            // console.log('updateItemQuantity apiResponse:', apiResponse)
             return apiResponse.data;
         } catch (error) {
             console.error('Update item quantity failed:', error);

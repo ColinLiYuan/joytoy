@@ -5,6 +5,25 @@ import { useState, useRef } from 'react';
 import { productService } from '@/services/product-service';
 import { getProductImageUrl } from '@/lib/image-utils';
 
+// --- dnd-kit 依赖 ---
+import {
+    DndContext,
+    closestCenter,
+    KeyboardSensor,
+    PointerSensor,
+    useSensor,
+    useSensors,
+    DragEndEvent
+} from '@dnd-kit/core';
+import {
+    arrayMove,
+    SortableContext,
+    sortableKeyboardCoordinates,
+    useSortable,
+    rectSortingStrategy
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+
 interface Product {
     id?: number;
     image?: string;
@@ -18,12 +37,108 @@ interface ImageUploadProps {
     updateProduct: (updates: Partial<Product>) => void;
 }
 
+// --- 子组件：可拖拽的相册项 ---
+interface SortableItemProps {
+    url: string; // 使用 url 作为唯一 id
+    alt?: string;
+    index: number;
+    onRemove: (index: number) => void;
+}
+
+function SortableGalleryItem({ url, alt, index, onRemove }: SortableItemProps) {
+    // dnd-kit hook
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging
+    } = useSortable({ id: url });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        zIndex: isDragging ? 10 : 1,
+        opacity: isDragging ? 0.5 : 1, // 拖拽时变透明
+    };
+
+    return (
+        <div
+            ref={setNodeRef}
+            style={style}
+            {...attributes}
+            {...listeners}
+            className="relative group aspect-square bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow cursor-move touch-none"
+        >
+            <img
+                src={getProductImageUrl('', url)}
+                alt={alt}
+                className="w-full h-full object-contain p-2 pointer-events-none" // 禁止图片本身被拖拽选中
+            />
+
+            {/* 悬停遮罩 */}
+            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors"></div>
+
+            {/* 删除按钮 */}
+            <button
+                type="button"
+                // 关键：阻止事件冒泡，防止点击删除时触发拖拽
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={(e) => {
+                    e.stopPropagation();
+                    onRemove(index);
+                }}
+                className="absolute top-1 right-1 bg-white text-red-500 rounded-full w-6 h-6 flex items-center justify-center text-xs shadow-sm opacity-0 group-hover:opacity-100 transition-all hover:bg-red-50 transform hover:scale-110 cursor-pointer"
+                title="删除"
+            >
+                ×
+            </button>
+
+            {/* 序号标签 */}
+            <span className="absolute bottom-1 left-1 bg-gray-100 text-gray-500 text-[10px] px-1.5 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                #{index + 1}
+            </span>
+        </div>
+    );
+}
+
+// --- 主组件 ---
 export default function AdminProductGallery({ product, updateProduct }: ImageUploadProps) {
     const [mainImagePreview, setMainImagePreview] = useState<string | null>(null);
     const [uploading, setUploading] = useState(false);
 
     const mainImageInputRef = useRef<HTMLInputElement>(null);
     const galleryInputRef = useRef<HTMLInputElement>(null);
+
+    // 配置 dnd-kit 传感器
+    const sensors = useSensors(
+        useSensor(PointerSensor, {
+            activationConstraint: {
+                distance: 5, // 移动 5px 后才判定为拖拽，防止误触点击
+            },
+        }),
+        useSensor(KeyboardSensor, {
+            coordinateGetter: sortableKeyboardCoordinates,
+        })
+    );
+
+    // 拖拽结束处理函数
+    const handleDragEnd = (event: DragEndEvent) => {
+        const { active, over } = event;
+
+        // 如果拖拽对象和放置对象不同，说明发生了移动
+        if (over && active.id !== over.id && product.galleries) {
+            const oldIndex = product.galleries.findIndex((item) => item.url === active.id);
+            const newIndex = product.galleries.findIndex((item) => item.url === over.id);
+
+            if (oldIndex !== -1 && newIndex !== -1) {
+                // 重新排序数组
+                const newGalleries = arrayMove(product.galleries, oldIndex, newIndex);
+                updateProduct({ galleries: newGalleries });
+            }
+        }
+    };
 
     // 校验函数：只允许 PNG
     const validateFile = (file: File): boolean => {
@@ -164,6 +279,7 @@ export default function AdminProductGallery({ product, updateProduct }: ImageUpl
                 <h3 className="text-lg font-semibold text-gray-900">图片管理</h3>
                 <div className="text-xs text-gray-500 mt-1">
                     请上传已在 PS 中处理好的图片 (推荐尺寸 1600x1600, PNG 格式)
+                    <span className="ml-2 text-blue-600">Tip: 相册图片支持拖拽排序</span>
                 </div>
             </div>
 
@@ -237,7 +353,7 @@ export default function AdminProductGallery({ product, updateProduct }: ImageUpl
 
                 <div className="border-t border-gray-100"></div>
 
-                {/* 相册上传区域 */}
+                {/* 相册上传区域 (支持拖拽排序) */}
                 <div>
                     <div className="flex justify-between items-center mb-4">
                         <label className="block text-sm font-medium text-gray-700">
@@ -260,37 +376,30 @@ export default function AdminProductGallery({ product, updateProduct }: ImageUpl
                             className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100 cursor-pointer transition-all mb-4"
                         />
 
-                        {/* 相册网格 */}
+                        {/* 相册网格 - 拖拽排序 */}
                         {product.galleries && product.galleries.length > 0 ? (
-                            <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-4">
-                                {product.galleries.map((gallery, index) => (
-                                    <div key={index} className="relative group aspect-square bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow">
-                                        <img
-                                            src={getProductImageUrl('', gallery.url)}
-                                            alt={gallery.alt}
-                                            className="w-full h-full object-contain p-2"
-                                        />
-
-                                        {/* 悬停遮罩 */}
-                                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors"></div>
-
-                                        {/* 删除按钮 */}
-                                        <button
-                                            type="button"
-                                            onClick={() => removeExistingGallery(index)}
-                                            className="absolute top-1 right-1 bg-white text-red-500 rounded-full w-6 h-6 flex items-center justify-center text-xs shadow-sm opacity-0 group-hover:opacity-100 transition-all hover:bg-red-50 transform hover:scale-110"
-                                            title="删除"
-                                        >
-                                            ×
-                                        </button>
-
-                                        {/* 序号标签 */}
-                                        <span className="absolute bottom-1 left-1 bg-gray-100 text-gray-500 text-[10px] px-1.5 rounded opacity-0 group-hover:opacity-100 transition-opacity">
-                                            #{index + 1}
-                                        </span>
+                            <DndContext
+                                sensors={sensors}
+                                collisionDetection={closestCenter}
+                                onDragEnd={handleDragEnd}
+                            >
+                                <SortableContext
+                                    items={product.galleries.map(g => g.url)}
+                                    strategy={rectSortingStrategy}
+                                >
+                                    <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-4">
+                                        {product.galleries.map((gallery, index) => (
+                                            <SortableGalleryItem
+                                                key={gallery.url}
+                                                url={gallery.url}
+                                                alt={gallery.alt}
+                                                index={index}
+                                                onRemove={removeExistingGallery}
+                                            />
+                                        ))}
                                     </div>
-                                ))}
-                            </div>
+                                </SortableContext>
+                            </DndContext>
                         ) : (
                             <div className="text-center py-8 text-gray-400 text-sm">
                                 暂无相册图片，支持批量上传

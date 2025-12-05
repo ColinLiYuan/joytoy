@@ -111,8 +111,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const login = useCallback(async (loginRequest: LoginRequest): Promise<LoginResponse> => {
         try {
-            console.log('Starting login process...');
+            // console.log('Starting login process...');
             const loginResponse: LoginResponse = await authService.login(loginRequest);
+
+            // console.log('LoginResponse...', loginResponse);
 
             setIsLoggedIn(true);
             setUserInfo(loginResponse);
@@ -124,7 +126,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             showToast('success', 'Welcome Back', 'Successfully logged in');
 
             if (onSuccessCallbackRef.current) {
-                console.log('Executing onSuccessCallback');
+                // console.log('Executing onSuccessCallback');
                 onSuccessCallbackRef.current();
                 onSuccessCallbackRef.current = null;
             }

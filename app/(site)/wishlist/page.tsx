@@ -11,23 +11,12 @@ const convertToProductResponse = (wishlistItem: WishlistResponse): any => {
         id: wishlistItem.productId,
         title: wishlistItem.productTitle,
         image: wishlistItem.image,
-        baseUrl: wishlistItem.baseUrl,
         currentPrice: wishlistItem.currentPrice,
         originalPrice: wishlistItem.currentPrice,
         slug: wishlistItem.slug,
         favorited: true,
     };
 };
-
-async function clearWishlistAction() {
-    'use server';
-    try {
-        await wishlistServiceServer.clearWishlist();
-        redirect('/wishlist');
-    } catch (error) {
-        console.error('Failed to clear wishlist:', error);
-    }
-}
 
 export default async function WishlistPage() {
     let wishlistItems: WishlistResponse[] = [];

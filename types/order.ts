@@ -1,7 +1,5 @@
 // types/order.ts
 export interface OrderCreateRequest {
-    userId: number;
-    cartId: number;
     items: OrderItemRequest[];
     shippingAddress: AddressRequest;
     shippingFee?: number;

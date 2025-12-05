@@ -1,56 +1,62 @@
 // services/orderService.ts
 import { OrderCreateRequest, OrderResponse } from '@/types/order';
-import { FrontApiResponse } from '@/types/api';
+import { BackendApiResponse } from '@/types/api';
 import { SERVER_CONFIG } from '@/lib/api-config';
 
 class OrderService {
     // 创建订单
-    async createOrder(orderCreateRequest: OrderCreateRequest): Promise<{ success: boolean; data?: any; error?: string }> {
-        try {
-            const url = `${SERVER_CONFIG.apiRoutes.order}`;
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(orderCreateRequest),
-            });
-            // console.log('after createOrder service ' + response.ok)
+    async createOrder(orderCreateRequest: OrderCreateRequest): Promise<BackendApiResponse> {
+        const url = `${SERVER_CONFIG.apiRoutes.order}/add`;
+        // console.log('🟢 Creating order, URL:', url);
 
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Failed to create order');
-            }
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(orderCreateRequest),
+            credentials: 'include',
+        });
 
-            const apiResponse: FrontApiResponse = await response.json();
-            if (!apiResponse.success) {
-                throw new Error(apiResponse.message || 'Failed to create order');
-            }
+        const apiResponse:BackendApiResponse = await response.json();
 
-            return {
-                success: true,
-                data: apiResponse.data
-            };
-        } catch (error) {
-            console.error('Order creation error:', error);
-            return {
-                success: false,
-                error: 'Network error while creating order'
-            };
-        }
+        // console.log('createOrder service: ', apiResponse)
+        return apiResponse;
+
     }
 
     // 获取订单详情
     async getOrder(orderId: number): Promise<{ success: boolean; data?: OrderResponse; error?: string }> {
         try {
             const url = `${SERVER_CONFIG.apiRoutes.order}/${orderId}`;
-            const response = await fetch(url);
-            const result = await response.json();
+            const response = await fetch(url, {
+                credentials: 'include', // 添加这行
+            });
+
+            // 先读取文本
+            const responseText = await response.text();
 
             if (!response.ok) {
+                let errorData;
+                try {
+                    errorData = responseText ? JSON.parse(responseText) : {};
+                } catch {
+                    errorData = { error: `HTTP error ${response.status}` };
+                }
                 return {
                     success: false,
-                    error: result.error || 'Failed to get order'
+                    error: errorData.error || 'Failed to get order'
+                };
+            }
+
+            // 解析成功响应
+            let result;
+            try {
+                result = responseText ? JSON.parse(responseText) : {};
+            } catch {
+                return {
+                    success: false,
+                    error: 'Invalid JSON response'
                 };
             }
 
@@ -68,28 +74,46 @@ class OrderService {
     }
 
     // 获取用户订单列表
-    async getUserOrders(userId: number, page: number = 0, size: number = 20): Promise<OrderResponse[]> {
+    async getUserOrders(page: number = 0, size: number = 20): Promise<OrderResponse[]> {
         try {
-            const url = `${SERVER_CONFIG.apiRoutes.order}/list?userId=${userId}&page=${page}&size=${size}`;
-            const response = await fetch(url);
-            // console.log('after getUserOrders service ' + response.ok)
+            const url = `${SERVER_CONFIG.apiRoutes.order}/list?page=${page}&size=${size}`;
+            const response = await fetch(url, {
+                credentials: 'include', // 添加这行
+            });
+
+            // console.log('🟢 Getting user orders, status:', response.status);
+
+            const responseText = await response.text();
+            // console.log('🟢 Orders response body:', responseText);
 
             if (!response.ok) {
-                const errorData = await response.json().catch(() => null);
+                let errorData;
+                try {
+                    errorData = responseText ? JSON.parse(responseText) : {};
+                } catch {
+                    errorData = { error: `HTTP error ${response.status}` };
+                }
                 throw new Error(errorData?.error || `Failed to get orders: ${response.status}`);
             }
 
-            const apiResponse: FrontApiResponse = await response.json();
+            let apiResponse: BackendApiResponse;
+            try {
+                apiResponse = responseText ? JSON.parse(responseText) : {};
+            } catch (e) {
+                console.error('🟡 Failed to parse orders response as JSON:', e);
+                throw new Error('Invalid JSON response from server');
+            }
+
             if (!apiResponse.success) {
                 throw new Error(apiResponse.message || 'Failed to get orders');
             }
 
-            console.log('after getUserOrders apiResponse data:', apiResponse.data);
+            console.log('🟢 Orders API response data:', apiResponse.data);
 
             // 确保返回的是数组
             return Array.isArray(apiResponse.data) ? apiResponse.data : [apiResponse.data];
         } catch (error) {
-            console.error('Orders list fetch error:', error);
+            console.error('🔴 Orders list fetch error:', error);
             throw error;
         }
     }

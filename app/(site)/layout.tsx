@@ -1,4 +1,4 @@
-// app/(site)/layout.tsx
+// app/layout.tsx
 import { categoryService } from '@/services/category-service';
 import { RootResponse } from '@/types/category';
 import Notice from '@/components/common/notice';
@@ -7,6 +7,28 @@ import Footer from '@/components/footer';
 import GARouteTracker from '@/components/analytics/ga-route-tracker';
 import Script from 'next/script';
 import { Suspense } from 'react';
+import { Metadata, Viewport } from 'next';
+
+export const metadata: Metadata = {
+    metadataBase: new URL('https://mythtoy.com'),
+    title: {
+        default: 'MythToy - Curated Adult Pleasure | Discreet & Premium',
+        template: '%s | MythToy',
+    },
+    description: 'Source factory direct adult toys. We curate the highest quality, body-safe silicone products with 100% discreet global shipping.',
+    icons: {
+        icon: '/icon.svg',
+        apple: '/icon.svg',
+    },
+    manifest: '/site.webmanifest',
+};
+
+export const viewport: Viewport = {
+    themeColor: 'black',
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 1,
+};
 
 export default async function SiteLayout({
                                              children,
@@ -29,22 +51,23 @@ export default async function SiteLayout({
         "@type": "Organization",
         "name": "MythToy",
         "url": "https://mythtoy.com",
-        "logo": "https://mythtoy.com/logo.png",
-        "description": "Premium adult lifestyle products.",
+        "logo": "https://mythtoy.com/logo.svg",
+        "description": "Premium adult lifestyle products direct from source.",
+        "foundingDate": "2024",
+        "sameAs": [
+            "https://www.instagram.com/colinliyuan",
+            "https://www.facebook.com/profile.php?id=61581471022682",
+        ],
         "contactPoint": {
             "@type": "ContactPoint",
             "email": "support@mythtoy.com",
-            "contactType": "customer service"
+            "contactType": "customer service",
+            "availableLanguage": ["English", "Chinese"]
         }
     };
 
     return (
-        // ✅ 核心修复：
-        // 1. max-w-[100vw]: 强制最大宽度为视口宽度
-        // 2. overflow-x-clip: 比 hidden 更强硬的裁剪属性 (Tailwind class)
-        // 3. position: relative: 确保内部绝对定位元素以它为边界
         <div className="relative flex flex-col min-h-screen w-full max-w-[100vw] overflow-x-clip bg-white">
-
             <script
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationStructuredData) }}
@@ -75,18 +98,15 @@ export default async function SiteLayout({
                 <GARouteTracker />
             </Suspense>
 
-            {/* 导航栏区域 */}
             <div className="w-full relative z-50">
                 <Navigation rootsData={rootsData} />
                 <Notice />
             </div>
 
-            {/* 主内容区域 - 再次加固 */}
             <main className="flex-grow w-full max-w-[100vw] overflow-x-clip">
                 {children}
             </main>
 
-            {/* Footer */}
             <div className="w-full max-w-[100vw] overflow-x-clip">
                 <Footer />
             </div>

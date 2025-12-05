@@ -1,8 +1,8 @@
 // lib/api-utils.ts
-import { BACKEND_CONFIG, SERVER_CONFIG } from '@/lib/api-config';
-import { FrontApiResponse } from '@/types/api';
+import { BACKEND_CONFIG } from '@/lib/api-config';
+import { BackendApiResponse, ApiErrorType } from '@/types/api';
 
-interface RequestOptions extends RequestInit {
+export interface RequestOptions extends RequestInit {  // 添加 export
     timeout?: number;
     retry?: number;
 }
@@ -11,7 +11,9 @@ class ApiError extends Error {
     constructor(
         public status: number,
         public message: string,
-        public data?: any
+        public data?: any,
+        public errorCode?: string,
+        public errorType?: ApiErrorType
     ) {
         super(message);
         this.name = 'ApiError';
@@ -19,7 +21,7 @@ class ApiError extends Error {
 }
 
 /**
- * 统一的 API 请求函数
+ * Unified API request function
  */
 export async function proxyRequest(
     endpoint: string,
@@ -49,236 +51,299 @@ export async function proxyRequest(
         });
 
         clearTimeout(timeoutId);
-
-        if (!response.ok) {
-            // 克隆响应来处理错误，避免消耗原始响应体
-            const errorResponse = response.clone();
-            let errorData;
-
-            try {
-                errorData = await errorResponse.json();
-            } catch {
-                try {
-                    const errorText = await errorResponse.text();
-                    errorData = { message: errorText || response.statusText };
-                } catch {
-                    errorData = { message: response.statusText };
-                }
-            }
-
-            process.stdout.write('proxyRequest HTTP错误: ${errorData}');
-
-            throw new ApiError(
-                response.status,
-                errorData.message || `HTTP error! status: ${response.status}`,
-                errorData
-            );
-        }
-
         return response;
     } catch (error) {
         clearTimeout(timeoutId);
 
-        // 安全地处理错误信息
         const errorMessage = error instanceof Error ? error.message : String(error);
-        process.stdout.write('proxyRequest 捕获错误: ${ error: errorMessage }\n');
+        console.error('proxyRequest caught error:', errorMessage);
 
-        // 重试逻辑
+        // Retry logic
         if (retry > 0 && shouldRetry(error)) {
-            process.stdout.write('apiGet 捕获错误: ${ error: errorMessage } API调用失败，重试中... 剩余 ${retry} 次\n');
+            console.warn(`API call failed, retrying... ${retry} attempts left`);
             return proxyRequest(endpoint, {
                 ...options,
                 retry: retry - 1,
             });
         }
 
-        throw error;
+        // 网络异常，直接抛出
+        throw new ApiError(
+            0,
+            errorMessage,
+            undefined,
+            undefined,
+            'network'
+        );
     }
 }
 
 /**
- * 处理 API 错误
+ * 判断错误类型
  */
-export function handleApiError(error: unknown): { error: string } {
-    console.error('API Error:', error);
-
-    if (error instanceof ApiError) {
-        return { error: error.message };
+function getErrorType(
+    httpStatus: number,
+    backendResponse: BackendApiResponse<any>
+): ApiErrorType {
+    // 1. HTTP 级别异常 (400, 401, 403, 404, 500, 502 等)
+    if (httpStatus >= 400) {
+        return 'http';
     }
 
-    if (error instanceof Error) {
-        if (error.name === 'AbortError') {
-            return { error: 'Request timeout' };
+    // 2. 后端返回 success: false，根据 errorCode 判断
+    if (!backendResponse.success) {
+        const errorCode = backendResponse.errorCode;
+        if (errorCode && (errorCode.startsWith('C') || errorCode.startsWith('c'))) {
+            return 'system_business'; // C 开头的需要统一处理
         }
-        return { error: error.message };
+        return 'custom_business'; // 其他业务错误留给调用者
     }
 
-    return { error: 'An unexpected error occurred' };
+    // 正常情况不会走到这里
+    return 'custom_business';
 }
 
 /**
- * 统一的 API 响应处理器
+ * 处理 API 响应，直接返回后端格式
  */
 export async function handleApiResponse<T>(
     response: Response
-): Promise<FrontApiResponse<T>> {
+): Promise<BackendApiResponse<T> & {
+    status?: number;
+    errorType?: ApiErrorType;
+}> {
     try {
-        // 克隆响应来检查内容
+        // Clone response to check content
         const responseClone = response.clone();
         const responseText = await responseClone.text();
 
-        // 如果响应体为空但请求成功，认为是更新成功
+        // 空响应体处理
         if (!responseText.trim()) {
-            if (response.ok) {
-                return {
-                    success: true,
-                    data: undefined as T  // 或者 {} as T
-                };
-            } else {
-                return {
-                    success: false,
-                    error: 'Empty response body',
-                };
-            }
+            return {
+                success: response.ok,
+                message: response.ok ? undefined : 'Empty response body',
+                status: response.status,
+                errorType: 'http' as ApiErrorType
+            };
         }
 
-        let data;
+        let data: any;
         try {
             data = JSON.parse(responseText);
         } catch (parseError) {
-            console.error('🔍 JSON 解析错误:', parseError);
+            console.error('JSON parsing error:', parseError);
             return {
                 success: false,
-                error: 'Failed to parse response as JSON',
+                message: 'Failed to parse response as JSON',
+                status: response.status,
+                errorType: 'http' as ApiErrorType
             };
         }
 
-        if (!response.ok) {
+        const backendResponse: BackendApiResponse<T> = data;
+        const errorType = getErrorType(response.status, backendResponse);
+
+        // HTTP 异常或业务失败
+        if (!response.ok || !backendResponse.success) {
             return {
+                ...backendResponse,
                 success: false,
-                error: data?.message || 'Request failed',
-                data: data,
+                message: backendResponse.message ||
+                    (response.status >= 400 ? `HTTP error: ${response.status}` : 'Business logic failed'),
+                status: response.status,
+                errorType
             };
         }
 
+        // 成功响应
         return {
-            success: true,
-            data,
+            ...backendResponse,
+            status: response.status
         };
     } catch (error) {
-        console.error('🔍 handleApiResponse 捕获错误:', error);
+        console.error('handleApiResponse caught error:', error);
+        // JSON 解析异常视为 HTTP 异常
         return {
             success: false,
-            error: 'Failed to process response',
+            message: 'Response parsing failed',
+            status: 500,
+            errorType: 'http' as ApiErrorType
         };
     }
 }
 
 /**
- * 判断是否应该重试
+ * Determine if retry should be attempted
  */
 function shouldRetry(error: unknown): boolean {
-    if (error instanceof ApiError) {
-        // 只对服务器错误进行重试
-        return error.status >= 500;
-    }
-
-    // 对网络错误进行重试
-    return error instanceof TypeError && error.message.includes('fetch');
+    // 只对网络错误重试
+    return error instanceof ApiError && error.errorType === 'network';
 }
 
 /**
- * 便捷的 GET 请求
+ * 统一的错误处理函数，用于封装 try-catch 逻辑
+ */
+async function apiRequest<T>(
+    endpoint: string,
+    method: string,
+    data?: any,
+    options: RequestOptions = {}
+): Promise<BackendApiResponse<T> & {
+    status?: number;
+    errorType?: ApiErrorType;
+}> {
+    try {
+        const response = await proxyRequest(endpoint, {
+            method,
+            body: data ? JSON.stringify(data) : undefined,
+            ...options,
+        });
+        return await handleApiResponse<T>(response);
+    } catch (error) {
+        console.error(`api${method} caught error:`, error);
+
+        // 如果是 ApiError（网络异常）
+        if (error instanceof ApiError) {
+            return {
+                success: false,
+                message: error.message,
+                data: error.data,
+                status: error.status,
+                errorType: error.errorType
+            };
+        }
+
+        // 其他未知错误
+        return {
+            success: false,
+            message: error instanceof Error ? error.message : 'Unknown error occurred',
+            status: 0,
+            errorType: 'network' as ApiErrorType
+        };
+    }
+}
+
+/**
+ * Convenient GET request
  */
 export async function apiGet<T>(
     endpoint: string,
-    options?: RequestOptions
-): Promise<FrontApiResponse<T>> {
-    try {
-        const response = await proxyRequest(endpoint, {
-            method: 'GET',
-            ...options,
-        });
-
-        const result = await handleApiResponse<T>(response);
-
-        return result;
-    } catch (error) {
-        // 安全地处理 error 对象
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        process.stdout.write('apiGet 捕获错误:  ${ error: errorMessage }\n');
-
-        return {
-            success: false,
-            ...handleApiError(error),
-        };
-    }
+    options: RequestOptions = {}
+): Promise<BackendApiResponse<T> & {
+    status?: number;
+    errorType?: ApiErrorType;
+}> {
+    return apiRequest<T>(endpoint, 'GET', undefined, options);
 }
 
 /**
- * 便捷的 POST 请求
+ * Convenient POST request
  */
 export async function apiPost<T>(
     endpoint: string,
     data?: any,
-    options?: RequestOptions
-): Promise<FrontApiResponse<T>> {
-    try {
-        const response = await proxyRequest(endpoint, {
-            method: 'POST',
-            body: data ? JSON.stringify(data) : undefined,
-            ...options,
-        });
-        return handleApiResponse<T>(response);
-    } catch (error) {
-        return {
-            success: false,
-            ...handleApiError(error),
-        };
-    }
+    options: RequestOptions = {}
+): Promise<BackendApiResponse<T> & {
+    status?: number;
+    errorType?: ApiErrorType;
+}> {
+    return apiRequest<T>(endpoint, 'POST', data, options);
 }
 
 /**
- * 便捷的 PUT 请求
+ * Convenient PUT request
  */
 export async function apiPut<T>(
     endpoint: string,
     data?: any,
-    options?: RequestOptions
-): Promise<FrontApiResponse<T>> {
-    try {
-        const response = await proxyRequest(endpoint, {
-            method: 'PUT',
-            body: data ? JSON.stringify(data) : undefined,
-            ...options,
-        });
-        return handleApiResponse<T>(response);
-    } catch (error) {
-        return {
-            success: false,
-            ...handleApiError(error),
-        };
-    }
+    options: RequestOptions = {}
+): Promise<BackendApiResponse<T> & {
+    status?: number;
+    errorType?: ApiErrorType;
+}> {
+    return apiRequest<T>(endpoint, 'PUT', data, options);
 }
 
 /**
- * 便捷的 DELETE 请求
+ * Convenient DELETE request
  */
 export async function apiDelete<T>(
     endpoint: string,
-    options?: RequestOptions
-): Promise<FrontApiResponse<T>> {
-    try {
-        // console.log('api- utils ')
-        const response = await proxyRequest(endpoint, {
-            method: 'DELETE',
-            ...options,
-        });
-        return handleApiResponse<T>(response);
-    } catch (error) {
-        return {
-            success: false,
-            ...handleApiError(error),
-        };
+    options: RequestOptions = {}
+): Promise<BackendApiResponse<T> & {
+    status?: number;
+    errorType?: ApiErrorType;
+}> {
+    return apiRequest<T>(endpoint, 'DELETE', undefined, options);
+}
+
+/**
+ * 错误处理工具函数
+ */
+export function handleApiError(
+    errorInput: unknown  // 改为 unknown
+): {
+    shouldHandle: boolean;
+    errorMessage: string;
+    errorType: string;
+} {
+    console.error('API Error:', errorInput);
+
+    let message = '';
+    let errorType: string = 'unknown';
+    let status: number | undefined;
+
+    // 处理不同类型的输入
+    if (typeof errorInput === 'string') {
+        message = errorInput;
+    } else if (errorInput instanceof Error) {
+        message = errorInput.message;
+    } else if (errorInput && typeof errorInput === 'object') {
+        // 处理 BackendApiResponse 格式
+        const typedError = errorInput as Partial<BackendApiResponse<any> & {
+            status?: number;
+            errorType?: string
+        }>;
+        message = typedError.message || 'Unknown error';
+        errorType = typedError.errorType || 'unknown';
+        status = typedError.status;
+    }
+
+    // 根据 errorType 返回相应的处理结果
+    switch (errorType) {
+        case 'network':
+            return {
+                shouldHandle: true,
+                errorMessage: '网络连接异常，请检查网络后重试',
+                errorType: 'network'
+            };
+
+        case 'http':
+            return {
+                shouldHandle: true,
+                errorMessage: `服务器错误 (${status || '未知'})，请稍后重试`,
+                errorType: 'http'
+            };
+
+        case 'system_business':
+            return {
+                shouldHandle: true,
+                errorMessage: message || '系统业务异常',
+                errorType: 'system_business'
+            };
+
+        case 'custom_business':
+            return {
+                shouldHandle: false,
+                errorMessage: message || '业务异常',
+                errorType: 'custom_business'
+            };
+
+        default:
+            return {
+                shouldHandle: true,
+                errorMessage: '未知错误，请稍后重试',
+                errorType: 'unknown'
+            };
     }
 }

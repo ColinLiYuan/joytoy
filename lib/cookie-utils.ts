@@ -5,7 +5,7 @@ export async function getServerUserInfo(): Promise<LoginResponse | null> {
     try {
         const cookieStore = await cookies();
 
-        const allCookies = cookieStore.getAll();
+        // const allCookies = cookieStore.getAll();
         // console.log('🔍 ALL COOKIES:', allCookies);
         // console.log('🔍 Cookie names:', allCookies.map(cookie => cookie.name));
 
@@ -32,4 +32,17 @@ export async function getServerUserInfo(): Promise<LoginResponse | null> {
 export async function getServerUserId(): Promise<number | null> {
     const userInfo = await getServerUserInfo();
     return userInfo?.id || null;
+}
+
+export async function getToken(): Promise<string | null> {
+    try {
+        const cookieStore = await cookies();
+
+        const authToken = cookieStore.get('auth_token')?.value;
+
+        return authToken || null;
+    } catch (error) {
+        console.error('Failed to get token from cookies:', error);
+        return null;
+    }
 }

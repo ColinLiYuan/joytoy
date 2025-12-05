@@ -131,7 +131,7 @@ export default function ProductDetailClient({
     const [recentlyViewed, setRecentlyViewed] = useState<ProductResponse[]>([]);
 
     const { showToast } = useToast();
-    const { openAuthModal, isLoggedIn, userInfo } = useAuth();
+    const { openAuthModal, isLoggedIn } = useAuth();
     const addItemToCart = useCartStore(state => state.addItemToCart);
 
     useEffect(() => {
@@ -204,12 +204,11 @@ export default function ProductDetailClient({
         const newState = !isFavorited;
         setIsFavorited(newState);
         try {
-            if (!userInfo) return;
             if (newState) {
-                await wishlistService.addItemToWishlist({ userId: userInfo.id, productId: product.id, productTitle: product.title, image: product.image, currentPrice: product.currentPrice, slug: product.slug });
+                await wishlistService.addItemToWishlist({ productId: product.id, productTitle: product.title, image: product.image, currentPrice: product.currentPrice, slug: product.slug });
                 showToast('success', 'Saved', 'Added to your wishlist');
             } else {
-                await wishlistService.removeItemFromWishlist({ userId: userInfo.id, productId: product.id });
+                await wishlistService.removeItemFromWishlist({ productId: product.id });
                 showToast('success', 'Removed', 'Removed from wishlist');
             }
         } catch (error) { setIsFavorited(!newState); showToast('error', 'Error', 'Failed to update wishlist'); } finally { setIsWishlistLoading(false); }
@@ -224,7 +223,7 @@ export default function ProductDetailClient({
         } catch (error) { console.error(error); showToast('error', 'Error', 'Failed to add product.'); return false; }
     };
 
-    const handleAddToCart = async () => { setAddingToCart(true); const success = await performAddToCart(); if (success) showToast('success', 'Added to Bag', `${product.title} is in your bag.`); setAddingToCart(false); };
+    const handleAddToCart = async () => { setAddingToCart(true); const success = await performAddToCart(); setAddingToCart(false); };
     const handleBuyNow = async () => { setBuyingNow(true); const success = await performAddToCart(); if (success) router.push('/checkout'); setBuyingNow(false); };
     const toggleSection = (section: string) => setExpandedSection(expandedSection === section ? null : section);
 
@@ -248,9 +247,20 @@ export default function ProductDetailClient({
 
                 <div className="flex flex-col">
                     <div className="border-b border-gray-100 pb-6 mb-6">
+                        {/*
+                           🔴 修复 1：主标题区域
+                           添加了 items-start（顶部对齐）, gap-4
+                           h1 添加了 flex-1 (占据剩余空间), min-w-0 (允许Flex子项收缩), break-words (长单词换行)
+                           button 添加了 flex-shrink-0 (防止被挤压)
+                        */}
                         <div className="flex justify-between items-start gap-4 mb-3">
-                            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 font-['Playfair_Display'] leading-tight">{product.title}</h1>
-                            <button onClick={handleToggleFavorite} className={`p-2.5 rounded-full transition-all flex-shrink-0 ${isFavorited ? 'bg-red-50 text-red-500 hover:bg-red-100' : 'bg-gray-50 text-gray-400 hover:bg-gray-100 hover:text-red-500'}`}>
+                            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 font-['Playfair_Display'] leading-tight flex-1 min-w-0 break-words pr-2">
+                                {product.title}
+                            </h1>
+                            <button
+                                onClick={handleToggleFavorite}
+                                className={`p-2.5 rounded-full transition-all flex-shrink-0 ${isFavorited ? 'bg-red-50 text-red-500 hover:bg-red-100' : 'bg-gray-50 text-gray-400 hover:bg-gray-100 hover:text-red-500'}`}
+                            >
                                 <Heart size={22} fill={isFavorited ? "currentColor" : "none"} strokeWidth={isFavorited ? 0 : 2} />
                             </button>
                         </div>
@@ -370,9 +380,14 @@ export default function ProductDetailClient({
 
             <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-3 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] flex items-center gap-3 safe-area-pb" style={{ zIndex: Z_INDEX.STICKY_CONTENT }}>
                 <div className="flex-1 min-w-0 flex flex-col justify-center">
-                    <div className="flex items-center justify-between">
-                        <p className="text-xs font-bold text-gray-900 truncate mr-2">{product.title}</p>
-                        <div className="flex items-baseline gap-2">
+                    {/*
+                       🔴 修复 2：移动端底部栏
+                       标题：添加 flex-1, truncate (确保长标题省略)
+                       价格：添加 flex-shrink-0 (防止被标题挤没)
+                    */}
+                    <div className="flex items-center justify-between gap-2">
+                        <p className="text-xs font-bold text-gray-900 truncate flex-1">{product.title}</p>
+                        <div className="flex items-baseline gap-2 flex-shrink-0">
                             {isOnSale ? (
                                 <>
                                     <p className="text-xs font-bold text-[#b62337] whitespace-nowrap">${product.currentPrice}</p>

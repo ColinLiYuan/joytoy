@@ -1,6 +1,5 @@
 // services/blog-service.ts
 
-import { FrontApiResponse } from '@/types/api';
 import { ADMIN_CONFIG } from '@/lib/api-config';
 import { AdminBlogResponse, AdminBlogListResponse } from '@/types/admin/adminBlog';
 import {ReleaseBlogRequest} from "../types/admin/adminBlog";
@@ -79,10 +78,7 @@ class BlogService {
                 throw new Error('Failed to fetch blog');
             }
 
-            const apiResponse: FrontApiResponse = await response.json();
-            if (!apiResponse.success) {
-                throw new Error(apiResponse.message || 'Get blog failed');
-            }
+            const apiResponse = await response.json();
 
             return apiResponse.data;
         } catch (error) {
@@ -105,7 +101,7 @@ class BlogService {
                 throw new Error(errorData?.error || `Failed to create blog: ${response.status}`);
             }
 
-            const apiResponse: FrontApiResponse = await response.json();
+            const apiResponse = await response.json();
             return apiResponse.data;
         } catch (error) {
             console.error('Create blog failed:', error);
@@ -133,7 +129,7 @@ class BlogService {
                 throw new Error(errorData?.error || `上传失败: ${response.status}`);
             }
 
-            const apiResponse: FrontApiResponse = await response.json();
+            const apiResponse = await response.json();
             return apiResponse.data;
 
         } catch (error) {

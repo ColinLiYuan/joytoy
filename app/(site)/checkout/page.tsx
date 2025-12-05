@@ -3,15 +3,16 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Loader2, ShoppingBag, Tag, Lock, ArrowLeft, LogIn } from 'lucide-react'; // ✅ Lucide Icons
+import { Loader2, ShoppingBag, Tag, Lock, ArrowLeft, LogIn } from 'lucide-react';
 import ShippingForm from './shipping';
 import OrderSummary from './orderSummary';
 import { useShipping } from '@/hooks/useShipping';
 import { orderService } from '@/services/orderService';
-import { OrderCreateRequest, OrderItemRequest, AddressRequest } from '@/types/order';
-import { getUserFullName, getUserEmail, getUserId, getCartId } from '@/lib/user-utils';
+import { OrderCreateRequest, OrderItemRequest } from '@/types/order';
+import { getUserFullName, getUserEmail } from '@/lib/user-utils';
 import { useCartStore } from '@/stores/useCartStore';
 import { useAuth } from '@/contexts/authContext';
+import { useToast } from '@/contexts/toastContext';
 
 export default function CheckoutPage() {
     const router = useRouter();
@@ -22,12 +23,14 @@ export default function CheckoutPage() {
     // Coupon & Shipping State
     const [couponCode, setCouponCode] = useState('');
     const [discountAmount, setDiscountAmount] = useState(0);
-    const [shippingFee, setShippingFee] = useState(0); // 默认为 0，后续可根据地址计算
+    const [shippingFee, setShippingFee] = useState(0);
     const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
 
     const { isLoggedIn, openAuthModal, isClient } = useAuth();
     const { cart, getCart, loading: cartLoading } = useCartStore();
     const { getShippingFormData } = useShipping({ userEmail: getUserEmail(), userName: getUserFullName() });
+
+    const { showToast } = useToast();
 
     // 1. 初始化检查
     useEffect(() => {
@@ -46,7 +49,7 @@ export default function CheckoutPage() {
                             init();
                         }
                     });
-                    setIsLoading(false); // 停止 Loading，显示“未登录”状态页
+                    setIsLoading(false);
                     return;
                 }
 
@@ -88,9 +91,7 @@ export default function CheckoutPage() {
             if (couponCode.toUpperCase() === 'MYTH20') {
                 const subtotal = orderItems.reduce((sum, i) => sum + (i.unitPrice * i.quantity), 0);
                 setDiscountAmount(subtotal * 0.2);
-                // alert('Coupon Applied!'); // 建议用 toast 替换 alert
             } else {
-                // alert('Invalid Code');
                 setDiscountAmount(0);
             }
             setIsApplyingCoupon(false);
@@ -101,32 +102,35 @@ export default function CheckoutPage() {
     const handleProceedToPayment = async () => {
         setIsCreatingOrder(true);
         try {
-            const userId = getUserId();
-            const cartId = getCartId();
-            if (!userId || !cartId) throw new Error('Session Error');
-
             const formData = getShippingFormData();
             const orderData: OrderCreateRequest = {
-                userId, cartId, items: orderItems,
-                shippingAddress: { ...formData.shippingAddress, addressLine2: formData.shippingAddress.addressLine2 || '' },
-                paymentMethod: 'CREDIT_CARD', shippingMethod: 'STANDARD', customerNote: formData.orderNotes,
-                shippingFee, discountAmount
+                items: orderItems,
+                shippingAddress: {
+                    ...formData.shippingAddress,
+                    addressLine2: formData.shippingAddress.addressLine2 || ''
+                },
+                paymentMethod: 'CREDIT_CARD',
+                shippingMethod: 'STANDARD',
+                customerNote: formData.orderNotes,
+                shippingFee,
+                discountAmount
             };
 
-            const res = await orderService.createOrder(orderData);
-            if (res.success && res.data) {
+            const result = await orderService.createOrder(orderData);
+            if (result.success && result.data) {
                 localStorage.setItem('currentOrder', JSON.stringify({
-                    orderId: res.data.id,
-                    orderNumber: res.data.orderNumber,
-                    totalAmount: res.data.finalAmount,
+                    orderId: result.data.id,
+                    orderNumber: result.data.orderNumber,
+                    totalAmount: result.data.finalAmount,
                     items: orderItems
                 }));
                 useCartStore.getState().clearCart();
-                router.push(`/payment?orderId=${res.data.id}`);
+                router.push(`/payment?orderId=${result.data.id}`);
+            } else {
+                showToast('error', 'Error', result.message || 'System Error');
             }
         } catch (e) {
             console.error(e);
-            // alert('Order Failed');
         } finally {
             setIsCreatingOrder(false);
         }
@@ -143,7 +147,6 @@ export default function CheckoutPage() {
     }
 
     // 2. ✅ Not Logged In State (强制阻断)
-    // 如果用户未登录（即使关掉了弹窗），显示这个页面，不展示表单
     if (!isLoggedIn) {
         return (
             <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4 w-full max-w-full overflow-x-hidden">
@@ -231,8 +234,6 @@ export default function CheckoutPage() {
                     <div className="lg:col-span-5 space-y-6">
                         <OrderSummary
                             orderItems={orderItems}
-                            // discount={discountAmount} // 如果 OrderSummary 组件支持 props 可传入
-                            // shipping={shippingFee}
                         />
 
                         {/* Coupon Input */}

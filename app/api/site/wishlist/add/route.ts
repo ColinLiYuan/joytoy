@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { apiPost, handleApiError } from '@/lib/api-utils';
-import { FrontApiResponse } from '@/types/api';
+import { getToken } from '@/lib/cookie-utils';
 
 // add to wishlist
 export async function POST(
@@ -8,19 +8,42 @@ export async function POST(
 ) {
     try {
         const body = await request.json();
-        const result: FrontApiResponse = await apiPost(`/api/V1/wishlist/items`, body);
 
-        if (result.success) {
-            return NextResponse.json(result);
-        } else {
+        // 1. 获取 token
+        const token = await getToken();
+
+        if (!token) {
             return NextResponse.json(
-                { error: result.error || '添加到心愿单失败' },
-                { status: 400 }
+                {
+                    success: false,
+                    error: '用户未登录，无法添加心愿单'
+                },
+                { status: 401 }
             );
         }
+
+        // 2. 准备请求头，添加 Authorization
+        const requestOptions = {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            },
+        };
+
+        // 3. 调用后端 API 添加到心愿单
+        const result = await apiPost(`/api/V1/wishlist`, body, requestOptions);
+
+        return NextResponse.json(result);
+
     } catch (error) {
         console.error('添加到心愿单代理错误:', error);
-        const errorResult = handleApiError(error);
-        return NextResponse.json(errorResult, { status: 500 });
+        const { errorMessage } = handleApiError(error);
+        return NextResponse.json(
+            {
+                success: false,
+                errorMessage
+            },
+            { status: 500 }
+        );
     }
 }

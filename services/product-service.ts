@@ -1,7 +1,6 @@
 // services/product-service.ts
 
 import { ProductListResponse } from '@/types/product';
-import { FrontApiResponse } from '@/types/api';
 import { ADMIN_CONFIG } from '@/lib/api-config';
 import {AdminProductResponse, ReleaseProductRequest} from "@/types/admin/adminProduct";
 import {ProductResponse} from "@/types/product";
@@ -39,11 +38,12 @@ class ProductService {
                 throw new Error('Failed to fetch products');
             }
 
-            // console.log('productService response ' + response.ok)
             const apiResponse = await response.json();
 
+            console.log('productService response ' + apiResponse.data)
+
             if (!apiResponse.success) {
-                throw new Error(apiResponse.error || 'Failed to fetch products');
+                throw new Error(apiResponse.error || 'Failed to fetch products ad');
             }
 
             // console.log('productService apiResponse ' + apiResponse.success)
@@ -78,7 +78,7 @@ class ProductService {
                 throw new Error(errorData?.error || `Failed to release product: ${response.status}`);
             }
 
-            const apiResponse: FrontApiResponse = await response.json();
+            const apiResponse = await response.json();
             return apiResponse.data;
 
         } catch (error) {
@@ -97,13 +97,8 @@ class ProductService {
                     'Content-Type': 'application/json',
                 },
             });
-            if (!response.ok) {
-                throw new Error('Failed to fetch product by slug');
-            }
-            const apiResponse: FrontApiResponse = await response.json();
-            if (!apiResponse.success) {
-                throw new Error(apiResponse.message || 'Get product by slug failed');
-            }
+
+            const apiResponse = await response.json();
 
             const productResponse: AdminProductResponse = apiResponse.data;
 
@@ -172,7 +167,7 @@ class ProductService {
                 throw new Error(errorData?.error || `上传失败: ${response.status}`);
             }
 
-            const apiResponse: FrontApiResponse = await response.json();
+            const apiResponse = await response.json();
             return apiResponse.data;
 
         } catch (error) {
@@ -216,26 +211,19 @@ class ProductService {
         try {
             const url = `/api/site/product/related?slug=${encodeURIComponent(slug)}&userId=${userId}`;
             // console.log('getRelatedProducts url : ', url)
-            const res = await fetch(url, {
+            const response = await fetch(url, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
                 },
             });
 
-            if (!res.ok) {
-                console.error('Failed to fetch related products');
-                return [];
-            }
+            // 关联产品比较特殊，接口直接返回产品列表，而不是apiResult
+            const result = await response.json();
 
-            const result = await res.json();
+            console.log('getRelatedProducts result: ', result)
 
-            // 兼容不同的返回格式：可能是直接数组，也可能是 { success: true, data: [] }
-            if (Array.isArray(result)) {
-                return result;
-            }
-
-            return result.data || [];
+            return result || [];
         } catch (error) {
             console.error('Error in product service client:', error);
             return [];

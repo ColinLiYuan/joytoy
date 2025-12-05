@@ -14,15 +14,12 @@ interface CartStore {
     totalPrice: number;
 
     // Actions
-    getCart: (cartId?: string) => Promise<CartResponse | undefined>;
+    getCart: () => Promise<CartResponse | undefined>;
     addItemToCart: (request: AddToCartRequest) => Promise<CartResponse | undefined>;
     updateItemQuantity: (itemId: number, quantity: number) => Promise<CartResponse | undefined>;
     removeItemFromCart: (itemId: number) => Promise<CartResponse | undefined>;
     clearError: () => void;
     clearCart: () => void;
-
-    // Helper
-    getCartId: () => string; // 确保返回 string，默认为 '0'
 }
 
 // 🛠️ 提取公共计算函数 (DRY原则)
@@ -34,21 +31,6 @@ const calculateTotals = (cart: CartResponse | null) => {
     };
 };
 
-// 🛠️ 提取 LocalStorage 解析逻辑
-const getStoredCartId = (): string => {
-    if (typeof window === 'undefined') return '0';
-    try {
-        const userInfoStr = localStorage.getItem('userInfo');
-        if (userInfoStr) {
-            const userInfo = JSON.parse(userInfoStr);
-            return userInfo.cartId?.toString() || '0';
-        }
-    } catch (error) {
-        console.error('Failed to parse cartId from userInfo:', error);
-    }
-    return '0';
-};
-
 export const useCartStore = create<CartStore>()(
     persist(
         (set, get) => ({
@@ -58,15 +40,10 @@ export const useCartStore = create<CartStore>()(
             totalItems: 0,
             totalPrice: 0,
 
-            // 获取 CartId，如果没有则返回 '0'
-            getCartId: () => getStoredCartId(),
-
-            getCart: async (cartId?: string) => {
-                const targetCartId = cartId || get().getCartId();
-
+            getCart: async () => {
                 set({ loading: true, error: null });
                 try {
-                    const cartResponse = await cartService.getCart(targetCartId);
+                    const cartResponse = await cartService.getCart();
                     const totals = calculateTotals(cartResponse);
 
                     set({
@@ -83,11 +60,10 @@ export const useCartStore = create<CartStore>()(
             },
 
             addItemToCart: async (request: AddToCartRequest) => {
-                const cartId = get().getCartId();
                 set({ loading: true, error: null });
 
                 try {
-                    const updatedCart = await cartService.addItemToCart(cartId, request);
+                    const updatedCart = await cartService.addItemToCart(request);
                     const totals = calculateTotals(updatedCart);
 
                     set({
@@ -107,12 +83,10 @@ export const useCartStore = create<CartStore>()(
             },
 
             updateItemQuantity: async (itemId: number, quantity: number) => {
-                const cartId = get().getCartId();
-                // 乐观更新 UI 还是等待服务器？为了准确性，这里选择等待服务器
                 set({ loading: true, error: null });
 
                 try {
-                    const updatedCart = await cartService.updateItemQuantity(cartId, itemId, quantity);
+                    const updatedCart = await cartService.updateItemQuantity(itemId, quantity);
                     const totals = calculateTotals(updatedCart);
 
                     set({
@@ -130,16 +104,14 @@ export const useCartStore = create<CartStore>()(
             },
 
             removeItemFromCart: async (itemId: number) => {
-                const cartId = get().getCartId();
                 set({ loading: true, error: null });
 
                 try {
                     // 1. 先执行删除
-                    await cartService.removeItemFromCart(cartId, itemId);
+                    await cartService.removeItemFromCart(itemId);
 
                     // 2. 重新获取最新购物车状态
-                    // (优化点：如果后端 removeItem 接口直接返回了最新的 Cart 对象，这里就不用再调一次 getCart 了)
-                    const updatedCart = await cartService.getCart(cartId);
+                    const updatedCart = await cartService.getCart();
                     const totals = calculateTotals(updatedCart);
 
                     set({
@@ -162,8 +134,6 @@ export const useCartStore = create<CartStore>()(
 
             clearCart: () => {
                 set({ cart: null, totalItems: 0, totalPrice: 0 });
-                // 注意：这里通常只清除 store 状态，不清除 localStorage 里的 'cart-storage'
-                // 除非你是想彻底重置用户的所有本地缓存
             },
         }),
         {
