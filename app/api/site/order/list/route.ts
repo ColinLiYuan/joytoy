@@ -30,8 +30,8 @@ export async function GET(request: NextRequest) {
             },
         };
 
-        // 3. 调用后端API获取订单列表（不需要传 userId）
-        const result = await apiGet(`/api/V1/order/list?page=${page}&size=${size}`, requestOptions);
+        let url = `/api/V1/order/list?page=${page}&size=${size}`;
+        const result = await apiGet(url, requestOptions);
 
         return NextResponse.json(result);
 

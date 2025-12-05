@@ -221,7 +221,7 @@ class ProductService {
             // 关联产品比较特殊，接口直接返回产品列表，而不是apiResult
             const result = await response.json();
 
-            console.log('getRelatedProducts result: ', result)
+            // console.log('getRelatedProducts result: ', result)
 
             return result || [];
         } catch (error) {
