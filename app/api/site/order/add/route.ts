@@ -3,7 +3,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { apiPost, handleApiError } from '@/lib/api-utils';
 import { OrderCreateRequest } from '@/types/order';
 import { getToken } from '@/lib/cookie-utils';
-import { FrontApiResponse } from '@/types/api';
 
 export async function POST(request: NextRequest) {
     try {
@@ -95,20 +94,18 @@ export async function POST(request: NextRequest) {
         };
 
         // 调用后端API创建订单
-        const result: FrontApiResponse<any> = await apiPost('/api/V1/order', orderData, requestOptions);
+        const result = await apiPost('/api/V1/order', orderData, requestOptions);
         // console.log('🟢 Backend API response:', result);
 
-        // 关键修复：直接返回 result，而不是 result.data
-        // result 已经是 FrontApiResponse 格式
-        return NextResponse.json(result.data);
+        return NextResponse.json(result);
 
     } catch (error) {
         console.error('🔴 ORDER CREATE Error:', error);
-        const { error: errorMessage } = handleApiError(error);
+        const { errorMessage } = handleApiError(error);
         return NextResponse.json(
             {
                 success: false,
-                error: errorMessage
+                errorMessage
             },
             { status: 500 }
         );

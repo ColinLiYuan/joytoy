@@ -6,10 +6,8 @@ export async function GET(
     request: NextRequest,
     { params }: { params: Promise<{ orderId: string }> }
 ) {
-    console.log('🟢 ORDER GET route HIT!');
     try {
         const { orderId } = await params;
-        console.log('🟢 Getting order:', orderId);
 
         if (!orderId) {
             return NextResponse.json(
@@ -25,20 +23,7 @@ export async function GET(
         const result = await apiGet(`/api/V1/order/${orderId}`);
         console.log('🟢 Order get API result:', result);
 
-        if (!result.success) {
-            return NextResponse.json(
-                {
-                    success: false,
-                    error: result.error || 'Failed to get order'
-                },
-                { status: 400 }
-            );
-        }
-
-        return NextResponse.json({
-            success: true,
-            data: result.data
-        });
+        return NextResponse.json(result);
 
     } catch (error) {
         console.error('🔴 ORDER GET Error:', error);

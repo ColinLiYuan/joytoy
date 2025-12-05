@@ -1,6 +1,5 @@
 // services/servers/blog-service-server.ts
 
-import { BackendApiResponse } from '@/types/api';
 import { SERVER_CONFIG } from '@/lib/api-config';
 import { BlogListResponse, BlogResponse } from '@/types/site/blog';
 
@@ -23,7 +22,7 @@ class BlogServiceServer {
             }
 
             const url = `${SERVER_CONFIG.baseURL}${SERVER_CONFIG.apiRoutes.blog}/list?${queryParams}`;
-            console.log('BlogServiceServer list url: ', url)
+            // console.log('BlogServiceServer list url: ', url)
             const response = await fetch(url, {
                 cache: 'no-store',
                 headers: {
@@ -36,10 +35,6 @@ class BlogServiceServer {
             }
 
             const apiResponse = await response.json();
-
-            if (!apiResponse.success) {
-                throw new Error(apiResponse.error || 'Failed to fetch blogs');
-            }
 
             // console.log('BlogServiceServer list apiResponse.data: ', apiResponse.data)
 
@@ -61,7 +56,7 @@ class BlogServiceServer {
     async getBySlug(slug: string): Promise<BlogResponse> {
         try {
             const url = `${SERVER_CONFIG.baseURL}${SERVER_CONFIG.apiRoutes.blog}/detail?slug=${slug}`;
-            console.log('BlogServiceServer getBySlug url:', url);
+            // console.log('BlogServiceServer getBySlug url:', url);
             const response = await fetch(url, {
                 cache: 'no-store',
                 headers: {
@@ -73,16 +68,14 @@ class BlogServiceServer {
                 throw new Error('Failed to fetch blog');
             }
 
-            const apiResponse: BackendApiResponse = await response.json();
+            const apiResponse = await response.json();
 
-            return apiResponse;
+            return apiResponse.data!;
         } catch (error) {
             console.error('Get blog failed:', error);
             throw error;
         }
     }
-
-
 }
 
 export const blogServiceServer = new BlogServiceServer();

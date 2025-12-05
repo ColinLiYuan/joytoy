@@ -23,9 +23,9 @@ export async function GET(request: NextRequest) {
         return NextResponse.json(result);
     } catch (error) {
         console.error('🔴 Product LIST Error:', error);
-        const { error: errorMessage } = handleApiError(error);
+        const { errorMessage } = handleApiError(error);
         return NextResponse.json(
-            { success: false, error: errorMessage },
+            { success: false, errorMessage },
             { status: 500 }
         );
     }

@@ -3,30 +3,16 @@ import { apiGet, apiPost, apiPut, apiDelete, RequestOptions } from './api-utils'
 import { BackendApiResponse } from '@/types/api';
 
 export interface BackendApiOptions extends RequestOptions {
-
     requiresAuth?: boolean;
-
-    /**
-     * Whether to automatically handle business exceptions (default: true)
-     * true: Business exceptions return error information directly
-     * false: Throw exception
-     */
     handleBusinessError?: boolean;
-
-    /**
-     * Default error message (used for system exceptions)
-     */
     defaultErrorMessage?: string;
 }
 
 async function getAuthToken(): Promise<string | null> {
     try {
-        // 检查是否在客户端环境
         if (typeof window !== 'undefined') {
-            // 客户端环境
             return getClientAuthToken();
         } else {
-            // 服务端环境
             const { getToken } = await import('@/lib/cookie-utils');
             return getToken();
         }
@@ -43,13 +29,11 @@ function getClientAuthToken(): string | null {
         if (userInfoStr) {
             try {
                 const userInfo = JSON.parse(userInfoStr);
-                // 检查 token 是否存在
                 if (userInfo?.token) {
                     return userInfo.token;
                 }
             } catch (parseError) {
                 console.error('Failed to parse userInfo from localStorage:', parseError);
-                // 清理无效数据
                 localStorage.removeItem('userInfo');
                 localStorage.removeItem('isLoggedIn');
             }
@@ -88,7 +72,6 @@ export async function callBackendApi<T = any>(
     try {
         let response: BackendApiResponse<T>;
 
-        // 如果需要认证，获取token并添加到headers
         const headers: Record<string, string> = { ...(restOptions.headers as Record<string, string>) };
 
         if (requiresAuth) {
@@ -103,20 +86,19 @@ export async function callBackendApi<T = any>(
             headers: headers
         };
 
-        // Call existing api-utils based on method
         switch (method.toUpperCase()) {
             case 'POST':
-                response = await apiPost<T>(endpoint, restOptions.body, apiOptions); // ✅ 传递 apiOptions
+                response = await apiPost<T>(endpoint, restOptions.body, apiOptions);
                 break;
             case 'PUT':
-                response = await apiPut<T>(endpoint, restOptions.body, apiOptions); // ✅ 传递 apiOptions
+                response = await apiPut<T>(endpoint, restOptions.body, apiOptions);
                 break;
             case 'DELETE':
-                response = await apiDelete<T>(endpoint, apiOptions); // ✅ 传递 apiOptions
+                response = await apiDelete<T>(endpoint, apiOptions);
                 break;
             case 'GET':
             default:
-                response = await apiGet<T>(endpoint, apiOptions); // ✅ 传递 apiOptions
+                response = await apiGet<T>(endpoint, apiOptions);
                 break;
         }
 
@@ -125,8 +107,8 @@ export async function callBackendApi<T = any>(
             return response;
         }
 
-        // Business exception: use backend error information
-        const errorMessage = response.error || 'Operation failed';
+        // Business exception: use backend message information
+        const errorMessage = response.message || 'Operation failed';  // 改为 message
         console.warn(`Business exception [${endpoint}]:`, errorMessage);
 
         if (!handleBusinessError) {
@@ -135,36 +117,32 @@ export async function callBackendApi<T = any>(
 
         return {
             success: false,
-            error: errorMessage,
+            message: errorMessage,  // 改为 message
             data: response.data
         };
 
     } catch (error) {
-        // System exception: network error, timeout, server error, etc.
         console.error(`System exception [${endpoint}]:`, error);
 
-        // Throw all exceptions
         if (!handleBusinessError) {
             throw error;
         }
 
         let errorMessage = defaultErrorMessage;
 
-        // Provide more specific prompts for known error types
         if (error instanceof Error) {
             if (error.name === 'AbortError' || error.message.includes('timeout')) {
                 errorMessage = 'Request timeout, please check network connection';
             } else if (error.message.includes('Network')) {
                 errorMessage = 'Network connection failed, please check network settings';
             } else {
-                // Use the original error message if available
                 errorMessage = error.message || errorMessage;
             }
         }
 
         return {
             success: false,
-            error: errorMessage,
+            message: errorMessage,  // 改为 message
             data: undefined
         };
     }

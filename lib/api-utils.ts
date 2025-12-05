@@ -2,7 +2,7 @@
 import { BACKEND_CONFIG } from '@/lib/api-config';
 import { BackendApiResponse, ApiErrorType } from '@/types/api';
 
-interface RequestOptions extends RequestInit {
+export interface RequestOptions extends RequestInit {  // 添加 export
     timeout?: number;
     retry?: number;
 }
@@ -300,9 +300,13 @@ export function handleApiError(
         message = errorInput.message;
     } else if (errorInput && typeof errorInput === 'object') {
         // 处理 BackendApiResponse 格式
-        message = errorInput.message || 'Unknown error';
-        errorType = errorInput.errorType || 'unknown';
-        status = errorInput.status;
+        const typedError = errorInput as Partial<BackendApiResponse<any> & {
+            status?: number;
+            errorType?: string
+        }>;
+        message = typedError.message || 'Unknown error';
+        errorType = typedError.errorType || 'unknown';
+        status = typedError.status;
     }
 
     // 根据 errorType 返回相应的处理结果

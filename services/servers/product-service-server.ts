@@ -90,7 +90,7 @@ class ProductServiceServer {
             requiresAuth: true
         });
 
-        console.log('getHeroProducts result:', result.data)
+        // console.log('getHeroProducts result:', result.data)
         return result.data!;
     }
 }

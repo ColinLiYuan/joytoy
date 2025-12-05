@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
             return NextResponse.json(
                 {
                     success: false,
-                    error: '用户未登录，无法获取订单列表'
+                    errorMessage: '用户未登录，无法获取订单列表'
                 },
                 { status: 401 }
             );
@@ -33,20 +33,7 @@ export async function GET(request: NextRequest) {
         // 3. 调用后端API获取订单列表（不需要传 userId）
         const result = await apiGet(`/api/V1/order/list?page=${page}&size=${size}`, requestOptions);
 
-        if (!result.success) {
-            return NextResponse.json(
-                {
-                    success: false,
-                    error: result.error || 'Failed to get orders'
-                },
-                { status: 400 }
-            );
-        }
-
-        return NextResponse.json({
-            success: true,
-            data: result.data
-        });
+        return NextResponse.json(result);
 
     } catch (error) {
         console.error('🔴 ORDERS LIST Error:', error);

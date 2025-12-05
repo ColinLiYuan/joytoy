@@ -4,7 +4,6 @@ import {
     LoginRequest,
     LoginResponse,
     RegisterResponse } from '@/types/auth';
-import { FrontApiResponse } from '@/types/api';
 import { SERVER_CONFIG } from '@/lib/api-config';
 
 class AuthService {
@@ -25,21 +24,10 @@ class AuthService {
                 throw new Error(errorData.error || 'Login failed');
             }
 
-            const apiResponse: FrontApiResponse = await response.json();
-            if (!apiResponse.success) {
-                throw new Error(apiResponse.message || 'Login failed');
-            }
+            const apiResponse = await response.json();
 
             const loginResponse: LoginResponse = apiResponse.data;
             // console.log('get loginResponse')
-
-            // 4. 保存 token 等
-            // if (loginResponse.token) {
-            //     localStorage.setItem('authToken', loginResponse.token);
-            // }
-            // localStorage.setItem('userInfo', JSON.stringify(loginResponse));
-            // localStorage.setItem('cartId', loginResponse.cartId.toString());
-            // localStorage.setItem('isLoggedIn', 'true');
 
             // 5. 返回业务数据
             return loginResponse;
@@ -63,10 +51,7 @@ class AuthService {
                 throw new Error(errorData.error || 'Registration failed');
             }
 
-            const apiResponse: FrontApiResponse = await response.json();
-            if (!apiResponse.success) {
-                throw new Error(apiResponse.message || 'Register failed');
-            }
+            const apiResponse = await response.json();
             const registerData: RegisterResponse = apiResponse.data;
 
             return registerData;

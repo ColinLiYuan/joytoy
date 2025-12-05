@@ -126,7 +126,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             showToast('success', 'Welcome Back', 'Successfully logged in');
 
             if (onSuccessCallbackRef.current) {
-                console.log('Executing onSuccessCallback');
+                // console.log('Executing onSuccessCallback');
                 onSuccessCallbackRef.current();
                 onSuccessCallbackRef.current = null;
             }
