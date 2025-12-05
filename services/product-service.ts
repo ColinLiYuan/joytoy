@@ -209,7 +209,7 @@ class ProductService {
         if (!slug) return [];
 
         try {
-            const url = `/api/site/product/related?slug=${encodeURIComponent(slug)}&userId=${userId}`;
+            const url = `/api/site/product/related?slug=${encodeURIComponent(slug)}`;
             // console.log('getRelatedProducts url : ', url)
             const response = await fetch(url, {
                 method: 'GET',

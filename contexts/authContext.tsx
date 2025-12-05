@@ -79,7 +79,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }, []);
 
     const logout = useCallback(() => {
-        console.log('Logging out...');
+        // console.log('Logging out...');
         setIsLoggedIn(false);
         setUserInfo(null);
 

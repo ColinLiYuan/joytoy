@@ -117,7 +117,7 @@ export default function CheckoutPage() {
             };
 
             const result = await orderService.createOrder(orderData);
-            if (result.success && result.data) {
+            if (result.data) {
                 localStorage.setItem('currentOrder', JSON.stringify({
                     orderId: result.data.id,
                     orderNumber: result.data.orderNumber,

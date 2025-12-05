@@ -1,10 +1,11 @@
 // services/orderService.ts
 import { OrderCreateRequest, OrderResponse } from '@/types/order';
 import { SERVER_CONFIG } from '@/lib/api-config';
+import {BackendApiResponse} from "@/types/api";
 
 class OrderService {
     // 创建订单
-    async createOrder(orderCreateRequest: OrderCreateRequest): Promise<OrderResponse> {
+    async createOrder(orderCreateRequest: OrderCreateRequest): Promise<BackendApiResponse> {
         const url = `${SERVER_CONFIG.apiRoutes.order}/add`;
         // console.log('🟢 Creating order, URL:', url);
 
@@ -21,7 +22,6 @@ class OrderService {
 
         // console.log('createOrder service: ', apiResponse)
         return apiResponse;
-
     }
 
     // 获取订单详情

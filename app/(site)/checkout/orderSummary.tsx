@@ -25,7 +25,7 @@ export default function OrderSummary({ orderItems, discount = 0, shipping = 0 }:
                             {item.productImage && <Image src={getProductImageUrl('', item.productImage)} alt={item.productTitle} fill className="object-cover" />}
                             <span className="absolute top-0 right-0 bg-black text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-bl-lg">{item.quantity}</span>
                         </div>
-                        <div className="flex-1">
+                        <div className="flex-1 min-w-0">
                             <h4 className="text-sm font-medium text-gray-900 line-clamp-2">{item.productTitle}</h4>
                             <p className="text-xs text-gray-500 mt-1 capitalize">{item.color}</p>
                         </div>

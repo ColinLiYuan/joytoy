@@ -143,7 +143,7 @@ export async function handleApiResponse<T>(
         const backendResponse: BackendApiResponse<T> = data;
         const errorType = getErrorType(response.status, backendResponse);
 
-        console.log('--------------- response and backendResponse1', backendResponse)
+        // console.log('--------------- response and backendResponse1', backendResponse)
 
         // HTTP 异常或业务失败
         if (!response.ok || !backendResponse.success) {
