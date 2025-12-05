@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { apiGet, handleApiError } from '@/lib/api-utils';
-import { FrontApiResponse } from '@/types/api';
+import { BackendApiResponse } from '@/types/api';
 import { SessionManager } from '@/lib/session-utils';
 import { getToken } from '@/lib/cookie-utils';
 
@@ -31,7 +31,7 @@ export async function GET(
 
         // 4. 调用后端 API
         const url = `/api/V1/cart`;
-        const result: FrontApiResponse = await apiGet(url, requestOptions);
+        const result: BackendApiResponse = await apiGet(url, requestOptions);
 
         // console.log('cart get route:', result);
 
@@ -43,9 +43,9 @@ export async function GET(
 
         return response;
     } catch (error) {
-        const { error: errorMessage } = handleApiError(error);
+        const { errorMessage } = handleApiError(error);
         return NextResponse.json(
-            { success: false, error: errorMessage },
+            { success: false, errorMessage },
             { status: 500 }
         );
     }

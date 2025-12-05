@@ -28,3 +28,5 @@ export interface PaginatedResponse<T> extends BackendApiResponse<T[]> {
     total: number;
     totalPages: number;
 }
+
+export type ApiErrorType = 'network' | 'http' | 'system_business' | 'custom_business';

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { apiGet, handleApiError } from '@/lib/api-utils';
-import { BackendApiResponse } from '@/types/api';
 
 export async function GET(request: NextRequest) {
 
@@ -15,14 +14,14 @@ export async function GET(request: NextRequest) {
 
         const url = `/api/admin/V1/blog/${id}`;
 
-        const result:BackendApiResponse = await apiGet(url);
+        const result = await apiGet(url);
 
         return NextResponse.json(result);
     } catch (error) {
         console.error('🔴 Get Order Detail Error:', error);
-        const { error: errorMessage } = handleApiError(error);
+        const { errorMessage } = handleApiError(error);
         return NextResponse.json(
-            { success: false, error: errorMessage },
+            { success: false, errorMessage },
             { status: 500 }
         );
     }

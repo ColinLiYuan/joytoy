@@ -4,9 +4,7 @@ import { BackendApiResponse } from '@/types/api';
 
 // app/api/category/root
 // get roots
-export async function GET(
-    request: NextRequest
-) {
+export async function GET() {
     try {
         // logger.info('category root api start');
 
@@ -15,9 +13,9 @@ export async function GET(
 
         return NextResponse.json(result);
     } catch (error) {
-        const { error: errorMessage } = handleApiError(error);
+        const { errorMessage } = handleApiError(error);
         return NextResponse.json(
-            { success: false, error: errorMessage },
+            { success: false, errorMessage },
             { status: 500 }
         );
     }

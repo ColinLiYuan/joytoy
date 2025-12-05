@@ -1,6 +1,6 @@
 // lib/api-utils.ts
 import { BACKEND_CONFIG } from '@/lib/api-config';
-import { ApiResponse, ApiErrorType } from '@/types/api';
+import { BackendApiResponse, ApiErrorType } from '@/types/api';
 
 interface RequestOptions extends RequestInit {
     timeout?: number;
@@ -83,7 +83,7 @@ export async function proxyRequest(
  */
 function getErrorType(
     httpStatus: number,
-    backendResponse: ApiResponse<any>
+    backendResponse: BackendApiResponse<any>
 ): ApiErrorType {
     // 1. HTTP 级别异常 (400, 401, 403, 404, 500, 502 等)
     if (httpStatus >= 400) {
@@ -108,7 +108,7 @@ function getErrorType(
  */
 export async function handleApiResponse<T>(
     response: Response
-): Promise<ApiResponse<T> & {
+): Promise<BackendApiResponse<T> & {
     status?: number;
     errorType?: ApiErrorType;
 }> {
@@ -140,7 +140,7 @@ export async function handleApiResponse<T>(
             };
         }
 
-        const backendResponse: ApiResponse<T> = data;
+        const backendResponse: BackendApiResponse<T> = data;
         const errorType = getErrorType(response.status, backendResponse);
 
         // HTTP 异常或业务失败
@@ -188,7 +188,7 @@ async function apiRequest<T>(
     method: string,
     data?: any,
     options: RequestOptions = {}
-): Promise<ApiResponse<T> & {
+): Promise<BackendApiResponse<T> & {
     status?: number;
     errorType?: ApiErrorType;
 }> {
@@ -229,7 +229,7 @@ async function apiRequest<T>(
 export async function apiGet<T>(
     endpoint: string,
     options: RequestOptions = {}
-): Promise<ApiResponse<T> & {
+): Promise<BackendApiResponse<T> & {
     status?: number;
     errorType?: ApiErrorType;
 }> {
@@ -243,7 +243,7 @@ export async function apiPost<T>(
     endpoint: string,
     data?: any,
     options: RequestOptions = {}
-): Promise<ApiResponse<T> & {
+): Promise<BackendApiResponse<T> & {
     status?: number;
     errorType?: ApiErrorType;
 }> {
@@ -257,7 +257,7 @@ export async function apiPut<T>(
     endpoint: string,
     data?: any,
     options: RequestOptions = {}
-): Promise<ApiResponse<T> & {
+): Promise<BackendApiResponse<T> & {
     status?: number;
     errorType?: ApiErrorType;
 }> {
@@ -270,7 +270,7 @@ export async function apiPut<T>(
 export async function apiDelete<T>(
     endpoint: string,
     options: RequestOptions = {}
-): Promise<ApiResponse<T> & {
+): Promise<BackendApiResponse<T> & {
     status?: number;
     errorType?: ApiErrorType;
 }> {
@@ -280,19 +280,34 @@ export async function apiDelete<T>(
 /**
  * 错误处理工具函数
  */
-export function handleApiError(error: ApiResponse<any> & {
-    status?: number;
-    errorType?: ApiErrorType;
-}): {
+export function handleApiError(
+    errorInput: unknown  // 改为 unknown
+): {
     shouldHandle: boolean;
     errorMessage: string;
     errorType: string;
 } {
-    console.error('API Error:', error);
+    console.error('API Error:', errorInput);
 
-    switch (error.errorType) {
+    let message = '';
+    let errorType: string = 'unknown';
+    let status: number | undefined;
+
+    // 处理不同类型的输入
+    if (typeof errorInput === 'string') {
+        message = errorInput;
+    } else if (errorInput instanceof Error) {
+        message = errorInput.message;
+    } else if (errorInput && typeof errorInput === 'object') {
+        // 处理 BackendApiResponse 格式
+        message = errorInput.message || 'Unknown error';
+        errorType = errorInput.errorType || 'unknown';
+        status = errorInput.status;
+    }
+
+    // 根据 errorType 返回相应的处理结果
+    switch (errorType) {
         case 'network':
-            // 网络异常：需要统一处理
             return {
                 shouldHandle: true,
                 errorMessage: '网络连接异常，请检查网络后重试',
@@ -300,31 +315,27 @@ export function handleApiError(error: ApiResponse<any> & {
             };
 
         case 'http':
-            // HTTP 异常：需要统一处理
             return {
                 shouldHandle: true,
-                errorMessage: `服务器错误 (${error.status})，请稍后重试`,
+                errorMessage: `服务器错误 (${status || '未知'})，请稍后重试`,
                 errorType: 'http'
             };
 
         case 'system_business':
-            // C 开头的业务异常：需要统一处理
             return {
                 shouldHandle: true,
-                errorMessage: error.message || '系统业务异常',
+                errorMessage: message || '系统业务异常',
                 errorType: 'system_business'
             };
 
         case 'custom_business':
-            // 其他业务异常：留给调用者处理
             return {
                 shouldHandle: false,
-                errorMessage: error.message || '业务异常',
+                errorMessage: message || '业务异常',
                 errorType: 'custom_business'
             };
 
         default:
-            // 未知类型
             return {
                 shouldHandle: true,
                 errorMessage: '未知错误，请稍后重试',

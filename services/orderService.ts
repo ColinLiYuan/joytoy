@@ -1,11 +1,11 @@
 // services/orderService.ts
 import { OrderCreateRequest, OrderResponse } from '@/types/order';
-import { FrontApiResponse } from '@/types/api';
+import { BackendApiResponse } from '@/types/api';
 import { SERVER_CONFIG } from '@/lib/api-config';
 
 class OrderService {
     // 创建订单
-    async createOrder(orderCreateRequest: OrderCreateRequest): Promise<{ success: boolean; data?: any; error?: string }> {
+    async createOrder(orderCreateRequest: OrderCreateRequest): Promise<BackendApiResponse> {
         const url = `${SERVER_CONFIG.apiRoutes.order}/add`;
         // console.log('🟢 Creating order, URL:', url);
 
@@ -18,9 +18,9 @@ class OrderService {
             credentials: 'include',
         });
 
-        const apiResponse = await response.json();
+        const apiResponse:BackendApiResponse = await response.json();
 
-        console.log('createOrder service: ', apiResponse)
+        // console.log('createOrder service: ', apiResponse)
         return apiResponse;
 
     }
@@ -96,7 +96,7 @@ class OrderService {
                 throw new Error(errorData?.error || `Failed to get orders: ${response.status}`);
             }
 
-            let apiResponse: FrontApiResponse;
+            let apiResponse: BackendApiResponse;
             try {
                 apiResponse = responseText ? JSON.parse(responseText) : {};
             } catch (e) {

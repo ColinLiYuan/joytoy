@@ -50,9 +50,9 @@ export async function GET(request: NextRequest) {
 
     } catch (error) {
         console.error('🔴 ORDERS LIST Error:', error);
-        const { error: errorMessage } = handleApiError(error);
+        const { errorMessage } = handleApiError(error);
         return NextResponse.json(
-            { success: false, error: errorMessage },
+            { success: false, errorMessage },
             { status: 500 }
         );
     }

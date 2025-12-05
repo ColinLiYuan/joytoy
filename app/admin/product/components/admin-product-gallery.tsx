@@ -4,9 +4,8 @@
 import { useState, useRef } from 'react';
 import { productService } from '@/services/product-service';
 import { getProductImageUrl } from '@/lib/image-utils';
-import { resizeImageToPng } from '@/lib/utils/image-resize'; // 确保你保留了之前定义的这个工具
 
-// 引入 dnd-kit 相关库
+// --- dnd-kit 依赖 ---
 import {
     DndContext,
     closestCenter,
@@ -38,16 +37,16 @@ interface ImageUploadProps {
     updateProduct: (updates: Partial<Product>) => void;
 }
 
-// --- 子组件：可拖拽的图片项 ---
+// --- 子组件：可拖拽的相册项 ---
 interface SortableItemProps {
-    id: string;
-    url: string;
+    url: string; // 使用 url 作为唯一 id
     alt?: string;
     index: number;
     onRemove: (index: number) => void;
 }
 
-function SortableGalleryItem({ id, url, alt, index, onRemove }: SortableItemProps) {
+function SortableGalleryItem({ url, alt, index, onRemove }: SortableItemProps) {
+    // dnd-kit hook
     const {
         attributes,
         listeners,
@@ -55,13 +54,13 @@ function SortableGalleryItem({ id, url, alt, index, onRemove }: SortableItemProp
         transform,
         transition,
         isDragging
-    } = useSortable({ id });
+    } = useSortable({ id: url });
 
     const style = {
         transform: CSS.Transform.toString(transform),
         transition,
-        zIndex: isDragging ? 10 : 1, // 拖拽时层级提高
-        opacity: isDragging ? 0.5 : 1, // 拖拽时半透明
+        zIndex: isDragging ? 10 : 1,
+        opacity: isDragging ? 0.5 : 1, // 拖拽时变透明
     };
 
     return (
@@ -75,16 +74,17 @@ function SortableGalleryItem({ id, url, alt, index, onRemove }: SortableItemProp
             <img
                 src={getProductImageUrl('', url)}
                 alt={alt}
-                className="w-full h-full object-contain p-2 pointer-events-none" // 防止图片本身被拖拽干扰 dnd
+                className="w-full h-full object-contain p-2 pointer-events-none" // 禁止图片本身被拖拽选中
             />
 
             {/* 悬停遮罩 */}
             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors"></div>
 
-            {/* 删除按钮 - 需要阻止事件冒泡，否则点击删除会触发拖拽 */}
+            {/* 删除按钮 */}
             <button
                 type="button"
-                onPointerDown={(e) => e.stopPropagation()} // 关键：阻止拖拽事件
+                // 关键：阻止事件冒泡，防止点击删除时触发拖拽
+                onPointerDown={(e) => e.stopPropagation()}
                 onClick={(e) => {
                     e.stopPropagation();
                     onRemove(index);
@@ -107,16 +107,15 @@ function SortableGalleryItem({ id, url, alt, index, onRemove }: SortableItemProp
 export default function AdminProductGallery({ product, updateProduct }: ImageUploadProps) {
     const [mainImagePreview, setMainImagePreview] = useState<string | null>(null);
     const [uploading, setUploading] = useState(false);
-    const [progressText, setProgressText] = useState('');
 
     const mainImageInputRef = useRef<HTMLInputElement>(null);
     const galleryInputRef = useRef<HTMLInputElement>(null);
 
-    // 配置 dnd-kit 传感器 (鼠标和触摸)
+    // 配置 dnd-kit 传感器
     const sensors = useSensors(
         useSensor(PointerSensor, {
             activationConstraint: {
-                distance: 5, // 移动 5px 后才开始拖拽，防止误触点击
+                distance: 5, // 移动 5px 后才判定为拖拽，防止误触点击
             },
         }),
         useSensor(KeyboardSensor, {
@@ -124,16 +123,17 @@ export default function AdminProductGallery({ product, updateProduct }: ImageUpl
         })
     );
 
-    // 处理拖拽结束
+    // 拖拽结束处理函数
     const handleDragEnd = (event: DragEndEvent) => {
         const { active, over } = event;
 
-        if (over && active.id !== over.id) {
-            const oldIndex = product.galleries?.findIndex((item) => item.url === active.id);
-            const newIndex = product.galleries?.findIndex((item) => item.url === over.id);
+        // 如果拖拽对象和放置对象不同，说明发生了移动
+        if (over && active.id !== over.id && product.galleries) {
+            const oldIndex = product.galleries.findIndex((item) => item.url === active.id);
+            const newIndex = product.galleries.findIndex((item) => item.url === over.id);
 
-            if (oldIndex !== undefined && newIndex !== undefined && product.galleries) {
-                // 使用 dnd-kit 的 arrayMove 重新排序数组
+            if (oldIndex !== -1 && newIndex !== -1) {
+                // 重新排序数组
                 const newGalleries = arrayMove(product.galleries, oldIndex, newIndex);
                 updateProduct({ galleries: newGalleries });
             }
@@ -160,32 +160,31 @@ export default function AdminProductGallery({ product, updateProduct }: ImageUpl
         }
 
         if (file) {
-            // 这里我加上了 resizeImageToPng 调用，这符合你之前的需求
-            // 如果你决定不通过代码 resize，请删除这一步并恢复 validateFile
+            // 校验格式
+            if (!validateFile(file)) {
+                if (mainImageInputRef.current) mainImageInputRef.current.value = '';
+                return;
+            }
+
             try {
                 setUploading(true);
-                setProgressText('正在处理主图...');
-
-                // 1. 处理图片 (强制 1600x1600 PNG)
-                const processedFile = await resizeImageToPng(file);
-
-                // 2. 上传
-                const result = await productService.uploadMainImage(processedFile, product.slug);
+                // 直接上传原文件
+                const result = await productService.uploadMainImage(file, product.slug);
                 updateProduct({ image: result.url });
 
-                // 3. 预览
+                // 本地预览
                 const reader = new FileReader();
                 reader.onload = (e) => {
                     setMainImagePreview(e.target?.result as string);
                 };
-                reader.readAsDataURL(processedFile);
+                reader.readAsDataURL(file);
 
             } catch (error) {
                 console.error('主图上传失败:', error);
                 alert('主图上传失败，请重试');
             } finally {
                 setUploading(false);
-                setProgressText('');
+                // 清理 input，允许重复选择同一文件
                 if (mainImageInputRef.current) mainImageInputRef.current.value = '';
             }
         }
@@ -202,12 +201,25 @@ export default function AdminProductGallery({ product, updateProduct }: ImageUpl
         }
 
         if (files && files.length > 0) {
+            // 过滤非 PNG 文件
+            const validFiles: File[] = [];
+            for (let i = 0; i < files.length; i++) {
+                if (validateFile(files[i])) {
+                    validFiles.push(files[i]);
+                }
+            }
+
+            if (validFiles.length === 0) {
+                if (galleryInputRef.current) galleryInputRef.current.value = '';
+                return;
+            }
+
             try {
                 setUploading(true);
                 const newGalleries = [];
                 const existingGalleries = product.galleries || [];
 
-                // 计算起始索引
+                // 计算起始索引，防止文件名冲突
                 const usedIndexes = new Set<number>();
                 existingGalleries.forEach(gallery => {
                     const match = gallery.url.match(/-(\d+)\./);
@@ -220,15 +232,11 @@ export default function AdminProductGallery({ product, updateProduct }: ImageUpl
                 }
 
                 // 循环上传
-                for (let i = 0; i < files.length; i++) {
+                for (let i = 0; i < validFiles.length; i++) {
                     const currentIndex = nextAvailableIndex + i;
-                    setProgressText(`正在上传 ${i + 1}/${files.length}...`);
 
-                    // 1. 处理图片
-                    const processedFile = await resizeImageToPng(files[i]);
-
-                    // 2. 上传
-                    const result = await productService.uploadGalleryImage(processedFile, product.slug, currentIndex);
+                    // 直接上传原文件
+                    const result = await productService.uploadGalleryImage(validFiles[i], product.slug, currentIndex);
 
                     newGalleries.push({
                         url: result.url,
@@ -245,7 +253,6 @@ export default function AdminProductGallery({ product, updateProduct }: ImageUpl
                 alert('部分图片上传失败');
             } finally {
                 setUploading(false);
-                setProgressText('');
                 if (galleryInputRef.current) galleryInputRef.current.value = '';
             }
         }
@@ -270,9 +277,9 @@ export default function AdminProductGallery({ product, updateProduct }: ImageUpl
         <div className="bg-white rounded-lg shadow-sm border">
             <div className="px-6 py-4 border-b">
                 <h3 className="text-lg font-semibold text-gray-900">图片管理</h3>
-                <div className="text-xs text-gray-500 mt-1 flex items-center gap-2">
-                    <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded">自动优化</span>
-                    <span>上传自动统一为 1600x1600 PNG。<strong>相册图片支持长按拖拽排序。</strong></span>
+                <div className="text-xs text-gray-500 mt-1">
+                    请上传已在 PS 中处理好的图片 (推荐尺寸 1600x1600, PNG 格式)
+                    <span className="ml-2 text-blue-600">Tip: 相册图片支持拖拽排序</span>
                 </div>
             </div>
 
@@ -282,7 +289,7 @@ export default function AdminProductGallery({ product, updateProduct }: ImageUpl
                     <div className="fixed inset-0 bg-black/20 z-50 flex items-center justify-center">
                         <div className="bg-white p-6 rounded-lg shadow-xl flex flex-col items-center">
                             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-2"></div>
-                            <span className="text-sm font-medium text-gray-700">{progressText || '正在上传...'}</span>
+                            <span className="text-sm font-medium text-gray-700">正在上传...</span>
                         </div>
                     </div>
                 )}
@@ -329,16 +336,16 @@ export default function AdminProductGallery({ product, updateProduct }: ImageUpl
                             <input
                                 type="file"
                                 id="mainImage"
-                                accept="image/png, image/jpeg, image/jpg" // 恢复支持 jpg，因为我们有自动转 png
+                                accept="image/png"
                                 onChange={handleMainImageChange}
                                 ref={mainImageInputRef}
                                 disabled={uploading}
                                 className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer transition-all"
                             />
                             <div className="text-xs text-gray-500 space-y-1">
-                                <p>• 支持 JPG, PNG, WebP 格式上传</p>
-                                <p>• 系统自动转换为 <span className="font-bold text-gray-700">1600x1600 PNG</span></p>
-                                <p>• 请务必上传<span className="text-red-500">已去除背景</span>的图片</p>
+                                <p>• 仅支持 <span className="font-bold text-gray-700">PNG</span> 格式</p>
+                                <p>• 建议尺寸：1600 x 1600 px</p>
+                                <p>• 请直接上传已处理好的图片</p>
                             </div>
                         </div>
                     </div>
@@ -346,14 +353,14 @@ export default function AdminProductGallery({ product, updateProduct }: ImageUpl
 
                 <div className="border-t border-gray-100"></div>
 
-                {/* 相册上传区域 (带拖拽排序) */}
+                {/* 相册上传区域 (支持拖拽排序) */}
                 <div>
                     <div className="flex justify-between items-center mb-4">
                         <label className="block text-sm font-medium text-gray-700">
                             产品相册
                         </label>
                         <span className="text-xs text-gray-500">
-                            已上传 {product.galleries?.length || 0} 张 (拖拽可调整顺序)
+                            已上传 {product.galleries?.length || 0} 张
                         </span>
                     </div>
 
@@ -362,14 +369,14 @@ export default function AdminProductGallery({ product, updateProduct }: ImageUpl
                             type="file"
                             id="galleryImages"
                             multiple
-                            accept="image/png, image/jpeg, image/jpg"
+                            accept="image/png"
                             onChange={handleGalleryChange}
                             ref={galleryInputRef}
                             disabled={uploading}
                             className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100 cursor-pointer transition-all mb-4"
                         />
 
-                        {/* 拖拽上下文 */}
+                        {/* 相册网格 - 拖拽排序 */}
                         {product.galleries && product.galleries.length > 0 ? (
                             <DndContext
                                 sensors={sensors}
@@ -383,8 +390,7 @@ export default function AdminProductGallery({ product, updateProduct }: ImageUpl
                                     <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-4">
                                         {product.galleries.map((gallery, index) => (
                                             <SortableGalleryItem
-                                                key={gallery.url} // 使用 url 作为唯一 key
-                                                id={gallery.url}
+                                                key={gallery.url}
                                                 url={gallery.url}
                                                 alt={gallery.alt}
                                                 index={index}

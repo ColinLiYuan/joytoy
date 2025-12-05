@@ -16,9 +16,9 @@ export async function GET(
 
         return NextResponse.json(result);
     } catch (error) {
-        const { error: errorMessage } = handleApiError(error);
+        const { errorMessage } = handleApiError(error);
         return NextResponse.json(
-            { success: false, error: errorMessage },
+            { success: false, errorMessage },
             { status: 500 }
         );
     }

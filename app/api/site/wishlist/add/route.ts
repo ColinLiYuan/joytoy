@@ -38,11 +38,11 @@ export async function POST(
 
     } catch (error) {
         console.error('添加到心愿单代理错误:', error);
-        const { error: errorMessage } = handleApiError(error);
+        const { errorMessage } = handleApiError(error);
         return NextResponse.json(
             {
                 success: false,
-                error: errorMessage
+                errorMessage
             },
             { status: 500 }
         );

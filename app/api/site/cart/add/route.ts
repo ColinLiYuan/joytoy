@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { apiPost, handleApiError } from '@/lib/api-utils';
-import { FrontApiResponse } from '@/types/api';
+import { BackendApiResponse } from '@/types/api';
 import { SessionManager } from '@/lib/session-utils';
 import { getToken } from '@/lib/cookie-utils';
 
@@ -32,7 +32,7 @@ export async function POST(
 
         // 4. 调用后端 API
         const url = `/api/V1/cart`;
-        const result: FrontApiResponse = await apiPost(url, body, requestOptions);
+        const result: BackendApiResponse = await apiPost(url, body, requestOptions);
 
         // 5. 创建响应并设置 Cookie（如果是新session）
         const response = NextResponse.json(result);

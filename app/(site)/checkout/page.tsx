@@ -116,19 +116,18 @@ export default function CheckoutPage() {
                 discountAmount
             };
 
-            const res = await orderService.createOrder(orderData);
-            if (res.success && res.data) {
+            const result = await orderService.createOrder(orderData);
+            if (result.success && result.data) {
                 localStorage.setItem('currentOrder', JSON.stringify({
-                    orderId: res.data.id,
-                    orderNumber: res.data.orderNumber,
-                    totalAmount: res.data.finalAmount,
+                    orderId: result.data.id,
+                    orderNumber: result.data.orderNumber,
+                    totalAmount: result.data.finalAmount,
                     items: orderItems
                 }));
                 useCartStore.getState().clearCart();
-                router.push(`/payment?orderId=${res.data.id}`);
+                router.push(`/payment?orderId=${result.data.id}`);
             } else {
-                console.log('dfd   ', res)
-                showToast('error', 'Error', res.message || 'System Error');
+                showToast('error', 'Error', result.message || 'System Error');
             }
         } catch (e) {
             console.error(e);

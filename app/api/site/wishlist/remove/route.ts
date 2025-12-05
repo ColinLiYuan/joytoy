@@ -52,14 +52,13 @@ export async function DELETE(
 
     } catch (error) {
         console.error('移除心愿单代理错误:', error);
-
         // 正确使用 handleApiError
-        const { error: errorMessage } = handleApiError(error);
+        const { errorMessage } = handleApiError(error);
 
         return NextResponse.json(
             {
                 success: false,
-                error: errorMessage
+                errorMessage
             },
             { status: 500 }
         );
