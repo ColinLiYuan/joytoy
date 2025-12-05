@@ -33,15 +33,10 @@ export async function GET(
         const url = `/api/V1/cart`;
         const result: FrontApiResponse = await apiGet(url, requestOptions);
 
-        if (!result.success) {
-            return NextResponse.json(
-                { error: result.error },
-                { status: 400 }
-            );
-        }
+        // console.log('cart get route:', result);
 
         // 5. 创建响应并设置 Cookie（如果是新session）
-        const response = NextResponse.json(result.data);
+        const response = NextResponse.json(result);
         if (isNew) {
             SessionManager.setSessionCookie(response, sessionId);
         }

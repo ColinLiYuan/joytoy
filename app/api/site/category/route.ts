@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { apiGet, handleApiError } from '@/lib/api-utils';
-import { FrontApiResponse } from '@/types/api';
+import { BackendApiResponse } from '@/types/api';
 
 // app/api/category
 // get categories
@@ -11,16 +11,9 @@ export async function GET(
         // console.log('category api start');
 
         const url = '/api/V1/category/getCategories';
-        const result:FrontApiResponse = await apiGet(url);
+        const result:BackendApiResponse = await apiGet(url);
 
-        if (!result.success) {
-            return NextResponse.json(
-                {error: result.error},
-                { status: 400 }
-            );
-        }
-
-        return NextResponse.json(result.data);
+        return NextResponse.json(result);
     } catch (error) {
         const { error: errorMessage } = handleApiError(error);
         return NextResponse.json(

@@ -2,7 +2,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { apiPut, handleApiError } from '@/lib/api-utils';
-import { FrontApiResponse } from '@/types/api';
+import { BackendApiResponse } from '@/types/api';
 import { SessionManager } from '@/lib/session-utils';
 import { getToken } from '@/lib/cookie-utils';
 
@@ -39,17 +39,10 @@ export async function PUT(
         // 如果后端需要查询参数
         const url = `/api/V1/cart?quantity=${quantity}&itemId=${itemId}`;
 
-        const result: FrontApiResponse = await apiPut(url, undefined, requestOptions);
-
-        if (!result.success) {
-            return NextResponse.json(
-                { error: result.error },
-                { status: 400 }
-            );
-        }
+        const result: BackendApiResponse = await apiPut(url, undefined, requestOptions);
 
         // 5. 创建响应并设置 Cookie（如果是新session）
-        const response = NextResponse.json(result.data);
+        const response = NextResponse.json(result);
         if (isNew) {
             SessionManager.setSessionCookie(response, sessionId);
         }

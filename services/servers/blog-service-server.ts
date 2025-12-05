@@ -1,6 +1,6 @@
 // services/servers/blog-service-server.ts
 
-import { FrontApiResponse } from '@/types/api';
+import { BackendApiResponse } from '@/types/api';
 import { SERVER_CONFIG } from '@/lib/api-config';
 import { BlogListResponse, BlogResponse } from '@/types/site/blog';
 
@@ -73,12 +73,9 @@ class BlogServiceServer {
                 throw new Error('Failed to fetch blog');
             }
 
-            const apiResponse: FrontApiResponse = await response.json();
-            if (!apiResponse.success) {
-                throw new Error(apiResponse.message || 'Get blog failed');
-            }
+            const apiResponse: BackendApiResponse = await response.json();
 
-            return apiResponse.data;
+            return apiResponse;
         } catch (error) {
             console.error('Get blog failed:', error);
             throw error;

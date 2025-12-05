@@ -17,16 +17,16 @@ class WishlistService {
                 body: JSON.stringify(request),
             });
 
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => null);
-                throw new Error(errorData?.error || `Failed to add item to wishlist: ${response.status}`);
-            }
+            // if (!response.ok) {
+            //     const errorData = await response.json().catch(() => null);
+            //     throw new Error(errorData?.error || `Failed to add item to wishlist: ${response.status}`);
+            // }
 
-            const apiResponse = await response.json();
-
-            if (!apiResponse.success) {
-                throw new Error(apiResponse.message || 'Failed to add item to wishlist');
-            }
+            // const apiResponse = await response.json();
+            //
+            // if (!apiResponse.success) {
+            //     throw new Error(apiResponse.message || 'Failed to add item to wishlist');
+            // }
 
         } catch (error) {
             console.error('❌ Add item to wishlist failed:', error);

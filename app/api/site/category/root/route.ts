@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { apiGet, handleApiError } from '@/lib/api-utils';
-import { FrontApiResponse } from '@/types/api';
-import { logger } from '@/lib/file-logger';
+import { BackendApiResponse } from '@/types/api';
 
 // app/api/category/root
 // get roots
@@ -12,16 +11,9 @@ export async function GET(
         // logger.info('category root api start');
 
         const url = '/api/V1/category/getRoots';
-        const result:FrontApiResponse = await apiGet(url);
+        const result:BackendApiResponse = await apiGet(url);
 
-        if (!result.success) {
-            return NextResponse.json(
-                {error: result.error},
-                { status: 400 }
-            );
-        }
-
-        return NextResponse.json(result.data);
+        return NextResponse.json(result);
     } catch (error) {
         const { error: errorMessage } = handleApiError(error);
         return NextResponse.json(

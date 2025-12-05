@@ -36,20 +36,9 @@ export async function DELETE(
         const url = `/api/V1/cart?itemId=${itemId}`;
         const result = await apiDelete(url, requestOptions);
 
-        if (!result.success) {
-            return NextResponse.json(
-                {
-                    success: false,
-                    error: result.error || 'Failed to remove item from cart'
-                },
-                { status: 400 }
-            );
-        }
-
         // 5. 创建响应并设置 Cookie（如果是新session）
         const response = NextResponse.json({
-            success: true,
-            data: result.data || { message: 'Item removed successfully' }
+            data: result || { message: 'Item removed successfully' }
         });
 
         if (isNew) {
