@@ -1,7 +1,6 @@
 // /app/api/admin/blog/list/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { apiGet, handleApiError } from '@/lib/api-utils';
-import { BackendApiResponse } from '@/types/api';
 
 export async function GET(request: NextRequest) {
     try {
@@ -14,7 +13,7 @@ export async function GET(request: NextRequest) {
         if (status) url += `&status=${status}`;
 
         // console.log('query list url ' + url)
-        const result:BackendApiResponse = await apiGet(url);
+        const result = await apiGet(url);
 
         return NextResponse.json(result);
     } catch (error) {

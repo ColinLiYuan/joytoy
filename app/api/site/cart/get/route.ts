@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { apiGet, handleApiError } from '@/lib/api-utils';
-import { BackendApiResponse } from '@/types/api';
 import { SessionManager } from '@/lib/session-utils';
 import { getToken } from '@/lib/cookie-utils';
 
@@ -31,7 +30,7 @@ export async function GET(
 
         // 4. 调用后端 API
         const url = `/api/V1/cart`;
-        const result: BackendApiResponse = await apiGet(url, requestOptions);
+        const result = await apiGet(url, requestOptions);
 
         // console.log('cart get route:', result);
 

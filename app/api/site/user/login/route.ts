@@ -1,8 +1,8 @@
 // app/api/users/login/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { apiPost, handleApiError } from '@/lib/api-utils';
-import { BackendApiResponse } from '@/types/api';
 import { SessionManager } from '@/lib/session-utils';
+import { LoginResponse } from '@/types/auth';
 
 export async function POST(request: NextRequest) {
     try {
@@ -17,23 +17,24 @@ export async function POST(request: NextRequest) {
             'X-Session-Id': sessionId
         };
 
-        const result: BackendApiResponse<any> = await apiPost('/api/V1/users/login', body, {
+        const result = await apiPost<LoginResponse>('/api/V1/users/login', body, {
             headers: headers,
         });
 
         // 登录成功，设置 cookie
         const response = NextResponse.json(result);
 
-        const userInfo = result?.data || result;
-        // console.log('login route userInfo2: ', result.data);
+        // 正确获取用户信息：只有在 success 为 true 时才从 data 中获取
+        if (result.success && result.data) {
+            const userInfo: LoginResponse = result.data;
 
-        // 如果需要存储用户基本信息（非敏感信息）
-        if (userInfo) {
+            // 存储用户基本信息（非敏感信息）
             response.cookies.set('userInfo', JSON.stringify({
                 id: userInfo.id,
-                name: userInfo.name,
+                name: userInfo.firstName + (userInfo.lastName ? ' ' + userInfo.lastName : ''),
                 email: userInfo.email,
                 cartId: userInfo.cartId,
+                displayName: userInfo.displayName || userInfo.firstName,
                 // 只存储必要的非敏感信息
             }), {
                 httpOnly: false, // 允许前端读取
@@ -43,7 +44,7 @@ export async function POST(request: NextRequest) {
                 path: '/',
             });
 
-            const token = userInfo?.token;
+            const token = userInfo.token;
             if (token) {
                 response.cookies.set('auth_token', token, {
                     httpOnly: true, // 防止 XSS 攻击
@@ -57,9 +58,6 @@ export async function POST(request: NextRequest) {
 
         // 设置或更新 sessionId Cookie（如果是新session或者需要更新）
         SessionManager.setSessionCookie(response, sessionId);
-
-        // const setCookies = response.cookies.getAll();
-        // console.log('🔐 Response cookies set:', setCookies);
 
         return response;
     } catch (error) {

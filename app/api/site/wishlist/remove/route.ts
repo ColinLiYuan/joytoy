@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { apiDelete, handleApiError } from '@/lib/api-utils';
-import { BackendApiResponse } from '@/types/api';
 import { getToken } from '@/lib/cookie-utils';
 
 // 从心愿单移除商品
@@ -43,7 +42,7 @@ export async function DELETE(
         };
 
         // 3. 调用后端 API 移除心愿单商品
-        const result: BackendApiResponse = await apiDelete(
+        const result = await apiDelete(
             `/api/V1/wishlist?productId=${productId}`,
             requestOptions
         );

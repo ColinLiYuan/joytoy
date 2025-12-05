@@ -2,7 +2,6 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { apiDelete, handleApiError } from '@/lib/api-utils';
-import { BackendApiResponse } from '@/types/api';
 import { SessionManager } from '@/lib/session-utils';
 import { getToken } from '@/lib/cookie-utils';
 
@@ -34,7 +33,7 @@ export async function DELETE(
 
         // 4. 调用后端 API
         const url = `/api/V1/cart?itemId=${itemId}`;
-        const result: BackendApiResponse = await apiDelete(url, requestOptions);
+        const result = await apiDelete(url, requestOptions);
 
         // 5. 创建响应并设置 Cookie（如果是新session）
         const response = NextResponse.json({

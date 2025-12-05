@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { apiPost, handleApiError } from '@/lib/api-utils';
-import { BackendApiResponse } from '@/types/api';
 import { getToken } from '@/lib/cookie-utils';
 
 // add to wishlist
@@ -32,7 +31,7 @@ export async function POST(
         };
 
         // 3. 调用后端 API 添加到心愿单
-        const result: BackendApiResponse = await apiPost(`/api/V1/wishlist`, body, requestOptions);
+        const result = await apiPost(`/api/V1/wishlist`, body, requestOptions);
 
         return NextResponse.json(result);
 

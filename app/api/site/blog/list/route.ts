@@ -1,7 +1,6 @@
 // /app/api/blog/list/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { apiGet, handleApiError } from '@/lib/api-utils';
-import { BackendApiResponse } from '@/types/api';
 
 export async function GET(request: NextRequest) {
     try {
@@ -12,7 +11,7 @@ export async function GET(request: NextRequest) {
         let url = `/api/V1/blog/list?page=${page}&size=${size}`;
         // console.log('blog list route url: ' + url)
 
-        const result:BackendApiResponse = await apiGet(url);
+        const result = await apiGet(url);
         // console.log('blog list route:', result);
 
         return NextResponse.json(result);

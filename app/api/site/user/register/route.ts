@@ -1,13 +1,12 @@
 // app/api/users/register/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { apiPost, handleApiError } from '@/lib/api-utils';
-import { BackendApiResponse } from '@/types/api';
 
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
 
-        const result: BackendApiResponse<any> = await apiPost('/api/V1/users/register', body, {
+        const result = await apiPost('/api/V1/users/register', body, {
             headers: {
                 'Content-Type': 'application/json',
             },

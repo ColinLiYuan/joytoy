@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { apiPost, handleApiError } from '@/lib/api-utils';
-import { BackendApiResponse } from '@/types/api';
 
 // product release
 export async function POST(
@@ -10,7 +9,7 @@ export async function POST(
         const body = await request.json();
 
         const url = `/api/admin/V1/product/release`;
-        const result:BackendApiResponse = await apiPost(url, body);
+        const result = await apiPost(url, body);
 
         return NextResponse.json(result);
     } catch (error) {
