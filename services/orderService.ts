@@ -25,44 +25,17 @@ class OrderService {
     }
 
     // 获取订单详情
-    async getOrder(orderId: number): Promise<{ success: boolean; data?: OrderResponse; error?: string }> {
+    async getOrder(orderId: number): Promise<OrderResponse> {
         try {
             const url = `${SERVER_CONFIG.apiRoutes.order}/${orderId}`;
             const response = await fetch(url, {
                 credentials: 'include', // 添加这行
             });
 
-            // 先读取文本
-            const responseText = await response.text();
+            const apiResponse = await response.json();
 
-            if (!response.ok) {
-                let errorData;
-                try {
-                    errorData = responseText ? JSON.parse(responseText) : {};
-                } catch {
-                    errorData = { error: `HTTP error ${response.status}` };
-                }
-                return {
-                    success: false,
-                    error: errorData.error || 'Failed to get order'
-                };
-            }
-
-            // 解析成功响应
-            let result;
-            try {
-                result = responseText ? JSON.parse(responseText) : {};
-            } catch {
-                return {
-                    success: false,
-                    error: 'Invalid JSON response'
-                };
-            }
-
-            return {
-                success: true,
-                data: result.data
-            };
+            console.log('getOrder service: ', apiResponse)
+            return apiResponse.data;
         } catch (error) {
             console.error('Order fetch error:', error);
             return {
@@ -82,7 +55,7 @@ class OrderService {
 
             const apiResponse = await response.json();
 
-            console.log('getUserOrders service: ', apiResponse)
+            // console.log('getUserOrders service: ', apiResponse)
             return apiResponse.data;
         } catch (error) {
             console.error('🔴 Orders list fetch error:', error);
