@@ -14,7 +14,7 @@ function PaymentContent() {
 
     const [isLoading, setIsLoading] = useState(true);
     const [orderData, setOrderData] = useState<any>(null);
-    const [paymentStatus, setPaymentStatus] = useState<'pending' | 'success' | 'error'>('pending');
+    const [paymentStatus, setPaymentStatus] = useState<'processing' | 'success' | 'error'>('processing');
     const [errorMessage, setErrorMessage] = useState('');
 
     const clientId = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID;
@@ -77,45 +77,35 @@ function PaymentContent() {
         });
     };
 
-    const onApprove = async (data: any, actions: any) => {
+    // app/(site)/payment/page.tsx - 更新 onApprove 函数
+    const onApprove = async (data: any) => {
         try {
-            // 1. 先捕获资金 (这是最关键的一步，钱在这步被扣除)
-            const details = await actions.order.capture();
-            console.log("💰 PayPal Capture Success:", details);
+            // 1. 显示"处理中"
+            setPaymentStatus('processing');
 
-            // 🔥 关键修复：只要钱扣了，立刻设置 UI 为成功！
-            // 即使后面后端接口崩了，也不能让用户觉得支付失败，否则会导致重复支付。
-            setPaymentStatus('success');
+            // 2. 只把 PayPal Order ID 传给后端
+            const result = await orderService.payOrder(orderId, {
+                transactionId: data.orderID,      // PayPal 订单ID
+                paymentMethod: 'PAYPAL',
+                amount: orderData.totalAmount,    // 金额
+                currency: 'USD'                  // 币种
+            });
 
-            // 清除本地缓存
-            localStorage.removeItem('currentOrder');
+            // 3. 💡 关键：如果后端返回成功，说明：
+            //    - PayPal 扣款成功了 ✅
+            //    - 后端状态更新成功了 ✅
+            //    - 库存扣减成功了 ✅
+            //    - 所有业务逻辑都完成了 ✅
 
-            // 2. 尝试通知后端 (这一步如果失败，算作“非致命错误”)
-            try {
-                if (orderId) {
-                    await orderService.updateOrderStatus(orderId, 'PAID', details.id);
-                }
-            } catch (backendError) {
-                // 🛑 核心逻辑：这里只记录日志，绝对不要 setPaymentStatus('error')！
-                // 这种情况属于：钱收到了，但数据库没改过来。
-                // 解决方案是：靠 PayPal Webhook 自动补单，或者人工核对。
-                console.error("⚠️ CRITICAL: Payment captured but DB update failed.", backendError);
-                console.error("Transaction ID:", details.id);
-
-                // 你可以选择在这里给用户弹个 Toast，说“订单处理稍有延迟”，但不要说失败
-                // showToast('warning', 'Order Processing', 'Payment received, confirmation email might be delayed.');
+            if (result.success) {
+                setPaymentStatus('success');  // 真正的双重确认成功！
+                localStorage.removeItem('currentOrder');
+                router.push(`/orders/${orderId}?payment_success=1`);
+            } else {
+                setPaymentStatus('error');
             }
 
-            // 3. 跳转
-            setTimeout(() => {
-                router.push(`/orders/${orderId}?payment_success=1`);
-            }, 2000);
-
-        } catch (paypalError) {
-            // 🛑 只有这里（capture 还没成功）才能报错
-            // 这时候钱还没扣，用户点 Try Again 是安全的
-            console.error("❌ Payment capture failed:", paypalError);
-            setErrorMessage("Transaction could not be completed. Please try again.");
+        } catch (error) {
             setPaymentStatus('error');
         }
     };

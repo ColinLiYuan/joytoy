@@ -1,7 +1,8 @@
 // services/orderService.ts
 import { OrderCreateRequest, OrderResponse } from '@/types/order';
 import { SERVER_CONFIG } from '@/lib/api-config';
-import {BackendApiResponse} from "@/types/api";
+import { BackendApiResponse } from "@/types/api";
+import { PaymentRequest } from '@/types/payment';
 
 class OrderService {
     // 创建订单
@@ -34,7 +35,7 @@ class OrderService {
 
             const apiResponse = await response.json();
 
-            console.log('getOrder service: ', apiResponse)
+            // console.log('getOrder service: ', apiResponse)
             return apiResponse.data;
         } catch (error) {
             console.error('Order fetch error:', error);
@@ -61,6 +62,24 @@ class OrderService {
             console.error('🔴 Orders list fetch error:', error);
             throw error;
         }
+    }
+
+    async payOrder(orderId: number, paymentRequest: PaymentRequest): Promise<BackendApiResponse> {
+        const url = `${SERVER_CONFIG.apiRoutes.order}/${orderId}/pay`;
+        console.log('🟢 Paying order, URL:', url);
+
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(paymentRequest),
+            credentials: 'include',
+        });
+
+        const apiResponse = await response.json();
+        console.log('payOrder service response: ', apiResponse);
+        return apiResponse;
     }
 }
 
