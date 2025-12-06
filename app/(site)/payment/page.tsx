@@ -46,9 +46,9 @@ function PaymentContent() {
                 }
 
                 // 2. 如果 LocalStorage 没有，或者 ID 不匹配，尝试从后端获取
-                // const data = await orderService.getOrderById(orderId);
-                // setOrderData(data);
-                // setIsLoading(false);
+                const data = await orderService.getOrder(orderId);
+                setOrderData(data);
+                setIsLoading(false);
 
                 // 暂时这就样：
                 setIsLoading(false);
