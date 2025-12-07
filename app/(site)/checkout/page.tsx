@@ -108,58 +108,52 @@ export default function CheckoutPage() {
         }
 
         setIsCreatingOrder(true);
+        // ✅ 这里直接读取当前组件的状态（shippingAddress），或者通过 Hook 获取
+        const formData = getShippingFormData();
+
+        // 🐛 Debug：打印一下，这次一定有值了！
+        console.log("🚀 Submitting Address Data:", formData.shippingAddress);
+
+        const addressData = {
+            firstName: formData.shippingAddress.firstName,
+            lastName: formData.shippingAddress.lastName,
+            phone: formData.shippingAddress.phone,
+            email: formData.shippingAddress.email,
+            country: formData.shippingAddress.country,
+            province: formData.shippingAddress.province,
+            city: formData.shippingAddress.city,
+            addressLine1: formData.shippingAddress.addressLine1,
+            addressLine2: formData.shippingAddress.addressLine2 || '',
+            zipCode: formData.shippingAddress.zipCode,
+            company: '',
+            useAsBilling: true
+        };
+
+        const orderData: OrderCreateRequest = {
+            userId: userId,
+            cartId: cartId,
+            items: orderItems,
+            shippingAddress: addressData,
+            billingAddress: addressData,
+            paymentMethod: 'CREDIT_CARD',
+            shippingMethod: 'STANDARD',
+            customerNote: formData.orderNotes,
+            shippingFee: shippingFee,
+            discountAmount: discountAmount
+        };
+
         try {
-            // ✅ 这里直接读取当前组件的状态（shippingAddress），或者通过 Hook 获取
-            const formData = getShippingFormData();
-
-            // 🐛 Debug：打印一下，这次一定有值了！
-            console.log("🚀 Submitting Address Data:", formData.shippingAddress);
-
-            const addressData = {
-                firstName: formData.shippingAddress.firstName,
-                lastName: formData.shippingAddress.lastName,
-                phone: formData.shippingAddress.phone,
-                email: formData.shippingAddress.email,
-                country: formData.shippingAddress.country,
-                province: formData.shippingAddress.province,
-                city: formData.shippingAddress.city,
-                addressLine1: formData.shippingAddress.addressLine1,
-                addressLine2: formData.shippingAddress.addressLine2 || '',
-                zipCode: formData.shippingAddress.zipCode,
-                company: '',
-                useAsBilling: true
-            };
-
-            const orderData: OrderCreateRequest = {
-                userId: userId,
-                cartId: cartId,
-                items: orderItems,
-                shippingAddress: addressData,
-                billingAddress: addressData,
-                paymentMethod: 'CREDIT_CARD',
-                shippingMethod: 'STANDARD',
-                customerNote: formData.orderNotes,
-                shippingFee: shippingFee,
-                discountAmount: discountAmount
-            };
-
             const result = await orderService.createOrder(orderData);
-
-            if (result.success && result.data) {
-                localStorage.setItem('currentOrder', JSON.stringify({
-                    orderId: result.data.id,
-                    orderNumber: result.data.orderNumber,
-                    totalAmount: result.data.finalAmount,
-                    items: orderItems
-                }));
-                useCartStore.getState().clearCart();
-                router.push(`/payment?orderId=${result.data.id}`);
-            } else {
-                throw new Error(result.message || 'Order creation failed');
-            }
-        } catch (e: any) {
-            console.error(e);
-            showToast('error', 'Order Failed', e.message || 'Could not create order');
+            localStorage.setItem('currentOrder', JSON.stringify({
+                orderId: result.id,
+                orderNumber: result.orderNumber,
+                totalAmount: result.finalAmount,
+                items: orderItems
+            }));
+            useCartStore.getState().clearCart();
+            router.push(`/payment?orderId=${result.id}`);
+        } catch (error: any) {
+            showToast('error', 'Order Failed', error.message || 'Could not create order');
         } finally {
             setIsCreatingOrder(false);
         }

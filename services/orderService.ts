@@ -1,12 +1,11 @@
 // services/orderService.ts
 import { OrderCreateRequest, OrderResponse } from '@/types/order';
 import { SERVER_CONFIG } from '@/lib/api-config';
-import { BackendApiResponse } from "@/types/api";
 import { PaymentRequest } from '@/types/payment';
 
 class OrderService {
     // 创建订单
-    async createOrder(orderCreateRequest: OrderCreateRequest): Promise<BackendApiResponse> {
+    async createOrder(orderCreateRequest: OrderCreateRequest): Promise<OrderResponse> {
         const url = `${SERVER_CONFIG.apiRoutes.order}/add`;
         // console.log('🟢 Creating order, URL:', url);
 
@@ -21,8 +20,12 @@ class OrderService {
 
         const apiResponse = await response.json();
 
+        if (!apiResponse.success) {
+            throw new Error(apiResponse.message || 'order creation failed, please contact support@mythtoy.com');
+        }
+
         // console.log('createOrder service: ', apiResponse)
-        return apiResponse;
+        return apiResponse.data;
     }
 
     // 获取订单详情
@@ -51,7 +54,7 @@ class OrderService {
         return apiResponse.data;
     }
 
-    async payOrder(orderId: number, paymentRequest: PaymentRequest): Promise<BackendApiResponse> {
+    async payOrder(orderId: number, paymentRequest: PaymentRequest): Promise<OrderResponse> {
         const url = `${SERVER_CONFIG.apiRoutes.order}/${orderId}/pay`;
         // console.log('🟢 Paying order, URL:', url);
 
@@ -66,7 +69,11 @@ class OrderService {
 
         const apiResponse = await response.json();
         // console.log('payOrder service response: ', apiResponse);
-        return apiResponse;
+
+        if (!apiResponse.success) {
+            throw new Error(apiResponse.message || 'order creation failed, please contact support@mythtoy.com');
+        }
+        return apiResponse.data;
     }
 }
 

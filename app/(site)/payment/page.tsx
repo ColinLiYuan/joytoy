@@ -84,7 +84,7 @@ function PaymentContent() {
             setPaymentStatus('processing');
 
             // 2. 只把 PayPal Order ID 传给后端
-            const result = await orderService.payOrder(Number(orderId), {
+            await orderService.payOrder(Number(orderId), {
                 transactionId: data.orderID,      // PayPal 订单ID
                 paymentMethod: 'PAYPAL',
                 amount: orderData.totalAmount,    // 金额
@@ -97,15 +97,11 @@ function PaymentContent() {
             //    - 库存扣减成功了 ✅
             //    - 所有业务逻辑都完成了 ✅
 
-            if (result.success) {
-                setPaymentStatus('success');  // 真正的双重确认成功！
-                localStorage.removeItem('currentOrder');
-                router.push(`/orders/${orderId}?payment_success=1`);
-            } else {
-                setPaymentStatus('error');
-            }
+            setPaymentStatus('success');  // 真正的双重确认成功！
+            localStorage.removeItem('currentOrder');
+            router.push(`/orders/${orderId}?payment_success=1`);
 
-        } catch (error) {
+        } catch (error: any) {
             setPaymentStatus('error');
         }
     };
