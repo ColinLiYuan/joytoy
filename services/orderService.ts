@@ -1,7 +1,8 @@
 // services/orderService.ts
 import { OrderCreateRequest, OrderResponse } from '@/types/order';
 import { SERVER_CONFIG } from '@/lib/api-config';
-import {BackendApiResponse} from "@/types/api";
+import { BackendApiResponse } from "@/types/api";
+import { PaymentRequest } from '@/types/payment';
 
 class OrderService {
     // 创建订单
@@ -25,69 +26,47 @@ class OrderService {
     }
 
     // 获取订单详情
-    async getOrder(orderId: number): Promise<{ success: boolean; data?: OrderResponse; error?: string }> {
-        try {
-            const url = `${SERVER_CONFIG.apiRoutes.order}/${orderId}`;
-            const response = await fetch(url, {
-                credentials: 'include', // 添加这行
-            });
+    async getOrder(orderId: number): Promise<OrderResponse> {
+        const url = `${SERVER_CONFIG.apiRoutes.order}/${orderId}`;
+        const response = await fetch(url, {
+            credentials: 'include', // 添加这行
+        });
 
-            // 先读取文本
-            const responseText = await response.text();
+        const apiResponse = await response.json();
 
-            if (!response.ok) {
-                let errorData;
-                try {
-                    errorData = responseText ? JSON.parse(responseText) : {};
-                } catch {
-                    errorData = { error: `HTTP error ${response.status}` };
-                }
-                return {
-                    success: false,
-                    error: errorData.error || 'Failed to get order'
-                };
-            }
-
-            // 解析成功响应
-            let result;
-            try {
-                result = responseText ? JSON.parse(responseText) : {};
-            } catch {
-                return {
-                    success: false,
-                    error: 'Invalid JSON response'
-                };
-            }
-
-            return {
-                success: true,
-                data: result.data
-            };
-        } catch (error) {
-            console.error('Order fetch error:', error);
-            return {
-                success: false,
-                error: 'Network error while fetching order'
-            };
-        }
+        // console.log('getOrder service: ', apiResponse)
+        return apiResponse.data;
     }
 
     // 获取用户订单列表
     async getUserOrders(page: number = 0, size: number = 20): Promise<OrderResponse[]> {
-        try {
-            const url = `${SERVER_CONFIG.apiRoutes.order}/list?page=${page}&size=${size}`;
-            const response = await fetch(url, {
-                credentials: 'include',
-            });
+        const url = `${SERVER_CONFIG.apiRoutes.order}/list?page=${page}&size=${size}`;
+        const response = await fetch(url, {
+            credentials: 'include',
+        });
 
-            const apiResponse = await response.json();
+        const apiResponse = await response.json();
 
-            console.log('getUserOrders service: ', apiResponse)
-            return apiResponse.data;
-        } catch (error) {
-            console.error('🔴 Orders list fetch error:', error);
-            throw error;
-        }
+        // console.log('getUserOrders service: ', apiResponse)
+        return apiResponse.data;
+    }
+
+    async payOrder(orderId: number, paymentRequest: PaymentRequest): Promise<BackendApiResponse> {
+        const url = `${SERVER_CONFIG.apiRoutes.order}/${orderId}/pay`;
+        // console.log('🟢 Paying order, URL:', url);
+
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(paymentRequest),
+            credentials: 'include',
+        });
+
+        const apiResponse = await response.json();
+        // console.log('payOrder service response: ', apiResponse);
+        return apiResponse;
     }
 }
 

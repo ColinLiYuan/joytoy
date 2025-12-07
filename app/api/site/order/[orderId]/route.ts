@@ -21,7 +21,7 @@ export async function GET(
 
         // 调用后端API获取订单详情
         const result = await apiGet(`/api/V1/order/${orderId}`);
-        console.log('🟢 Order get API result:', result);
+        // console.log('🟢 Order get API result:', result);
 
         return NextResponse.json(result);
 

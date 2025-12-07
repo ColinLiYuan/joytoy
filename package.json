@@ -19,6 +19,7 @@
     "@fortawesome/free-regular-svg-icons": "^7.0.1",
     "@fortawesome/free-solid-svg-icons": "^7.0.1",
     "@fortawesome/react-fontawesome": "^3.0.2",
+    "@paypal/react-paypal-js": "^8.9.2",
     "@uiw/react-md-editor": "^4.0.8",
     "lucide-react": "^0.553.0",
     "next": "15.5.3",

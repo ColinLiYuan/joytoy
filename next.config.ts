@@ -5,46 +5,57 @@ const nextConfig = {
     // 禁用源映射以减少内存使用
     productionBrowserSourceMaps: false,
 
-    // 优化构建
+    // 开启 React 严格模式（建议开启，有助于发现潜在 Bug）
+    reactStrictMode: true,
+
+    // 优化构建：生产环境移除 console
     compiler: {
         removeConsole: process.env.NODE_ENV === 'production',
     },
 
+    // ✅ 核心修改区域：图片优化策略
     images: {
-        // 允许来自 R2 存储桶的图片
+        // 1. 强制缓存时间：设置为 1 年 (秒)。
+        // 这样 Vercel 优化过一次图片后，一年内都不会再重新消耗额度去生成同一张图。
+        minimumCacheTTL: 31536000,
+
+        // 2. 精简生成的尺寸：
+        // 默认 Next.js 会生成 8-10 种尺寸。减少尺寸变种能显著降低额度消耗。
+        // 这里只保留了最常用的手机、平板、桌面尺寸。
+        deviceSizes: [360, 640, 750, 1080, 1920],
+        imageSizes: [16, 32, 48, 64, 96, 128], // 用于头像或小图标
+
+        // 3. 允许的域名
         remotePatterns: [
             {
                 protocol: 'https',
                 hostname: 'mythtoy.com',
-                port: '',
-                pathname: '/**',
             },
             {
                 protocol: 'https',
-                hostname: 'pub-c128c2f5caa744afbeb49b9904451478.r2.dev',
-                port: '',
-                pathname: '/**',
-            },
-            {
-                protocol: 'https',
-                hostname: 'pub-e5d14c6d386c4d90979458082617517a.r2.dev',
-                port: '',
-                pathname: '/**',
+                hostname: '*.r2.dev', // ✅ 优化：使用通配符匹配所有 R2 子域名，以后新增桶不用改配置
             },
         ],
-        // 优化图片加载
+
         formats: ['image/webp', 'image/avif'],
-        // 在开发环境中禁用图片优化以减少内存使用
+
+        // 开发环境禁用优化，省电脑资源；生产环境开启
         unoptimized: process.env.NODE_ENV === 'development',
     },
 
-    // 添加重定向配置
+    // 调试日志 (可选)：开发时可以看到 fetch 的缓存情况
+    logging: {
+        fetches: {
+            fullUrl: true,
+        },
+    },
+
     async redirects() {
         return [
             {
                 source: '/home',
                 destination: '/',
-                permanent: true, // 301 永久重定向
+                permanent: true,
             },
             {
                 source: '/index.html',
@@ -59,7 +70,6 @@ const nextConfig = {
         ];
     },
 
-    // 添加性能优化配置
     poweredByHeader: false,
     compress: true,
 }

@@ -1,23 +1,4 @@
 // types/order.ts
-export interface OrderCreateRequest {
-    items: OrderItemRequest[];
-    shippingAddress: AddressRequest;
-    shippingFee?: number;
-    discountAmount?: number;
-    paymentMethod: string;
-    shippingMethod: string;
-    customerNote?: string;
-}
-
-export interface OrderItemRequest {
-    productId: number;
-    productSku: string;
-    quantity: number;
-    productTitle: string;
-    unitPrice: number;
-    color: string;
-    productImage?: string;
-}
 
 export interface AddressRequest {
     firstName: string;
@@ -30,8 +11,35 @@ export interface AddressRequest {
     addressLine1: string;
     addressLine2?: string;
     zipCode: string;
+    company?: string;      // 后端新增字段
+    useAsBilling?: boolean; // 前端辅助字段
 }
 
+export interface OrderItemRequest {
+    productId: number;
+    productTitle: string;
+    productSku: string;
+    productImage?: string;
+    quantity: number;
+    unitPrice: number;
+    color: string;
+    skuId?: number;
+}
+
+export interface OrderCreateRequest {
+    userId: number;        // 后端新增
+    cartId: number;        // 后端新增
+    items: OrderItemRequest[];
+    shippingAddress: AddressRequest;
+    billingAddress: AddressRequest; // 后端新增
+    paymentMethod: string;
+    shippingMethod: string;
+    customerNote?: string;
+    shippingFee: number;   // BigDecimal 对应 number
+    discountAmount: number; // BigDecimal 对应 number
+}
+
+// OrderResponse 保持不变...
 export interface OrderResponse {
     id: number;
     orderNumber: string;
@@ -43,31 +51,5 @@ export interface OrderResponse {
     createdAt: string;
     paymentMethod: string;
     shippingMethod: string;
-    items: OrderItemResponse[];
-}
-
-export interface OrderItemResponse {
-    id: number;
-    productId: number;
-    productTitle: string;
-    productSku: string;
-    color: string
-    unitPrice: number;
-    quantity: number;
-    totalPrice: number;
-    productImage: string;
-    productDetailUrl?: string;
-    stockStatus?: string;
-    returnable?: boolean;
-}
-
-export interface OrderSummary {
-    id: number;
-    orderNumber: string;
-    status: string;
-    finalAmount: number;
-    itemCount: number;
-    createdAt: string;
-    paymentMethod: string;
-    shippingMethod: string;
+    items: any[];
 }
