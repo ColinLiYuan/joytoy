@@ -37,11 +37,8 @@ export const getUserId = (): number | null => {
 
 // 获取购物车ID
 export const getCartId = (): number | null => {
-    const cartIdString = localStorage.getItem('cartId');
-    if (cartIdString) {
-        return Number(cartIdString);
-    }
-    return null;
+    const userInfo = getUserInfo();
+    return userInfo?.cartId || null;
 };
 
 // 获取认证token
