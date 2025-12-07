@@ -17,13 +17,13 @@ class AuthService {
         });
 
         // console.log('AuthService login route response ');
-        const result = await response.json();
+        const apiResponse = await response.json();
 
-        if (!result.success) {
-            throw new Error(result.message || 'Login failed. Please check your credentials.');
+        if (!apiResponse.success) {
+            throw new Error(apiResponse.message || 'Login failed. Please check your credentials.');
         }
 
-        return result.data!;
+        return apiResponse.data!;
     }
 
     async register(request: RegisterRequest): Promise<RegisterResponse> {
@@ -33,13 +33,13 @@ class AuthService {
             body: JSON.stringify(request),
         });
 
-        const result = await response.json();
+        const apiResponse = await response.json();
 
-        if (!result.success) {
-            throw new Error(result.message || 'Registration failed.');
+        if (!apiResponse.success) {
+            throw new Error(apiResponse.message || 'Registration failed.');
         }
 
-        return result.data!;
+        return apiResponse.data!;
     }
 }
 
