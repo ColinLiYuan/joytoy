@@ -21,52 +21,39 @@ class OrderService {
 
         const apiResponse = await response.json();
 
-        console.log('createOrder service: ', apiResponse)
+        // console.log('createOrder service: ', apiResponse)
         return apiResponse;
     }
 
     // 获取订单详情
     async getOrder(orderId: number): Promise<OrderResponse> {
-        try {
-            const url = `${SERVER_CONFIG.apiRoutes.order}/${orderId}`;
-            const response = await fetch(url, {
-                credentials: 'include', // 添加这行
-            });
+        const url = `${SERVER_CONFIG.apiRoutes.order}/${orderId}`;
+        const response = await fetch(url, {
+            credentials: 'include', // 添加这行
+        });
 
-            const apiResponse = await response.json();
+        const apiResponse = await response.json();
 
-            // console.log('getOrder service: ', apiResponse)
-            return apiResponse.data;
-        } catch (error) {
-            console.error('Order fetch error:', error);
-            return {
-                success: false,
-                error: 'Network error while fetching order'
-            };
-        }
+        // console.log('getOrder service: ', apiResponse)
+        return apiResponse.data;
     }
 
     // 获取用户订单列表
     async getUserOrders(page: number = 0, size: number = 20): Promise<OrderResponse[]> {
-        try {
-            const url = `${SERVER_CONFIG.apiRoutes.order}/list?page=${page}&size=${size}`;
-            const response = await fetch(url, {
-                credentials: 'include',
-            });
+        const url = `${SERVER_CONFIG.apiRoutes.order}/list?page=${page}&size=${size}`;
+        const response = await fetch(url, {
+            credentials: 'include',
+        });
 
-            const apiResponse = await response.json();
+        const apiResponse = await response.json();
 
-            // console.log('getUserOrders service: ', apiResponse)
-            return apiResponse.data;
-        } catch (error) {
-            console.error('🔴 Orders list fetch error:', error);
-            throw error;
-        }
+        // console.log('getUserOrders service: ', apiResponse)
+        return apiResponse.data;
     }
 
     async payOrder(orderId: number, paymentRequest: PaymentRequest): Promise<BackendApiResponse> {
         const url = `${SERVER_CONFIG.apiRoutes.order}/${orderId}/pay`;
-        console.log('🟢 Paying order, URL:', url);
+        // console.log('🟢 Paying order, URL:', url);
 
         const response = await fetch(url, {
             method: 'POST',
@@ -78,7 +65,7 @@ class OrderService {
         });
 
         const apiResponse = await response.json();
-        console.log('payOrder service response: ', apiResponse);
+        // console.log('payOrder service response: ', apiResponse);
         return apiResponse;
     }
 }

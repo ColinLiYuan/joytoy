@@ -3,11 +3,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { apiPost, handleApiError } from '@/lib/api-utils';
 import { getToken } from '@/lib/cookie-utils';
 
+// 修改这里的类型定义
 export async function POST(
     request: NextRequest,
-    { params }: { params: { orderId: string } }
+    context: { params: Promise<{ orderId: string }> }  // params 应该是 Promise
 ) {
     try {
+        // 等待 params 解析
+        const params = await context.params;
         const orderId = params.orderId;
 
         if (!orderId) {

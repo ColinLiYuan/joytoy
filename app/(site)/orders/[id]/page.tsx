@@ -36,7 +36,7 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
             try {
                 // 注意：如果你的后端接收的是数字ID，这里可能需要转换，或者后端兼容字符串
                 // 假设 getOrder 接收 string | number
-                const data = await orderService.getOrder(id);
+                const data = await orderService.getOrder(Number(id));
                 setOrder(data);
             } catch (error) {
                 console.error('Failed to load order:', error);

@@ -6,8 +6,8 @@ import { AddressRequest } from '@/types/order';
 
 interface ShippingFormProps {
     // ✅ 接收父组件的数据
-    shippingAddress: any; // 或者定义具体的 Address 接口
-    updateShippingAddress: (field: string, value: string) => void;
+    shippingAddress: AddressRequest; // 这里最好也精确一点
+    updateShippingAddress: (field: keyof AddressRequest, value: string) => void;
     onProceedToPayment: () => void;
     isCreatingOrder: boolean;
 }
@@ -21,7 +21,7 @@ export default function ShippingForm({
 
     const [errors, setErrors] = useState<Record<string, string>>({});
 
-    // 本地验证逻辑 (验证 props 传进来的 shippingAddress)
+    // 本地验证逻辑
     const validateForm = () => {
         const newErrors: Record<string, string> = {};
         if (!shippingAddress.email?.trim()) newErrors.email = 'Email is required';
@@ -40,7 +40,6 @@ export default function ShippingForm({
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        // 验证通过后，通知父组件继续
         if (validateForm()) {
             onProceedToPayment();
         } else {
@@ -49,8 +48,8 @@ export default function ShippingForm({
         }
     };
 
-    // ✅ 调用父组件的方法更新数据
-    const handleChange = (field: string, value: string) => {
+    // ✅ 修复：将 field 的类型改为 keyof AddressRequest
+    const handleChange = (field: keyof AddressRequest, value: string) => {
         updateShippingAddress(field, value);
         if (errors[field]) setErrors(prev => ({ ...prev, [field]: '' }));
     };

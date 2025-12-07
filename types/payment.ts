@@ -7,7 +7,6 @@ export interface PaymentRequest {
     expiryDate?: string;
     cvv?: string;
     amount: number;
-    currency?: string;
 }
 
 export interface PaymentResponse {

@@ -46,7 +46,7 @@ function PaymentContent() {
                 }
 
                 // 2. 如果 LocalStorage 没有，或者 ID 不匹配，尝试从后端获取
-                const data = await orderService.getOrder(orderId);
+                const data = await orderService.getOrder(Number(orderId));
                 setOrderData(data);
                 setIsLoading(false);
 
@@ -84,7 +84,7 @@ function PaymentContent() {
             setPaymentStatus('processing');
 
             // 2. 只把 PayPal Order ID 传给后端
-            const result = await orderService.payOrder(orderId, {
+            const result = await orderService.payOrder(Number(orderId), {
                 transactionId: data.orderID,      // PayPal 订单ID
                 paymentMethod: 'PAYPAL',
                 amount: orderData.totalAmount,    // 金额

@@ -155,7 +155,7 @@ export default function CheckoutPage() {
                 useCartStore.getState().clearCart();
                 router.push(`/payment?orderId=${result.data.id}`);
             } else {
-                throw new Error(result.error || 'Order creation failed');
+                throw new Error(result.message || 'Order creation failed');
             }
         } catch (e: any) {
             console.error(e);

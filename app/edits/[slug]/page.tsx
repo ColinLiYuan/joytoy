@@ -12,7 +12,7 @@ const EDITS_CONFIG: Record<string, any> = {
         subtitle: "Whisper-quiet pleasure for peace of mind.",
         description: "Living with roommates or parents? We've curated our quietest toys (< 50dB) so you can enjoy without worry.",
         icon: VolumeX,
-        filter: { features: ['Quiet', 'Whisper'] }, // 假设你的后端支持按 feature 筛选
+        filter: { features: ['Quiet', 'Whisper'] },
         heroColor: "bg-blue-50 text-blue-900"
     },
     'under-30': {
@@ -42,8 +42,9 @@ const EDITS_CONFIG: Record<string, any> = {
 };
 
 // 2. 生成 Metadata
-export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
-    const config = EDITS_CONFIG[params.slug];
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+    const resolvedParams = await params;
+    const config = EDITS_CONFIG[resolvedParams.slug];
     if (!config) return { title: 'Collection Not Found' };
 
     return {
@@ -53,25 +54,31 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 }
 
 // 3. 页面组件
-export default async function EditsPage({ params, searchParams }: any) {
-    const slug = params.slug;
+export default async function EditsPage({ params, searchParams }: {
+    params: Promise<{ slug: string }>;
+    searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
+    const resolvedParams = await params;
+    const slug = resolvedParams.slug;
     const config = EDITS_CONFIG[slug];
 
     if (!config) return notFound();
 
-    // 合并 URL 参数和专题预设参数
-    // 例如：专题限定了价格<30，用户依然可以在此基础上筛选颜色
-    const searchParamsVal = await searchParams;
+    // 解析 searchParams
+    const resolvedSearchParams = searchParams ? await searchParams : {};
+
+    // 构造 Filters 对象
+    const currentPage = parseInt((resolvedSearchParams.page as string) || '1');
+
     const filters = {
-        ...config.filter, // 预设筛选
-        ...searchParamsVal, // 用户筛选覆盖
-        page: parseInt(searchParamsVal.page || '0'),
+        ...config.filter, // 专题预设 (例如 priceRange: [0, 30])
+        ...resolvedSearchParams, // URL 参数覆盖 (例如用户手动排序)
+        page: currentPage,
+        size: 12
     };
 
-    // 获取产品 (这里假设你的 getProducts 支持传入任意 filters)
-    // 你可能需要调整 productServiceServer.getProductsByCategory 或者是新建一个 getProductsByFilter
-    // 这里仅作逻辑演示
-    const productsData = await productServiceServer.getProductsByFilter(filters);
+    // ✅ 调用刚刚在 Service 里新增的方法
+    const productsData = await productServiceServer.getProductsByCategory(filters);
 
     const Icon = config.icon;
 
@@ -97,10 +104,15 @@ export default async function EditsPage({ params, searchParams }: any) {
                     products={productsData.content}
                     itemsPerPage={12}
                     totalPages={productsData.totalPages}
-                    currentPage={filters.page}
+                    currentPage={currentPage - 1} // ProductList 分页组件通常也是 0-based
                     totalProducts={productsData.totalElements}
-                    // 传入预设 filters 确保 ProductList 的筛选器状态正确
-                    initialFilters={filters}
+                    // 传入 filter 状态，这样 ProductList 里的筛选器能显示正确的初始状态（例如价格滑块在 0-30）
+                    initialFilters={{
+                        priceRange: filters.priceRange || null,
+                        colors: filters.colors ? (Array.isArray(filters.colors) ? filters.colors : filters.colors.split(',')) : [],
+                        features: filters.features ? (Array.isArray(filters.features) ? filters.features : filters.features.split(',')) : [],
+                        materials: []
+                    }}
                 />
             </div>
         </div>
