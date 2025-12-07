@@ -9,11 +9,11 @@ export async function POST(request: NextRequest) {
         const body: OrderCreateRequest = await request.json();
 
         // 验证必需字段
-        if (!body.items || !body.shippingAddress || !body.paymentMethod || !body.shippingMethod) {
+        if (!body.items || !body.shippingAddress || !body.shippingMethod) {
             return NextResponse.json(
                 {
                     success: false,
-                    error: 'Missing required fields: items, shippingAddress, paymentMethod, shippingMethod'
+                    error: 'Missing required fields: items, shippingAddress, shippingMethod'
                 },
                 { status: 400 }
             );

@@ -21,7 +21,7 @@ class OrderService {
 
         const apiResponse = await response.json();
 
-        // console.log('createOrder service: ', apiResponse)
+        console.log('createOrder service: ', apiResponse)
         return apiResponse;
     }
 
