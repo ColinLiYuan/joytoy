@@ -21,6 +21,8 @@ export async function POST(request: NextRequest) {
             headers: headers,
         });
 
+        // console.log('user login route result: ', result)
+
         // 登录成功，设置 cookie
         const response = NextResponse.json(result);
 

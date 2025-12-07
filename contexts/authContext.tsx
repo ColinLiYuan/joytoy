@@ -111,22 +111,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const login = useCallback(async (loginRequest: LoginRequest): Promise<LoginResponse> => {
         try {
-            // console.log('Starting login process...');
-            const loginResponse: LoginResponse = await authService.login(loginRequest);
-
-            // console.log('LoginResponse...', loginResponse);
+            // authService.login 现在会返回 LoginResponse (用户数据)，或者抛出 Error
+            const loginResponse = await authService.login(loginRequest);
 
             setIsLoggedIn(true);
             setUserInfo(loginResponse);
 
-            // 保存到 localStorage
             localStorage.setItem('isLoggedIn', 'true');
             localStorage.setItem('userInfo', JSON.stringify(loginResponse));
 
             showToast('success', 'Welcome Back', 'Successfully logged in');
 
             if (onSuccessCallbackRef.current) {
-                // console.log('Executing onSuccessCallback');
                 onSuccessCallbackRef.current();
                 onSuccessCallbackRef.current = null;
             }
@@ -134,17 +130,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             closeAuthModal();
 
             return loginResponse;
-        } catch (error) {
-            console.error('Login failed:', error);
+        } catch (error: any) {
+            console.error('Login failed in Context:', error);
             throw error;
         }
     }, [showToast, closeAuthModal]);
 
     const register = useCallback(async (registerRequest: RegisterRequest): Promise<RegisterResponse> => {
-        const registerResponse: RegisterResponse = await authService.register(registerRequest);
-        showToast('success', 'Registration Successful', 'Please login to continue');
-        setAuthModalMode('login');
-        return registerResponse;
+        try {
+            const registerResponse = await authService.register(registerRequest);
+
+            showToast('success', 'Registration Successful', 'Please login to continue');
+            setAuthModalMode('login');
+            return registerResponse;
+        } catch (error: any) {
+            console.error('Register failed in Context:', error);
+            throw error;
+        }
     }, [showToast]);
 
     const value = useMemo(() => ({

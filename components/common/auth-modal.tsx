@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useAuth } from '@/contexts/authContext';
 import { Z_INDEX } from '@/lib/constants/z-index';
-import { X, Mail, Lock, Eye, EyeOff, Loader2, Check } from 'lucide-react'; // ✅ Lucide
+import { X, Mail, Lock, Eye, EyeOff, Loader2, Check } from 'lucide-react';
 
 interface AuthModalProps {
     isOpen: boolean;
@@ -61,7 +61,9 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                 setFormData(prev => ({ ...prev, confirmPassword: '' }));
             }
         } catch (error: any) {
-            setErrors({ submit: error.message || 'Authentication failed' });
+            setErrors({
+                submit: error.message || 'Authentication failed. Please try again.'
+            });
         } finally {
             setIsLoading(false);
         }

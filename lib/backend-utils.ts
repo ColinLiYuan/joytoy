@@ -14,7 +14,7 @@ async function getAuthToken(): Promise<string | null> {
             return getClientAuthToken();
         } else {
             const { getToken } = await import('@/lib/cookie-utils');
-            console.log('server get token')
+            // console.log('server get token')
             return getToken();
         }
     } catch (error) {
