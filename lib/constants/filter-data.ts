@@ -1,4 +1,6 @@
 // lib/constants/filter-data.ts
+import { getColorGroups } from './color-config';
+
 export interface FilterOption {
     keyWord: string;
     marketingWords?: string[]; // 只有features有这个字段
@@ -11,25 +13,7 @@ export interface FilterData {
 }
 
 export const filterData: FilterData = {
-    colors: [
-        "Flesh",
-        "Red",
-        "Pink",
-        "Rose",
-        "Blue",
-        "Sky Blue",
-        "Green",
-        "Purple",
-        "Brown",
-        "Chocolate",
-        "Coffee Light",
-        "Coffee Dark",
-        "Black",
-        "White",
-        "Grey",
-        "Gold",
-        "Silver"
-    ],
+    colors: getColorGroups(),
 
     materials: [
         "Body-Safe Silicone",

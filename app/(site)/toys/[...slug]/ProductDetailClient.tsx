@@ -14,8 +14,6 @@ import { wishlistService } from '@/services/wishlistService';
 import { productService } from '@/services/product-service';
 import { getProductImageUrl } from '@/lib/image-utils';
 import { Z_INDEX } from '@/lib/constants/z-index';
-
-// ✅ 严格保留你的引用路径
 import ProductGallery from '@/components/product/product-gallery';
 import Breadcrumb from '@/components/common/breadcrumb';
 
@@ -227,6 +225,30 @@ export default function ProductDetailClient({
     const handleBuyNow = async () => { setBuyingNow(true); const success = await performAddToCart(); if (success) router.push('/checkout'); setBuyingNow(false); };
     const toggleSection = (section: string) => setExpandedSection(expandedSection === section ? null : section);
 
+    const renderDetailTitle = (fullTitle: string) => {
+        if (fullTitle.includes('|')) {
+            const [name, desc] = fullTitle.split('|');
+            return (
+                <div className="flex flex-col gap-1 mb-2">
+                    {/* 主标题：大号衬线体，优雅 */}
+                    <h1 className="text-4xl md:text-5xl font-bold text-gray-900 font-['Playfair_Display'] leading-tight">
+                        {name.trim()}
+                    </h1>
+                    {/* 副标题：中号无衬线体，灰色，作为 Value Prop */}
+                    <span className="text-lg md:text-xl text-gray-500 font-['Inter'] font-light">
+                    {desc.trim()}
+                </span>
+                </div>
+            );
+        }
+        // 普通标题兜底
+        return (
+            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3 font-['Playfair_Display'] leading-tight">
+                {fullTitle}
+            </h1>
+        );
+    };
+
     return (
         <div className="w-full pb-32 lg:pb-16">
             <div className="mb-6">
@@ -254,9 +276,9 @@ export default function ProductDetailClient({
                            button 添加了 flex-shrink-0 (防止被挤压)
                         */}
                         <div className="flex justify-between items-start gap-4 mb-3">
-                            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 font-['Playfair_Display'] leading-tight flex-1 min-w-0 break-words pr-2">
-                                {product.title}
-                            </h1>
+                            <div className="flex-1 min-w-0 pr-2">
+                                {renderDetailTitle(product.title)}
+                            </div>
                             <button
                                 onClick={handleToggleFavorite}
                                 className={`p-2.5 rounded-full transition-all flex-shrink-0 ${isFavorited ? 'bg-red-50 text-red-500 hover:bg-red-100' : 'bg-gray-50 text-gray-400 hover:bg-gray-100 hover:text-red-500'}`}

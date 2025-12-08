@@ -2,11 +2,11 @@
 'use client';
 
 import { useState } from 'react';
-import dynamic from 'next/dynamic'; // 新增
-import { VENDORS, COLOR_GROUPS_PRESET } from '@/lib/constants/product-options';
-import { getMappedColor, getColorDisplayText } from '@/lib/constants/color-map';
+import dynamic from 'next/dynamic';
+import { VENDORS } from '@/lib/constants/product-options';
+import { COLOR_SYSTEM } from '@/lib/constants/color-config';
 
-// 动态导入 MD 编辑器，避免 SSR 问题
+// 动态导入 MD 编辑器
 const MDEditor = dynamic(
     () => import('@uiw/react-md-editor').then((mod) => mod.default),
     { ssr: false }
@@ -26,7 +26,6 @@ export default function AdminProductBasicInfo({ product, updateProduct }: BasicI
 
     const handleColorChange = (color: string, checked: boolean) => {
         const currentColors = product.colors || [];
-        // 清理颜色名称（去空格、标准化）
         const cleanColor = color.trim();
 
         const newColors = checked
@@ -40,7 +39,7 @@ export default function AdminProductBasicInfo({ product, updateProduct }: BasicI
         if (!customColor.trim()) return;
 
         const newColor = customColor.trim();
-        // 首字母大写优化
+        // 简单的首字母大写格式化
         const formattedColor = newColor.charAt(0).toUpperCase() + newColor.slice(1);
 
         if (!product.colors?.includes(formattedColor)) {
@@ -48,6 +47,24 @@ export default function AdminProductBasicInfo({ product, updateProduct }: BasicI
             updateProduct({ colors: newColors });
         }
         setCustomColor('');
+    };
+
+    // 辅助函数：根据颜色名查找对应的 HEX 值用于预览
+    const getPreviewHex = (colorName: string) => {
+        for (const group of Object.values(COLOR_SYSTEM)) {
+            // @ts-ignore - 忽略类型检查以便快速查找
+            if (group.variants[colorName]) {
+                // @ts-ignore
+                return group.variants[colorName];
+            }
+            // 尝试不区分大小写查找
+            const key = Object.keys(group.variants).find(k => k.toLowerCase() === colorName.toLowerCase());
+            if (key) {
+                // @ts-ignore
+                return group.variants[key];
+            }
+        }
+        return '#CCCCCC'; // 默认灰色
     };
 
     return (
@@ -101,7 +118,7 @@ export default function AdminProductBasicInfo({ product, updateProduct }: BasicI
                     </div>
                 </div>
 
-                {/* 颜色选择区域 - 增强版 */}
+                {/* 颜色选择区域 - 升级版 (使用 COLOR_SYSTEM) */}
                 <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
                     <div className="flex justify-between items-center mb-3">
                         <label className="text-sm font-medium text-gray-700">颜色变体</label>
@@ -113,7 +130,7 @@ export default function AdminProductBasicInfo({ product, updateProduct }: BasicI
                                 value={customColor}
                                 onChange={(e) => setCustomColor(e.target.value)}
                                 placeholder="输入特殊颜色..."
-                                className="px-2 py-1 text-sm border border-gray-300 rounded w-32"
+                                className="px-2 py-1 text-sm border border-gray-300 rounded w-32 focus:outline-none focus:border-blue-500"
                                 onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addCustomColor())}
                             />
                             <button
@@ -132,48 +149,58 @@ export default function AdminProductBasicInfo({ product, updateProduct }: BasicI
                             {product.colors.map((color: string) => (
                                 <span key={color} className="inline-flex items-center px-2 py-1 rounded-full text-xs border bg-blue-50 text-blue-700 border-blue-200">
                                     <span
-                                        className="w-3 h-3 rounded-full mr-1.5 border border-black/10"
-                                        style={{ backgroundColor: getMappedColor(color) }}
+                                        className="w-3 h-3 rounded-full mr-1.5 border border-black/10 shadow-sm"
+                                        style={{ backgroundColor: getPreviewHex(color) }}
                                     ></span>
-                                    {getColorDisplayText(color)}
+                                    {color}
                                     <button
                                         type="button"
                                         onClick={() => handleColorChange(color, false)}
-                                        className="ml-1.5 text-blue-400 hover:text-blue-900"
+                                        className="ml-1.5 text-blue-400 hover:text-blue-900 font-bold"
                                     >×</button>
                                 </span>
                             ))}
                         </div>
                     )}
 
-                    <div className="space-y-4 max-h-60 overflow-y-auto pr-2">
-                        {Object.entries(COLOR_GROUPS_PRESET).map(([groupName, colors]) => (
-                            <div key={groupName}>
-                                <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">{groupName}</h4>
-                                <div className="flex flex-wrap gap-2">
-                                    {colors.map((color: string) => (
+                    {/* 颜色分组选择器 */}
+                    <div className="space-y-5 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                        {Object.entries(COLOR_SYSTEM).map(([groupName, groupData]) => (
+                            <div key={groupName} className="border-b border-gray-200 pb-3 last:border-0 last:pb-0">
+                                {/* 分组标题 */}
+                                <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-2">
+                                    <span
+                                        className="w-3 h-3 rounded-full border border-gray-300 shadow-sm"
+                                        style={{backgroundColor: groupData.hex}}
+                                    ></span>
+                                    {groupName} 系
+                                </h4>
+
+                                {/* 变体选项 */}
+                                <div className="flex flex-wrap gap-2 ml-1">
+                                    {Object.entries(groupData.variants).map(([variantName, hexVal]) => (
                                         <label
-                                            key={color}
-                                            className={`inline-flex items-center px-3 py-1.5 border rounded cursor-pointer transition-all select-none ${
-                                                product.colors?.includes(color)
-                                                    ? 'bg-blue-600 border-blue-600 text-white shadow-sm'
-                                                    : 'bg-white text-gray-700 border-gray-300 hover:border-gray-400'
+                                            key={variantName}
+                                            className={`inline-flex items-center px-3 py-1.5 border rounded-full cursor-pointer transition-all select-none text-xs ${
+                                                product.colors?.includes(variantName)
+                                                    ? 'bg-blue-600 border-blue-600 text-white shadow-md transform scale-105'
+                                                    : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400 hover:bg-gray-50'
                                             }`}
                                         >
                                             <input
                                                 type="checkbox"
                                                 className="hidden"
-                                                checked={product.colors?.includes(color) || false}
-                                                onChange={(e) => handleColorChange(color, e.target.checked)}
+                                                checked={product.colors?.includes(variantName) || false}
+                                                onChange={(e) => handleColorChange(variantName, e.target.checked)}
                                             />
                                             {/* 颜色预览圆点 */}
                                             <span
-                                                className={`w-3 h-3 rounded-full mr-2 border ${
-                                                    product.colors?.includes(color) ? 'border-white/50' : 'border-black/10'
+                                                className={`w-2.5 h-2.5 rounded-full mr-1.5 border ${
+                                                    product.colors?.includes(variantName) ? 'border-white/50' : 'border-black/10'
                                                 }`}
-                                                style={{ backgroundColor: getMappedColor(color) }}
+                                                style={{ backgroundColor: hexVal }}
                                             ></span>
-                                            <span className="text-xs font-medium">{color}</span>
+                                            <span className="font-medium">{variantName}</span>
                                         </label>
                                     ))}
                                 </div>
@@ -228,7 +255,7 @@ export default function AdminProductBasicInfo({ product, updateProduct }: BasicI
                     </div>
                 </div>
 
-                {/* 描述 - 替换为 MDEditor */}
+                {/* 描述 - MDEditor */}
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">产品描述</label>
                     <div className="border border-gray-300 rounded-lg overflow-hidden shadow-sm">
