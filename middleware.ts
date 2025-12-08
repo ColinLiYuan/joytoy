@@ -1,0 +1,110 @@
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+
+// 1. 定义 301 重定向规则 (Moved Permanently)
+// 键是旧路径，值是新路径
+const redirectMap: Record<string, string> = {
+    // 你刚才给我的两个旧链接
+    '/toys/female-sex-toys/bullet-vibrators/matte-red-lipstick-bullet-vibes': '/collections/female-sex-toys', // 暂时跳到分类页，你后面改成具体产品页
+    '/toys/female-sex-toys/bullet-vibrators/bullet-vibes-5-color-522': '/collections/female-sex-toys', // 同上
+
+    // 可以在这里继续添加...
+};
+
+// 2. 定义 410 删除规则 (Gone)
+// 使用 Set 提高查找性能 (O(1))，比数组 includes (O(n)) 快
+const gonePaths = new Set([
+    '/female-sex-toys/bullet-vibrators/matte-red-lipstick-bullet-vibes',
+    '/sex-toys/butt-plugs/medal-butt-plug-HT019',
+    '/male-sex-toys/pussy-masturbators/life-like-miru',
+    '/products/vibrator-g-sucking-usb-szm',
+    '/products/vibrator-silicone-sucking-mirro',
+    '/membership',
+    '/products/suction-sex-toy-soft-szm',
+    '/products/sex-doll-vagina-dghs',
+    '/contact',
+    '/collections/male-sex-toys/pocket-pussy',
+    '/collections/female-sex-toys/fairy-dildos',
+    '/collections/sex-toys/pocket-pussy',
+    '/toys/male-sex-toys/sex-doll/mini-sex-doll-cui',
+    '/collections/sex-toys/vibrator',
+    '/collections/male-sex-toys/silicone-male-masturbator',
+    '/toys/female-sex-toys/clit-suction-vibrators/suction-sex-toy-soft-szm',
+    '/toys/female-sex-toys/clit-suction-vibrators/squirrel-auto-suction-vibes',
+    '/toys/female-sex-toys/clit-suction-vibrators/charming-vibes',
+    '/toys/female-sex-toys/vibrators/vibrators-g-sucking-usb-szm',
+    '/toys/female-sex-toys/vibrators/suction-sex-toy-soft-szm',
+    '/toys/female-sex-toys/vibrator/suction-sex-toy-soft-szm',
+    '/toys/female-sex-toys/vibrator/vibrator-g-sucking-usb-szm',
+    '/toys/male-sex-toys/nipple-toys',
+    '/toys/male-sex-toys/sex-doll/sex-doll-vagina-dghs',
+    '/toys/male-sex-toys/pocket-pussy/funny-peach-pussy',
+    '/toys/male-sex-toys/pocket-pussy/realistic-pocket-pussy-snow',
+    '/toys/male-sex-toys/pocket-pussy/realistic-pocket-pussy-south',
+    '/toys/male-sex-toys/pocket-pussy/realistic-pocket-pussy-dream',
+    '/collections/vibrator',
+    '/collections/sextoy',
+    '/collections/pocket-pussy',
+    '/collections/female-sex-toys/realistic-dildos',
+    '/collections/lingerie/cos-play',
+    '/collections/sex-lingerie',
+    '/male-sex-toys/male-masturbators/auto-suction-masturbator-fire',
+    '/female-sex-toys/clit-vibrators/charming-vibes',
+    '/collections/male-sex-toys/sex-doll',
+    '/collections/female-sex-toys/vibrators',
+    '/collections/new',
+    '/collections/male',
+    '/collections/fairy-dildos',
+    '/collections/valentine',
+    '/collections/nipple-toys',
+    '/collections/silicone-male-masturbator',
+    '/collections/female'
+]);
+
+// 3. 定义 410 前缀匹配规则
+const gonePrefixes = [
+    '/collections/vibrators',
+    '/sex-toys',
+    '/products'
+];
+
+export function middleware(request: NextRequest) {
+    const { pathname } = request.nextUrl;
+
+    // --- 优先处理 301 重定向 (Redirects) ---
+    // 如果这个路径在映射表里，直接跳走
+    if (redirectMap[pathname]) {
+        const destination = new URL(redirectMap[pathname], request.url);
+        return NextResponse.redirect(destination, { status: 301 });
+    }
+
+    // --- 处理 410 删除 (Gone) ---
+    // 精确匹配
+    if (gonePaths.has(pathname)) {
+        return new Response('Gone', { status: 410, headers: { 'Content-Type': 'text/plain' } });
+    }
+
+    // 前缀匹配
+    for (const prefix of gonePrefixes) {
+        if (pathname.startsWith(prefix)) {
+            return new Response('Gone', { status: 410, headers: { 'Content-Type': 'text/plain' } });
+        }
+    }
+
+    return NextResponse.next();
+}
+
+// Config 主要是为了性能，让 Middleware 只在特定路径触发
+// 但如果你要拦截大量旧路径，与其写几百行 matcher，不如直接匹配所有非静态资源
+export const config = {
+    matcher: [
+        /*
+         * 匹配所有请求路径，除了：
+         * 1. /api/ (API 路由)
+         * 2. /_next/ (Next.js 内部资源)
+         * 3. /_static (静态文件)
+         * 4. 各种图片/字体文件扩展名
+         */
+        '/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    ],
+}
