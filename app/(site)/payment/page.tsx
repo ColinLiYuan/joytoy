@@ -26,7 +26,7 @@ function PaymentContent() {
                 setIsLoading(false);
                 return;
             }
-
+            console.log('payment fetch order')
             if (!orderId) {
                 setIsLoading(false);
                 return;
