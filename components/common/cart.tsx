@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useToast } from '@/contexts/toastContext';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation'; // ✅ 引入 usePathname
 import { useAuth } from '@/contexts/authContext';
 import { useCartStore } from '@/stores/useCartStore';
 import { Z_INDEX } from '@/lib/constants/z-index';
@@ -16,7 +16,6 @@ interface CartProps {
     onClose: () => void;
 }
 
-// 截断文本的辅助函数
 const truncateText = (text: string, maxLength: number = 30): string => {
     if (!text) return '';
     if (text.length <= maxLength) return text;
@@ -27,13 +26,12 @@ export default function Cart({ isOpen, onClose }: CartProps) {
     const { cart, error, totalItems, getCart, updateItemQuantity, removeItemFromCart } = useCartStore();
     const { showToast } = useToast();
     const router = useRouter();
+    const pathname = usePathname(); // ✅ 获取当前路径
     const { isLoggedIn } = useAuth();
 
     const [isUpdating, setIsUpdating] = useState<number | null>(null);
     const [isInitialLoading, setIsInitialLoading] = useState(false);
     const [isMounted, setIsMounted] = useState(false);
-
-    // ✅ 新增：结账加载状态
     const [isCheckingOut, setIsCheckingOut] = useState(false);
 
     useEffect(() => {
@@ -43,6 +41,15 @@ export default function Cart({ isOpen, onClose }: CartProps) {
             getCart().finally(() => setIsInitialLoading(false));
         }
     }, [isOpen, isLoggedIn, getCart]);
+
+    // ✅ 核心修复：监听路径变化
+    // 当路由发生改变时（例如跳转到了 /checkout），自动关闭购物车，并重置 loading 状态
+    useEffect(() => {
+        if (isOpen) {
+            onClose();
+            setIsCheckingOut(false);
+        }
+    }, [pathname]); // 依赖项是 pathname
 
     const handleIncreaseQuantity = async (itemId: number, currentQuantity: number) => {
         setIsUpdating(itemId);
@@ -60,17 +67,15 @@ export default function Cart({ isOpen, onClose }: CartProps) {
         try { await removeItemFromCart(itemId); } catch { showToast('error', 'Error', 'Failed'); } finally { setIsUpdating(null); }
     };
 
-    // ✅ 修复：不再关闭弹窗，而是显示 Loading 并跳转
     const handleCheckout = () => {
         if (!cart?.items || cart.items.length === 0) {
             showToast('warning', 'Empty', 'Cart is empty');
             return;
         }
 
-        setIsCheckingOut(true); // 开启 Loading
-
-        // 不需要 onClose()，跳转后组件自动卸载
-        router.push('/checkout');
+        setIsCheckingOut(true); // 显示 Loading
+        router.push('/checkout'); // 跳转
+        // ❌ 这里不手动调用 onClose，交给上面的 useEffect 自动处理
     };
 
     const calculateTotal = () => cart?.items ? cart.items.reduce((t, i) => t + i.totalPrice, 0) : 0;
@@ -165,7 +170,6 @@ export default function Cart({ isOpen, onClose }: CartProps) {
                     <div className="p-6 border-t border-gray-100 bg-gray-50/50">
                         <div className="flex justify-between text-base font-bold mb-4 text-gray-900"><span>Subtotal</span><span>${calculateTotal().toFixed(2)}</span></div>
                         <div className="flex flex-col gap-3">
-                            {/* ✅ 修复：添加 loading 状态和图标 */}
                             <button
                                 className="w-full bg-black text-white py-4 rounded-lg font-bold hover:bg-gray-800 transition-colors shadow-md flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
                                 onClick={handleCheckout}
