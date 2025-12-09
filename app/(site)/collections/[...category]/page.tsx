@@ -142,7 +142,7 @@ export default async function ProductListPage({ params, searchParams }: PageProp
 
         // 2. 添加当前级（无链接）
         breadcrumbs.push({
-            name: currentCategory.name,
+            name: currentCategory?.name || 'Collection',
             path: null
         });
 
@@ -156,7 +156,7 @@ export default async function ProductListPage({ params, searchParams }: PageProp
 
                     <div className="mb-10 text-left border-b border-gray-200 pb-8">
                         <h1 className="text-3xl md:text-5xl font-bold text-gray-900 mb-4 font-['Playfair_Display'] leading-tight">
-                            {currentCategory.name}
+                            {currentCategory?.name}
                         </h1>
                         {(currentCategory as any).description && (
                             <p className="text-gray-500 text-base md:text-lg max-w-3xl leading-relaxed">
