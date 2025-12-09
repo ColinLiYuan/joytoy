@@ -1,8 +1,19 @@
 // services/wishlistService.ts
-import { WishlistRequest } from '@/types/wishlist';
+import { WishlistRequest, WishlistResponse } from '@/types/wishlist';
 import { SERVER_CONFIG } from '@/lib/api-config';
 
 class WishlistService {
+
+    async getWishlist(): Promise<WishlistResponse[]> {
+        const url = `${SERVER_CONFIG.apiRoutes.wishlist}/list`;
+        const response = await fetch(url, {
+            credentials: 'include',
+        });
+
+        const apiResponse = await response.json();
+        console.log('getWishlist route: ', apiResponse.data)
+        return apiResponse.data;
+    }
 
     /**
      * 添加商品到心愿单

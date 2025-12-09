@@ -48,8 +48,7 @@ export default async function CollectionPage() {
     const filteredRoots = rootsData.filter(root => root.slug !== 'best-sellers');
 
     return (
-        // ✅ 保持防溢出修复：w-full overflow-x-hidden
-        <div className="w-full bg-white w-full overflow-x-hidden">
+        <div className="min-h-screen bg-white w-full overflow-x-hidden">
 
             {/* Hero Section */}
             <section className="relative py-20 md:py-28 bg-gray-50 w-full">
