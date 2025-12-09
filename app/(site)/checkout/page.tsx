@@ -112,7 +112,7 @@ export default function CheckoutPage() {
         const formData = getShippingFormData();
 
         // 🐛 Debug：打印一下，这次一定有值了！
-        console.log("🚀 Submitting Address Data:", formData.shippingAddress);
+        // console.log("🚀 Submitting Address Data:", formData.shippingAddress);
 
         const addressData = {
             firstName: formData.shippingAddress.firstName,
@@ -144,6 +144,7 @@ export default function CheckoutPage() {
 
         try {
             const result = await orderService.createOrder(orderData);
+            console.log('checkout order: ', result)
             localStorage.setItem('currentOrder', JSON.stringify({
                 orderId: result.id,
                 orderNumber: result.orderNumber,

@@ -9,7 +9,7 @@ import { Z_INDEX } from '@/lib/constants/z-index';
 import { colorMap } from '@/lib/constants/color-map';
 import Image from 'next/image';
 import { getProductImageUrl } from '@/lib/image-utils';
-import { X, ShoppingBag, Plus, Minus, Loader2, Trash2 } from 'lucide-react';
+import { X, ShoppingBag, Plus, Minus, Loader2, Trash2, ArrowRight } from 'lucide-react';
 
 interface CartProps {
     isOpen: boolean;
@@ -28,9 +28,13 @@ export default function Cart({ isOpen, onClose }: CartProps) {
     const { showToast } = useToast();
     const router = useRouter();
     const { isLoggedIn } = useAuth();
+
     const [isUpdating, setIsUpdating] = useState<number | null>(null);
     const [isInitialLoading, setIsInitialLoading] = useState(false);
     const [isMounted, setIsMounted] = useState(false);
+
+    // ✅ 新增：结账加载状态
+    const [isCheckingOut, setIsCheckingOut] = useState(false);
 
     useEffect(() => {
         setIsMounted(true);
@@ -40,12 +44,39 @@ export default function Cart({ isOpen, onClose }: CartProps) {
         }
     }, [isOpen, isLoggedIn, getCart]);
 
-    const handleIncreaseQuantity = async (itemId: number, currentQuantity: number) => { setIsUpdating(itemId); try { await updateItemQuantity(itemId, currentQuantity + 1); } catch { showToast('error', 'Error', 'Failed'); } finally { setIsUpdating(null); } };
-    const handleDecreaseQuantity = async (itemId: number, currentQuantity: number) => { if (currentQuantity <= 1) return; setIsUpdating(itemId); try { await updateItemQuantity(itemId, currentQuantity - 1); } catch { showToast('error', 'Error', 'Failed'); } finally { setIsUpdating(null); } };
-    const handleRemoveItem = async (itemId: number) => { setIsUpdating(itemId); try { await removeItemFromCart(itemId); } catch { showToast('error', 'Error', 'Failed'); } finally { setIsUpdating(null); } };
-    const handleCheckout = () => { if (!cart?.items || cart.items.length === 0) { showToast('warning', 'Empty', 'Cart is empty'); return; } onClose(); router.push('/checkout'); };
+    const handleIncreaseQuantity = async (itemId: number, currentQuantity: number) => {
+        setIsUpdating(itemId);
+        try { await updateItemQuantity(itemId, currentQuantity + 1); } catch { showToast('error', 'Error', 'Failed'); } finally { setIsUpdating(null); }
+    };
+
+    const handleDecreaseQuantity = async (itemId: number, currentQuantity: number) => {
+        if (currentQuantity <= 1) return;
+        setIsUpdating(itemId);
+        try { await updateItemQuantity(itemId, currentQuantity - 1); } catch { showToast('error', 'Error', 'Failed'); } finally { setIsUpdating(null); }
+    };
+
+    const handleRemoveItem = async (itemId: number) => {
+        setIsUpdating(itemId);
+        try { await removeItemFromCart(itemId); } catch { showToast('error', 'Error', 'Failed'); } finally { setIsUpdating(null); }
+    };
+
+    // ✅ 修复：不再关闭弹窗，而是显示 Loading 并跳转
+    const handleCheckout = () => {
+        if (!cart?.items || cart.items.length === 0) {
+            showToast('warning', 'Empty', 'Cart is empty');
+            return;
+        }
+
+        setIsCheckingOut(true); // 开启 Loading
+
+        // 不需要 onClose()，跳转后组件自动卸载
+        router.push('/checkout');
+    };
+
     const calculateTotal = () => cart?.items ? cart.items.reduce((t, i) => t + i.totalPrice, 0) : 0;
+
     const getColorValue = (n: string) => colorMap[n.toLowerCase().trim()] || '#CCCCCC';
+
     const formatColorDisplay = (color: string | undefined) => {
         if (!color) return null;
         const bgStyle = color.startsWith('#') ? color : getColorValue(color);
@@ -73,7 +104,7 @@ export default function Cart({ isOpen, onClose }: CartProps) {
                     transition-transform duration-300 ease-out
                     w-full sm:w-[450px]
                     ${isOpen ? 'translate-x-0' : 'translate-x-full'}
-                    ${/* ✅ 关键修复：关闭时 invisible，防止溢出 */ isOpen ? 'visible' : 'invisible'}
+                    ${isOpen ? 'visible' : 'invisible'}
                 `}
                 style={{ zIndex: Z_INDEX.DRAWER }}
             >
@@ -103,14 +134,11 @@ export default function Cart({ isOpen, onClose }: CartProps) {
                                     <div className="relative w-24 h-24 flex-shrink-0 border border-gray-100 rounded-lg overflow-hidden bg-gray-50">
                                         {item.productImage ? <Image src={getProductImageUrl('', item.productImage)} alt={item.productTitle} fill className="object-cover" /> : null}
                                     </div>
-                                    <div className="flex-1 flex flex-col justify-between min-w-0"> {/* 添加 min-w-0 防止 flex 子元素溢出 */}
-                                        <div className="min-w-0"> {/* 添加 min-w-0 确保截断生效 */}
+                                    <div className="flex-1 flex flex-col justify-between min-w-0">
+                                        <div className="min-w-0">
                                             <div className="flex justify-between items-start gap-2">
-                                                <h4
-                                                    className="font-medium text-sm text-gray-900 line-clamp-2"
-                                                    title={item.productTitle} // 添加完整标题作为 tooltip
-                                                >
-                                                    {truncateText(item.productTitle, 35)} {/* 截断文本，最多35字符 */}
+                                                <h4 className="font-medium text-sm text-gray-900 line-clamp-2" title={item.productTitle}>
+                                                    {truncateText(item.productTitle, 35)}
                                                 </h4>
                                                 <button className="text-gray-400 hover:text-red-500 p-1 flex-shrink-0" onClick={() => handleRemoveItem(item.itemId)} disabled={isUpdating === item.itemId}>
                                                     {isUpdating === item.itemId ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
@@ -119,7 +147,11 @@ export default function Cart({ isOpen, onClose }: CartProps) {
                                             {item.color && <div className="mt-1.5">{formatColorDisplay(item.color)}</div>}
                                         </div>
                                         <div className="flex justify-between items-end mt-2">
-                                            <div className="flex items-center border border-gray-200 rounded-md"><button onClick={() => handleDecreaseQuantity(item.itemId, item.quantity)} className="w-7 h-7 flex items-center justify-center hover:bg-gray-50"><Minus size={14} /></button><span className="text-sm w-6 text-center">{item.quantity}</span><button onClick={() => handleIncreaseQuantity(item.itemId, item.quantity)} className="w-7 h-7 flex items-center justify-center hover:bg-gray-50"><Plus size={14} /></button></div>
+                                            <div className="flex items-center border border-gray-200 rounded-md">
+                                                <button onClick={() => handleDecreaseQuantity(item.itemId, item.quantity)} className="w-7 h-7 flex items-center justify-center hover:bg-gray-50"><Minus size={14} /></button>
+                                                <span className="text-sm w-6 text-center">{item.quantity}</span>
+                                                <button onClick={() => handleIncreaseQuantity(item.itemId, item.quantity)} className="w-7 h-7 flex items-center justify-center hover:bg-gray-50"><Plus size={14} /></button>
+                                            </div>
                                             <p className="font-bold text-gray-900">${item.unitPrice.toFixed(2)}</p>
                                         </div>
                                     </div>
@@ -133,7 +165,23 @@ export default function Cart({ isOpen, onClose }: CartProps) {
                     <div className="p-6 border-t border-gray-100 bg-gray-50/50">
                         <div className="flex justify-between text-base font-bold mb-4 text-gray-900"><span>Subtotal</span><span>${calculateTotal().toFixed(2)}</span></div>
                         <div className="flex flex-col gap-3">
-                            <button className="w-full bg-black text-white py-4 rounded-lg font-bold hover:bg-gray-800 transition-colors shadow-md" onClick={handleCheckout}>Checkout</button>
+                            {/* ✅ 修复：添加 loading 状态和图标 */}
+                            <button
+                                className="w-full bg-black text-white py-4 rounded-lg font-bold hover:bg-gray-800 transition-colors shadow-md flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+                                onClick={handleCheckout}
+                                disabled={isCheckingOut}
+                            >
+                                {isCheckingOut ? (
+                                    <>
+                                        <Loader2 className="w-5 h-5 animate-spin" />
+                                        Redirecting...
+                                    </>
+                                ) : (
+                                    <>
+                                        Checkout <ArrowRight size={18} />
+                                    </>
+                                )}
+                            </button>
                         </div>
                     </div>
                 )}
