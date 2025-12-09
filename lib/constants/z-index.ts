@@ -7,7 +7,7 @@ export const Z_INDEX = {
 
     // === 10-39: 页面内容层 ===
     CONTENT: 10,
-    STICKY_CONTENT: 30, // 比如页面内的吸顶标题
+    STICKY: 30, // 比如页面内的吸顶标题
 
     // === 40-99: 顶部导航体系 (Header System) ===
     NOTICE: 40,          // 最底层：公告栏 (必须比导航低)

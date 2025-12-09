@@ -3,8 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import Image from 'next/image';
+import Link from 'next/link'; // 保留，虽然 ProductCard 内部处理了跳转，但 Breadcrumb 可能用到
 import dynamic from 'next/dynamic';
 import { ProductResponse, ProductSku } from '@/types/product';
 import { useToast } from '@/contexts/toastContext';
@@ -15,35 +14,18 @@ import { productService } from '@/services/product-service';
 import { getProductImageUrl } from '@/lib/image-utils';
 import { Z_INDEX } from '@/lib/constants/z-index';
 
-// ✅ 严格保留你的引用路径
+// ✅ 引入统一的卡片组件
+import ProductCard from '@/components/product/product-card';
 import ProductGallery from '@/components/product/product-gallery';
 import Breadcrumb from '@/components/common/breadcrumb';
 
 import {
-    ShoppingBag,
-    ShieldCheck,
-    Package,
-    Truck,
-    ChevronDown,
-    ChevronUp,
-    Star,
-    Heart,
-    Loader2,
-    Zap,
-    ArrowRight,
-    Check,
-    Droplets,
-    BatteryCharging,
-    Volume2,
-    Smartphone,
-    Feather
+    ShoppingBag, ShieldCheck, Package, Truck, ChevronDown, ChevronUp, Star, Heart, Loader2, Zap, Check, Droplets, BatteryCharging, Volume2, Smartphone, Feather
 } from 'lucide-react';
 
-// ✅ 引入 Markdown 样式 (修复富文本显示问题)
 import '@uiw/react-md-editor/markdown-editor.css';
 import '@uiw/react-markdown-preview/markdown.css';
 
-// Badge 配置
 const BADGE_CONFIG: Record<string, { label: string; className: string }> = {
     'NEW': { label: 'New Arrival', className: 'bg-blue-600' },
     'HOT': { label: 'Best Seller', className: 'bg-amber-500' },
@@ -78,32 +60,27 @@ const getFeatureIconAndStyle = (text: string) => {
     return { icon: Check, color: 'text-gray-600', bg: 'bg-gray-100' };
 };
 
+// ✅ 修复后的轮播组件：尺寸更协调
 const ProductCarousel = ({ title, products }: { title: string; products: ProductResponse[] }) => {
     if (!products || products.length === 0) return null;
     return (
         <div className="py-10 border-t border-gray-100">
             <div className="flex items-center justify-between mb-6 px-1">
                 <h3 className="text-xl md:text-2xl font-bold text-gray-900 font-['Playfair_Display']">{title}</h3>
-                <span className="text-xs text-gray-400 flex items-center gap-1 lg:hidden">Swipe <ArrowRight size={12} /></span>
+                <span className="text-xs text-gray-400 lg:hidden">Swipe →</span>
             </div>
-            <div className="flex overflow-x-auto pb-6 gap-4 snap-x snap-mandatory scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0 md:grid md:grid-cols-4 md:overflow-visible">
+
+            {/*
+                容器布局修复：
+                - Mobile: flex gap-4 overflow-x-auto (横向滚动)
+                - Desktop: grid grid-cols-4 (标准的四列布局)
+                - Card Width: 移动端 w-[180px] (更紧凑)，桌面端 w-auto (自适应)
+            */}
+            <div className="flex overflow-x-auto pb-8 gap-4 snap-x snap-mandatory scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0 md:grid md:grid-cols-2 lg:grid-cols-4 md:overflow-visible">
                 {products.map((p) => (
-                    <Link key={p.id} href={`/toys${p.slug}`} className="flex-shrink-0 w-[160px] md:w-auto snap-start group block">
-                        <div className="relative aspect-[3/4] bg-[#f7f7f7] rounded-lg overflow-hidden mb-3 border border-gray-100">
-                            <Image src={getProductImageUrl('', p.image)} alt={p.title} fill className="object-cover mix-blend-multiply group-hover:scale-105 transition-transform duration-500 p-2" />
-                        </div>
-                        <h4 className="text-sm font-medium text-gray-900 line-clamp-2 min-h-[2.5em] leading-snug group-hover:text-pink-600 transition-colors">{p.title}</h4>
-                        <div className="mt-1 flex items-baseline gap-2">
-                            {p.originalPrice > p.currentPrice ? (
-                                <>
-                                    <span className="text-sm font-bold text-[#b62337]">${p.currentPrice.toFixed(2)}</span>
-                                    <span className="text-xs text-gray-400 line-through">${p.originalPrice.toFixed(2)}</span>
-                                </>
-                            ) : (
-                                <span className="text-sm font-bold text-gray-900">${p.currentPrice.toFixed(2)}</span>
-                            )}
-                        </div>
-                    </Link>
+                    <div key={p.id} className="flex-shrink-0 w-[180px] md:w-auto snap-start h-full">
+                        <ProductCard product={p} />
+                    </div>
                 ))}
             </div>
         </div>
@@ -162,11 +139,10 @@ export default function ProductDetailClient({
             const otherViewed = viewed.filter(p => p.id !== product.id);
             const newViewedHistory = [product, ...otherViewed].slice(0, 8);
             localStorage.setItem('recently_viewed', JSON.stringify(newViewedHistory));
-            setRecentlyViewed(otherViewed.slice(0, 6));
+            setRecentlyViewed(otherViewed.slice(0, 4)); // 限制显示数量，保持整洁
         } catch (e) { console.error(e); }
     }, [product]);
 
-    // ✅ 修复：安全获取库存
     const getAvailableStock = (sku: ProductSku | null | undefined) => {
         if (!sku) return 0;
         return (sku.stock || 0) - (sku.lockedStock || 0);
@@ -177,7 +153,6 @@ export default function ProductDetailClient({
     const isCurrentSkuOutOfStock = selectedSku && getAvailableStock(selectedSku) <= 0;
     const badgeConfig = product.badge ? BADGE_CONFIG[product.badge.toUpperCase()] : null;
 
-    // ✅ 保持你的 badges 传递方式，这会显示在相册里
     const galleryBadges = (
         <>
             {isCurrentSkuOutOfStock && (
@@ -205,7 +180,15 @@ export default function ProductDetailClient({
         setIsFavorited(newState);
         try {
             if (newState) {
-                await wishlistService.addItemToWishlist({ productId: product.id, productTitle: product.title, image: product.image, currentPrice: product.currentPrice, slug: product.slug });
+                await wishlistService.addItemToWishlist({
+                    productId: product.id,
+                    productTitle: product.title,
+                    image: product.image,
+                    originalPrice: product.originalPrice,
+                    currentPrice: product.currentPrice,
+                    slug: product.slug,
+                    badge: product.badge
+                });
                 showToast('success', 'Saved', 'Added to your wishlist');
             } else {
                 await wishlistService.removeItemFromWishlist({ productId: product.id });
@@ -218,7 +201,7 @@ export default function ProductDetailClient({
         if (!product || !selectedSku) return false;
         if (getAvailableStock(selectedSku) <= 0) return false;
         try {
-            await addItemToCart({ productId: product.id, productTitle: product.title, productSku: selectedSku.sku, productImage: getProductImageUrl('', product.image), unitPrice: product.currentPrice, quantity: 1, color: selectedSku.color });
+            await addItemToCart({ productId: product.id, productTitle: product.title, productSku: selectedSku.sku, productImage: getProductImageUrl('', product.image), unitPrice: product.currentPrice, quantity: 1, color: selectedSku.color, skuId: selectedSku.id });
             return true;
         } catch (error) { console.error(error); showToast('error', 'Error', 'Failed to add product.'); return false; }
     };
@@ -227,40 +210,36 @@ export default function ProductDetailClient({
     const handleBuyNow = async () => { setBuyingNow(true); const success = await performAddToCart(); if (success) router.push('/checkout'); setBuyingNow(false); };
     const toggleSection = (section: string) => setExpandedSection(expandedSection === section ? null : section);
 
+    const renderDetailTitle = (fullTitle: string) => {
+        if (fullTitle.includes('|')) {
+            const [name, desc] = fullTitle.split('|');
+            return (
+                <div className="flex flex-col gap-1 mb-2">
+                    <h1 className="text-4xl md:text-5xl font-bold text-gray-900 font-['Playfair_Display'] leading-tight">{name.trim()}</h1>
+                    <span className="text-lg md:text-xl text-gray-500 font-['Inter'] font-light">{desc.trim()}</span>
+                </div>
+            );
+        }
+        return <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3 font-['Playfair_Display'] leading-tight">{fullTitle}</h1>;
+    };
+
     return (
         <div className="w-full pb-32 lg:pb-16">
-            <div className="mb-6">
-                {/* ✅ 保持你的面包屑用法 */}
-                <Breadcrumb items={breadcrumbs} showLastItem={false} />
-            </div>
+            <div className="mb-6"><Breadcrumb items={breadcrumbs} showLastItem={false} /></div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 mt-6">
                 <div>
-                    {/* ✅ 保持你的相册用法 */}
-                    <ProductGallery
-                        images={galleryImages}
-                        productTitle={product.title}
+                    <ProductGallery images={galleryImages} productTitle={product.title}
                         // @ts-ignore
-                        badges={galleryBadges}
+                                    badges={galleryBadges}
                     />
                 </div>
 
                 <div className="flex flex-col">
                     <div className="border-b border-gray-100 pb-6 mb-6">
-                        {/*
-                           🔴 修复 1：主标题区域
-                           添加了 items-start（顶部对齐）, gap-4
-                           h1 添加了 flex-1 (占据剩余空间), min-w-0 (允许Flex子项收缩), break-words (长单词换行)
-                           button 添加了 flex-shrink-0 (防止被挤压)
-                        */}
                         <div className="flex justify-between items-start gap-4 mb-3">
-                            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 font-['Playfair_Display'] leading-tight flex-1 min-w-0 break-words pr-2">
-                                {product.title}
-                            </h1>
-                            <button
-                                onClick={handleToggleFavorite}
-                                className={`p-2.5 rounded-full transition-all flex-shrink-0 ${isFavorited ? 'bg-red-50 text-red-500 hover:bg-red-100' : 'bg-gray-50 text-gray-400 hover:bg-gray-100 hover:text-red-500'}`}
-                            >
+                            <div className="flex-1 min-w-0 pr-2">{renderDetailTitle(product.title)}</div>
+                            <button onClick={handleToggleFavorite} className={`p-2.5 rounded-full transition-all flex-shrink-0 ${isFavorited ? 'bg-red-50 text-red-500 hover:bg-red-100' : 'bg-gray-50 text-gray-400 hover:bg-gray-100 hover:text-red-500'}`}>
                                 <Heart size={22} fill={isFavorited ? "currentColor" : "none"} strokeWidth={isFavorited ? 0 : 2} />
                             </button>
                         </div>
@@ -268,14 +247,8 @@ export default function ProductDetailClient({
                         <div className="flex items-center justify-between">
                             <div className="flex items-baseline gap-3">
                                 {isOnSale ? (
-                                    <>
-                                        <span className="text-2xl font-bold text-[#b62337]">${product.currentPrice.toFixed(2)}</span>
-                                        <span className="text-lg text-gray-400 line-through decoration-gray-300">${product.originalPrice.toFixed(2)}</span>
-                                        {/* ✅ 已移除这里的 Sale 标签 */}
-                                    </>
-                                ) : (
-                                    <span className="text-2xl font-bold text-gray-900">${product.currentPrice.toFixed(2)}</span>
-                                )}
+                                    <><span className="text-2xl font-bold text-[#b62337]">${product.currentPrice.toFixed(2)}</span><span className="text-lg text-gray-400 line-through decoration-gray-300">${product.originalPrice.toFixed(2)}</span></>
+                                ) : (<span className="text-2xl font-bold text-gray-900">${product.currentPrice.toFixed(2)}</span>)}
                             </div>
                             <div className="flex items-center gap-1">
                                 {[1,2,3,4,5].map(i => <Star key={i} size={14} className="fill-yellow-400 text-yellow-400" />)}
@@ -284,7 +257,6 @@ export default function ProductDetailClient({
                         </div>
                     </div>
 
-                    {/* Color Selection */}
                     {product.productSkus && product.productSkus.length > 0 && (
                         <div className="mb-8">
                             <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wide mb-3">
@@ -341,17 +313,10 @@ export default function ProductDetailClient({
                         </button>
                         {expandedSection === 'description' && (
                             <div className="pb-6 animate-fadeIn">
-                                {/* ✅ 修复富文本样式 + 强制字体 */}
                                 <div data-color-mode="light" className="markdown-content">
                                     <MDViewer
                                         source={description}
-                                        style={{
-                                            backgroundColor: 'transparent',
-                                            color: '#4b5563',
-                                            fontSize: '1rem',
-                                            lineHeight: '1.75',
-                                            fontFamily: 'var(--font-inter), sans-serif'
-                                        }}
+                                        style={{ backgroundColor: 'transparent', color: '#4b5563', fontSize: '1rem', lineHeight: '1.75', fontFamily: 'var(--font-inter), sans-serif' }}
                                     />
                                 </div>
                             </div>
@@ -378,24 +343,14 @@ export default function ProductDetailClient({
                 </div>
             </div>
 
-            <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-3 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] flex items-center gap-3 safe-area-pb" style={{ zIndex: Z_INDEX.STICKY_CONTENT }}>
+            <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-3 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] flex items-center gap-3 safe-area-pb" style={{ zIndex: Z_INDEX.STICKY }}>
                 <div className="flex-1 min-w-0 flex flex-col justify-center">
-                    {/*
-                       🔴 修复 2：移动端底部栏
-                       标题：添加 flex-1, truncate (确保长标题省略)
-                       价格：添加 flex-shrink-0 (防止被标题挤没)
-                    */}
                     <div className="flex items-center justify-between gap-2">
                         <p className="text-xs font-bold text-gray-900 truncate flex-1">{product.title}</p>
                         <div className="flex items-baseline gap-2 flex-shrink-0">
                             {isOnSale ? (
-                                <>
-                                    <p className="text-xs font-bold text-[#b62337] whitespace-nowrap">${product.currentPrice}</p>
-                                    <p className="text-[10px] text-gray-400 line-through">${product.originalPrice}</p>
-                                </>
-                            ) : (
-                                <p className="font-bold text-gray-900 text-xs">${product.currentPrice}</p>
-                            )}
+                                <><p className="text-xs font-bold text-[#b62337] whitespace-nowrap">${product.currentPrice}</p><p className="text-[10px] text-gray-400 line-through">${product.originalPrice}</p></>
+                            ) : (<p className="font-bold text-gray-900 text-xs">${product.currentPrice}</p>)}
                         </div>
                     </div>
                     <p className="text-[10px] text-gray-500 truncate flex items-center gap-1 mt-0.5">

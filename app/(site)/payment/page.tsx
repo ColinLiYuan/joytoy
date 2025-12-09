@@ -26,7 +26,7 @@ function PaymentContent() {
                 setIsLoading(false);
                 return;
             }
-
+            console.log('payment fetch order')
             if (!orderId) {
                 setIsLoading(false);
                 return;
@@ -35,6 +35,7 @@ function PaymentContent() {
             try {
                 // 1. 尝试从 LocalStorage 获取（最快）
                 const storedOrder = localStorage.getItem('currentOrder');
+                console.log('payment fetch order from storedOrder: ', storedOrder)
                 if (storedOrder) {
                     const parsed = JSON.parse(storedOrder);
                     // 强制转字符串对比，防止类型不一致
@@ -47,6 +48,7 @@ function PaymentContent() {
 
                 // 2. 如果 LocalStorage 没有，或者 ID 不匹配，尝试从后端获取
                 const data = await orderService.getOrder(Number(orderId));
+                console.log('payment fetch order from service: ', data)
                 setOrderData(data);
                 setIsLoading(false);
 

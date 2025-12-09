@@ -1,13 +1,5 @@
 // types/product.ts
 
-export interface ProductSku {
-    id: number;
-    sku: string;
-    color: string;
-    stock: number;
-    lockedStock: number;
-}
-
 export interface ProductResponse {
     id: number;
     slug: string;
@@ -19,7 +11,6 @@ export interface ProductResponse {
     minOrder: string;
     description: string;
     image: string;
-    baseUrl: string;
     stock: number;
     galleries?: Array<{
         url: string;
@@ -51,4 +42,12 @@ export interface ProductListResponse {
     totalPages: number;
     hasNext: boolean;
     hasPrevious: boolean;
+}
+
+export interface ProductSku {
+    id: number;
+    sku: string;
+    color: string;
+    stock: number;
+    lockedStock: number;
 }

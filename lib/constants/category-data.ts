@@ -206,6 +206,52 @@ export const CATEGORIES_DATA: CategoriesData = {
                         changefreq: "weekly"
                     }
                 ]
+            },
+            {
+                slug: "bondage-play",
+                name: "Bondage & Play",
+                title: "Bondage & SM Toys | Kink, Fetish & BDSM Gear",
+                description: "Explore your kinky side with our collection of bondage gear. Handcuffs, whips, blindfolds and sensory play toys.",
+                priority: 0.7,
+                changefreq: "weekly",
+                categories: [
+                    {
+                        slug: "bondage-play/impact-play",
+                        name: "Whips & Crops", // 👈 这里放鞭子
+                        title: "Impact Play | Sex Whips, Paddles & Crops",
+                        description: "Spankers, whips, and riding crops for impact play. Experience the thrill of sensation.",
+                        root: "bondage-play",
+                        priority: 0.7,
+                        changefreq: "weekly"
+                    },
+                    {
+                        slug: "bondage-play/restraints",
+                        name: "Handcuffs & Restraints",
+                        title: "Sex Handcuffs & Restraints | Bondage Gear",
+                        description: "Beginner-friendly handcuffs, ankle cuffs, and soft restraints for bedroom submission.",
+                        root: "bondage-play",
+                        priority: 0.7,
+                        changefreq: "weekly"
+                    },
+                    {
+                        slug: "bondage-play/sensory-play",
+                        name: "Blindfolds & Masks",
+                        title: "Sensory Deprivation | Blindfolds & Eye Masks",
+                        description: "Enhance sensitivity by removing sight. Satin blindfolds and masks for sensory play.",
+                        root: "bondage-play",
+                        priority: 0.7,
+                        changefreq: "weekly"
+                    },
+                    {
+                        slug: "bondage-play/bdsm-kits",
+                        name: "Bondage Kits",
+                        title: "BDSM Starter Kits | Beginner Bondage Sets",
+                        description: "All-in-one bondage sets for beginners. Includes cuffs, blindfolds, and teasers.",
+                        root: "bondage-play",
+                        priority: 0.7,
+                        changefreq: "weekly"
+                    }
+                ]
             }
         ]
     }

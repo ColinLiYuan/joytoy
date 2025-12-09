@@ -1,6 +1,7 @@
 export interface AddToCartRequest {
     productId: number;
     productTitle: string;     // 新增字段
+    skuId?: number;
     productSku: string;       // 新增字段
     productImage: string;     // 新增字段
     unitPrice: number;        // 改为 unitPrice
