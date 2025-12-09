@@ -97,7 +97,7 @@ export default async function ProductDetail({ params }: PageProps) {
         if (!product) return [];
         const hasGallery = !!(product.galleries && product.galleries.length > 0);
         return hasGallery ?
-            product.galleries!.map(gallery => ({ url: getProductImageUrl(product!.baseUrl, gallery.url), alt: gallery.alt || product.title })) :
+            product.galleries!.map(gallery => ({ url: getProductImageUrl('', gallery.url), alt: gallery.alt || product.title })) :
             [{ url: getProductImageUrl('', product.image), alt: product.title }];
     };
 

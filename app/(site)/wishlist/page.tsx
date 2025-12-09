@@ -17,11 +17,13 @@ const convertToProductResponse = (wishlistItem: WishlistResponse): ProductRespon
         id: wishlistItem.productId,
         title: wishlistItem.productTitle,
         image: wishlistItem.image,
-        baseUrl: wishlistItem.baseUrl,
-        currentPrice: wishlistItem.currentPrice,
-        originalPrice: wishlistItem.originalPrice, // ✅ 恢复原价，触发 Sale 徽章
+        currentPrice: wishlistItem.currentPrice ?? 0,
+        originalPrice: wishlistItem.originalPrice ?? 0, // ✅ 恢复原价，触发 Sale 徽章
         slug: wishlistItem.slug,
-        badge: wishlistItem.badge, // ✅ 恢复 Badge (HOT/NEW)
+        badge: wishlistItem.badge ?? '', // ✅ 恢复 Badge (HOT/NEW)
+        minOrder: '1',  // 必需字段
+        description: '', // 必需字段
+        stock: 0,       // 必需字段
         favorited: true,
         // ✅ 关键：构造一个有库存的 SKU，但用特殊颜色标记
         productSkus: [
@@ -31,7 +33,6 @@ const convertToProductResponse = (wishlistItem: WishlistResponse): ProductRespon
                 lockedStock: 0,
                 // 使用特殊标记，告诉 Card 组件不要渲染这个颜色圆点
                 color: '__generic__',
-                price: wishlistItem.currentPrice,
                 sku: 'wishlist-item'
             }
         ]

@@ -72,8 +72,7 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
                 productImage: product.image,
                 unitPrice: product.currentPrice,
                 quantity: 1,
-                color: colorToSave,
-                skuId: selectedSku.id
+                color: colorToSave
             });
             // showToast('success', 'Added', 'Product added to bag');
         } catch (error) {
@@ -104,7 +103,6 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
             if (!userInfo) return;
             if (newState) {
                 await wishlistService.addItemToWishlist({
-                    userId: userInfo.id,
                     productId: product.id,
                     productTitle: product.title,
                     image: product.image,
@@ -114,7 +112,7 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
                     badge: product.badge
                 });
             } else {
-                await wishlistService.removeItemFromWishlist({ userId: userInfo.id, productId: product.id });
+                await wishlistService.removeItemFromWishlist({ productId: product.id });
             }
             onWishlistUpdate?.();
         } catch (error) {

@@ -4,11 +4,10 @@ import type { NextRequest } from 'next/server';
 // 1. 定义 301 重定向规则 (Moved Permanently)
 // 键是旧路径，值是新路径
 const redirectMap: Record<string, string> = {
-    // 你刚才给我的两个旧链接
-    '/toys/female-sex-toys/bullet-vibrators/matte-red-lipstick-bullet-vibes': '/collections/female-sex-toys', // 暂时跳到分类页，你后面改成具体产品页
-    '/toys/female-sex-toys/bullet-vibrators/bullet-vibes-5-color-522': '/collections/female-sex-toys', // 同上
-
-    // 可以在这里继续添加...
+    '/toys/female-sex-toys/bullet-vibrators/matte-red-lipstick-bullet-vibes': '/toys/female-sex-toys/bullet-vibrators/dart-precision-bullet',
+    '/toys/female-sex-toys/bullet-vibrators/bullet-vibes-5-color-522': '/toys/female-sex-toys/bullet-vibrators/rouge-lipstick-bullet',
+    '/toys/male-sex-toys/male-masturbators/auto-suction-masturbator-fire': '/toys/male-sex-toys/masturbators/titan-electric-cup',
+    '/toys/female-sex-toys/clit-vibrators/rose-vibes-tongue': '/toys/female-sex-toys/clit-vibrators/rose-licking-vibrator',
 };
 
 // 2. 定义 410 删除规则 (Gone)

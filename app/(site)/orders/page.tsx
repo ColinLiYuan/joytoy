@@ -9,22 +9,42 @@ import { getUserId } from '@/lib/user-utils';
 import { getProductImageUrl } from '@/lib/image-utils';
 import {
     Package, Truck, CheckCircle, Clock, Search,
-    ArrowRight, AlertCircle, ShoppingBag, XCircle, CreditCard, ChevronRight
+    ArrowRight, AlertCircle, ShoppingBag, XCircle, CreditCard, ChevronRight, RefreshCw, Archive
 } from 'lucide-react';
 
+// ✅ 严格按照后端枚举映射状态
 const getStatusConfig = (status: string) => {
     const s = status?.toUpperCase() || 'PENDING';
     switch (s) {
-        case 'COMPLETED': case 'DELIVERED':
-            return { label: 'Delivered', icon: CheckCircle, color: 'text-green-700', bg: 'bg-green-50 border-green-100', action: 'view' };
-        case 'SHIPPED':
-            return { label: 'Shipped', icon: Truck, color: 'text-blue-700', bg: 'bg-blue-50 border-blue-100', action: 'track' };
-        case 'PROCESSING': case 'PAID':
+        case 'PENDING':
+            return { label: 'Pending Payment', icon: Clock, color: 'text-amber-700', bg: 'bg-amber-50 border-amber-100', action: 'pay' };
+
+        case 'PAID':
+            return { label: 'Paid', icon: CheckCircle, color: 'text-blue-700', bg: 'bg-blue-50 border-blue-100', action: 'view' };
+
+        case 'PROCESSING':
             return { label: 'Processing', icon: Package, color: 'text-purple-700', bg: 'bg-purple-50 border-purple-100', action: 'view' };
+
+        case 'SHIPPED':
+            return { label: 'Shipped', icon: Truck, color: 'text-indigo-700', bg: 'bg-indigo-50 border-indigo-100', action: 'track' };
+
+        case 'DELIVERED':
+            return { label: 'Delivered', icon: CheckCircle, color: 'text-green-700', bg: 'bg-green-50 border-green-100', action: 'view' };
+
+        case 'COMPLETED':
+            return { label: 'Completed', icon: CheckCircle, color: 'text-emerald-700', bg: 'bg-emerald-50 border-emerald-100', action: 'reorder' };
+
         case 'CANCELLED':
-            return { label: 'Cancelled', icon: XCircle, color: 'text-red-700', bg: 'bg-red-50 border-red-100', action: 'reorder' };
-        default: // PENDING
-            return { label: 'Unpaid', icon: Clock, color: 'text-amber-700', bg: 'bg-amber-50 border-amber-100', action: 'pay' };
+            return { label: 'Cancelled', icon: XCircle, color: 'text-red-700', bg: 'bg-red-50 border-red-100', action: 'view' };
+
+        case 'REFUNDED':
+            return { label: 'Refunded', icon: RefreshCw, color: 'text-gray-700', bg: 'bg-gray-100 border-gray-200', action: 'view' };
+
+        case 'EXPIRED':
+            return { label: 'Expired', icon: Archive, color: 'text-gray-500', bg: 'bg-gray-50 border-gray-100', action: 'view' };
+
+        default:
+            return { label: s, icon: Clock, color: 'text-gray-700', bg: 'bg-gray-50 border-gray-200', action: 'view' };
     }
 };
 
@@ -68,6 +88,7 @@ export default function OrdersPage() {
         e.stopPropagation();
         if (action === 'pay') window.location.href = `/payment?orderId=${order.id}`;
         else if (action === 'track') window.location.href = `/orders/${order.id}/tracking`;
+        // 其他状态保持默认跳转
     };
 
     if (isLoading) {
@@ -80,7 +101,6 @@ export default function OrdersPage() {
 
     return (
         <div className="min-h-screen bg-gray-50 py-8 md:py-12 w-full max-w-full overflow-x-hidden">
-            {/* ✅ 修复：放宽 PC 端容器宽度 */}
             <div className="container mx-auto px-4 max-w-5xl">
 
                 {/* Header */}
@@ -133,7 +153,7 @@ export default function OrdersPage() {
                                     key={order.id}
                                     className="block bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden group"
                                 >
-                                    {/* Top Bar: Date & Status */}
+                                    {/* Top Bar */}
                                     <div className="px-5 py-3 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
                                         <div className="flex items-center gap-3">
                                             <span className="font-mono text-sm font-bold text-gray-900">#{order.orderNumber}</span>
@@ -146,12 +166,11 @@ export default function OrdersPage() {
                                         </div>
                                     </div>
 
-                                    {/* Card Body - ✅ 响应式布局核心 */}
+                                    {/* Card Body */}
                                     <div className="p-5 flex flex-col md:flex-row md:items-center gap-6">
 
                                         {/* Left: Product Info */}
                                         <div className="flex gap-4 flex-1">
-                                            {/* Image */}
                                             <div className="w-20 h-20 bg-gray-100 rounded-lg flex-shrink-0 relative overflow-hidden border border-gray-100 group-hover:border-gray-300 transition-colors">
                                                 {firstItem?.productImage ? (
                                                     <Image
@@ -172,7 +191,6 @@ export default function OrdersPage() {
                                                 )}
                                             </div>
 
-                                            {/* Info Text */}
                                             <div className="flex flex-col justify-center min-w-0">
                                                 <h4 className="font-bold text-gray-900 text-sm line-clamp-1 group-hover:text-pink-600 transition-colors">
                                                     {firstItem?.productTitle || 'Unknown Item'}
@@ -187,16 +205,13 @@ export default function OrdersPage() {
                                             </div>
                                         </div>
 
-                                        {/* Right: Price & Actions - ✅ PC端横向排列 */}
+                                        {/* Right: Price & Actions */}
                                         <div className="flex flex-row md:flex-col items-center md:items-end justify-between md:justify-center gap-4 md:pl-6 md:border-l md:border-gray-100 md:min-w-[140px]">
-
-                                            {/* Price */}
                                             <div className="text-left md:text-right">
                                                 <p className="text-[10px] text-gray-400 uppercase tracking-wider font-bold mb-0.5">Total</p>
                                                 <p className="font-bold text-lg text-gray-900">${order.finalAmount.toFixed(2)}</p>
                                             </div>
 
-                                            {/* Action Button */}
                                             {(status.action === 'pay' || status.action === 'track') ? (
                                                 <button
                                                     onClick={(e) => handleAction(e, order, status.action)}
