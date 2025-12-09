@@ -5,10 +5,6 @@ import { getToken } from '@/lib/cookie-utils';
 
 export async function GET(request: NextRequest) {
     try {
-        const { searchParams } = new URL(request.url);
-        const page = searchParams.get('page') || '0';
-        const size = searchParams.get('size') || '20';
-
         // 1. 获取 token
         const token = await getToken();
 
@@ -30,7 +26,7 @@ export async function GET(request: NextRequest) {
             },
         };
 
-        let url = `/api/V1/wishlist/list`;
+        let url = `/api/V1/wishlist`;
         const result = await apiGet(url, requestOptions);
 
         return NextResponse.json(result);

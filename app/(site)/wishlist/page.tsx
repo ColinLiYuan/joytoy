@@ -5,22 +5,36 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { WishlistResponse } from '@/types/wishlist';
 import { Heart, ArrowLeft, ShoppingBag, Loader2 } from 'lucide-react';
-import { wishlistService } from '@/services/wishlistService'; // ✅ 用客户端 Service
-import SimpleProductGrid from '@/components/product/simple-product-grid'; // ✅ 用简单网格
+import { wishlistService } from '@/services/wishlistService';
+import SimpleProductGrid from '@/components/product/simple-product-grid';
 import { useAuth } from '@/contexts/authContext';
 import { useRouter } from 'next/navigation';
+import { ProductResponse } from '@/types/product';
 
-const convertToProductResponse = (wishlistItem: WishlistResponse): any => {
+// ✅ 修复：更精确的数据映射
+const convertToProductResponse = (wishlistItem: WishlistResponse): ProductResponse => {
     return {
         id: wishlistItem.productId,
         title: wishlistItem.productTitle,
         image: wishlistItem.image,
         baseUrl: wishlistItem.baseUrl,
         currentPrice: wishlistItem.currentPrice,
-        originalPrice: wishlistItem.currentPrice, // 假设原价一样，或者后端补充字段
+        originalPrice: wishlistItem.originalPrice, // ✅ 恢复原价，触发 Sale 徽章
         slug: wishlistItem.slug,
-        favorited: true, // 既然在心愿单里，肯定是 true
-        productSkus: [] // 心愿单列表不需要 SKU 选择
+        badge: wishlistItem.badge, // ✅ 恢复 Badge (HOT/NEW)
+        favorited: true,
+        // ✅ 关键：构造一个有库存的 SKU，但用特殊颜色标记
+        productSkus: [
+            {
+                id: 0,
+                stock: 999, // 保证有货
+                lockedStock: 0,
+                // 使用特殊标记，告诉 Card 组件不要渲染这个颜色圆点
+                color: '__generic__',
+                price: wishlistItem.currentPrice,
+                sku: 'wishlist-item'
+            }
+        ]
     };
 };
 
@@ -47,7 +61,6 @@ export default function WishlistPage() {
     useEffect(() => {
         if (isClient) {
             if (!isLoggedIn) {
-                // 如果没登录，可以在这里跳转登录，或者显示空状态
                 setIsLoading(false);
                 return;
             }
@@ -55,7 +68,6 @@ export default function WishlistPage() {
         }
     }, [isClient, isLoggedIn]);
 
-    // 当用户在卡片上点击移除心愿单时，刷新列表
     const handleWishlistUpdate = () => {
         fetchWishlist();
     };
@@ -70,6 +82,7 @@ export default function WishlistPage() {
         );
     }
 
+    // 转换数据
     const products = wishlistItems.map(convertToProductResponse);
 
     return (
@@ -125,7 +138,6 @@ export default function WishlistPage() {
                         </Link>
                     </div>
                 ) : (
-                    /* ✅ 使用简单网格，传入刷新回调 */
                     <SimpleProductGrid
                         products={products}
                         onWishlistUpdate={handleWishlistUpdate}

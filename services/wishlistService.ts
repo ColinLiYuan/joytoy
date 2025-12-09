@@ -11,7 +11,7 @@ class WishlistService {
         });
 
         const apiResponse = await response.json();
-        console.log('getWishlist route: ', apiResponse.data)
+        console.log('getWishlist service: ', apiResponse)
         return apiResponse.data;
     }
 
