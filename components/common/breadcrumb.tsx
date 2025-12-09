@@ -6,21 +6,19 @@ import { ChevronRight, Home } from 'lucide-react';
 
 export interface BreadcrumbItem {
     name: string;
-    path: string | null; // null 表示不可点击（通常是当前页）
+    path: string | null;
 }
 
 interface BreadcrumbProps {
     items: BreadcrumbItem[];
-    showLastItem?: boolean; // 控制是否显示最后一级（当前页标题）
+    showLastItem?: boolean;
 }
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://mythtoy.com';
 
 export default function Breadcrumb({ items, showLastItem = false }: BreadcrumbProps) {
-    // 1. 视觉上要显示的 items
     const visibleItems = showLastItem ? items : items.slice(0, -1);
 
-    // 2. 完整的 Schema 数据 (SEO 必须包含完整的路径)
     const structuredData = {
         '@context': 'https://schema.org',
         '@type': 'BreadcrumbList',
@@ -34,7 +32,6 @@ export default function Breadcrumb({ items, showLastItem = false }: BreadcrumbPr
 
     return (
         <nav aria-label="Breadcrumb" className="w-full">
-            {/* 注入 JSON-LD */}
             <script
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
@@ -46,24 +43,30 @@ export default function Breadcrumb({ items, showLastItem = false }: BreadcrumbPr
 
                     return (
                         <li key={index} className="flex items-center gap-2">
-                            {/* 第一项如果是 Home，可以加个小图标 */}
                             {index === 0 && <Home size={14} className="mb-0.5" />}
 
-                            {item.path && !isLast ? (
+                            {/* ✅ 修改逻辑：只要 item.path 存在，就渲染为 Link，不管是不是最后一项 */}
+                            {item.path ? (
                                 <Link
                                     href={item.path}
-                                    className="hover:text-black hover:underline underline-offset-4 transition-colors duration-200"
+                                    className={`transition-colors duration-200 ${
+                                        isLast
+                                            // 如果是当前页(最后一项)：加粗、黑色，表明状态
+                                            ? 'font-medium text-gray-900 hover:text-black'
+                                            // 如果是父级页：灰色，悬停变黑加下划线
+                                            : 'text-gray-500 hover:text-black hover:underline underline-offset-4'
+                                    }`}
+                                    aria-current={isLast ? 'page' : undefined}
                                 >
                                     {item.name}
                                 </Link>
                             ) : (
-                                // 最后一项（当前页），颜色加深，不可点
+                                // 只有 path 为 null 时才渲染为纯文本
                                 <span className="font-medium text-gray-900 line-clamp-1 max-w-[200px] md:max-w-none">
                                     {item.name}
                                 </span>
                             )}
 
-                            {/* 分隔符 */}
                             {!isLast && (
                                 <ChevronRight size={14} className="text-gray-300 flex-shrink-0" />
                             )}

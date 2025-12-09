@@ -3,12 +3,14 @@
 // 1. 定义颜色组和变体 (这是核心数据源)
 export const COLOR_SYSTEM = {
     "Red": {
-        display: "Red", // 筛选器显示的名称
-        hex: "#FF0000", // 筛选器显示的色块
+        display: "Red",
+        hex: "#FF0000",
         variants: {
             "Red": "#FF0000",
             "Crimson": "#DC143C",
+            "Crimson Red": "#DC143C", // ✅ 新增
             "Scarlet": "#FF2400",
+            "Scarlet Red": "#FF2400", // ✅ 新增
             "Burgundy": "#800020",
             "Maroon": "#800000",
             "Coral": "#FF7F50",
@@ -31,6 +33,7 @@ export const COLOR_SYSTEM = {
         hex: "#0000FF",
         variants: {
             "Blue": "#0000FF",
+            "Electric Blue": "#7DF9FF", // ✅ 新增
             "Navy": "#000080",
             "Sky Blue": "#87CEEB",
             "Royal Blue": "#4169E1",
@@ -59,6 +62,7 @@ export const COLOR_SYSTEM = {
             "Violet": "#EE82EE",
             "Lavender": "#E6E6FA",
             "Lilac": "#C8A2C8",
+            "Soft Lilac": "#D8B2D1", // ✅ 新增
             "Royal Purple": "#7851A9"
         }
     },
@@ -68,6 +72,7 @@ export const COLOR_SYSTEM = {
         variants: {
             "Black": "#000000",
             "Midnight Black": "#191970",
+            "Obsidian Black": "#1C1C1C", // ✅ 新增 (黑曜石色)
             "Charcoal": "#36454F"
         }
     },
@@ -76,6 +81,7 @@ export const COLOR_SYSTEM = {
         hex: "#FFFFFF",
         variants: {
             "White": "#FFFFFF",
+            "Arctic White": "#F0FFFF", // ✅ 新增 (极地白)
             "Ivory": "#FFFFF0",
             "Cream": "#FFFDD0"
         }
@@ -117,6 +123,7 @@ export const COLOR_SYSTEM = {
         hex: "#C0C0C0",
         variants: {
             "Silver": "#C0C0C0",
+            "Sterling Silver": "#C0C0C0", // ✅ 新增 (925银色)
             "Bronze": "#CD7F32",
             "Copper": "#B87333"
         }
