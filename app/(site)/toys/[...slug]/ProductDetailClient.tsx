@@ -13,12 +13,10 @@ import { wishlistService } from '@/services/wishlistService';
 import { productService } from '@/services/product-service';
 import { getProductImageUrl } from '@/lib/image-utils';
 import { Z_INDEX } from '@/lib/constants/z-index';
-
-// ✅ 引入统一的卡片组件
 import ProductCard from '@/components/product/product-card';
 import ProductGallery from '@/components/product/product-gallery';
 import Breadcrumb from '@/components/common/breadcrumb';
-
+import ProductBadge from '@/components/product/product-badge';
 import {
     ShoppingBag, ShieldCheck, Package, Truck, ChevronDown, ChevronUp, Star, Heart, Loader2, Zap, Check, Droplets, BatteryCharging, Volume2, Smartphone, Feather
 } from 'lucide-react';
@@ -150,22 +148,18 @@ export default function ProductDetailClient({
 
     const getMappedColor = (color: string) => colorMap[color.toLowerCase().trim()] || color;
     const isOnSale = product.originalPrice > product.currentPrice;
-    const isCurrentSkuOutOfStock = selectedSku && getAvailableStock(selectedSku) <= 0;
-    const badgeConfig = product.badge ? BADGE_CONFIG[product.badge.toUpperCase()] : null;
+    const isCurrentSkuInStock = selectedSku
+        ? getAvailableStock(selectedSku) > 0
+        : true;
 
     const galleryBadges = (
-        <>
-            {isCurrentSkuOutOfStock && (
-                <span className="bg-black/80 backdrop-blur-sm text-white text-[10px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wide shadow-sm">
-                    Sold Out
-                </span>
-            )}
-            {!isCurrentSkuOutOfStock && badgeConfig && (
-                <span className={`${badgeConfig.className} text-white text-[10px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wide shadow-sm`}>
-                    {badgeConfig.label}
-                </span>
-            )}
-        </>
+        <ProductBadge
+            stockStatus={isCurrentSkuInStock}
+            originalPrice={product.originalPrice}
+            currentPrice={product.currentPrice}
+            badge={product.badge}
+            className="absolute top-4 left-4 z-20" // 详情页图片大，padding可以稍微大一点点
+        />
     );
 
     const handleToggleFavorite = async () => {

@@ -12,13 +12,13 @@ import { useToast } from '@/contexts/toastContext';
 import { useCartStore } from '@/stores/useCartStore';
 import { getMappedColor } from '@/lib/constants/color-map';
 import { Heart, ShoppingBag, Loader2 } from 'lucide-react';
+import ProductBadge from './product-badge';
 
 interface ProductCardProps {
     product: ProductResponse;
     onWishlistUpdate?: () => void;
 }
 
-// ... BLUR_DATA_URL 保持不变 ...
 const BLUR_DATA_URL = "data:image/jpeg;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mN8/+F9PQAI8wNPvd7POQAAAABJRU5ErkJggg==";
 
 export default function ProductCard({ product, onWishlistUpdate }: ProductCardProps) {
@@ -62,7 +62,6 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
 
         setAddingToCart(true);
         try {
-            // ✅ 修复：如果是虚拟颜色，传给购物车的颜色设为 'Default'
             const colorToSave = selectedSku.color === '__generic__' ? 'Default' : selectedSku.color;
 
             await addItemToCart({
@@ -72,9 +71,9 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
                 productImage: product.image,
                 unitPrice: product.currentPrice,
                 quantity: 1,
-                color: colorToSave
+                color: colorToSave,
+                skuId: selectedSku.id
             });
-            // showToast('success', 'Added', 'Product added to bag');
         } catch (error) {
             console.error(error);
             showToast('error', 'Error', 'Failed to add to cart');
@@ -83,7 +82,6 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
         }
     };
 
-    // ... handleToggleFavorite, executeToggleFavorite, renderTitle 保持不变 ...
     const handleToggleFavorite = async (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
@@ -99,20 +97,21 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
         setIsLoading(true);
         const newState = !isFavorited;
         setIsFavorited(newState);
+
         try {
             if (!userInfo) return;
             if (newState) {
                 await wishlistService.addItemToWishlist({
+                    userId: userInfo.id,
                     productId: product.id,
                     productTitle: product.title,
                     image: product.image,
-                    originalPrice: product.originalPrice,
                     currentPrice: product.currentPrice,
                     slug: product.slug,
                     badge: product.badge
                 });
             } else {
-                await wishlistService.removeItemFromWishlist({ productId: product.id });
+                await wishlistService.removeItemFromWishlist({ userId: userInfo.id, productId: product.id });
             }
             onWishlistUpdate?.();
         } catch (error) {
@@ -138,7 +137,6 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
         return <span className="font-medium text-gray-900 line-clamp-2 leading-snug">{fullTitle}</span>;
     };
 
-    // ✅ 新增：检查是否是虚拟 SKU
     const isGenericSku = product.productSkus?.length === 1 && product.productSkus[0].color === '__generic__';
 
     return (
@@ -161,28 +159,12 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
                     <Heart size={18} fill={isFavorited ? "currentColor" : "none"} />
                 </button>
 
-                {!hasAvailableStock && (
-                    <div className="absolute inset-0 bg-white/60 flex items-center justify-center z-0">
-                        <span className="bg-black text-white text-xs font-bold px-3 py-1 rounded-full">SOLD OUT</span>
-                    </div>
-                )}
-
-                {hasAvailableStock && isOnSale && (
-                    <div className="absolute top-3 left-3 z-10">
-                        <span className="bg-[#b62337] text-white text-[10px] font-bold px-2.5 py-1 rounded uppercase tracking-wider shadow-sm">
-                            Sale
-                        </span>
-                    </div>
-                )}
-
-                {/* 增加 Badge 支持 (HOT, NEW) */}
-                {hasAvailableStock && !isOnSale && product.badge && (
-                    <div className="absolute top-3 left-3 z-10">
-                        <span className="bg-black text-white text-[10px] font-bold px-2.5 py-1 rounded uppercase tracking-wider shadow-sm">
-                            {product.badge}
-                        </span>
-                    </div>
-                )}
+                <ProductBadge
+                    stockStatus={hasAvailableStock}
+                    originalPrice={product.originalPrice}
+                    currentPrice={product.currentPrice}
+                    badge={product.badge}
+                />
             </Link>
 
             <div className="p-4 flex flex-col flex-1">
@@ -190,7 +172,6 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
                     {renderTitle(product.title)}
                 </Link>
 
-                {/* ✅ 修复：如果是虚拟 SKU，直接隐藏颜色区域，防止显示丑陋的 Default 圆点 */}
                 {!isGenericSku && (
                     <div className="flex items-center gap-2 mb-3 min-h-[12px]">
                         <div className="flex gap-1 h-3 items-center">
@@ -209,7 +190,6 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
                     </div>
                 )}
 
-                {/* 如果隐藏了颜色，加上 margin 补位，保持对齐 (可选) */}
                 {isGenericSku && <div className="mb-3 min-h-[12px]"></div>}
 
                 <div className="mt-auto flex items-center justify-between">

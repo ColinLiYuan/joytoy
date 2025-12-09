@@ -3,9 +3,10 @@ import { productServiceServer } from '@/services/servers/product-service-server'
 import { categoryService } from '@/services/category-service';
 import { filterServiceServer } from '@/services/servers/product-filter-service-server';
 import ProductList from '@/components/product/product-list';
-import Breadcrumb, { BreadcrumbItem } from '@/components/common/breadcrumb'; // ✅ 使用通用面包屑
+import Breadcrumb, { BreadcrumbItem } from '@/components/common/breadcrumb';
 import ErrorSection from '@/components/product/error-section';
 import { Metadata } from 'next';
+import { RootResponse, CategoryResponse } from '@/types/category';
 
 const ITEMS_PER_PAGE = 12;
 
@@ -16,55 +17,16 @@ interface PageProps {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
     const resolvedParams = await params;
-    const categoryParam = resolvedParams.category;
+    // 构造完整路径用于 canonical
+    const path = Array.isArray(resolvedParams.category)
+        ? resolvedParams.category.join('/')
+        : resolvedParams.category;
 
-    // 处理 slug 数组或字符串
-    let slug = '';
-    if (Array.isArray(categoryParam)) {
-        slug = categoryParam.join('/');
-    } else {
-        slug = categoryParam;
-    }
+    const canonicalUrl = `https://mythtoy.com/collections/${path}`;
 
-    // 确保 slug 前面没有多余的斜杠，后面也没有
-    const cleanSlug = slug.replace(/^\/+|\/+$/g, '');
-
-    // ✅ 核心：构建绝对纯净的 URL，不带任何查询参数
-    const canonicalUrl = `https://mythtoy.com/collections/${cleanSlug}`;
-
-    try {
-        const categoryData = await categoryService.getCategoryBySlug(cleanSlug);
-
-        if (categoryData) {
-            return {
-                title: `${categoryData.name} - Myth Toy`,
-                description: categoryData.description || `Shop ${categoryData.name} at MythToy.`,
-
-                // ✅ 确认这里配置了 Canonical
-                alternates: {
-                    canonical: canonicalUrl,
-                },
-
-                openGraph: {
-                    title: categoryData.name,
-                    description: categoryData.description,
-                    url: canonicalUrl, // OG URL 也要用纯净版
-                    type: 'website',
-                    siteName: 'Myth Toy',
-                },
-                // ...
-            };
-        }
-    } catch (error) {
-        console.error('Error in generateMetadata:', error);
-    }
-
-    // 兜底 Metadata
     return {
         title: 'Collection - Myth Toy',
-        alternates: {
-            canonical: canonicalUrl,
-        },
+        alternates: { canonical: canonicalUrl },
     };
 }
 
@@ -89,8 +51,14 @@ function extractFilterArray(data: any): string[] {
 
 export default async function ProductListPage({ params, searchParams }: PageProps) {
     const [resolvedParams, resolvedSearchParams] = await Promise.all([params, searchParams]);
-    const slugParam = resolvedParams.category;
-    const slug = Array.isArray(slugParam) ? slugParam.join('/') : (slugParam || '');
+
+    // ✅ 核心修复 1：把 URL 拆解为数组 segments
+    // 例如 /collections/female-sex-toys/vibrators -> ['female-sex-toys', 'vibrators']
+    const urlSegments = Array.isArray(resolvedParams.category)
+        ? resolvedParams.category
+        : [resolvedParams.category];
+
+    const fullSlug = urlSegments.join('/');
 
     const page = parseInt(resolvedSearchParams.page as string) || 0;
     const sortParam = resolvedSearchParams.sort as string || 'newest';
@@ -108,7 +76,7 @@ export default async function ProductListPage({ params, searchParams }: PageProp
     try {
         const [categoriesResult, productsResult, colorsResult, featuresResult, materialsResult] = await Promise.allSettled([
             categoryService.getCategories(),
-            productServiceServer.getProductsByCategory(slug, page, ITEMS_PER_PAGE, filters),
+            productServiceServer.getProductsByCategory(fullSlug, page, ITEMS_PER_PAGE, filters),
             filterServiceServer.getFilters('colors'),
             filterServiceServer.getFilters('features'),
             filterServiceServer.getFilters('materials'),
@@ -116,46 +84,87 @@ export default async function ProductListPage({ params, searchParams }: PageProp
 
         const categoriesData = categoriesResult.status === 'fulfilled' ? categoriesResult.value : [];
         const productsData = productsResult.status === 'fulfilled' ? productsResult.value : { content: [], totalPages: 0, totalElements: 0, currentPage: 0 };
-
         const availableFilters = {
             colors: extractFilterArray(colorsResult.status === 'fulfilled' ? colorsResult.value : []),
             features: extractFilterArray(featuresResult.status === 'fulfilled' ? featuresResult.value : []),
             materials: extractFilterArray(materialsResult.status === 'fulfilled' ? materialsResult.value : [])
         };
 
-        const currentCategory = categoriesData?.find(cat => cat.slug === slug) || {
-            name: slug.split('-').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' '),
-            slug, root: '', title: "", description: ""
-        };
+        // ✅ 核心修复 2：根据 URL 数组层级来查找分类
+        let currentCategory: CategoryResponse | RootResponse | null = null;
+        let parentCategory: RootResponse | null = null;
 
-        // ✅ 生成面包屑数据
+        if (categoriesData.length > 0) {
+            // 第一段通常是 Root Slug (如 female-sex-toys)
+            const rootSlug = urlSegments[0];
+            const rootMatch = categoriesData.find(root => root.slug === rootSlug);
+
+            if (urlSegments.length === 1) {
+                // 只有一级：/collections/female-sex-toys
+                currentCategory = rootMatch || null;
+            } else if (urlSegments.length >= 2 && rootMatch) {
+                // 有二级：/collections/female-sex-toys/vibrators
+                parentCategory = rootMatch;
+                const subSlug = urlSegments[1];
+
+                // 尝试在子分类里找
+                if (rootMatch.categories) {
+                    currentCategory = rootMatch.categories.find(sub =>
+                        // 兼容两种后端 Slug 格式：'vibrators' 或 'female-sex-toys/vibrators'
+                        sub.slug === subSlug || sub.slug.endsWith(`/${subSlug}`) || sub.slug === fullSlug
+                    ) || null;
+                }
+            }
+        }
+
+        // 兜底：如果数据库没匹配到，手动构造（保证页面不崩）
+        if (!currentCategory) {
+            const lastSegment = urlSegments[urlSegments.length - 1];
+            currentCategory = {
+                name: lastSegment.split('-').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' '),
+                slug: fullSlug,
+                id: 0
+            } as any;
+        }
+
+        // ✅ 核心修复 3：构造正确的层级面包屑
         const breadcrumbs: BreadcrumbItem[] = [
-            { name: 'Home', path: '/' },
-            { name: currentCategory.name, path: null }
+            { name: 'Home', path: '/' }
         ];
+
+        // 1. 如果有父级，添加父级链接
+        if (parentCategory) {
+            breadcrumbs.push({
+                name: parentCategory.name,
+                path: `/collections/${parentCategory.slug}`
+            });
+        }
+
+        // 2. 添加当前级（无链接）
+        breadcrumbs.push({
+            name: currentCategory.name,
+            path: null
+        });
 
         return (
             <section className="min-h-screen bg-gray-50 py-8 w-full max-w-full overflow-x-hidden">
                 <div className="container mx-auto px-4 sm:px-6 max-w-7xl">
 
-                    {/* 1. 面包屑区域 */}
                     <div className="mb-6">
                         <Breadcrumb items={breadcrumbs} showLastItem={true} />
                     </div>
 
-                    {/* 2. 标题区域 */}
                     <div className="mb-10 text-left border-b border-gray-200 pb-8">
                         <h1 className="text-3xl md:text-5xl font-bold text-gray-900 mb-4 font-['Playfair_Display'] leading-tight">
                             {currentCategory.name}
                         </h1>
-                        {currentCategory.description && (
+                        {(currentCategory as any).description && (
                             <p className="text-gray-500 text-base md:text-lg max-w-3xl leading-relaxed">
-                                {currentCategory.description}
+                                {(currentCategory as any).description}
                             </p>
                         )}
                     </div>
 
-                    {/* 3. 主内容区域 */}
                     <div className="flex flex-col w-full">
                         <main className="flex-1 min-w-0 w-full">
                             <ProductList
