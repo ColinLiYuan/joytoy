@@ -123,6 +123,15 @@ export const CATEGORIES_DATA: CategoriesData = {
                         changefreq: "weekly"
                     },
                     {
+                        slug: "male-sex-toys/cock-rings",
+                        name: "Cock Rings",
+                        title: "Cock Rings | Performance & Vibrating Rings",
+                        description: "Enhance stamina and pleasure with premium cock rings. Vibrating and stretchy options for couples.",
+                        root: "male-sex-toys",
+                        priority: 0.7,
+                        changefreq: "weekly"
+                    },
+                    {
                         slug: "male-sex-toys/pussy-masturbators",
                         name: "Pussy & Ass Masturbators",
                         title: "Pussy & Anal Masturbators | Realistic Strokers",
