@@ -51,7 +51,8 @@ export const COLOR_SYSTEM = {
             "Forest": "#228B22",
             "Olive": "#808000",
             "Emerald": "#50C878",
-            "Mint": "#98FB98"
+            "Mint": "#98FB98",
+            "Emerald Green": "#50C878"
         }
     },
     "Purple": {
@@ -62,7 +63,7 @@ export const COLOR_SYSTEM = {
             "Violet": "#EE82EE",
             "Lavender": "#E6E6FA",
             "Lilac": "#C8A2C8",
-            "Soft Lilac": "#D8B2D1", // ✅ 新增
+            "Soft Lilac": "#D8B2D1",
             "Royal Purple": "#7851A9"
         }
     },

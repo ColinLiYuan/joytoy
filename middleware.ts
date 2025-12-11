@@ -8,6 +8,7 @@ const redirectMap: Record<string, string> = {
     '/toys/female-sex-toys/bullet-vibrators/bullet-vibes-5-color-522': '/toys/female-sex-toys/bullet-vibrators/rouge-lipstick-bullet',
     '/toys/male-sex-toys/male-masturbators/auto-suction-masturbator-fire': '/toys/male-sex-toys/masturbators/titan-electric-cup',
     '/toys/female-sex-toys/clit-vibrators/rose-vibes-tongue': '/toys/female-sex-toys/clit-vibrators/rose-licking-vibrator',
+    '/toys/sex-toys/butt-plugs/medal-butt-plug-ht019': '/toys/sex-toys/butt-plugs/gem-remote-metal-plug',
 };
 
 // 2. 定义 410 删除规则 (Gone)

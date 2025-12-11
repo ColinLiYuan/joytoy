@@ -158,6 +158,7 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
                     <Heart size={18} fill={isFavorited ? "currentColor" : "none"} />
                 </button>
 
+                {/* Badges */}
                 <ProductBadge
                     stockStatus={hasAvailableStock}
                     originalPrice={product.originalPrice}
@@ -173,17 +174,23 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
 
                 {!isGenericSku && (
                     <div className="flex items-center gap-2 mb-3 min-h-[12px]">
-                        <div className="flex gap-1 h-3 items-center">
+                        <div className="flex gap-1.5 h-4 items-center">
                             {product.productSkus?.slice(0, 3).map(sku => (
+                                // ✅ 修复：外圈是透明背景+灰色边框，内圈是实心颜色
                                 <div
                                     key={sku.id}
-                                    className="w-3 h-3 rounded-full border border-gray-200 shadow-sm"
-                                    style={{ backgroundColor: getMappedColor(sku.color || '') }}
+                                    className="w-4 h-4 rounded-full border border-gray-200 flex items-center justify-center p-[2px]" // 外圈容器
                                     title={sku.color}
-                                />
+                                >
+                                    {/* 内圈实心圆点 */}
+                                    <div
+                                        className="w-full h-full rounded-full"
+                                        style={{ backgroundColor: getMappedColor(sku.color || '') }}
+                                    />
+                                </div>
                             ))}
                             {(product.productSkus?.length || 0) > 3 && (
-                                <span className="text-[10px] text-gray-400">+{(product.productSkus?.length || 0) - 3}</span>
+                                <span className="text-[10px] text-gray-400 ml-0.5">+{(product.productSkus?.length || 0) - 3}</span>
                             )}
                         </div>
                     </div>
