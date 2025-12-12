@@ -46,9 +46,19 @@ export async function POST(request: NextRequest) {
                 path: '/',
             });
 
-            const token = userInfo.token;
-            if (token) {
-                response.cookies.set('auth_token', token, {
+            const accessToken = userInfo.accessToken;
+            if (accessToken) {
+                response.cookies.set('accessToken', accessToken, {
+                    httpOnly: true, // 防止 XSS 攻击
+                    secure: process.env.NODE_ENV === 'production', // 生产环境使用 HTTPS
+                    sameSite: 'lax',
+                    maxAge: 60 * 60 * 24 * 7, // 7 天
+                    path: '/',
+                });
+            }
+            const refreshToken = userInfo.refreshToken;
+            if (refreshToken) {
+                response.cookies.set('refreshToken', refreshToken, {
                     httpOnly: true, // 防止 XSS 攻击
                     secure: process.env.NODE_ENV === 'production', // 生产环境使用 HTTPS
                     sameSite: 'lax',

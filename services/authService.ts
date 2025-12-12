@@ -5,13 +5,16 @@ import {
     LoginResponse,
     RegisterResponse } from '@/types/auth';
 import { SERVER_CONFIG } from '@/lib/api-config';
-import apiClient from '@/lib/api-client';
 
 class AuthService {
 
     async login(request: LoginRequest): Promise<LoginResponse> {
         // console.log('AuthService login start');
-        const response = await apiClient.post('${SERVER_CONFIG.apiRoutes.auth}/login', request);
+        const response = await fetch(`${SERVER_CONFIG.apiRoutes.auth}/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(request),
+        });
 
         // console.log('AuthService login route response ');
         const apiResponse = await response.json();

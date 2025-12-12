@@ -9,6 +9,8 @@ export const getToken = () => {
 
 export const getRefreshToken = () => {
     if (typeof window === 'undefined') return null;
+    console.log('getRefreshToken----+++++++')
+    console.log('getRefreshToken: ', localStorage)
     return localStorage.getItem(REFRESH_TOKEN_KEY);
 };
 

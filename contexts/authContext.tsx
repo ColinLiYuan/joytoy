@@ -116,6 +116,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         try {
             // authService.login 现在会返回 LoginResponse (用户数据)，或者抛出 Error
             const loginResponse = await authService.login(loginRequest);
+            console.log('login callback result: ', loginResponse)
 
             setTokens(loginResponse.accessToken, loginResponse.refreshToken);
             setIsLoggedIn(true);

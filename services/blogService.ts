@@ -20,7 +20,7 @@ class BlogService {
         status?: string
     ): Promise<AdminBlogListResponse> {
         try {
-            console.log('BlogService adminList')
+            // console.log('BlogService adminList')
             const queryParams = new URLSearchParams({
                 page: page.toString(),
                 size: size.toString()
@@ -31,7 +31,7 @@ class BlogService {
             }
 
             const url = `${ADMIN_CONFIG.apiRoutes.blog}/list?${queryParams}`;
-            console.log('BlogService adminList url: ', url)
+            // console.log('BlogService adminList url: ', url)
             const response = await fetch(url, {
                 cache: 'no-store',
                 headers: {
