@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { apiGet, handleApiError } from '@/lib/api-utils';
 import { SessionManager } from '@/lib/session-utils';
-import { getToken } from '@/lib/cookie-utils';
+import { getToken } from '@/lib/token-utils';
 
 // /api/cart/get
 // get cart

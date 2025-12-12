@@ -1,48 +1,50 @@
-import { LoginResponse } from '@/types/auth';
-import { cookies } from 'next/headers';
+// lib/cookie-utils.ts
+import Cookies from 'js-cookie';
 
-export async function getServerUserInfo(): Promise<LoginResponse | null> {
-    try {
-        const cookieStore = await cookies();
+const isBrowser = typeof window !== 'undefined';
 
-        // const allCookies = cookieStore.getAll();
-        // console.log('🔍 ALL COOKIES:', allCookies);
-        // console.log('🔍 Cookie names:', allCookies.map(cookie => cookie.name));
+// 统一的 Cookie 配置
+const DEFAULT_OPTIONS = {
+    expires: 7, // 7天
+    path: '/',
+    sameSite: 'lax' as const,
+    // 只有在 https 协议下才开启 secure
+    secure: isBrowser && window.location.protocol === 'https:'
+};
 
-        const userInfoCookie = cookieStore.get('userInfo')?.value;
-
-        // console.log('🔍 getServerUserInfo - userInfoCookie exists:', !!userInfoCookie);
-
-        if (!userInfoCookie) {
-            return null;
+/**
+ * 获取 Cookie (自动识别服务端/客户端)
+ */
+export async function getCookie(name: string): Promise<string | undefined> {
+    if (isBrowser) {
+        // 🌐 客户端：使用 js-cookie
+        return Cookies.get(name);
+    } else {
+        // 🖥️ 服务端：动态导入 next/headers
+        try {
+            const { cookies } = await import('next/headers');
+            const cookieStore = await cookies();
+            return cookieStore.get(name)?.value;
+        } catch (error) {
+            console.error(`Failed to get cookie ${name} on server:`, error);
+            return undefined;
         }
-        // console.log('🔍 getServerUserInfo - userInfoCookie value:', userInfoCookie);
-
-        const userInfo = JSON.parse(userInfoCookie);
-        return userInfo;
-    } catch (error) {
-        console.error('Failed to get server user info:', error);
-        return null;
     }
 }
 
 /**
- * 服务端：获取用户ID
+ * 设置 Cookie (仅客户端有效)
+ * 服务端组件无法直接 Set-Cookie，通常在 Route Handler 中处理
  */
-export async function getServerUserId(): Promise<number | null> {
-    const userInfo = await getServerUserInfo();
-    return userInfo?.id || null;
+export function setCookie(name: string, value: string, options = {}) {
+    if (!isBrowser) return;
+    Cookies.set(name, value, { ...DEFAULT_OPTIONS, ...options });
 }
 
-export async function getToken(): Promise<string | null> {
-    try {
-        const cookieStore = await cookies();
-
-        const accessToken = cookieStore.get('accessToken')?.value;
-
-        return accessToken || null;
-    } catch (error) {
-        console.error('Failed to get token from cookies:', error);
-        return null;
-    }
+/**
+ * 删除 Cookie (仅客户端有效)
+ */
+export function removeCookie(name: string) {
+    if (!isBrowser) return;
+    Cookies.remove(name, { path: '/' });
 }

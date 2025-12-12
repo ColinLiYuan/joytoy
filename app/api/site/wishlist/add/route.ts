@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { apiPost, handleApiError } from '@/lib/api-utils';
-import { getToken } from '@/lib/cookie-utils';
+import { getToken } from '@/lib/token-utils';
 
 // add to wishlist
 export async function POST(

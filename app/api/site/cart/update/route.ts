@@ -3,7 +3,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { apiPut, handleApiError } from '@/lib/api-utils';
 import { SessionManager } from '@/lib/session-utils';
-import { getToken } from '@/lib/cookie-utils';
+import { getToken } from '@/lib/token-utils';
 
 // update quantity
 export async function PUT(
