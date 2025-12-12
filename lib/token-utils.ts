@@ -16,7 +16,8 @@ export const getToken = async (): Promise<string | undefined> => {
     // 1. 尝试从 Cookie 获取 (支持 Server & Client)
     const cookieToken = await getCookie(ACCESS_TOKEN_KEY);
     if (cookieToken) return cookieToken;
-
+    console.log('getToken cookieToken: ', cookieToken)
+    // console.log('getToken storage: ', localStorage.getItem(ACCESS_TOKEN_KEY))
     // 2. 如果是客户端，尝试从 LocalStorage 兜底
     if (isBrowser) {
         return localStorage.getItem(ACCESS_TOKEN_KEY) || undefined;
@@ -112,6 +113,21 @@ export const clearTokens = async () => {
 
     // 触发事件通知其他 Tab
     window.dispatchEvent(new Event('storage'));
+};
+
+export const updateAccessToken = (newToken: string): void => {
+    if (!isBrowser) return;
+
+    // 更新 localStorage
+    localStorage.setItem(ACCESS_TOKEN_KEY, newToken);
+
+    // 更新 cookie（带过期时间）
+    setCookie(ACCESS_TOKEN_KEY, newToken, {
+        expires: 30 / 60 / 24, // 30分钟
+        path: '/',
+        sameSite: 'lax',
+        secure: process.env.NODE_ENV === 'production',
+    });
 };
 
 /**

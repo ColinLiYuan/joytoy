@@ -1,12 +1,13 @@
 // lib/api-utils.ts
 import { BACKEND_CONFIG } from '@/lib/api-config';
 import { BackendApiResponse, ApiErrorType } from '@/types/api';
-import { getToken, getRefreshToken, setTokens, clearTokens } from '@/lib/token-utils'; // 确保你有这个文件
+// ✅ 引入 setTokens 即可，不需要 updateAccessToken，保持逻辑统一
+import { getToken, getRefreshToken, setTokens, clearTokens } from '@/lib/token-utils';
 
 export interface RequestOptions extends RequestInit {
     timeout?: number;
     retry?: number;
-    _isRetry?: boolean; // 内部标志，防止死循环
+    _isRetry?: boolean;
 }
 
 class ApiError extends Error {
@@ -24,39 +25,51 @@ class ApiError extends Error {
 
 /**
  * 刷新 Token 的独立逻辑
- * 避免使用 proxyRequest 造成循环调用
  */
 async function refreshAccessToken(): Promise<string | null> {
     try {
-        const refreshToken = getRefreshToken();
-        if (!refreshToken) return null;
+        const refreshToken = await getRefreshToken();
 
-        // 这里使用原生 fetch，不走 proxyRequest，避免死循环
+        if (!refreshToken) {
+            console.warn('No refresh token found');
+            return null;
+        }
+
         const url = `${BACKEND_CONFIG.baseURL}/api/V1/users/refresh`;
-        console.log('refreshAccessToken url: ', url);
+        console.log('Refreshing token...');
+
         const response = await fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ refreshToken })
         });
 
-        console.log('refreshAccessToken api util: ', response)
-        if (!response.ok) return null;
+        if (!response.ok) {
+            console.error('Refresh failed with status:', response.status);
+            return null;
+        }
+
+        const data = await response.json();
 
         if (data.success && data.data) {
             const { accessToken, refreshToken: newRefresh } = data.data;
-            setTokens(accessToken, newRefresh);
+
+            // ✅ 核心修复：直接使用 setTokens 统一更新 Cookie 和 LocalStorage
+            // 如果后端没返回新的 refresh token，就沿用旧的
+            setTokens(accessToken, newRefresh || refreshToken);
+
+            console.log('Token refreshed successfully: ', accessToken);
             return accessToken;
         }
         return null;
     } catch (e) {
-        console.error('Token refresh failed:', e);
+        console.error('Token refresh logic error:', e);
         return null;
     }
 }
 
 /**
- * 统一 API 请求函数 (包含 Token 自动注入和刷新逻辑)
+ * 统一 API 请求函数
  */
 export async function proxyRequest(
     endpoint: string,
@@ -66,14 +79,16 @@ export async function proxyRequest(
         timeout = BACKEND_CONFIG.timeout,
         retry = 0,
         headers = {},
-        _isRetry = false, // 默认不是重试请求
+        _isRetry = false,
         ...fetchOptions
     } = options;
 
     const url = `${BACKEND_CONFIG.baseURL}${endpoint}`;
 
-    // 1. 自动注入 Token
-    const token = getToken();
+    // 1. 获取 Token (Async)
+    const token = await getToken();
+
+    // 2. 构造 Header
     const authHeaders: Record<string, string> = {};
     if (token) {
         authHeaders['Authorization'] = `Bearer ${token}`;
@@ -97,30 +112,32 @@ export async function proxyRequest(
 
         clearTimeout(timeoutId);
 
-        // 2. 核心逻辑：拦截 401 并尝试刷新 Token
+        // 3. 拦截 401 并重试
         if (response.status === 401 && !_isRetry) {
-            console.warn('Token expired, attempting refresh...');
+            console.warn('401 Unauthorized, attempting refresh...');
 
             // 尝试刷新
             const newToken = await refreshAccessToken();
 
             if (newToken) {
-                console.log('Token refreshed, retrying request...');
-                // 刷新成功，带上新 Token 重试原请求
+                console.log('Retrying original request with new token...');
+
+                // ✅ 递归调用，并强制覆盖 Authorization Header
                 return proxyRequest(endpoint, {
                     ...options,
                     headers: {
                         ...headers,
-                        'Authorization': `Bearer ${newToken}` // 覆盖旧 Token
+                        'Authorization': `Bearer ${newToken}`
                     },
-                    _isRetry: true // 标记为重试，防止无限死循环
+                    _isRetry: true // 标记防止死循环
                 });
             } else {
-                // 刷新失败（Refresh Token 也过期了），清理登录状态
                 console.error('Refresh failed, logging out.');
                 clearTokens();
-                // 可选：强制跳转登录页，或者由上层业务处理
-                // window.location.href = '/?login=expired';
+                // 可选：触发页面跳转
+                if (typeof window !== 'undefined') {
+                    window.location.href = '/';
+                }
             }
         }
 
@@ -130,7 +147,6 @@ export async function proxyRequest(
 
         const errorMessage = error instanceof Error ? error.message : String(error);
 
-        // Retry logic (针对网络错误)
         if (retry > 0 && shouldRetry(error)) {
             console.warn(`Network error, retrying... ${retry} attempts left`);
             return proxyRequest(endpoint, {
@@ -149,14 +165,14 @@ export async function proxyRequest(
     }
 }
 
-/**
- * 判断错误类型
- */
+// ... 下面的辅助函数 (getErrorType, handleApiResponse, apiRequest 等) 保持不变 ...
+// ... (为了节省篇幅，这里省略，直接复用你之前的代码即可) ...
+
 function getErrorType(
     httpStatus: number,
     backendResponse: BackendApiResponse<any>
 ): ApiErrorType {
-    if (httpStatus === 401) return 'http'; // 401 单独处理
+    if (httpStatus === 401) return 'http';
     if (httpStatus >= 400) return 'http';
     if (!backendResponse.success) {
         const errorCode = backendResponse.errorCode;
@@ -168,9 +184,6 @@ function getErrorType(
     return 'custom_business';
 }
 
-/**
- * 处理 API 响应
- */
 export async function handleApiResponse<T>(
     response: Response
 ): Promise<BackendApiResponse<T> & {
@@ -194,7 +207,6 @@ export async function handleApiResponse<T>(
         try {
             data = JSON.parse(responseText);
         } catch (parseError) {
-            console.error('JSON parsing error:', parseError);
             return {
                 success: false,
                 message: 'Failed to parse response as JSON',
@@ -210,8 +222,7 @@ export async function handleApiResponse<T>(
             return {
                 ...backendResponse,
                 success: false,
-                message: backendResponse.message ||
-                    (response.status >= 400 ? `HTTP error: ${response.status}` : 'Business logic failed'),
+                message: backendResponse.message || (response.status >= 400 ? `HTTP error: ${response.status}` : 'Business logic failed'),
                 status: response.status,
                 errorType
             };
@@ -235,7 +246,6 @@ function shouldRetry(error: unknown): boolean {
     return error instanceof ApiError && error.errorType === 'network';
 }
 
-// ... 下面的 apiRequest, apiGet, apiPost 等保持不变，它们会自动使用新的 proxyRequest ...
 async function apiRequest<T>(
     endpoint: string,
     method: string,
@@ -308,7 +318,6 @@ export function handleApiError(errorInput: unknown): { shouldHandle: boolean; er
         case 'network':
             return { shouldHandle: true, errorMessage: 'Network connection error', errorType: 'network' };
         case 'http':
-            // 401 已经在 proxyRequest 处理过了，这里一般不会再弹窗提示，除非刷新也失败
             if (status === 401) return { shouldHandle: false, errorMessage: 'Session expired', errorType: 'auth' };
             return { shouldHandle: true, errorMessage: `Server Error (${status || 'Unknown'})`, errorType: 'http' };
         case 'system_business':

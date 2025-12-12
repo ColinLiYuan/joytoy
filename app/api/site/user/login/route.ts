@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
                     httpOnly: false,
                     secure: process.env.NODE_ENV === 'production', // 生产环境使用 HTTPS
                     sameSite: 'lax',
-                    maxAge: 60 * 30 // 30分钟
+                    maxAge: 60 * 30, // 30分钟
                     path: '/',
                 });
             }

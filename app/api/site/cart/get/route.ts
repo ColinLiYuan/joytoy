@@ -20,6 +20,7 @@ export async function GET(
 
         // 3. 如果有token，添加到请求头；没有就用sessionId
         const token = await getToken();
+        // console.log('get cart token: ', token)
         if (token) {
             headers['Authorization'] = `Bearer ${token}`;
         }
