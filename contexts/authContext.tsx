@@ -6,6 +6,7 @@ import { LoginResponse, LoginRequest, RegisterRequest, RegisterResponse } from '
 import authService from '@/services/authService';
 import AuthModal from '@/components/common/auth-modal';
 import { useCartStore } from '@/stores/useCartStore';
+import { setTokens, clearTokens } from '@/lib/token-utils';
 
 interface AuthContextType {
     isAuthModalOpen: boolean;
@@ -80,11 +81,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const logout = useCallback(() => {
         // console.log('Logging out...');
+
+        clearTokens();
         setIsLoggedIn(false);
         setUserInfo(null);
 
-        localStorage.removeItem('isLoggedIn');
-        localStorage.removeItem('userInfo');
+        // localStorage.removeItem('isLoggedIn');
+        // localStorage.removeItem('userInfo');
 
         const { clearCart } = useCartStore.getState();
         clearCart();
@@ -114,6 +117,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             // authService.login 现在会返回 LoginResponse (用户数据)，或者抛出 Error
             const loginResponse = await authService.login(loginRequest);
 
+            setTokens(loginResponse.accessToken, loginResponse.refreshToken);
             setIsLoggedIn(true);
             setUserInfo(loginResponse);
 
