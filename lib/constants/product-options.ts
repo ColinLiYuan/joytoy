@@ -15,22 +15,6 @@ export const VENDORS = [
     "东莞沃色玩具有限公司",
     "揭阳市顺资电子实业有限公司",
     "连云港曼芭莎",
-    "深圳想成科技有限公司"
+    "深圳想成科技有限公司",
+    "深圳市宝安区石岩航恒者电子科技厂"
 ];
-
-export const COLOR_GROUPS_PRESET = {
-    "肤色系列": ["Flesh"],
-    "红色系列": ["Red", "Pink", "Rose"],
-    "蓝色系列": ["Blue", "Sky Blue"],
-    "绿色系列": ["Green"],
-    "紫色系列": ["Purple"],
-    "棕色系列": ["Brown", "Chocolate", "Coffee Light", "Coffee Dark"],
-    "灰色/黑色系列": ["Black", "White", "Grey"],
-    "金属色": ["Gold", "Silver"]
-};
-
-export const PRODUCT_SPECS = {
-    materials: ["Body-Safe Silicone", "TPE", "ABS Plastic", "Stainless Steel", "Glass", "Liquid Silicone"],
-    powerSources: ["Battery Powered", "USB Rechargeable", "Magnetic Charging", "Plug-in", "Manual"],
-    intensityLevels: ["Gentle", "Moderate", "Powerful", "Intense", "Variable"]
-};

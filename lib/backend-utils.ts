@@ -15,7 +15,8 @@ async function getAuthToken(): Promise<string | null> {
         } else {
             const { getToken } = await import('@/lib/token-utils');
             // console.log('server get token')
-            return getToken();
+            const token = await getToken();
+            return token || null; // 将 undefined 转换为 null
         }
     } catch (error) {
         console.error('Failed to get auth token:', error);

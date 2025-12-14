@@ -17,7 +17,7 @@ interface PromotionBarProps {
 
 const promotions: Promotion[] = [
     {
-        text: "Free discreet shipping on orders over $40",
+        text: "Free discreet shipping on orders over $49",
         link: "/collections/best-sellers"
     },
     {

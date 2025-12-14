@@ -283,7 +283,7 @@ export default function ProductDetailClient({
                     <div className="grid grid-cols-3 gap-4 mb-8 py-6 border-t border-b border-gray-100">
                         <div className="flex flex-col items-center text-center gap-3"><div className="p-2.5 bg-gray-50 rounded-full text-black"><Package size={20} strokeWidth={1.5} /></div><span className="text-xs font-medium text-gray-600 leading-tight">Discreet<br/>Packaging</span></div>
                         <div className="flex flex-col items-center text-center gap-3"><div className="p-2.5 bg-gray-50 rounded-full text-black"><ShieldCheck size={20} strokeWidth={1.5} /></div><span className="text-xs font-medium text-gray-600 leading-tight">Body-Safe<br/>Materials</span></div>
-                        <div className="flex flex-col items-center text-center gap-3"><div className="p-2.5 bg-gray-50 rounded-full text-black"><Truck size={20} strokeWidth={1.5} /></div><span className="text-xs font-medium text-gray-600 leading-tight">Free Shipping<br/>Over $40</span></div>
+                        <div className="flex flex-col items-center text-center gap-3"><div className="p-2.5 bg-gray-50 rounded-full text-black"><Truck size={20} strokeWidth={1.5} /></div><span className="text-xs font-medium text-gray-600 leading-tight">Free Shipping<br/>Over $49</span></div>
                     </div>
 
                     {features.length > 0 && (
