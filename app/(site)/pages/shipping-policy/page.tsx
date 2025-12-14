@@ -35,7 +35,7 @@ export default function ShippingPolicy() {
 
                             <h3 className="text-lg font-semibold mt-4 mb-2">United States (Domestic)</h3>
                             <ul className="list-disc pl-6 mt-2 space-y-1">
-                                <li><strong>Standard Shipping (3-7 days):</strong> $5.99 (Free on orders over $69)</li>
+                                <li><strong>Standard Shipping (3-7 days):</strong> $5.99 (Free on orders over $49)</li>
                                 <li><strong>Priority Shipping (2-3 days):</strong> $14.99</li>
                             </ul>
 
