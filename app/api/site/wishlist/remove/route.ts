@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { apiDelete, handleApiError } from '@/lib/api-utils';
-import { getToken } from '@/lib/cookie-utils';
+import { getToken } from '@/lib/token-utils';
 
 // 从心愿单移除商品
 export async function DELETE(

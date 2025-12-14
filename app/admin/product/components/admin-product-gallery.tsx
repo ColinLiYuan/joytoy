@@ -140,10 +140,12 @@ export default function AdminProductGallery({ product, updateProduct }: ImageUpl
         }
     };
 
-    // 校验函数：只允许 PNG
+    // 校验函数：支持 PNG, JPG, WebP
     const validateFile = (file: File): boolean => {
-        if (file.type !== 'image/png') {
-            alert(`文件 "${file.name}" 格式错误。\n\n请上传 PNG 格式的图片。`);
+        const validTypes = ['image/png', 'image/jpeg', 'image/webp'];
+
+        if (!validTypes.includes(file.type)) {
+            alert(`文件 "${file.name}" 格式错误。\n\n请上传 PNG, JPG 或 WebP 格式的图片。`);
             return false;
         }
         return true;
@@ -201,7 +203,7 @@ export default function AdminProductGallery({ product, updateProduct }: ImageUpl
         }
 
         if (files && files.length > 0) {
-            // 过滤非 PNG 文件
+            // 过滤无效文件
             const validFiles: File[] = [];
             for (let i = 0; i < files.length; i++) {
                 if (validateFile(files[i])) {
@@ -278,7 +280,7 @@ export default function AdminProductGallery({ product, updateProduct }: ImageUpl
             <div className="px-6 py-4 border-b">
                 <h3 className="text-lg font-semibold text-gray-900">图片管理</h3>
                 <div className="text-xs text-gray-500 mt-1">
-                    请上传已在 PS 中处理好的图片 (推荐尺寸 1600x1600, PNG 格式)
+                    请上传已在 PS 中处理好的图片 (推荐尺寸 1600x1600)
                     <span className="ml-2 text-blue-600">Tip: 相册图片支持拖拽排序</span>
                 </div>
             </div>
@@ -336,15 +338,15 @@ export default function AdminProductGallery({ product, updateProduct }: ImageUpl
                             <input
                                 type="file"
                                 id="mainImage"
-                                accept="image/png"
+                                accept="image/png, image/jpeg, image/jpg, image/webp"
                                 onChange={handleMainImageChange}
                                 ref={mainImageInputRef}
                                 disabled={uploading}
                                 className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer transition-all"
                             />
                             <div className="text-xs text-gray-500 space-y-1">
-                                <p>• 仅支持 <span className="font-bold text-gray-700">PNG</span> 格式</p>
-                                <p>• 建议尺寸：1600 x 1600 px</p>
+                                <p>• 支持格式: <span className="font-bold text-gray-700">PNG, JPG, WebP</span></p>
+                                <p>• 建议尺寸: 1600 x 1600 px</p>
                                 <p>• 请直接上传已处理好的图片</p>
                             </div>
                         </div>
@@ -369,7 +371,7 @@ export default function AdminProductGallery({ product, updateProduct }: ImageUpl
                             type="file"
                             id="galleryImages"
                             multiple
-                            accept="image/png"
+                            accept="image/png, image/jpeg, image/jpg, image/webp"
                             onChange={handleGalleryChange}
                             ref={galleryInputRef}
                             disabled={uploading}

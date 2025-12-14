@@ -1,7 +1,7 @@
 // app/api/order/[id]/pay/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { apiPost, handleApiError } from '@/lib/api-utils';
-import { getToken } from '@/lib/cookie-utils';
+import { getToken } from '@/lib/token-utils';
 
 // 修改这里的类型定义
 export async function POST(

@@ -3,7 +3,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { apiDelete, handleApiError } from '@/lib/api-utils';
 import { SessionManager } from '@/lib/session-utils';
-import { getToken } from '@/lib/cookie-utils';
+import { getToken } from '@/lib/token-utils';
 
 export async function DELETE(
     request: NextRequest

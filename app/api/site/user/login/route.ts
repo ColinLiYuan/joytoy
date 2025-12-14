@@ -46,10 +46,20 @@ export async function POST(request: NextRequest) {
                 path: '/',
             });
 
-            const token = userInfo.token;
-            if (token) {
-                response.cookies.set('auth_token', token, {
-                    httpOnly: true, // 防止 XSS 攻击
+            const accessToken = userInfo.accessToken;
+            if (accessToken) {
+                response.cookies.set('accessToken', accessToken, {
+                    httpOnly: false,
+                    secure: process.env.NODE_ENV === 'production', // 生产环境使用 HTTPS
+                    sameSite: 'lax',
+                    maxAge: 60 * 30, // 30分钟
+                    path: '/',
+                });
+            }
+            const refreshToken = userInfo.refreshToken;
+            if (refreshToken) {
+                response.cookies.set('refreshToken', refreshToken, {
+                    httpOnly: false,
                     secure: process.env.NODE_ENV === 'production', // 生产环境使用 HTTPS
                     sameSite: 'lax',
                     maxAge: 60 * 60 * 24 * 7, // 7 天

@@ -13,7 +13,7 @@ async function getAuthToken(): Promise<string | null> {
         if (typeof window !== 'undefined') {
             return getClientAuthToken();
         } else {
-            const { getToken } = await import('@/lib/cookie-utils');
+            const { getToken } = await import('@/lib/token-utils');
             // console.log('server get token')
             return getToken();
         }

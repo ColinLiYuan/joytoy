@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { apiGet, handleApiError } from '@/lib/api-utils';
 import { SessionManager } from '@/lib/session-utils';
-import { getToken } from '@/lib/cookie-utils';
+import { getToken } from '@/lib/token-utils';
 
 // /api/cart/get
 // get cart
@@ -20,6 +20,7 @@ export async function GET(
 
         // 3. 如果有token，添加到请求头；没有就用sessionId
         const token = await getToken();
+        // console.log('get cart token: ', token)
         if (token) {
             headers['Authorization'] = `Bearer ${token}`;
         }

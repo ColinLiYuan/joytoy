@@ -1,7 +1,7 @@
 // app/api/wishlist/list/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { apiGet, handleApiError } from '@/lib/api-utils';
-import { getToken } from '@/lib/cookie-utils';
+import { getToken } from '@/lib/token-utils';
 
 export async function GET(request: NextRequest) {
     try {

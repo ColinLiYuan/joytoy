@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { apiPost, handleApiError } from '@/lib/api-utils';
 import { OrderCreateRequest } from '@/types/order';
-import { getToken } from '@/lib/cookie-utils';
+import { getToken } from '@/lib/token-utils';
 
 export async function POST(request: NextRequest) {
     try {
