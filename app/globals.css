@@ -83,6 +83,18 @@ body {
     }
 }
 
+@layer utilities {
+    .animate-float {
+        animation: float 6s ease-in-out infinite;
+    }
+}
+
+@keyframes float {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-20px); } /* 上下浮动 20px */
+    100% { transform: translateY(0px); }
+}
+
 /* ========== Markdown 文章详情页样式 (修复 SyntaxError) ========== */
 .wmde-markdown {
     background: transparent !important;
