@@ -2,80 +2,82 @@
 'use client';
 
 import Link from 'next/link';
-import { ArrowDown } from 'lucide-react';
+import Image from 'next/image';
+import { ArrowRight } from 'lucide-react';
+// 1. 引入工具函数
+import { getProductImageUrl } from '@/lib/image-utils';
+
+// 🔴 2. 这里只需要填你在 Cloudflare (或后台) 保存的那个“路径”或“文件名”
+// 不需要填完整的 https://...，工具函数会自动拼接前缀
+const HERO_IMAGE_PATH = "banner.webp"; // 示例文件名，请替换为你上传的具体文件名
 
 export default function HeroSection() {
 
-    const scrollToFooter = () => {
-        // 找到 Footer 里的订阅区域 (我们需要确保 Footer 里有 id="footer-subscribe")
-        const footerSubscribe = document.getElementById('footer-subscribe');
-        if (footerSubscribe) {
-            footerSubscribe.scrollIntoView({ behavior: 'smooth' });
-        }
-    };
+    // 3. 使用工具函数生成最终的 URL
+    // 第一个参数传空字符串 ''，第二个参数传路径，逻辑与详情页完全一致
+    const finalHeroImageUrl = getProductImageUrl('', HERO_IMAGE_PATH);
 
     return (
-        <section className="relative w-full bg-[#b62337] overflow-hidden">
+        <section className="relative w-full min-h-[85vh] bg-[#050505] overflow-hidden flex items-center">
 
-            {/* 背景装饰层 */}
-            <div className="absolute inset-0 pointer-events-none">
-                <div className="absolute inset-0 bg-gradient-to-br from-[#b62337] via-[#a51e32] to-[#941a2d]"></div>
-                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#d12a42]/30 via-transparent to-transparent"></div>
-                <div className="absolute top-0 left-0 right-0 h-1/3 bg-gradient-to-b from-white/10 to-transparent"></div>
-                <div
-                    className="absolute inset-0 opacity-[0.03]"
-                    style={{
-                        backgroundImage: `url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7z' fill='%23ffffff' fill-opacity='1' fill-rule='evenodd'/%3E%3C/svg%3E")`,
-                        backgroundSize: '60px 60px'
-                    }}
-                ></div>
-            </div>
+            {/* --- 背景氛围光效 --- */}
+            <div className="absolute top-1/2 right-[-10%] md:right-[5%] -translate-y-1/2 w-[300px] md:w-[600px] h-[300px] md:h-[600px] bg-[#C5A059] opacity-20 blur-[120px] rounded-full pointer-events-none" />
+            <div className="absolute bottom-0 left-[-10%] w-[400px] h-[400px] bg-blue-900/10 blur-[100px] rounded-full pointer-events-none" />
 
-            {/* 内容容器 */}
-            <div className="container relative mx-auto px-4 max-w-7xl z-10">
-                <div className="hero-content w-full min-h-[50vh] md:min-h-[60vh] flex items-center justify-center text-center py-12 md:py-20">
-                    <div className="max-w-3xl mx-auto space-y-6">
+            {/* --- 内容容器 --- */}
+            <div className="container relative mx-auto px-6 md:px-12 z-10 h-full">
+                <div className="flex flex-col md:flex-row items-center justify-between gap-12 h-full py-20">
 
-                        {/* 优惠标签 - 改为诱导文案 */}
-                        <div className="inline-block bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-4 py-1.5 mb-2 animate-fadeIn">
-                            <span className="text-white text-xs md:text-sm font-bold tracking-widest uppercase">
-                                New Customer Exclusive
+                    {/* Left: 文字区域 */}
+                    <div className="w-full md:w-1/2 space-y-8 text-center md:text-left order-2 md:order-1">
+                        <div className="inline-flex items-center gap-3 animate-fade-in-up">
+                            <span className="h-[1px] w-8 bg-[#C5A059]"></span>
+                            <span className="text-[#C5A059] text-xs font-bold tracking-[0.25em] uppercase">
+                                Myth Toy Exclusive
                             </span>
                         </div>
 
-                        {/* 主标题 */}
-                        <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold text-white mb-2 font-['Playfair_Display'] drop-shadow-lg leading-tight">
-                            20% OFF
+                        <h1 className="text-5xl md:text-7xl lg:text-8xl font-serif text-white leading-[1.1] tracking-tight">
+                            Elegance in <br/>
+                            <span className="italic text-[#ffffff]/90">Darkness</span>.
                         </h1>
 
-                        {/* 副标题 */}
-                        <p className="text-xl md:text-2xl text-white/90 font-medium font-['Playfair_Display']">
-                            Your First Order + Free Shipping
+                        <p className="text-gray-400 text-lg md:text-xl font-light max-w-lg mx-auto md:mx-0 leading-relaxed">
+                            Curated pleasure objects for the modern lifestyle.
+                            Where wellness meets technological artistry.
                         </p>
 
-                        {/* 按钮区域 - 双按钮策略 */}
-                        <div className="pt-8 flex flex-col sm:flex-row gap-4 justify-center items-center">
-                            {/* 1. 直接去购物 */}
+                        <div className="pt-4">
                             <Link
                                 href="/collections/all"
-                                className="w-full sm:w-auto inline-block bg-black text-white font-bold py-4 px-10 rounded-full transition-all duration-300 hover:bg-gray-900 hover:scale-105 hover:shadow-2xl text-sm md:text-base tracking-widest uppercase"
+                                className="group inline-flex items-center gap-4 px-8 py-4 bg-white text-black hover:bg-[#C5A059] hover:text-white transition-all duration-300 rounded-full"
                             >
-                                Shop Now
+                                <span className="text-sm font-bold uppercase tracking-widest">Shop The Collection</span>
+                                <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
                             </Link>
-
-                            {/* 2. 获取折扣码 (滚动到底部) */}
-                            <button
-                                onClick={scrollToFooter}
-                                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white text-[#b62337] font-bold py-4 px-10 rounded-full transition-all duration-300 hover:bg-gray-50 hover:scale-105 hover:shadow-2xl text-sm md:text-base tracking-widest uppercase"
-                            >
-                                Get My Code <ArrowDown size={18} />
-                            </button>
                         </div>
-
-                        <p className="text-white/60 text-xs mt-6">
-                            *Discrete packaging guaranteed on all orders
-                        </p>
                     </div>
+
+                    {/* Right: 图片区域 */}
+                    <div className="w-full md:w-1/2 relative h-[40vh] md:h-[70vh] flex items-center justify-center order-1 md:order-2">
+                        <div className="relative w-full h-full">
+                            {HERO_IMAGE_PATH ? (
+                                <Image
+                                    src={finalHeroImageUrl} // 4. 使用处理后的 URL
+                                    alt="MythToy Hero Product"
+                                    fill
+                                    priority
+                                    className="object-contain drop-shadow-2xl animate-float"
+                                    sizes="(max-width: 768px) 100vw, 50vw"
+                                />
+                            ) : (
+                                <div className="w-full h-full border border-white/10 flex items-center justify-center text-white/20">
+                                    <p>Image Placeholder</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </section>

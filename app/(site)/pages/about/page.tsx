@@ -1,130 +1,141 @@
-// pages/about/page.tsx
-
+// app/pages/about/page.tsx
 import { Metadata } from 'next';
 import Link from 'next/link';
-import { Diamond, HeartHandshake, ShieldCheck, Factory } from 'lucide-react'; // ✅ 替换为 Lucide
+import Image from 'next/image';
+import { ShieldCheck, Lock, Gem, MoveRight } from 'lucide-react';
 
 export const metadata: Metadata = {
-    title: 'About Us | MythToy - Beyond the Myth',
-    description: 'Discover the story behind MythToy. Direct from the source, we provide high-quality, safe, and innovative adult products with complete discretion.',
+    title: 'About Us | MythToy - Pleasure, Demystified.',
+    description: 'We believe intimacy shouldn\'t be complicated. MythToy bridges the gap between premium manufacturing and your bedroom.',
 };
 
 export default function About() {
     return (
-        <div className="bg-white">
-            {/* Hero Section */}
-            <section className="relative py-20 bg-gray-50 overflow-hidden">
-                <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-pink-50 to-purple-50 opacity-50"></div>
-                <div className="container mx-auto px-4 max-w-5xl relative z-10 text-center">
-                    <span className="text-pink-600 font-bold tracking-widest uppercase text-sm mb-4 block">Our Story</span>
-                    <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6 font-['Playfair_Display']">
-                        Beyond the Myth
+        <div className="bg-white w-full overflow-x-hidden">
+
+            {/* 1. Hero Section: 极简纯白背景 */}
+            <section className="relative py-24 md:py-32 bg-white">
+                <div className="container mx-auto px-6 max-w-4xl text-center">
+                    <span className="text-[#C5A059] font-bold tracking-[0.2em] uppercase text-xs mb-6 block animate-fade-in-up">
+                        Our Philosophy
+                    </span>
+                    <h1 className="text-5xl md:text-7xl font-serif text-[#1A1A1A] mb-8 leading-[1.1] animate-fade-in-up delay-100">
+                        Pleasure, <i className="font-light text-gray-400">Demystified.</i>
                     </h1>
-                    <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed font-['Inter']">
-                        Every myth contains a kernel of truth. At <strong className="text-gray-900">MythToy</strong>, our truth is simple:
-                        everyone deserves access to safe, innovative, and high-quality intimate products without the mystery.
+                    <p className="text-lg md:text-xl text-gray-500 font-light font-sans leading-relaxed max-w-2xl mx-auto animate-fade-in-up delay-200">
+                        We believe intimacy shouldn't be complicated or overpriced.
+                        <strong className="text-[#1A1A1A] font-medium"> MythToy</strong> exists to bridge the gap between premium manufacturing and your bedroom—delivering honest quality without the luxury markup.
                     </p>
                 </div>
             </section>
 
-            {/* Main Content */}
-            <section className="py-16 md:py-24">
-                <div className="container mx-auto px-4 max-w-6xl">
+            {/* 2. Story Section: Born at the Source */}
+            <section className="py-16 md:py-24 border-t border-gray-50">
+                <div className="container mx-auto px-6 max-w-7xl">
+                    <div className="grid md:grid-cols-2 gap-12 lg:gap-20 items-center">
 
-                    {/* The Source Advantage */}
-                    <div className="grid md:grid-cols-2 gap-12 items-center mb-24">
-                        <div className="order-2 md:order-1">
-                            <div className="bg-gray-100 rounded-3xl h-[400px] w-full relative overflow-hidden flex items-center justify-center">
-                                <div className="text-gray-300">
-                                    {/* ✅ 使用 Lucide 图标 */}
-                                    <Factory size={120} strokeWidth={1} className="opacity-20" />
-                                </div>
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
-                            </div>
-                        </div>
-                        <div className="order-1 md:order-2">
-                            <h2 className="text-3xl font-bold text-gray-900 mb-6 font-['Playfair_Display']">The Insider Advantage</h2>
-                            <p className="text-gray-600 mb-6 leading-relaxed text-lg">
-                                Founded in the heart of the world's largest adult products manufacturing hub, we have a unique advantage.
-                                <strong>We're not just distributors; we're insiders.</strong>
-                            </p>
-                            <p className="text-gray-600 leading-relaxed text-lg">
-                                This direct access allows us to cut through the noise, offering you products that are the result of
-                                genuine expertise and cutting-edge manufacturing. No middlemen, no marketing hype—just exceptional quality at honest prices.
-                            </p>
-                        </div>
-                    </div>
-
-                    {/* Core Values */}
-                    <div className="mb-24">
-                        <div className="text-center mb-16">
-                            <h2 className="text-3xl font-bold text-gray-900 mb-4 font-['Playfair_Display']">The MythToy Difference</h2>
-                            <div className="w-20 h-1 bg-pink-500 mx-auto rounded-full"></div>
+                        {/* Image Side: 设计感图片 (黑白手稿/工作室) */}
+                        <div className="order-2 md:order-1 relative h-[500px] bg-[#F5F5F7] overflow-hidden group">
+                            {/* 使用 Unsplash 的一张极简设计/工作室风格图 */}
+                            <Image
+                                src="https://images.unsplash.com/photo-1501084817091-a4f3d1d19e07?auto=format&fit=crop&q=80&w=1000"
+                                alt="MythToy Design Studio"
+                                fill
+                                className="object-cover transition-transform duration-700 group-hover:scale-105 grayscale hover:grayscale-0"
+                            />
+                            {/* 装饰性遮罩 */}
+                            <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors duration-500"></div>
                         </div>
 
-                        <div className="grid md:grid-cols-3 gap-8">
-                            {/* Card 1 */}
-                            <div className="bg-gray-50 rounded-2xl p-8 hover:-translate-y-2 transition-transform duration-300 border border-gray-100">
-                                <div className="w-14 h-14 bg-white rounded-xl shadow-sm flex items-center justify-center mb-6 text-pink-600">
-                                    <Diamond size={28} />
-                                </div>
-                                <h3 className="text-xl font-bold text-gray-900 mb-3">Uncompromising Quality</h3>
-                                <p className="text-gray-600 leading-relaxed">
-                                    We believe quality is non-negotiable. Our products are designed with safety, sensation, and durability as the top priorities.
+                        {/* Text Side */}
+                        <div className="order-1 md:order-2 space-y-8">
+                            <h2 className="text-4xl md:text-5xl font-serif text-[#1A1A1A] leading-tight">
+                                Born at the <br/>
+                                <span className="italic text-gray-400">Source.</span>
+                            </h2>
+                            <div className="space-y-6 text-gray-500 font-light text-lg leading-relaxed">
+                                <p>
+                                    We started with a simple question: <span className="text-[#1A1A1A] italic">"Why do premium toys cost so much?"</span>
                                 </p>
-                            </div>
-
-                            {/* Card 2 */}
-                            <div className="bg-gray-50 rounded-2xl p-8 hover:-translate-y-2 transition-transform duration-300 border border-gray-100">
-                                <div className="w-14 h-14 bg-white rounded-xl shadow-sm flex items-center justify-center mb-6 text-purple-600">
-                                    <ShieldCheck size={28} />
-                                </div>
-                                <h3 className="text-xl font-bold text-gray-900 mb-3">Discretion Assured</h3>
-                                <p className="text-gray-600 leading-relaxed">
-                                    Your privacy is paramount. From plain packaging to discreet billing, every order is handled with the utmost respect.
+                                <p>
+                                    The answer wasn't quality—it was marketing. Located at the global hub of wellness innovation, we have direct access to the same craftsmen who build for the world's top luxury brands.
                                 </p>
-                            </div>
-
-                            {/* Card 3 */}
-                            <div className="bg-gray-50 rounded-2xl p-8 hover:-translate-y-2 transition-transform duration-300 border border-gray-100">
-                                <div className="w-14 h-14 bg-white rounded-xl shadow-sm flex items-center justify-center mb-6 text-blue-600">
-                                    <HeartHandshake size={28} />
-                                </div>
-                                <h3 className="text-xl font-bold text-gray-900 mb-3">Source Intelligence</h3>
-                                <p className="text-gray-600 leading-relaxed">
-                                    Better prices, authentic materials, and direct quality control. We bring the factory floor's precision directly to your door.
+                                <p>
+                                    We bypass the middlemen, the branding hype, and the retail markups to bring you factory-direct curation. Same materials, same engines, <strong>honest prices.</strong>
                                 </p>
                             </div>
                         </div>
                     </div>
+                </div>
+            </section>
 
-                    {/* CTA Section */}
-                    <div className="bg-black text-white rounded-3xl p-12 md:p-20 text-center relative overflow-hidden">
-                        <div className="absolute top-0 right-0 w-64 h-64 bg-gray-800 rounded-full mix-blend-overlay filter blur-3xl opacity-50"></div>
-                        <div className="absolute bottom-0 left-0 w-64 h-64 bg-pink-900 rounded-full mix-blend-overlay filter blur-3xl opacity-50"></div>
-
-                        <div className="relative z-10">
-                            <h2 className="text-3xl md:text-5xl font-bold mb-6 font-['Playfair_Display']">Experience the Truth</h2>
-                            <p className="text-gray-300 text-lg mb-10 max-w-2xl mx-auto">
-                                Ready to see beyond the myth? Explore our collection of thoughtfully designed products or speak directly with our team.
-                            </p>
-                            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                                <Link
-                                    href="/collections/all"
-                                    className="bg-white text-black px-8 py-4 rounded-full font-bold hover:bg-gray-100 transition-colors duration-300"
-                                >
-                                    Explore Products
-                                </Link>
-                                <Link
-                                    href="/pages/contact"
-                                    className="bg-transparent border border-white text-white px-8 py-4 rounded-full font-bold hover:bg-white/10 transition-colors duration-300"
-                                >
-                                    Contact Us
-                                </Link>
-                            </div>
-                        </div>
+            {/* 3. The Three Pillars (Values) */}
+            <section className="py-24 bg-[#F9F9F9]">
+                <div className="container mx-auto px-6 max-w-7xl">
+                    <div className="text-center mb-20">
+                        <span className="text-xs font-bold tracking-[0.2em] uppercase text-gray-400 mb-3 block">
+                            Why MythToy
+                        </span>
+                        <h2 className="text-3xl md:text-4xl font-serif text-[#1A1A1A]">
+                            The MythToy Difference
+                        </h2>
                     </div>
 
+                    <div className="grid md:grid-cols-3 gap-12">
+                        {/* Card 1: Purity */}
+                        <div className="flex flex-col items-start space-y-4 group">
+                            <ShieldCheck size={40} strokeWidth={1} className="text-[#1A1A1A] mb-2 group-hover:scale-110 transition-transform duration-300" />
+                            <h3 className="text-xl font-serif font-medium text-[#1A1A1A]">Medical-Grade Purity</h3>
+                            <p className="text-gray-500 font-light text-sm leading-relaxed">
+                                We strictly use body-safe silicone and non-toxic ABS. If we wouldn't use it ourselves, we won't sell it to you.
+                            </p>
+                        </div>
+
+                        {/* Card 2: Privacy */}
+                        <div className="flex flex-col items-start space-y-4 group">
+                            <Lock size={40} strokeWidth={1} className="text-[#1A1A1A] mb-2 group-hover:scale-110 transition-transform duration-300" />
+                            <h3 className="text-xl font-serif font-medium text-[#1A1A1A]">Ironclad Privacy</h3>
+                            <p className="text-gray-500 font-light text-sm leading-relaxed">
+                                Your business is yours alone. From unbranded packaging to generic billing descriptors, we protect your privacy as fiercely as our own.
+                            </p>
+                        </div>
+
+                        {/* Card 3: Curation */}
+                        <div className="flex flex-col items-start space-y-4 group">
+                            <Gem size={40} strokeWidth={1} className="text-[#1A1A1A] mb-2 group-hover:scale-110 transition-transform duration-300" />
+                            <h3 className="text-xl font-serif font-medium text-[#1A1A1A]">Curated, Not Cluttered</h3>
+                            <p className="text-gray-500 font-light text-sm leading-relaxed">
+                                We don't sell everything. We test hundreds of products to select the top 1%. No fillers, no gimmicks, just the best in class.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* 4. Minimalist CTA */}
+            <section className="py-24 bg-[#1A1A1A] text-white">
+                <div className="container mx-auto px-6 text-center">
+                    <h2 className="text-4xl md:text-6xl font-serif mb-8">
+                        Experience the <span className="italic text-[#C5A059]">Truth</span>.
+                    </h2>
+                    <p className="text-gray-400 max-w-xl mx-auto mb-12 font-light text-lg">
+                        Ready to see beyond the myth? Explore our collection of thoughtfully designed products.
+                    </p>
+
+                    <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
+                        <Link
+                            href="/collections/all"
+                            className="px-10 py-4 bg-white text-black text-xs font-bold uppercase tracking-widest hover:bg-[#C5A059] hover:text-white transition-colors duration-300 min-w-[200px]"
+                        >
+                            Shop Collection
+                        </Link>
+                        <Link
+                            href="/pages/contact"
+                            className="group inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-white hover:text-[#C5A059] transition-colors"
+                        >
+                            Contact Us <MoveRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                        </Link>
+                    </div>
                 </div>
             </section>
         </div>

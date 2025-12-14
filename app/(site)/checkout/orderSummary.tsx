@@ -82,7 +82,7 @@ export default function OrderSummary({ orderItems, subtotal, discount, shipping,
                 {/* 运费门槛提示 */}
                 {shipping > 0 && (
                     <div className="text-xs text-gray-400 text-right italic">
-                        Add ${(40 - subtotal).toFixed(2)} more for free shipping
+                        Add ${(49 - subtotal).toFixed(2)} more for free shipping
                     </div>
                 )}
             </div>

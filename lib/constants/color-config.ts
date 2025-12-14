@@ -25,7 +25,8 @@ export const COLOR_SYSTEM = {
             "Pink": "#FFC0CB",
             "Soft Pink": "#FFB6C1",
             "Hot Pink": "#FF69B4",
-            "Fuchsia": "#FF00FF"
+            "Fuchsia": "#FF00FF",
+            "Amethyst Purple": "#9966CC" // 紫水晶紫，添加到紫色或粉色组，这里根据色调更适合粉色组
         }
     },
     "Blue": {
@@ -74,7 +75,9 @@ export const COLOR_SYSTEM = {
             "Black": "#000000",
             "Midnight Black": "#191970",
             "Obsidian Black": "#1C1C1C", // ✅ 新增 (黑曜石色)
-            "Charcoal": "#36454F"
+            "Charcoal": "#36454F",
+            "Matte Black": "#28282B", // 哑光黑
+            "Satin Silver": "#C0C0C0" // 缎面银，虽然名字是silver但属于黑色/金属组
         }
     },
     "White": {
@@ -85,6 +88,19 @@ export const COLOR_SYSTEM = {
             "Arctic White": "#F0FFFF", // ✅ 新增 (极地白)
             "Ivory": "#FFFFF0",
             "Cream": "#FFFDD0"
+        }
+    },
+    "Gray": {
+        display: "Gray",
+        hex: "#808080",
+        variants: {
+            "Gray": "#808080",
+            "Grey": "#808080", // 英式拼写
+            "Matte Grey": "#A9A9A9", // 哑光灰
+            "Slate Gray": "#708090",
+            "Light Gray": "#D3D3D3",
+            "Dark Gray": "#A9A9A9",
+            "Silver": "#C0C0C0"
         }
     },
     "Skin": {
@@ -126,7 +142,20 @@ export const COLOR_SYSTEM = {
             "Silver": "#C0C0C0",
             "Sterling Silver": "#C0C0C0", // ✅ 新增 (925银色)
             "Bronze": "#CD7F32",
-            "Copper": "#B87333"
+            "Copper": "#B87333",
+            "Satin Silver": "#D3D3D3", // 缎面银（更亮的银色）
+            "Matte Black": "#1C1C1C", // 哑光黑也可以放在金属组
+            "Clear": "transparent" // 透明色
+        }
+    },
+    "Clear": {
+        display: "Clear",
+        hex: "transparent",
+        variants: {
+            "Clear": "transparent",
+            "Transparent": "transparent",
+            "Frosted": "#F0F8FF", // 磨砂透明
+            "Smoke": "#F5F5F5" // 烟熏透明
         }
     }
 };
@@ -135,14 +164,20 @@ export const COLOR_SYSTEM = {
 // 输入 "Crimson" -> 输出 "#DC143C"
 export function getHexColor(colorName: string): string {
     if (!colorName) return '#CCCCCC';
-    const normalized = colorName.trim(); // 保持原始大小写查找，或者统一转小写
+    const normalized = colorName.trim();
+
+    // 特殊处理透明色
+    if (normalized.toLowerCase() === 'clear' || normalized.toLowerCase() === 'transparent') {
+        return 'transparent';
+    }
 
     // 遍历所有组查找
     for (const group of Object.values(COLOR_SYSTEM)) {
         // 不区分大小写查找
         const variantKey = Object.keys(group.variants).find(k => k.toLowerCase() === normalized.toLowerCase());
         if (variantKey) {
-            return group.variants[variantKey as keyof typeof group.variants];
+            const hexValue = group.variants[variantKey as keyof typeof group.variants];
+            return hexValue === 'transparent' ? 'transparent' : hexValue;
         }
     }
     return '#CCCCCC'; // 默认灰
@@ -167,5 +202,5 @@ export function getAllColorVariants(): string[] {
     Object.values(COLOR_SYSTEM).forEach(group => {
         all = [...all, ...Object.keys(group.variants)];
     });
-    return all.sort();
+    return [...new Set(all)].sort(); // 去重并排序
 }
