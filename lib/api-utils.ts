@@ -58,7 +58,7 @@ async function refreshAccessToken(): Promise<string | null> {
             // 如果后端没返回新的 refresh token，就沿用旧的
             setTokens(accessToken, newRefresh || refreshToken);
 
-            console.log('Token refreshed successfully: ', accessToken);
+            // console.log('Token refreshed successfully: ', accessToken);
             return accessToken;
         }
         return null;
