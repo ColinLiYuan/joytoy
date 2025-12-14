@@ -49,13 +49,14 @@ interface ProductDetailClientProps {
 
 const getFeatureIconAndStyle = (text: string) => {
     const lowerText = text.toLowerCase();
-    if (lowerText.includes('water') || lowerText.includes('proof')) return { icon: Droplets, color: 'text-blue-500', bg: 'bg-blue-50' };
-    if (lowerText.includes('usb') || lowerText.includes('charg') || lowerText.includes('power')) return { icon: BatteryCharging, color: 'text-green-500', bg: 'bg-green-50' };
-    if (lowerText.includes('quiet') || lowerText.includes('noise') || lowerText.includes('decibel')) return { icon: Volume2, color: 'text-purple-500', bg: 'bg-purple-50' };
-    if (lowerText.includes('app') || lowerText.includes('remote') || lowerText.includes('control')) return { icon: Smartphone, color: 'text-indigo-500', bg: 'bg-indigo-50' };
-    if (lowerText.includes('silicone') || lowerText.includes('safe') || lowerText.includes('skin')) return { icon: ShieldCheck, color: 'text-pink-500', bg: 'bg-pink-50' };
-    if (lowerText.includes('soft') || lowerText.includes('touch')) return { icon: Feather, color: 'text-orange-500', bg: 'bg-orange-50' };
-    return { icon: Check, color: 'text-gray-600', bg: 'bg-gray-100' };
+    // 只区分图标颜色，所有标签使用相同的背景色和文字颜色
+    if (lowerText.includes('water') || lowerText.includes('proof')) return { icon: Droplets, color: 'text-blue-500' };
+    if (lowerText.includes('usb') || lowerText.includes('charg') || lowerText.includes('power')) return { icon: BatteryCharging, color: 'text-green-500' };
+    if (lowerText.includes('quiet') || lowerText.includes('noise') || lowerText.includes('decibel')) return { icon: Volume2, color: 'text-purple-500' };
+    if (lowerText.includes('app') || lowerText.includes('remote') || lowerText.includes('control')) return { icon: Smartphone, color: 'text-indigo-500' };
+    if (lowerText.includes('silicone') || lowerText.includes('safe') || lowerText.includes('skin')) return { icon: ShieldCheck, color: 'text-pink-500' };
+    if (lowerText.includes('soft') || lowerText.includes('touch')) return { icon: Feather, color: 'text-orange-500' };
+    return { icon: Check, color: 'text-gray-600' };
 };
 
 // ✅ 修复后的轮播组件：尺寸更协调
@@ -292,7 +293,7 @@ export default function ProductDetailClient({
                                 const style = getFeatureIconAndStyle(feature);
                                 const Icon = style.icon;
                                 return (
-                                    <div key={idx} className={`flex items-center gap-2.5 text-sm font-medium text-gray-700 ${style.bg} p-3 rounded-xl border border-transparent hover:border-gray-200 transition-colors`}>
+                                    <div key={idx} className={`flex items-center gap-2.5 text-sm font-medium text-gray-800 bg-gray-50 border border-gray-200 p-3 rounded-xl hover:bg-gray-100 transition-colors`}>
                                         <Icon size={18} className={style.color} />
                                         <span className="line-clamp-1">{feature}</span>
                                     </div>
