@@ -10,7 +10,7 @@ import { Suspense } from 'react';
 import { Metadata, Viewport } from 'next';
 // ✅ 1. 引入高性能字体加载模块
 import { Playfair_Display, Inter } from 'next/font/google';
-import './globals.css'; // 确保引入全局样式
+import '../globals.css'; // 确保引入全局样式
 
 // ✅ 2. 配置字体 (自动托管，不阻塞渲染)
 const playfair = Playfair_Display({
