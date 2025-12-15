@@ -66,7 +66,7 @@ export default function HeroSection() {
                                     src={finalHeroImageUrl} // 4. 使用处理后的 URL
                                     alt="MythToy Hero Product"
                                     fill
-                                    priority{true}
+                                    priority={true}
                                     className="object-contain drop-shadow-2xl animate-float"
                                     sizes="(max-width: 768px) 100vw, 50vw"
                                 />
