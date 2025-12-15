@@ -5,29 +5,46 @@ import Pagination from '@/components/common/pagination';
 import Breadcrumb from '@/components/common/breadcrumb';
 import { blogServiceServer } from '@/services/servers/blog-service-server';
 import { BlogListResponse } from '@/types/site/blog';
-import { ArrowUpRight } from 'lucide-react'; // 更换了一个更“艺术”的箭头
+import { ArrowUpRight } from 'lucide-react';
 
 // --- 1. 精选的高端艺术图 (替换原有图片) ---
-// 这些图片都是 Unsplash 上经过筛选的：抽象、纹理、丝绸、自然光
 const AESTHETIC_IMAGES = [
-    "https://images.unsplash.com/photo-1507919909716-c8262e491cde?auto=format&fit=crop&q=80&w=800", // 丝绸/波纹
-    "https://images.unsplash.com/photo-1515377905703-c4788e51af15?auto=format&fit=crop&q=80&w=800", // 极简光影
-    "https://images.unsplash.com/photo-1616486338812-3dadae4b4f9d?auto=format&fit=crop&q=80&w=800", // 柔和织物
-    "https://images.unsplash.com/photo-1516975080664-ed2fc6a32937?auto=format&fit=crop&q=80&w=800", // 抽象曲线
-    "https://images.unsplash.com/photo-1499244571941-37a279d0ccb9?auto=format&fit=crop&q=80&w=800", // 极简风景
-    "https://images.unsplash.com/photo-1605218427306-635ba2439715?auto=format&fit=crop&q=80&w=800", // 艺术雕塑感
+    "https://images.unsplash.com/photo-1507919909716-c8262e491cde?auto=format&fit=crop&q=80&w=800",
+    "https://images.unsplash.com/photo-1515377905703-c4788e51af15?auto=format&fit=crop&q=80&w=800",
+    "https://images.unsplash.com/photo-1616486338812-3dadae4b4f9d?auto=format&fit=crop&q=80&w=800",
+    "https://unsplash.com/photos/a-close-up-of-a-white-surface-with-a-light-shining-on-it-v4dwU9sX5tY?auto=format&fit=crop&q=80&w=800",
+    "https://images.unsplash.com/photo-1499244571941-37a279d0ccb9?auto=format&fit=crop&q=80&w=800",
+    "https://images.unsplash.com/photo-1605218427306-635ba2439715?auto=format&fit=crop&q=80&w=800",
 ];
 
-// ... Metadata 和 GenerateStructuredData 代码保持不变 ...
+// 定义搜索参数类型
+interface BlogSearchParams {
+    page?: string;
+    [key: string]: string | string[] | undefined;
+}
 
-export default async function BlogList({ searchParams }: PageProps) {
-    const resolvedSearchParams = await searchParams;
+// 定义页面组件属性
+interface BlogListPageProps {
+    searchParams?: Promise<BlogSearchParams>;
+}
+
+// 如果还需要生成 Metadata，可以添加
+export async function generateMetadata(): Promise<Metadata> {
+    return {
+        title: 'The Journal - Pleasure & Wellness',
+        description: 'Explorations in intimacy, education, and the art of living well.',
+    };
+}
+
+export default async function BlogList({ searchParams }: BlogListPageProps) {
+    // 等待 searchParams 解析
+    const resolvedSearchParams = searchParams ? await searchParams : { page: undefined };
     const page = parseInt(resolvedSearchParams.page || '0', 10);
     const currentPage = isNaN(page) ? 0 : page;
 
     const breadcrumbs = [
         { name: 'Home', path: '/' },
-        { name: 'Journal', path: null } // 改名为 "Journal" 更高级
+        { name: 'Journal', path: null }
     ];
 
     try {
@@ -37,7 +54,7 @@ export default async function BlogList({ searchParams }: PageProps) {
         return (
             <div className="min-h-screen bg-white w-full">
 
-                {/* Header Section - 更加留白 */}
+                {/* Header Section */}
                 <div className="pt-24 pb-16 md:pt-32 md:pb-24 px-6 text-center border-b border-gray-50">
                     <span className="text-[#C5A059] text-xs font-bold tracking-[0.25em] uppercase mb-4 block">
                         The Editorial
@@ -52,7 +69,7 @@ export default async function BlogList({ searchParams }: PageProps) {
 
                 <div className="container mx-auto px-6 max-w-7xl py-16">
 
-                    {/* Breadcrumb - 极简 */}
+                    {/* Breadcrumb */}
                     <div className="mb-12 flex justify-center md:justify-start">
                         <Breadcrumb items={breadcrumbs} showLastItem={true} />
                     </div>
@@ -61,13 +78,12 @@ export default async function BlogList({ searchParams }: PageProps) {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-16 mb-24">
                         {posts.length > 0 ? (
                             posts.map((post, index) => {
-                                // 强制使用精选图，实现“全部换掉”的效果
                                 const artImage = AESTHETIC_IMAGES[index % AESTHETIC_IMAGES.length];
 
                                 return (
                                     <article key={post.id} className="group flex flex-col cursor-pointer">
 
-                                        {/* Image: 16:9 -> 4:5 (更像杂志) */}
+                                        {/* Image */}
                                         <Link href={`/blog/${post.slug}`} className="block relative aspect-[4/5] overflow-hidden bg-[#F5F5F7] mb-6">
                                             <img
                                                 src={artImage}
@@ -85,7 +101,7 @@ export default async function BlogList({ searchParams }: PageProps) {
                                                 <span className="w-8 h-[1px] bg-gray-200"></span>
                                             </div>
 
-                                            {/* Title: Serif & Larger */}
+                                            {/* Title */}
                                             <Link href={`/blog/${post.slug}`} className="block mb-3">
                                                 <h2 className="text-3xl font-serif text-[#1A1A1A] group-hover:text-[#C5A059] transition-colors leading-[1.1]">
                                                     {post.title}
@@ -128,7 +144,13 @@ export default async function BlogList({ searchParams }: PageProps) {
             </div>
         );
     } catch (error) {
-        // Error handling...
-        return null;
+        console.error('Error loading blog posts:', error);
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="text-center">
+                    <p className="text-gray-500">Failed to load blog posts. Please try again later.</p>
+                </div>
+            </div>
+        );
     }
 }
