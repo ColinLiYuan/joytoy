@@ -141,13 +141,36 @@ export default function Footer() {
                         {/* Social Icons */}
                         <div className="mt-8 pt-6 border-t border-gray-100">
                             <div className="flex gap-4">
-                                <a href="https://www.facebook.com/profile.php?id=61581471022682" target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-gray-50 text-gray-600 rounded-full flex items-center justify-center transition-all hover:bg-blue-600 hover:text-white hover:-translate-y-1">
+                                {/* ✅ 添加 aria-label */}
+                                <a
+                                    href="https://www.facebook.com/profile.php?id=61581471022682"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    aria-label="Follow us on Facebook"
+                                    className="w-10 h-10 bg-gray-50 text-gray-600 rounded-full flex items-center justify-center transition-all hover:bg-blue-600 hover:text-white hover:-translate-y-1"
+                                >
                                     <Facebook size={18} />
                                 </a>
-                                <a href="https://www.instagram.com/colinliyuan" target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-gray-50 text-gray-600 rounded-full flex items-center justify-center transition-all hover:bg-pink-600 hover:text-white hover:-translate-y-1">
+
+                                {/* ✅ 添加 aria-label */}
+                                <a
+                                    href="https://www.instagram.com/colinliyuan"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    aria-label="Follow us on Instagram"
+                                    className="w-10 h-10 bg-gray-50 text-gray-600 rounded-full flex items-center justify-center transition-all hover:bg-pink-600 hover:text-white hover:-translate-y-1"
+                                >
                                     <Instagram size={18} />
                                 </a>
-                                <a href="https://wa.me/17620189025" target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-gray-50 text-gray-600 rounded-full flex items-center justify-center transition-all hover:bg-green-500 hover:text-white hover:-translate-y-1">
+
+                                {/* ✅ 添加 aria-label */}
+                                <a
+                                    href="https://wa.me/17620189025"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    aria-label="Chat with us on WhatsApp"
+                                    className="w-10 h-10 bg-gray-50 text-gray-600 rounded-full flex items-center justify-center transition-all hover:bg-green-500 hover:text-white hover:-translate-y-1"
+                                >
                                     <WhatsAppIcon className="w-4 h-4" />
                                 </a>
                             </div>

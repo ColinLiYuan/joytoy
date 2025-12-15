@@ -85,8 +85,23 @@ export default function Contact() {
 
                             {/* Socials */}
                             <div className="pt-4 flex gap-4 border-t border-gray-200/50 mt-4">
-                                <a href="#" className="text-gray-400 hover:text-black transition-colors"><Facebook size={20} strokeWidth={1.5} /></a>
-                                <a href="https://www.instagram.com/colinliyuan" className="text-gray-400 hover:text-black transition-colors"><Instagram size={20} strokeWidth={1.5} /></a>
+                                {/* ✅ Add aria-label */}
+                                <a
+                                    href="#"
+                                    aria-label="Visit our Facebook page"
+                                    className="text-gray-400 hover:text-black transition-colors"
+                                >
+                                    <Facebook size={20} strokeWidth={1.5} />
+                                </a>
+
+                                {/* ✅ Add aria-label */}
+                                <a
+                                    href="https://www.instagram.com/colinliyuan"
+                                    aria-label="Visit our Instagram profile"
+                                    className="text-gray-400 hover:text-black transition-colors"
+                                >
+                                    <Instagram size={20} strokeWidth={1.5} />
+                                </a>
                             </div>
                         </div>
                     </div>

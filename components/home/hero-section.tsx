@@ -9,7 +9,7 @@ import { getProductImageUrl } from '@/lib/image-utils';
 
 // 🔴 2. 这里只需要填你在 Cloudflare (或后台) 保存的那个“路径”或“文件名”
 // 不需要填完整的 https://...，工具函数会自动拼接前缀
-const HERO_IMAGE_PATH = "banner.webp"; // 示例文件名，请替换为你上传的具体文件名
+const HERO_IMAGE_PATH = "banner.webp?v=20241216"; // 示例文件名，请替换为你上传的具体文件名
 
 export default function HeroSection() {
 
@@ -66,7 +66,7 @@ export default function HeroSection() {
                                     src={finalHeroImageUrl} // 4. 使用处理后的 URL
                                     alt="MythToy Hero Product"
                                     fill
-                                    priority
+                                    priority{true}
                                     className="object-contain drop-shadow-2xl animate-float"
                                     sizes="(max-width: 768px) 100vw, 50vw"
                                 />
