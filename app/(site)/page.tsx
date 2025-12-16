@@ -1,4 +1,4 @@
-// app/route.tsx - 服务端组件
+// app/(site)/route.tsx - 服务端组件
 import { ProductResponse } from '@/types/product';
 import { productServiceServer } from '@/services/servers/product-service-server';
 import ClientAgeVerification from '@/components/common/client-age-verification';

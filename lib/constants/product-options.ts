@@ -1,6 +1,7 @@
 // /lib/constants/product-options.ts
 
 export const VENDORS = [
+    "公模",
     "东莞闺蜜情趣成人用品有限公司",
     "东莞市三只猫科技有限公司",
     "东莞市中同医疗器械科技有限公司",
