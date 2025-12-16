@@ -1,4 +1,4 @@
-// app/layout.tsx
+// app/(site)/layout.tsx
 import { categoryService } from '@/services/category-service';
 import { RootResponse } from '@/types/category';
 import Notice from '@/components/common/notice';
@@ -8,11 +8,9 @@ import GARouteTracker from '@/components/analytics/ga-route-tracker';
 import Script from 'next/script';
 import { Suspense } from 'react';
 import { Metadata, Viewport } from 'next';
-// ✅ 1. 引入高性能字体加载模块
 import { Playfair_Display, Inter } from 'next/font/google';
-import '../globals.css'; // 确保引入全局样式
 
-// ✅ 2. 配置字体 (自动托管，不阻塞渲染)
+// 字体配置保持不变
 const playfair = Playfair_Display({
     subsets: ['latin'],
     variable: '--font-playfair',
@@ -39,12 +37,11 @@ export const metadata: Metadata = {
     manifest: '/site.webmanifest',
 };
 
-// ✅ 3. 修复 Viewport (允许缩放，解决 Lighthouse 扣分)
 export const viewport: Viewport = {
     themeColor: 'black',
     width: 'device-width',
     initialScale: 1,
-    maximumScale: 5, // 🔴 必须允许用户缩放
+    maximumScale: 5,
     userScalable: true,
 };
 
@@ -85,52 +82,53 @@ export default async function SiteLayout({
     };
 
     return (
-        // ✅ 4. 将字体变量注入 html 根标签
-        <html lang="en" className={`${playfair.variable} ${inter.variable}`}>
-        <body className="relative flex flex-col min-h-screen w-full max-w-[100vw] overflow-x-clip bg-white font-sans antialiased">
-        <script
-            type="application/ld+json"
-            dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationStructuredData) }}
-        />
+        // 🔴 关键修复：移除 <html> 和 <body>，改用 Fragment (<>...</>) 和 div
+        <>
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationStructuredData) }}
+            />
 
-        {gaId && (
-            <>
-                <Script
-                    strategy="afterInteractive"
-                    src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`}
-                />
-                <Script
-                    id="google-analytics-init"
-                    strategy="afterInteractive"
-                    dangerouslySetInnerHTML={{
-                        __html: `
+            {gaId && (
+                <>
+                    <Script
+                        strategy="afterInteractive"
+                        src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`}
+                    />
+                    <Script
+                        id="google-analytics-init"
+                        strategy="afterInteractive"
+                        dangerouslySetInnerHTML={{
+                            __html: `
                                     window.dataLayer = window.dataLayer || [];
                                     function gtag(){dataLayer.push(arguments);}
                                     gtag('js', new Date());
                                     gtag('config', '${gaId}');
                                 `,
-                    }}
-                />
-            </>
-        )}
+                        }}
+                    />
+                </>
+            )}
 
-        <Suspense fallback={null}>
-            <GARouteTracker />
-        </Suspense>
+            {/* 🔴 这里的 div 代替了原来的 body，承载字体变量和全局样式 */}
+            <div className={`${playfair.variable} ${inter.variable} relative flex flex-col min-h-screen w-full max-w-[100vw] overflow-x-clip bg-white font-sans antialiased text-[#1A1A1A]`}>
+                <Suspense fallback={null}>
+                    <GARouteTracker />
+                </Suspense>
 
-        <div className="w-full relative z-50">
-            <Navigation rootsData={rootsData} />
-            <Notice />
-        </div>
+                <div className="w-full relative z-50">
+                    <Navigation rootsData={rootsData} />
+                    <Notice />
+                </div>
 
-        <main className="flex-grow w-full max-w-[100vw] overflow-x-clip">
-            {children}
-        </main>
+                <main className="flex-grow w-full max-w-[100vw] overflow-x-clip">
+                    {children}
+                </main>
 
-        <div className="w-full max-w-[100vw] overflow-x-clip">
-            <Footer />
-        </div>
-        </body>
-        </html>
+                <div className="w-full max-w-[100vw] overflow-x-clip">
+                    <Footer />
+                </div>
+            </div>
+        </>
     );
 }

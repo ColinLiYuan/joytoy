@@ -116,7 +116,6 @@ export default async function CollectionPage() {
                                         >
                                             {/* Image Container */}
                                             <div className={`relative h-48 overflow-hidden bg-gradient-to-br ${gradientClass} flex items-center justify-center group-hover:opacity-90 transition-opacity`}>
-
                                                 {/* ✅ 优先显示真实图片 */}
                                                 {hasImage ? (
                                                     <Image
@@ -124,7 +123,8 @@ export default async function CollectionPage() {
                                                         alt={subcategory.name}
                                                         fill
                                                         sizes="(max-width: 768px) 100vw, 25vw"
-                                                        className="object-cover transition-transform duration-700 group-hover:scale-105"
+                                                        className="object-contain p-4 transition-transform duration-700 group-hover:scale-105" // 👈 修改这里
+                                                        priority={rootIndex < 2 && subIndex < 4} // 可选：优化加载
                                                     />
                                                 ) : (
                                                     // ✅ 兜底显示首字母
@@ -132,7 +132,6 @@ export default async function CollectionPage() {
                                                         {subcategory.name.charAt(0)}
                                                     </span>
                                                 )}
-
                                             </div>
 
                                             {/* Content */}

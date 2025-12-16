@@ -28,7 +28,7 @@ export const CATEGORIES_DATA: CategoriesData = {
                         name: "Best Sellers",
                         title: "Best Selling Sex Toys | Top Rated Adult Products",
                         description: "Shop best selling sex toys and top rated adult products. Premium quality discreet shipping.",
-                        image: "/images/categories/best-sellers.jpg", // 👈 新增
+                        image: "swan-1.webp", // 👈 新增
                         root: "shop",
                         priority: 0.7,
                         changefreq: "weekly"
@@ -179,9 +179,9 @@ export const CATEGORIES_DATA: CategoriesData = {
             },
             {
                 slug: "sex-toys",
-                name: "Sex Toys",
-                title: "Adult Sex Toys | Vibrators, Dildos & More",
-                description: "Complete collection of adult sex toys. Anal toys, BDSM gear and accessories.",
+                name: "Anal Play",
+                title: "Anal Play | Butt Plugs, Beads & Accessories",
+                description: "Explore our curated collection of anal play essentials. From beginner-friendly butt plugs to progressive beads and fantasy tails.",
                 image: "/images/categories/sex-toys.jpg", // 👈 新增
                 priority: 0.7,
                 changefreq: "weekly",
