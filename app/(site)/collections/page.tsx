@@ -1,17 +1,16 @@
 // app/(site)/collections/page.tsx
 import Link from 'next/link';
+import Image from 'next/image'; // ✅ 恢复引用
 import { RootResponse } from '@/types/category';
 import { categoryService } from '@/services/category-service';
 import { ArrowRight, Sparkles } from 'lucide-react';
 import { Metadata } from 'next';
-import { getProductImageUrl } from '@/lib/image-utils';
-// import Image from 'next/image'; // 如果后续要用真实图片，请取消注释
+import { getProductImageUrl } from '@/lib/image-utils'; // ✅ 引入工具函数
 
 // SEO Metadata
 export const metadata: Metadata = {
     title: "Collections | MythToy - Premium Adult Pleasure",
     description: "Explore our curated collections of premium adult products. From intimate massagers to luxury lingerie, find exactly what you desire.",
-    // ✅ 补回 Canonical
     alternates: {
         canonical: 'https://mythtoy.com/collections',
     },
@@ -52,8 +51,6 @@ export default async function CollectionPage() {
 
             {/* Hero Section */}
             <section className="relative py-20 md:py-28 bg-gray-50 w-full">
-
-                {/* 背景装饰层 - 双重锁定防溢出 */}
                 <div className="absolute inset-0 overflow-hidden pointer-events-none">
                     <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-white to-gray-50"></div>
                     <div className="absolute -right-20 -top-20 w-96 h-96 bg-pink-100/40 rounded-full blur-3xl"></div>
@@ -106,27 +103,36 @@ export default async function CollectionPage() {
                                 {rootCategory.categories.map((subcategory, subIndex) => {
                                     const gradientClass = GRADIENTS[(rootIndex + subIndex) % GRADIENTS.length];
 
+                                    // ✅ 处理图片逻辑
+                                    // 假设字段名为 subcategory.image
+                                    const hasImage = !!subcategory.image;
+                                    const imageUrl = getProductImageUrl('', subcategory.image);
+
                                     return (
                                         <Link
                                             key={subcategory.slug}
                                             href={`/collections/${subcategory.slug}`}
                                             className="group flex flex-col h-full bg-white rounded-2xl overflow-hidden border border-gray-100 hover:border-pink-200 hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
                                         >
-                                            {/* Image / Placeholder Container */}
+                                            {/* Image Container */}
                                             <div className={`relative h-48 overflow-hidden bg-gradient-to-br ${gradientClass} flex items-center justify-center group-hover:opacity-90 transition-opacity`}>
-                                                {/*
-                                                // 如果以后有图片，取消注释这里：
-                                                <Image
-                                                    src={getProductImageUrl('', subcategory.image || '')}
-                                                    alt={subcategory.name}
-                                                    fill
-                                                    className="object-cover"
-                                                />
-                                                */}
 
-                                                <span className="text-6xl font-['Playfair_Display'] text-gray-900/10 font-bold select-none group-hover:scale-110 transition-transform duration-500">
-                                                    {subcategory.name.charAt(0)}
-                                                </span>
+                                                {/* ✅ 优先显示真实图片 */}
+                                                {hasImage ? (
+                                                    <Image
+                                                        src={imageUrl}
+                                                        alt={subcategory.name}
+                                                        fill
+                                                        sizes="(max-width: 768px) 100vw, 25vw"
+                                                        className="object-cover transition-transform duration-700 group-hover:scale-105"
+                                                    />
+                                                ) : (
+                                                    // ✅ 兜底显示首字母
+                                                    <span className="text-6xl font-['Playfair_Display'] text-gray-900/10 font-bold select-none group-hover:scale-110 transition-transform duration-500">
+                                                        {subcategory.name.charAt(0)}
+                                                    </span>
+                                                )}
+
                                             </div>
 
                                             {/* Content */}
