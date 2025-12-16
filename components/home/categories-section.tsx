@@ -10,7 +10,7 @@ const categories = [
         title: "For Her",
         description: "Curated pleasure & comfort.",
         link: "/collections/female-sex-toys",
-        image: "forHer.png",
+        image: "swan.webp",
         alt: "Luxury adult toys for women",
     },
     {
@@ -18,7 +18,7 @@ const categories = [
         title: "For Him",
         description: "Performance & sensation.",
         link: "/collections/male-sex-toys",
-        image: "forHim.png",
+        image: "titan.png",
         alt: "High-quality male adult toys",
     },
     {
@@ -26,7 +26,7 @@ const categories = [
         title: "Couples & Play",
         description: "Shared intimacy & exploration.",
         link: "/collections/sex-toys",
-        image: "sexToy.png",
+        image: "crystal-1.png",
         alt: "Adult sex toys for couples",
     },
     {
@@ -34,7 +34,7 @@ const categories = [
         title: "Lingerie",
         description: "Confidence & romance.",
         link: "/collections/lingerie",
-        image: "lingerie.png",
+        image: "mesh.jpg",
         alt: "Elegant intimate apparel",
     }
 ];
