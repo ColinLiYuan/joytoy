@@ -206,10 +206,10 @@ export const CATEGORIES_DATA: CategoriesData = {
                 changefreq: "weekly",
                 categories: [
                     {
-                        slug: "lingerie/schoolgirl-lingerie",
-                        name: "Schoolgirl Lingerie",
-                        title: "Schoolgirl Lingerie | Roleplay Costumes",
-                        description: "Schoolgirl lingerie for fantasy roleplay. Plaid skirts and outfits.",
+                        slug: "lingerie/bodystockings",
+                        name: "Bodystockings",
+                        title: "Bodystockings | Full Body Lingerie & Stockings",
+                        description: "Sensual bodystockings for full coverage seduction. Sheer, lace and fishnet styles.",
                         root: "lingerie",
                         priority: 0.7,
                         changefreq: "weekly"
