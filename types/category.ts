@@ -4,12 +4,12 @@ export interface CategoryResponse {
     slug: string;
     name: string;
     title: string;
+    image?: string;
     description: string;
     root?: string;
     priority?: number;
     changefreq?: string;
     lastModified?: string;
-    // ✅ 统一：可选数组
     categories?: CategoryResponse[];
 }
 
@@ -17,12 +17,12 @@ export interface RootResponse {
     slug: string;
     name: string;
     title: string;
+    image?: string;
     description: string;
     root?: string;
     priority?: number;
     changefreq?: string;
     lastModified?: string;
-    // ✅ 统一：改为可选数组 (防止 TS 报错说 CategoryResponse 不兼容)
     categories?: CategoryResponse[];
 }
 
@@ -31,6 +31,7 @@ export interface CategoryItem {
     slug: string;
     name: string;
     title: string;
+    image?: string;
     description: string;
     priority: number;
     changefreq: string;
