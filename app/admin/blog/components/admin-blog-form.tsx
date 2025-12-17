@@ -3,16 +3,36 @@
 import { useState, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { blogService } from '@/services/blogService';
-import { RefreshCw } from 'lucide-react'; // 引入图标
-// 动态导入 MD 编辑器，避免 SSR 问题
+import { RefreshCw } from 'lucide-react';
+
+// 动态导入 MD 编辑器
 const MDEditor = dynamic(
     () => import('@uiw/react-md-editor').then((mod) => mod.default),
     { ssr: false }
 );
+
+// 获取图片前缀环境变量
+const CDN_URL = process.env.NEXT_PUBLIC_IMAGE_UPLOAD_PATH || '';
+
+/**
+ * 图片路径处理辅助函数
+ * 如果是完整链接(http开头)则直接返回，否则拼接 CDN 前缀
+ */
+const getImageUrl = (path: string | undefined | null) => {
+    if (!path) return '';
+    if (path.startsWith('http') || path.startsWith('https')) {
+        return path;
+    }
+    // 处理可能存在的双斜杠问题
+    const cleanPath = path.startsWith('/') ? path.slice(1) : path;
+    const cleanCdn = CDN_URL.endsWith('/') ? CDN_URL.slice(0, -1) : CDN_URL;
+    return `${cleanCdn}/${cleanPath}`;
+};
+
 interface BlogFormProps {
     initialData?: {
         title: string;
-        slug?: string; // 新增 slug
+        slug?: string;
         subTitle: string;
         content: string;
         author: string;
@@ -26,6 +46,7 @@ interface BlogFormProps {
     submitText: string;
     submitLoadingText: string;
 }
+
 export default function BlogForm({
                                      initialData,
                                      onSubmit,
@@ -36,7 +57,7 @@ export default function BlogForm({
                                  }: BlogFormProps) {
     const [formData, setFormData] = useState({
         title: '',
-        slug: '', // 新增 slug 状态
+        slug: '',
         subTitle: '',
         content: '',
         author: '',
@@ -47,9 +68,13 @@ export default function BlogForm({
     const [newTag, setNewTag] = useState('');
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [uploadingImage, setUploadingImage] = useState(false);
-// 用于判断是否需要自动生成 Slug (只有当用户未手动修改过 slug 时才自动同步)
+
+    // 用于区分当前上传是为了“正文插图”还是“封面图”
+    const [uploadTarget, setUploadTarget] = useState<'CONTENT' | 'COVER'>('CONTENT');
+
     const [isSlugTouched, setIsSlugTouched] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
+
     useEffect(() => {
         if (initialData) {
             setFormData({
@@ -62,58 +87,63 @@ export default function BlogForm({
                 coverImage: initialData.coverImage || '',
                 status: initialData.status || 'DRAFT'
             });
-            // 如果是编辑模式且已有 slug，标记为已修改，防止自动覆盖
             if (initialData.slug) setIsSlugTouched(true);
         }
     }, [initialData]);
 
-// 自动生成 Slug 的简单的工具函数
     const generateSlug = (text: string) => {
         return text
             .toLowerCase()
             .trim()
-            .replace(/[\s\W-]+/g, '-') // 将空格和非单词字符替换为 -
-            .replace(/^-+|-+$/g, ''); // 去除首尾的 -
+            .replace(/[\s\W-]+/g, '-')
+            .replace(/^-+|-+$/g, '');
     };
 
     const handleChange = (field: string, value: any) => {
         setFormData(prev => {
             const newData = { ...prev, [field]: value };
-
-            // 如果修改的是标题，且 Slug 未被用户手动锁定，则自动生成 Slug
             if (field === 'title' && !isSlugTouched && !initialData) {
                 newData.slug = generateSlug(value);
             }
             return newData;
         });
-
         if (errors[field]) {
             setErrors(prev => ({ ...prev, [field]: '' }));
         }
     };
 
-// 手动修改 Slug
     const handleSlugChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setIsSlugTouched(true);
         setFormData(prev => ({ ...prev, slug: e.target.value }));
         if (errors.slug) setErrors(prev => ({ ...prev, slug: '' }));
     };
 
-// 强制重新生成 Slug
     const handleRegenerateSlug = () => {
         const newSlug = generateSlug(formData.title);
         setFormData(prev => ({ ...prev, slug: newSlug }));
-        setIsSlugTouched(false); // 重置触摸状态
+        setIsSlugTouched(false);
     };
 
+    // 支持逗号分隔添加多个标签
     const addTag = () => {
-        if (newTag.trim() && !formData.tags.includes(newTag.trim())) {
-            setFormData(prev => ({
+        if (!newTag.trim()) return;
+
+        const tagsToAdd = newTag
+            .split(/[,，]/)
+            .map(t => t.trim())
+            .filter(t => t.length > 0);
+
+        if (tagsToAdd.length === 0) return;
+
+        setFormData(prev => {
+            const uniqueNewTags = tagsToAdd.filter(tag => !prev.tags.includes(tag));
+            return {
                 ...prev,
-                tags: [...prev.tags, newTag.trim()]
-            }));
-            setNewTag('');
-        }
+                tags: [...prev.tags, ...uniqueNewTags]
+            };
+        });
+
+        setNewTag('');
     };
 
     const removeTag = (tagToRemove: string) => {
@@ -130,40 +160,44 @@ export default function BlogForm({
         }
     };
 
-// 处理图片上传
-    const handleImageUpload = async (file: File) => {
+    const triggerFileInput = (target: 'CONTENT' | 'COVER') => {
+        setUploadTarget(target);
+        setTimeout(() => {
+            fileInputRef.current?.click();
+        }, 0);
+    };
+
+    // 处理文件选择逻辑
+    const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
         try {
             setUploadingImage(true);
             const result = await blogService.uploadImage(file);
 
-            // 插入图片 Markdown 语法到当前位置
-            const imageMarkdown = `![${file.name}](${result.url})`;
-            const newContent = formData.content + `\n${imageMarkdown}\n`;
-            handleChange('content', newContent);
+            // 获取完整 URL (用于 Markdown 预览)
+            const fullImageUrl = getImageUrl(result.url);
 
-            return result.url;
+            if (uploadTarget === 'CONTENT') {
+                // 编辑器插图：必须使用完整 URL，否则编辑器里看不到图
+                const imageMarkdown = `![${file.name}](${fullImageUrl})`;
+                const newContent = formData.content + `\n${imageMarkdown}\n`;
+                handleChange('content', newContent);
+            } else if (uploadTarget === 'COVER') {
+                // 封面：修改这里！只填入后端返回的原始路径/文件名 (不带前缀)
+                handleChange('coverImage', result.url);
+            }
+
         } catch (error) {
             console.error('图片上传失败:', error);
             alert('图片上传失败，请重试');
-            throw error;
         } finally {
             setUploadingImage(false);
-        }
-    };
-
-    const triggerFileInput = () => {
-        fileInputRef.current?.click();
-    };
-
-    const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            await handleImageUpload(file);
             e.target.value = '';
         }
     };
 
-// 插入视频/链接的辅助函数保持不变...
     const insertVideo = () => {
         const videoUrl = prompt('请输入视频 URL:');
         if (videoUrl) {
@@ -187,11 +221,11 @@ export default function BlogForm({
         <div className="flex flex-wrap gap-2 p-3 bg-gray-50 border-b border-gray-200">
             <button
                 type="button"
-                onClick={triggerFileInput}
+                onClick={() => triggerFileInput('CONTENT')}
                 disabled={uploadingImage}
                 className="px-3 py-1 bg-white border border-gray-300 rounded text-sm hover:bg-gray-50 disabled:opacity-50 flex items-center gap-1"
             >
-                {uploadingImage ? '上传中...' : '📷 插入图片'}
+                {uploadingImage && uploadTarget === 'CONTENT' ? '上传中...' : '📷 插入图片'}
             </button>
             <button
                 type="button"
@@ -212,17 +246,14 @@ export default function BlogForm({
 
     const validateForm = () => {
         const newErrors: Record<string, string> = {};
-
         if (!formData.title.trim()) newErrors.title = '标题不能为空';
         if (!formData.slug.trim()) newErrors.slug = 'Slug 不能为空';
-        // Slug 格式校验：只允许字母、数字、连字符
         if (!/^[a-z0-9-]+$/i.test(formData.slug)) {
             newErrors.slug = 'Slug 只能包含字母、数字和连字符(-)';
         }
         if (!formData.subTitle.trim()) newErrors.subTitle = '副标题不能为空';
         if (!formData.content.trim()) newErrors.content = '内容不能为空';
         if (!formData.author.trim()) newErrors.author = '作者不能为空';
-
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
@@ -230,7 +261,6 @@ export default function BlogForm({
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!validateForm()) return;
-
         try {
             await onSubmit(formData);
         } catch (error) {
@@ -240,7 +270,6 @@ export default function BlogForm({
 
     return (
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
-            {/* 第一行：标题和Slug */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                     <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
@@ -284,11 +313,9 @@ export default function BlogForm({
                         </button>
                     </div>
                     {errors.slug && <p className="mt-1 text-sm text-red-600">{errors.slug}</p>}
-                    <p className="mt-1 text-xs text-gray-500">将显示在 URL 中，如: domain.com/blog/<strong>{formData.slug || '...'}</strong></p>
                 </div>
             </div>
 
-            {/* 副标题 */}
             <div>
                 <label htmlFor="subTitle" className="block text-sm font-medium text-gray-700 mb-2">
                     副标题/摘要 *
@@ -298,7 +325,7 @@ export default function BlogForm({
                     value={formData.subTitle}
                     onChange={(e) => handleChange('subTitle', e.target.value)}
                     rows={3}
-                    placeholder="简短描述文章内容，用于列表展示"
+                    placeholder="简短描述文章内容"
                     className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                         errors.subTitle ? 'border-red-500' : 'border-gray-300'
                     }`}
@@ -306,7 +333,6 @@ export default function BlogForm({
                 {errors.subTitle && <p className="mt-1 text-sm text-red-600">{errors.subTitle}</p>}
             </div>
 
-            {/* 第二行：作者、状态 */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                     <label htmlFor="author" className="block text-sm font-medium text-gray-700 mb-2">
@@ -325,9 +351,7 @@ export default function BlogForm({
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                        状态
-                    </label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">状态</label>
                     <div className="flex space-x-4 mt-2">
                         <label className="inline-flex items-center cursor-pointer">
                             <input
@@ -364,23 +388,26 @@ export default function BlogForm({
                         id="coverImage"
                         value={formData.coverImage}
                         onChange={(e) => handleChange('coverImage', e.target.value)}
-                        placeholder="https://..."
+                        placeholder="输入图片 URL 或点击上传"
                         className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
                     <button
                         type="button"
-                        onClick={triggerFileInput}
+                        onClick={() => triggerFileInput('COVER')}
+                        disabled={uploadingImage}
                         className="px-4 py-2 bg-gray-100 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-200 flex items-center"
                     >
-                        上传图片
+                        {uploadingImage && uploadTarget === 'COVER' ? '上传中...' : '上传封面'}
                     </button>
                 </div>
                 {formData.coverImage && (
-                    <div className="mt-3 relative w-full md:w-1/2 h-48 rounded-lg overflow-hidden border bg-gray-50">
+                    <div className="mt-3 relative w-full md:w-1/2 h-48 rounded-lg overflow-hidden border bg-gray-50 group">
                         <img
-                            src={formData.coverImage}
+                            // 确保回显时使用完整URL
+                            src={getImageUrl(formData.coverImage)}
                             alt="封面预览"
                             className="w-full h-full object-cover"
+                            onError={(e) => (e.currentTarget.src = '/placeholder-image.png')}
                         />
                     </div>
                 )}
@@ -397,7 +424,7 @@ export default function BlogForm({
                         value={newTag}
                         onChange={(e) => setNewTag(e.target.value)}
                         onKeyPress={handleTagKeyPress}
-                        placeholder="输入标签后按回车"
+                        placeholder="输入标签，支持逗号分隔多个 (如: React, Nextjs)"
                         className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
                     <button
@@ -448,7 +475,6 @@ export default function BlogForm({
                 {errors.content && <p className="mt-1 text-sm text-red-600">{errors.content}</p>}
             </div>
 
-            {/* 隐藏的文件输入 */}
             <input
                 type="file"
                 ref={fileInputRef}
@@ -457,7 +483,6 @@ export default function BlogForm({
                 className="hidden"
             />
 
-            {/* 操作按钮 */}
             <div className="flex justify-end space-x-4 pt-6 border-t bg-gray-50 -mx-6 -mb-6 p-6 rounded-b-lg">
                 <button
                     type="button"

@@ -21,6 +21,8 @@ export interface ProductResponse {
         specKey: string;
         specValue: string;
     }>;
+    boxContents?: string;
+    highlightData?: string;
     features?: string[];
     favorited?: boolean;
     color?: string;
@@ -50,4 +52,10 @@ export interface ProductSku {
     color: string;
     stock: number;
     lockedStock: number;
+}
+
+export interface HighlightData {
+    title: string;
+    body: string;
+    image: string;
 }

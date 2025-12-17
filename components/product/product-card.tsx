@@ -141,29 +141,19 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
     return (
         <div className="group flex flex-col bg-white rounded-2xl overflow-hidden border border-gray-100 hover:border-gray-200 hover:shadow-xl transition-all duration-300 relative h-full">
             <Link href={productDetailPath} className="block relative aspect-[4/5] sm:aspect-square overflow-hidden bg-[#F5F5F7]">
-                {/*
-                   1. bg-[#F5F5F7]: 使用高级淡灰色背景，让透明PNG产品凸显出来。
-                   2. aspect-[4/5]: 稍微加高一点比例，适合这一类长条形的玩具，比纯正方形更优雅。
-                */}
 
-                {/* 增加一个内层容器来控制 Padding */}
                 <div className="absolute inset-0 p-6 sm:p-8 flex items-center justify-center">
                     <Image
                         src={mainImage}
                         alt={product.title}
                         width={400}
                         height={400}
-                        // 核心修改：
-                        // 1. object-contain: 确保原本90%占比的图不会因为裁切显得更大。
-                        // 2. drop-shadow-sm: 给产品加一点点投影，增加立体感。
-                        // 3. mix-blend-multiply: 如果图片自带微弱白底，这个属性可以把它“融”进灰色背景里（如果是纯透明PNG可去掉）。
                         className="object-contain w-full h-full group-hover:scale-110 transition-transform duration-500 drop-shadow-sm mix-blend-multiply"
                         placeholder="blur"
                         blurDataURL={BLUR_DATA_URL}
                     />
                 </div>
 
-                {/* Favorite Button (保持位置不变) */}
                 <button
                     onClick={handleToggleFavorite}
                     className={`absolute top-3 right-3 p-2 rounded-full bg-white/90 shadow-sm hover:bg-white transition-colors z-10 ${isFavorited ? 'text-red-500' : 'text-gray-400 hover:text-red-500'}`}
@@ -171,7 +161,6 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
                     <Heart size={18} fill={isFavorited ? "currentColor" : "none"} />
                 </button>
 
-                {/* Badges (保持位置不变) */}
                 <ProductBadge
                     stockStatus={hasAvailableStock}
                     originalPrice={product.originalPrice}
@@ -189,13 +178,11 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
                     <div className="flex items-center gap-2 mb-3 min-h-[12px]">
                         <div className="flex gap-1.5 h-4 items-center">
                             {product.productSkus?.slice(0, 3).map(sku => (
-                                // ✅ 修复：外圈是透明背景+灰色边框，内圈是实心颜色
                                 <div
                                     key={sku.id}
-                                    className="w-4 h-4 rounded-full border border-gray-200 flex items-center justify-center p-[2px]" // 外圈容器
+                                    className="w-4 h-4 rounded-full border border-gray-200 flex items-center justify-center p-[2px]"
                                     title={sku.color}
                                 >
-                                    {/* 内圈实心圆点 */}
                                     <div
                                         className="w-full h-full rounded-full"
                                         style={{ backgroundColor: getMappedColor(sku.color || '') }}
@@ -218,7 +205,8 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
                                 <span className="text-xs text-gray-400 line-through decoration-gray-300">
                                     ${product.originalPrice.toFixed(2)}
                                 </span>
-                                <span className="text-lg font-bold text-[#b62337]">
+                                {/* ✅ 颜色已修改为 Passion Red (#E11D48) 以匹配详情页 */}
+                                <span className="text-lg font-bold text-[#E11D48]">
                                     ${product.currentPrice.toFixed(2)}
                                 </span>
                             </div>

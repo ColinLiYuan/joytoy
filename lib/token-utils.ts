@@ -16,7 +16,7 @@ export const getToken = async (): Promise<string | undefined> => {
     // 1. 尝试从 Cookie 获取 (支持 Server & Client)
     const cookieToken = await getCookie(ACCESS_TOKEN_KEY);
     if (cookieToken) return cookieToken;
-    console.log('getToken cookieToken: ', cookieToken)
+    // console.log('getToken cookieToken: ', cookieToken)
     // console.log('getToken storage: ', localStorage.getItem(ACCESS_TOKEN_KEY))
     // 2. 如果是客户端，尝试从 LocalStorage 兜底
     if (isBrowser) {
