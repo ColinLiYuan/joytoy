@@ -4,9 +4,25 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { blogService } from '@/services/blogService';
 import { AdminBlogResponse, AdminBlogListResponse } from '@/types/admin/adminBlog'
-import { Eye, Edit, Plus, ExternalLink } from 'lucide-react'; // 引入图标优化视觉
+import { Eye, Edit, Plus, ExternalLink } from 'lucide-react';
+
+// 获取图片前缀环境变量
+const CDN_URL = process.env.NEXT_PUBLIC_IMAGE_UPLOAD_PATH || '';
+
+/**
+ * 图片路径处理辅助函数
+ */
+const getImageUrl = (path: string | undefined | null) => {
+    if (!path) return '';
+    if (path.startsWith('http') || path.startsWith('https')) {
+        return path;
+    }
+    const cleanPath = path.startsWith('/') ? path.slice(1) : path;
+    const cleanCdn = CDN_URL.endsWith('/') ? CDN_URL.slice(0, -1) : CDN_URL;
+    return `${cleanCdn}/${cleanPath}`;
+};
+
 export default function BlogManagementPage() {
-// ... 状态定义保持不变
     const [blogs, setBlogs] = useState<AdminBlogResponse[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -19,11 +35,11 @@ export default function BlogManagementPage() {
         hasNext: false,
         hasPrevious: false
     });
+
     useEffect(() => {
         fetchBlogs();
     }, [statusFilter, pagination.currentPage]);
 
-// ... fetchBlogs 保持不变
     const fetchBlogs = async () => {
         try {
             setLoading(true);
@@ -92,7 +108,7 @@ export default function BlogManagementPage() {
     return (
         <div className="min-h-screen bg-gray-50 p-6">
             <div className="max-w-7xl mx-auto">
-                {/* 头部优化 */}
+                {/* 头部 */}
                 <div className="mb-8 flex justify-between items-end">
                     <div>
                         <h1 className="text-3xl font-bold text-gray-900">博客管理</h1>
@@ -105,7 +121,7 @@ export default function BlogManagementPage() {
                     </div>
                 </div>
 
-                {/* 操作栏优化 */}
+                {/* 操作栏 */}
                 <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-4">
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                         <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto flex-1">
@@ -145,7 +161,7 @@ export default function BlogManagementPage() {
                     </div>
                 </div>
 
-                {/* 博客列表优化 */}
+                {/* 博客列表 */}
                 <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
                     <div className="overflow-x-auto">
                         <table className="min-w-full divide-y divide-gray-200">
@@ -165,8 +181,13 @@ export default function BlogManagementPage() {
                                     <td className="px-6 py-4">
                                         <div className="flex items-start">
                                             <div className="h-12 w-12 flex-shrink-0 rounded-lg bg-gray-100 border border-gray-200 overflow-hidden">
+                                                {/* 列表页图片路径处理 */}
                                                 {blog.coverImage ? (
-                                                    <img className="h-full w-full object-cover" src={blog.coverImage} alt="" />
+                                                    <img
+                                                        className="h-full w-full object-cover"
+                                                        src={getImageUrl(blog.coverImage)}
+                                                        alt=""
+                                                    />
                                                 ) : (
                                                     <div className="h-full w-full flex items-center justify-center text-gray-400">
                                                         <span className="text-xs">无图</span>
@@ -202,7 +223,6 @@ export default function BlogManagementPage() {
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         <div className="flex justify-end space-x-3">
-                                            {/* 预览按钮：假设前台路由是 /blog/[slug] */}
                                             {blog.status === 'PUBLISHED' && blog.slug && (
                                                 <a
                                                     href={`/blog/${blog.slug}`}
@@ -228,10 +248,9 @@ export default function BlogManagementPage() {
                         </table>
                     </div>
 
-                    {/* 分页组件保持不变... (或者也可以封装成独立组件) */}
+                    {/* 分页 */}
                     {pagination.totalPages > 1 && (
                         <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
-                            {/* ... 分页代码与之前相同 ... */}
                             <div className="flex-1 flex justify-between items-center">
                                 <div>
                                     <p className="text-sm text-gray-700">
