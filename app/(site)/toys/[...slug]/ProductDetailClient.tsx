@@ -1,11 +1,11 @@
 // app/(site)/toys/[...slug]/ProductDetailClient.tsx
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link'; // 保留，虽然 ProductCard 内部处理了跳转，但 Breadcrumb 可能用到
+import Image from 'next/image';
 import dynamic from 'next/dynamic';
-import { ProductResponse, ProductSku } from '@/types/product';
+import { ProductResponse, ProductSku, HighlightData } from '@/types/product'; // 记得更新类型定义
 import { useToast } from '@/contexts/toastContext';
 import { useAuth } from '@/contexts/authContext';
 import { useCartStore } from '@/stores/useCartStore';
@@ -18,23 +18,42 @@ import ProductGallery from '@/components/product/product-gallery';
 import Breadcrumb from '@/components/common/breadcrumb';
 import ProductBadge from '@/components/product/product-badge';
 import {
-    ShoppingBag, ShieldCheck, Package, Truck, ChevronDown, ChevronUp, Star, Heart, Loader2, Zap, Check, Droplets, BatteryCharging, Volume2, Smartphone, Feather
+    ShoppingBag, ShieldCheck, Package, Truck, ChevronDown, ChevronUp, Star, Heart,
+    Loader2, Zap, BatteryCharging, Power, Droplets, Box, Smartphone, Feather, Volume2, Check,
+    Ruler, Scale, Activity
 } from 'lucide-react';
 
 import '@uiw/react-md-editor/markdown-editor.css';
 import '@uiw/react-markdown-preview/markdown.css';
 
-const BADGE_CONFIG: Record<string, { label: string; className: string }> = {
-    'NEW': { label: 'New Arrival', className: 'bg-blue-600' },
-    'HOT': { label: 'Best Seller', className: 'bg-amber-500' },
-    'STAFF_PICK': { label: 'Staff Pick', className: 'bg-purple-600' },
-    'LIMITED': { label: 'Limited Edition', className: 'bg-gray-900' },
-};
-
 const MDViewer = dynamic(
     () => import('@uiw/react-md-editor').then((mod) => mod.default.Markdown),
-    { ssr: false, loading: () => <div className="h-20 bg-gray-50 animate-pulse rounded-lg"></div> }
+    { ssr: false, loading: () => <div className="h-40 bg-gray-50 animate-pulse rounded-lg"></div> }
 );
+
+// ✅ 规格参数映射表 (Key -> Display Label)
+const SPEC_LABEL_MAP: Record<string, string> = {
+    "Material": "Material",
+    "Size": "Dimensions",
+    "Weight": "Weight",
+    "Power Source": "Power",
+    "Battery Life": "Play Time",
+    "Charging Time": "Charge Time",
+    "Noise Level": "Noise",
+    "Waterproof": "Waterproof",
+    // 可以继续添加其他可能的字段
+};
+
+// 辅助函数：获取规格图标 (可选，增加视觉丰富度)
+const getSpecIcon = (key: string) => {
+    const k = key.toLowerCase();
+    if (k.includes('size') || k.includes('dimension')) return <Ruler size={16} />;
+    if (k.includes('weight')) return <Scale size={16} />;
+    if (k.includes('noise')) return <Volume2 size={16} />;
+    if (k.includes('battery') || k.includes('power') || k.includes('charg')) return <BatteryCharging size={16} />;
+    if (k.includes('water')) return <Droplets size={16} />;
+    return <Activity size={16} />;
+};
 
 interface ProductDetailClientProps {
     product: ProductResponse;
@@ -42,45 +61,36 @@ interface ProductDetailClientProps {
     galleryImages: any[];
     specifications: any[];
     features: string[];
-    description: string;
+    description: string; // 这是"说明书"
     defaultColor: string | null;
     colorMap: { [key: string]: string };
 }
 
+// 辅助函数：Feature Icon
 const getFeatureIconAndStyle = (text: string) => {
     const lowerText = text.toLowerCase();
-    // 只区分图标颜色，所有标签使用相同的背景色和文字颜色
-    if (lowerText.includes('water') || lowerText.includes('proof')) return { icon: Droplets, color: 'text-blue-500' };
-    if (lowerText.includes('usb') || lowerText.includes('charg') || lowerText.includes('power')) return { icon: BatteryCharging, color: 'text-green-500' };
-    if (lowerText.includes('quiet') || lowerText.includes('noise') || lowerText.includes('decibel')) return { icon: Volume2, color: 'text-purple-500' };
-    if (lowerText.includes('app') || lowerText.includes('remote') || lowerText.includes('control')) return { icon: Smartphone, color: 'text-indigo-500' };
-    if (lowerText.includes('silicone') || lowerText.includes('safe') || lowerText.includes('skin')) return { icon: ShieldCheck, color: 'text-pink-500' };
-    if (lowerText.includes('soft') || lowerText.includes('touch')) return { icon: Feather, color: 'text-orange-500' };
+    if (lowerText.includes('water') || lowerText.includes('proof')) return { icon: Droplets, color: 'text-gray-600' };
+    if (lowerText.includes('usb') || lowerText.includes('charg')) return { icon: BatteryCharging, color: 'text-gray-600' };
+    if (lowerText.includes('quiet') || lowerText.includes('noise')) return { icon: Volume2, color: 'text-gray-600' };
+    if (lowerText.includes('app') || lowerText.includes('remote')) return { icon: Smartphone, color: 'text-gray-600' };
+    if (lowerText.includes('silicone') || lowerText.includes('safe')) return { icon: ShieldCheck, color: 'text-gray-600' };
     return { icon: Check, color: 'text-gray-600' };
 };
 
-// ✅ 修复后的轮播组件：尺寸更协调
+// 轮播组件保持不变
 const ProductCarousel = ({ title, products }: { title: string; products: ProductResponse[] }) => {
     if (!products || products.length === 0) return null;
     return (
-        <div className="py-10 border-t border-gray-100">
-            <div className="flex items-center justify-between mb-6 px-1">
-                <h3 className="text-xl md:text-2xl font-bold text-gray-900 font-['Playfair_Display']">{title}</h3>
-                <span className="text-xs text-gray-400 lg:hidden">Swipe →</span>
-            </div>
-
-            {/*
-                容器布局修复：
-                - Mobile: flex gap-4 overflow-x-auto (横向滚动)
-                - Desktop: grid grid-cols-4 (标准的四列布局)
-                - Card Width: 移动端 w-[180px] (更紧凑)，桌面端 w-auto (自适应)
-            */}
-            <div className="flex overflow-x-auto pb-8 gap-4 snap-x snap-mandatory scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0 md:grid md:grid-cols-2 lg:grid-cols-4 md:overflow-visible">
-                {products.map((p) => (
-                    <div key={p.id} className="flex-shrink-0 w-[180px] md:w-auto snap-start h-full">
-                        <ProductCard product={p} />
-                    </div>
-                ))}
+        <div className="py-16 bg-white border-t border-gray-100">
+            <div className="container mx-auto px-4 max-w-7xl">
+                <h3 className="text-2xl font-bold text-gray-900 font-['Playfair_Display'] mb-8">{title}</h3>
+                <div className="flex overflow-x-auto pb-8 gap-6 snap-x snap-mandatory scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0 md:grid md:grid-cols-4 md:overflow-visible">
+                    {products.map((p) => (
+                        <div key={p.id} className="flex-shrink-0 w-[220px] md:w-auto snap-start h-full">
+                            <ProductCard product={p} />
+                        </div>
+                    ))}
+                </div>
             </div>
         </div>
     );
@@ -97,12 +107,16 @@ export default function ProductDetailClient({
                                                 colorMap
                                             }: ProductDetailClientProps) {
     const router = useRouter();
+    // 状态管理
     const [addingToCart, setAddingToCart] = useState(false);
     const [buyingNow, setBuyingNow] = useState(false);
     const [selectedSku, setSelectedSku] = useState<ProductSku | null>(null);
-    const [expandedSection, setExpandedSection] = useState<string | null>('description');
     const [isFavorited, setIsFavorited] = useState(product.favorited || false);
     const [isWishlistLoading, setIsWishlistLoading] = useState(false);
+
+    // 折叠面板状态：默认展开 Description
+    const [activeAccordion, setActiveAccordion] = useState<string | null>('details');
+
     const [relatedProducts, setRelatedProducts] = useState<ProductResponse[]>([]);
     const [recentlyViewed, setRecentlyViewed] = useState<ProductResponse[]>([]);
 
@@ -110,6 +124,31 @@ export default function ProductDetailClient({
     const { openAuthModal, isLoggedIn } = useAuth();
     const addItemToCart = useCartStore(state => state.addItemToCart);
 
+    console.log('product detail : ', product)
+
+    // ✅ 解析 JSON 数据 (Highlight & Box Contents)
+    const highlightData: HighlightData | null = useMemo(() => {
+        if (!product.highlightData) return null;
+        try {
+            return JSON.parse(product.highlightData);
+        } catch (e) {
+            console.error("Failed to parse highlight_data", e);
+            return null;
+        }
+    }, [product.highlightData]);
+
+    const boxContents: string[] = useMemo(() => {
+        if (!product.boxContents) return [];
+        try {
+            const parsed = JSON.parse(product.boxContents);
+            return Array.isArray(parsed) ? parsed : [];
+        } catch (e) {
+            return [];
+        }
+    }, [product.boxContents]);
+
+
+    // SKU Logic
     useEffect(() => {
         if (product.productSkus && product.productSkus.length > 0) {
             if (defaultColor) {
@@ -120,6 +159,7 @@ export default function ProductDetailClient({
         }
     }, [product.productSkus, defaultColor]);
 
+    // Fetch Related & Recent
     useEffect(() => {
         const fetchRelated = async () => {
             if (!product.slug) return;
@@ -138,36 +178,21 @@ export default function ProductDetailClient({
             const otherViewed = viewed.filter(p => p.id !== product.id);
             const newViewedHistory = [product, ...otherViewed].slice(0, 8);
             localStorage.setItem('recently_viewed', JSON.stringify(newViewedHistory));
-            setRecentlyViewed(otherViewed.slice(0, 4)); // 限制显示数量，保持整洁
+            setRecentlyViewed(otherViewed.slice(0, 4));
         } catch (e) { console.error(e); }
     }, [product]);
 
-    const getAvailableStock = (sku: ProductSku | null | undefined) => {
-        if (!sku) return 0;
-        return (sku.stock || 0) - (sku.lockedStock || 0);
-    };
-
+    // Helpers
+    const getAvailableStock = (sku: ProductSku | null | undefined) => sku ? (sku.stock || 0) - (sku.lockedStock || 0) : 0;
     const getMappedColor = (color: string) => colorMap[color.toLowerCase().trim()] || color;
     const isOnSale = product.originalPrice > product.currentPrice;
-    const isCurrentSkuInStock = selectedSku
-        ? getAvailableStock(selectedSku) > 0
-        : true;
+    const isCurrentSkuInStock = selectedSku ? getAvailableStock(selectedSku) > 0 : true;
 
-    const galleryBadges = (
-        <ProductBadge
-            stockStatus={isCurrentSkuInStock}
-            originalPrice={product.originalPrice}
-            currentPrice={product.currentPrice}
-            badge={product.badge}
-            className="absolute top-4 left-4 z-20" // 详情页图片大，padding可以稍微大一点点
-        />
-    );
-
+    // Actions (Favorite & Add to Cart) - 保持不变
     const handleToggleFavorite = async () => {
         if (!isLoggedIn) { openAuthModal('login', { onSuccess: executeToggleFavorite }); return; }
         executeToggleFavorite();
     };
-
     const executeToggleFavorite = async () => {
         if (isWishlistLoading) return;
         setIsWishlistLoading(true);
@@ -179,7 +204,6 @@ export default function ProductDetailClient({
                     productId: product.id,
                     productTitle: product.title,
                     image: product.image,
-                    originalPrice: product.originalPrice,
                     currentPrice: product.currentPrice,
                     slug: product.slug,
                     badge: product.badge
@@ -191,173 +215,340 @@ export default function ProductDetailClient({
             }
         } catch (error) { setIsFavorited(!newState); showToast('error', 'Error', 'Failed to update wishlist'); } finally { setIsWishlistLoading(false); }
     };
-
     const performAddToCart = async () => {
-        if (!product || !selectedSku) return false;
-        if (getAvailableStock(selectedSku) <= 0) return false;
+        if (!product || !selectedSku || getAvailableStock(selectedSku) <= 0) return false;
         try {
             await addItemToCart({ productId: product.id, productTitle: product.title, productSku: selectedSku.sku, productImage: getProductImageUrl('', product.image), unitPrice: product.currentPrice, quantity: 1, color: selectedSku.color, skuId: selectedSku.id });
             return true;
         } catch (error) { console.error(error); showToast('error', 'Error', 'Failed to add product.'); return false; }
     };
-
     const handleAddToCart = async () => { setAddingToCart(true); const success = await performAddToCart(); setAddingToCart(false); };
     const handleBuyNow = async () => { setBuyingNow(true); const success = await performAddToCart(); if (success) router.push('/checkout'); setBuyingNow(false); };
-    const toggleSection = (section: string) => setExpandedSection(expandedSection === section ? null : section);
 
+    // Accordion Helper
+    const toggleAccordion = (id: string) => {
+        setActiveAccordion(activeAccordion === id ? null : id);
+    };
+
+    // Title Render
     const renderDetailTitle = (fullTitle: string) => {
         if (fullTitle.includes('|')) {
             const [name, desc] = fullTitle.split('|');
             return (
-                <div className="flex flex-col gap-1 mb-2">
-                    <h1 className="text-4xl md:text-5xl font-bold text-gray-900 font-['Playfair_Display'] leading-tight">{name.trim()}</h1>
-                    <span className="text-lg md:text-xl text-gray-500 font-['Inter'] font-light">{desc.trim()}</span>
+                <div className="flex flex-col gap-2 mb-4">
+                    <h1 className="text-4xl md:text-5xl font-bold text-gray-900 font-['Playfair_Display'] leading-[1.1]">{name.trim()}</h1>
+                    <span className="text-xl text-gray-500 font-['Inter'] font-light">{desc.trim()}</span>
                 </div>
             );
         }
-        return <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3 font-['Playfair_Display'] leading-tight">{fullTitle}</h1>;
+        return <h1 className="text-3xl md:text-5xl font-bold text-gray-900 mb-4 font-['Playfair_Display'] leading-tight">{fullTitle}</h1>;
     };
 
+    const galleryBadges = (
+        <ProductBadge
+            stockStatus={isCurrentSkuInStock}
+            originalPrice={product.originalPrice}
+            currentPrice={product.currentPrice}
+            badge={product.badge}
+            className="absolute top-6 left-6 z-20 scale-110"
+        />
+    );
+
     return (
-        <div className="w-full pb-32 lg:pb-16">
-            <div className="mb-6"><Breadcrumb items={breadcrumbs} showLastItem={false} /></div>
+        <div className="w-full">
+            {/* --- SECTION 0: BREADCRUMBS --- */}
+            <div className="container mx-auto px-4 max-w-7xl pt-4 pb-4">
+                <Breadcrumb items={breadcrumbs} showLastItem={false} />
+            </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 mt-6">
-                <div>
-                    <ProductGallery images={galleryImages} productTitle={product.title}
-                        // @ts-ignore
-                                    badges={galleryBadges}
-                    />
-                </div>
-
-                <div className="flex flex-col">
-                    <div className="border-b border-gray-100 pb-6 mb-6">
-                        <div className="flex justify-between items-start gap-4 mb-3">
-                            <div className="flex-1 min-w-0 pr-2">{renderDetailTitle(product.title)}</div>
-                            <button onClick={handleToggleFavorite} className={`p-2.5 rounded-full transition-all flex-shrink-0 ${isFavorited ? 'bg-red-50 text-red-500 hover:bg-red-100' : 'bg-gray-50 text-gray-400 hover:bg-gray-100 hover:text-red-500'}`}>
-                                <Heart size={22} fill={isFavorited ? "currentColor" : "none"} strokeWidth={isFavorited ? 0 : 2} />
-                            </button>
-                        </div>
-
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-baseline gap-3">
-                                {isOnSale ? (
-                                    <><span className="text-2xl font-bold text-[#b62337]">${product.currentPrice.toFixed(2)}</span><span className="text-lg text-gray-400 line-through decoration-gray-300">${product.originalPrice.toFixed(2)}</span></>
-                                ) : (<span className="text-2xl font-bold text-gray-900">${product.currentPrice.toFixed(2)}</span>)}
-                            </div>
-                            <div className="flex items-center gap-1">
-                                {[1,2,3,4,5].map(i => <Star key={i} size={14} className="fill-yellow-400 text-yellow-400" />)}
-                                <span className="text-xs text-gray-500 ml-1">(4.9)</span>
-                            </div>
-                        </div>
+            {/* --- SECTION 1: THE FOLD (Gallery + Purchase Info) --- */}
+            <div className="container mx-auto px-4 max-w-7xl pb-16 lg:pb-24">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20">
+                    {/* Left: Gallery */}
+                    <div className="w-full">
+                        <ProductGallery
+                            images={galleryImages}
+                            productTitle={product.title}
+                            // @ts-ignore
+                            badges={galleryBadges}
+                        />
                     </div>
 
-                    {product.productSkus && product.productSkus.length > 0 && (
-                        <div className="mb-8">
-                            <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wide mb-3">
-                                Color: <span className="text-gray-500 font-normal capitalize">{selectedSku?.color || 'Select'}</span>
-                            </h3>
-                            <div className="flex flex-wrap gap-3">
-                                {product.productSkus.map((sku) => {
-                                    const isSelected = selectedSku?.id === sku.id;
-                                    const isOutOfStock = getAvailableStock(sku) <= 0;
-                                    const colorHex = getMappedColor(sku.color || '');
+                    {/* Right: Info */}
+                    <div className="flex flex-col h-full justify-center">
+                        <div className="border-b border-gray-100 pb-8 mb-8">
+                            <div className="flex justify-between items-start gap-4 mb-2">
+                                <div className="flex-1 min-w-0 pr-2">{renderDetailTitle(product.title)}</div>
+                                <button onClick={handleToggleFavorite} className={`p-3 rounded-full transition-all flex-shrink-0 ${isFavorited ? 'bg-red-50 text-red-500' : 'bg-gray-50 text-gray-400 hover:text-red-500'}`}>
+                                    <Heart size={24} fill={isFavorited ? "currentColor" : "none"} strokeWidth={isFavorited ? 0 : 2} />
+                                </button>
+                            </div>
+
+                            <div className="flex items-center justify-between mt-4">
+                                <div className="flex items-baseline gap-4">
+                                    {isOnSale ? (
+                                        <>
+                                            <span className="text-3xl font-bold text-[#E11D48]">${product.currentPrice.toFixed(2)}</span>
+                                            <span className="text-xl text-gray-400 line-through decoration-gray-300">${product.originalPrice.toFixed(2)}</span>
+                                        </>
+                                    ) : (<span className="text-3xl font-bold text-gray-900">${product.currentPrice.toFixed(2)}</span>)}
+                                </div>
+                                <div className="flex items-center gap-1">
+                                    {[1, 2, 3, 4, 5].map(i => <Star key={i} size={16} className="fill-yellow-400 text-yellow-400" />)}
+                                    <span className="text-sm text-gray-500 ml-2 font-medium">4.9 (128)</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* ✅ Feature Pills (Tech Badge Style) */}
+                        {features.length > 0 && (
+                            <div className="flex flex-wrap gap-2 mb-8">
+                                {features.slice(0, 4).map((feature, idx) => {
+                                    const style = getFeatureIconAndStyle(feature);
+                                    const Icon = style.icon;
                                     return (
-                                        <button key={sku.id} onClick={() => !isOutOfStock && setSelectedSku(sku)} disabled={isOutOfStock} className={`w-10 h-10 rounded-full flex items-center justify-center transition-all relative ${isSelected ? 'ring-2 ring-offset-2 ring-black scale-110' : 'hover:scale-105'} ${isOutOfStock ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer shadow-sm'}`} style={{ backgroundColor: colorHex === '#FFFFFF' ? '#F3F4F6' : colorHex }} title={sku.color}>
-                                            {isOutOfStock && <div className="absolute inset-0 flex items-center justify-center"><div className="w-full h-0.5 bg-gray-400 rotate-45"></div></div>}
-                                        </button>
-                                    );
+                                        <div key={idx} className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#F3F4F6] text-gray-700 text-xs font-medium rounded-md">
+                                            <Icon size={14} className={style.color} />
+                                            {feature}
+                                        </div>
+                                    )
                                 })}
                             </div>
-                        </div>
-                    )}
+                        )}
 
-                    <div className="hidden lg:flex gap-4 mb-8">
-                        <button className={`flex-1 py-4 rounded-full font-bold text-lg flex items-center justify-center gap-3 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 ${!selectedSku || getAvailableStock(selectedSku) <= 0 ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-black text-white hover:bg-gray-900'}`} onClick={handleAddToCart} disabled={addingToCart || buyingNow || !selectedSku || getAvailableStock(selectedSku) <= 0}>
-                            {addingToCart ? <Loader2 size={24} className="animate-spin" /> : <><ShoppingBag size={20} strokeWidth={2} /> Add to Bag</>}
-                        </button>
-                        <button className={`flex-1 py-4 rounded-full font-bold text-lg flex items-center justify-center gap-3 transition-all shadow-sm border-2 ${!selectedSku || getAvailableStock(selectedSku) <= 0 ? 'border-gray-200 text-gray-400 cursor-not-allowed' : 'border-black text-black hover:bg-gray-50'}`} onClick={handleBuyNow} disabled={addingToCart || buyingNow || !selectedSku || getAvailableStock(selectedSku) <= 0}>
-                            {buyingNow ? <Loader2 size={24} className="animate-spin" /> : <><Zap size={20} strokeWidth={2} /> Buy Now</>}
-                        </button>
-                    </div>
-
-                    <div className="grid grid-cols-3 gap-4 mb-8 py-6 border-t border-b border-gray-100">
-                        <div className="flex flex-col items-center text-center gap-3"><div className="p-2.5 bg-gray-50 rounded-full text-black"><Package size={20} strokeWidth={1.5} /></div><span className="text-xs font-medium text-gray-600 leading-tight">Discreet<br/>Packaging</span></div>
-                        <div className="flex flex-col items-center text-center gap-3"><div className="p-2.5 bg-gray-50 rounded-full text-black"><ShieldCheck size={20} strokeWidth={1.5} /></div><span className="text-xs font-medium text-gray-600 leading-tight">Body-Safe<br/>Materials</span></div>
-                        <div className="flex flex-col items-center text-center gap-3"><div className="p-2.5 bg-gray-50 rounded-full text-black"><Truck size={20} strokeWidth={1.5} /></div><span className="text-xs font-medium text-gray-600 leading-tight">Free Shipping<br/>Over $49</span></div>
-                    </div>
-
-                    {features.length > 0 && (
-                        <div className="grid grid-cols-2 gap-3 mb-8">
-                            {features.map((feature, idx) => {
-                                const style = getFeatureIconAndStyle(feature);
-                                const Icon = style.icon;
-                                return (
-                                    <div key={idx} className={`flex items-center gap-2.5 text-sm font-medium text-gray-800 bg-gray-50 border border-gray-200 p-3 rounded-xl hover:bg-gray-100 transition-colors`}>
-                                        <Icon size={18} className={style.color} />
-                                        <span className="line-clamp-1">{feature}</span>
-                                    </div>
-                                )
-                            })}
-                        </div>
-                    )}
-
-                    <div className="border-b border-gray-100">
-                        <button onClick={() => toggleSection('description')} className="w-full flex justify-between items-center py-4 text-left font-bold text-gray-900">
-                            Description {expandedSection === 'description' ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-                        </button>
-                        {expandedSection === 'description' && (
-                            <div className="pb-6 animate-fadeIn">
-                                <div data-color-mode="light" className="markdown-content">
-                                    <MDViewer
-                                        source={description}
-                                        style={{ backgroundColor: 'transparent', color: '#4b5563', fontSize: '1rem', lineHeight: '1.75', fontFamily: 'var(--font-inter), sans-serif' }}
-                                    />
+                        {/* SKU Selector */}
+                        {product.productSkus && product.productSkus.length > 0 && (
+                            <div className="mb-10">
+                                <h3 className="text-sm font-bold text-gray-900 uppercase tracking-widest mb-4">
+                                    Select Shade: <span className="text-gray-500 font-normal capitalize ml-2">{selectedSku?.color || 'Select'}</span>
+                                </h3>
+                                <div className="flex flex-wrap gap-4">
+                                    {product.productSkus.map((sku) => {
+                                        const isSelected = selectedSku?.id === sku.id;
+                                        const isOutOfStock = getAvailableStock(sku) <= 0;
+                                        const colorHex = getMappedColor(sku.color || '');
+                                        return (
+                                            <button key={sku.id} onClick={() => !isOutOfStock && setSelectedSku(sku)} disabled={isOutOfStock} className={`w-12 h-12 rounded-full flex items-center justify-center transition-all relative ${isSelected ? 'ring-2 ring-offset-2 ring-black scale-110' : 'hover:scale-105'} ${isOutOfStock ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer shadow-sm'}`} style={{ backgroundColor: colorHex === '#FFFFFF' ? '#F3F4F6' : colorHex }} title={sku.color}>
+                                                {isOutOfStock && <div className="absolute inset-0 flex items-center justify-center"><div className="w-full h-0.5 bg-gray-400 rotate-45"></div></div>}
+                                            </button>
+                                        );
+                                    })}
                                 </div>
                             </div>
                         )}
-                    </div>
 
-                    {specifications.length > 0 && (
-                        <div className="border-b border-gray-100">
-                            <button onClick={() => toggleSection('specs')} className="w-full flex justify-between items-center py-4 text-left font-bold text-gray-900">
-                                Specifications {expandedSection === 'specs' ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                        {/* Actions */}
+                        <div className="flex flex-col sm:flex-row gap-4 mb-10">
+                            <button className={`flex-1 py-4 px-8 rounded-full font-bold text-lg flex items-center justify-center gap-3 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 ${!selectedSku || getAvailableStock(selectedSku) <= 0 ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-black text-white hover:bg-gray-900'}`} onClick={handleAddToCart} disabled={addingToCart || buyingNow || !selectedSku || getAvailableStock(selectedSku) <= 0}>
+                                {addingToCart ? <Loader2 size={24} className="animate-spin" /> : <><ShoppingBag size={20} strokeWidth={2} /> Add to Bag</>}
                             </button>
-                            {expandedSection === 'specs' && (
-                                <div className="pb-6 grid grid-cols-1 gap-2 animate-fadeIn">
-                                    {specifications.map((spec, idx) => (
-                                        <div key={idx} className="flex justify-between py-3 border-b border-gray-50 last:border-0">
-                                            <span className="text-gray-500 capitalize text-sm">{spec.specKey.replace(/_/g, ' ')}</span>
-                                            <span className="font-medium text-gray-900 text-sm text-right">{spec.specValue}</span>
-                                        </div>
+                            <button className={`flex-1 py-4 px-8 rounded-full font-bold text-lg flex items-center justify-center gap-3 transition-all shadow-sm border-2 ${!selectedSku || getAvailableStock(selectedSku) <= 0 ? 'border-gray-200 text-gray-400 cursor-not-allowed' : 'border-black text-black hover:bg-gray-50'}`} onClick={handleBuyNow} disabled={addingToCart || buyingNow || !selectedSku || getAvailableStock(selectedSku) <= 0}>
+                                {buyingNow ? <Loader2 size={24} className="animate-spin" /> : <><Zap size={20} strokeWidth={2} /> Buy Now</>}
+                            </button>
+                        </div>
+
+                        {/* Trust Signals */}
+                        <div className="flex justify-between items-center py-6 border-t border-gray-100 text-xs font-bold text-gray-600 uppercase tracking-wider">
+                            <span className="flex items-center gap-2"><Truck size={16} /> Discreet Shipping</span>
+                            <span className="flex items-center gap-2"><ShieldCheck size={16} /> Body-Safe</span>
+                            <span className="flex items-center gap-2"><Package size={16} /> Plain Box</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* --- ✅ SECTION 2: PRODUCT HIGHLIGHTS (Data Driven) --- */}
+            {highlightData && (
+                <div className="w-full bg-[#F9FAFB] py-20 lg:py-32 border-t border-gray-100">
+                    <div className="container mx-auto px-4 max-w-7xl">
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+                            {/* Text Content (Romance Copy) */}
+                            <div className="order-2 lg:order-1">
+                                <div className="mb-8">
+                                    <span className="text-[#E11D48] font-bold tracking-[0.2em] uppercase text-xs mb-4 block">Why You'll Love It</span>
+                                    <h2 className="text-3xl md:text-5xl font-bold text-gray-900 font-['Playfair_Display'] mb-6 leading-tight">
+                                        {highlightData.title}
+                                    </h2>
+                                    <p className="text-lg md:text-xl text-gray-600 font-light leading-relaxed">
+                                        {highlightData.body}
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Mood Image (Right Side) */}
+                            <div className="order-1 lg:order-2 h-[400px] lg:h-[600px] relative rounded-3xl overflow-hidden shadow-2xl">
+                                <Image
+                                    // 自动处理 Cloudflare 图片路径
+                                    src={getProductImageUrl('', highlightData.image)}
+                                    alt={highlightData.title}
+                                    fill
+                                    className="object-cover"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* --- SECTION 3: HOW TO USE (Static Visuals) --- */}
+            <div className="w-full bg-white py-20 lg:py-28">
+                <div className="container mx-auto px-4 max-w-5xl text-center">
+                    <h2 className="text-3xl md:text-4xl font-bold text-gray-900 font-['Playfair_Display'] mb-16">
+                        Simple & Intuitive
+                    </h2>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+                        <div className="flex flex-col items-center">
+                            <div className="w-20 h-20 rounded-2xl bg-gray-50 flex items-center justify-center text-gray-900 mb-6">
+                                <BatteryCharging size={32} strokeWidth={1.5} />
+                            </div>
+                            <h3 className="text-lg font-bold mb-3 font-['Playfair_Display']">1. Charge</h3>
+                            <p className="text-gray-500 font-light">Fully charge until the light is steady.</p>
+                        </div>
+                        <div className="flex flex-col items-center">
+                            <div className="w-20 h-20 rounded-2xl bg-gray-50 flex items-center justify-center text-gray-900 mb-6">
+                                <Power size={32} strokeWidth={1.5} />
+                            </div>
+                            <h3 className="text-lg font-bold mb-3 font-['Playfair_Display']">2. Activate</h3>
+                            <p className="text-gray-500 font-light">Press and hold for 3 seconds to start.</p>
+                        </div>
+                        <div className="flex flex-col items-center">
+                            <div className="w-20 h-20 rounded-2xl bg-gray-50 flex items-center justify-center text-gray-900 mb-6">
+                                <Droplets size={32} strokeWidth={1.5} />
+                            </div>
+                            <h3 className="text-lg font-bold mb-3 font-['Playfair_Display']">3. Clean</h3>
+                            <p className="text-gray-500 font-light">Wash with warm water and cleaner.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* --- ✅ SECTION 4: WHAT'S IN THE BOX (Data Driven) --- */}
+            {boxContents.length > 0 && (
+                <div className="w-full bg-[#F9FAFB] py-20 border-y border-gray-100">
+                    <div className="container mx-auto px-4 max-w-4xl">
+                        <div className="bg-white rounded-3xl p-10 md:p-16 shadow-sm border border-gray-100 flex flex-col md:flex-row items-center gap-12">
+                            <div className="w-full md:w-1/3 flex justify-center text-gray-300">
+                                <Box size={120} strokeWidth={0.5} />
+                            </div>
+                            <div className="w-full md:w-2/3">
+                                <h2 className="text-2xl md:text-3xl font-bold text-gray-900 font-['Playfair_Display'] mb-8">
+                                    What's in the Box
+                                </h2>
+                                <ul className="space-y-4">
+                                    {boxContents.map((item, idx) => (
+                                        <li key={idx} className="flex items-center gap-4 text-gray-700">
+                                            <div className="w-8 h-8 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center text-xs font-bold">{idx + 1}</div>
+                                            <span className="font-medium">{item}</span>
+                                        </li>
                                     ))}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* --- ✅ SECTION 5: ACCORDIONS (Details + Mapped Specs) --- */}
+            <div className="w-full bg-white py-16">
+                <div className="container mx-auto px-4 max-w-3xl">
+
+                    {/* 1. Product Details (Description) */}
+                    {description && (
+                        <div className="border-b border-gray-100">
+                            <button
+                                onClick={() => toggleAccordion('details')}
+                                className="w-full flex justify-between items-center py-6 text-left"
+                            >
+                                <span className="text-xl font-bold text-gray-900 font-['Playfair_Display']">Product Details</span>
+                                {activeAccordion === 'details' ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                            </button>
+                            {activeAccordion === 'details' && (
+                                <div className="pb-8 animate-fadeIn">
+                                    <div data-color-mode="light" className="markdown-story">
+                                        <MDViewer
+                                            source={description}
+                                            style={{
+                                                backgroundColor: 'transparent',
+                                                color: '#4b5563',
+                                                fontSize: '1rem',
+                                                lineHeight: '1.75',
+                                                fontFamily: 'var(--font-inter), sans-serif',
+                                                fontWeight: 300
+                                            }}
+                                        />
+                                    </div>
                                 </div>
                             )}
                         </div>
                     )}
+
+                    {/* 2. Specifications (Mapped) */}
+                    {specifications.length > 0 && (
+                        <div className="border-b border-gray-100">
+                            <button
+                                onClick={() => toggleAccordion('specs')}
+                                className="w-full flex justify-between items-center py-6 text-left"
+                            >
+                                <span className="text-xl font-bold text-gray-900 font-['Playfair_Display']">Technical Specifications</span>
+                                {activeAccordion === 'specs' ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                            </button>
+                            {activeAccordion === 'specs' && (
+                                <div className="pb-8 animate-fadeIn">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-12">
+                                        {specifications.map((spec, idx) => {
+                                            // 使用映射表转换 Label
+                                            const displayLabel = SPEC_LABEL_MAP[spec.specKey] || spec.specKey.replace(/_/g, ' ');
+                                            const Icon = getSpecIcon(displayLabel);
+
+                                            return (
+                                                <div key={idx} className="flex justify-between items-center py-3 border-b border-dashed border-gray-100">
+                                                    <div className="flex items-center gap-2 text-gray-500">
+                                                        {Icon}
+                                                        <span className="text-sm font-medium">{displayLabel}</span>
+                                                    </div>
+                                                    <span className="font-medium text-gray-900 text-sm text-right">{spec.specValue}</span>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* 3. Static Shipping Info (Optional) */}
+                    <div className="border-b border-gray-100">
+                        <button
+                            onClick={() => toggleAccordion('shipping')}
+                            className="w-full flex justify-between items-center py-6 text-left"
+                        >
+                            <span className="text-xl font-bold text-gray-900 font-['Playfair_Display']">Shipping & Returns</span>
+                            {activeAccordion === 'shipping' ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                        </button>
+                        {activeAccordion === 'shipping' && (
+                            <div className="pb-8 text-gray-600 text-sm leading-relaxed animate-fadeIn">
+                                <p className="mb-4">We offer free discreet shipping on orders over $49. All packages are unbranded for your privacy.</p>
+                                <p>If you are not satisfied with your purchase, you may return unopened items within 30 days. Due to the intimate nature of our products, opened items cannot be returned unless defective.</p>
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
 
+            {/* --- STICKY MOBILE BAR --- */}
             <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-3 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] flex items-center gap-3 safe-area-pb" style={{ zIndex: Z_INDEX.STICKY }}>
                 <div className="flex-1 min-w-0 flex flex-col justify-center">
-                    <div className="flex items-center justify-between gap-2">
-                        <p className="text-xs font-bold text-gray-900 truncate flex-1">{product.title}</p>
-                        <div className="flex items-baseline gap-2 flex-shrink-0">
-                            {isOnSale ? (
-                                <><p className="text-xs font-bold text-[#b62337] whitespace-nowrap">${product.currentPrice}</p><p className="text-[10px] text-gray-400 line-through">${product.originalPrice}</p></>
-                            ) : (<p className="font-bold text-gray-900 text-xs">${product.currentPrice}</p>)}
-                        </div>
-                    </div>
-                    <p className="text-[10px] text-gray-500 truncate flex items-center gap-1 mt-0.5">
-                        {selectedSku ? <><span className="w-2 h-2 rounded-full border border-gray-200 inline-block" style={{ backgroundColor: getMappedColor(selectedSku.color || '') }} />{selectedSku.color}</> : "Select Color"}
-                    </p>
+                    <p className="text-xs font-bold text-gray-900 truncate">{product.title}</p>
+                    <p className="text-xs font-bold text-[#E11D48]">${product.currentPrice}</p>
                 </div>
-                <button className={`h-11 px-6 rounded-full font-bold text-sm transition-all shadow-md whitespace-nowrap flex-shrink-0 flex items-center justify-center ${!selectedSku || getAvailableStock(selectedSku) <= 0 ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-black text-white hover:bg-gray-800 active:scale-95'}`} onClick={handleAddToCart} disabled={addingToCart || !selectedSku || getAvailableStock(selectedSku) <= 0}>
+                <button className={`h-11 px-8 rounded-full font-bold text-sm transition-all shadow-md whitespace-nowrap flex-shrink-0 flex items-center justify-center ${!selectedSku || getAvailableStock(selectedSku) <= 0 ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-black text-white hover:bg-gray-800'}`} onClick={handleAddToCart} disabled={addingToCart || !selectedSku || getAvailableStock(selectedSku) <= 0}>
                     {addingToCart ? <Loader2 size={18} className="animate-spin" /> : 'Add to Bag'}
                 </button>
             </div>
 
-            <div className="mt-16 space-y-8">
+            {/* --- CAROUSELS --- */}
+            <div className="mt-8">
                 {relatedProducts.length > 0 && <ProductCarousel title="You May Also Like" products={relatedProducts} />}
                 {recentlyViewed.length > 0 && <ProductCarousel title="Recently Viewed" products={recentlyViewed} />}
             </div>
