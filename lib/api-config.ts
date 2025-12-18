@@ -15,6 +15,7 @@ export const SERVER_CONFIG = {
     // 前端 API 路由前缀
     apiRoutes: {
         product: '/api/site/product',
+        review: '/api/site/review',
         category: '/api/site/category',
         filter: '/api/site/filter',
         order: '/api/site/order',

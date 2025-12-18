@@ -17,10 +17,19 @@ import ProductCard from '@/components/product/product-card';
 import ProductGallery from '@/components/product/product-gallery';
 import Breadcrumb from '@/components/common/breadcrumb';
 import ProductBadge from '@/components/product/product-badge';
+import ProductReviews from '@/components/product/reviews/product-reviews';
 import {
     ShoppingBag, ShieldCheck, Package, Truck, ChevronDown, ChevronUp, Star, Heart,
-    Loader2, Zap, BatteryCharging, Power, Droplets, Box, Smartphone, Feather, Volume2, Check,
-    Ruler, Scale, Activity
+    Loader2, BatteryCharging, Droplets, Box, Smartphone, Feather, Volume2, Check,
+    // 👇 更新这些 Spec 相关的图标
+    Ruler,          // Dimensions (尺子)
+    Scale,          // Weight (天平)
+    Activity,       // Material/Usage Time (脉冲线)
+    EyeOff,         // Discreet (闭眼)
+    Waves,          // Vibration (波纹)
+    Zap,            // Power (闪电),
+    Power,
+    Hourglass
 } from 'lucide-react';
 
 import '@uiw/react-md-editor/markdown-editor.css';
@@ -33,26 +42,64 @@ const MDViewer = dynamic(
 
 // ✅ 规格参数映射表 (Key -> Display Label)
 const SPEC_LABEL_MAP: Record<string, string> = {
+    // 基础
     "Material": "Material",
     "Size": "Dimensions",
+    "Dimensions": "Dimensions",
     "Weight": "Weight",
+
+    // 电源与时间
     "Power Source": "Power",
-    "Battery Life": "Play Time",
+    "Power": "Power",
+    "Battery Life": "Usage Time", // 截图显示为 Usage Time
+    "Play Time": "Usage Time",
+    "Usage Time": "Usage Time",
     "Charging Time": "Charge Time",
+    "Charge Time": "Charge Time",
+
+    // 性能
     "Noise Level": "Noise",
+    "Noise": "Noise",
     "Waterproof": "Waterproof",
-    // 可以继续添加其他可能的字段
+    "Discreet Level": "Discreet Level",
+    "Vibration Modes": "Vibration Modes",
 };
 
 // 辅助函数：获取规格图标 (可选，增加视觉丰富度)
 const getSpecIcon = (key: string) => {
     const k = key.toLowerCase();
-    if (k.includes('size') || k.includes('dimension')) return <Ruler size={16} />;
-    if (k.includes('weight')) return <Scale size={16} />;
-    if (k.includes('noise')) return <Volume2 size={16} />;
-    if (k.includes('battery') || k.includes('power') || k.includes('charg')) return <BatteryCharging size={16} />;
-    if (k.includes('water')) return <Droplets size={16} />;
-    return <Activity size={16} />;
+
+    if (k.includes('material')) return <Feather size={18} strokeWidth={1.5} />;
+
+    // 1. 隐秘等级 -> 闭眼 (EyeOff)
+    if (k.includes('discreet')) return <EyeOff size={18} strokeWidth={1.5} />;
+
+    // 2. 震动模式 -> 波纹 (Waves)
+    if (k.includes('vibration') || k.includes('mode')) return <Waves size={18} strokeWidth={1.5} />;
+
+    // 3. 尺寸 -> 尺子 (Ruler)
+    if (k.includes('size') || k.includes('dimension')) return <Ruler size={18} strokeWidth={1.5} />;
+
+    // 4. 重量 -> 天平 (Scale)
+    if (k.includes('weight')) return <Scale size={18} strokeWidth={1.5} />;
+
+    // 5. 噪音 -> 喇叭 (Volume2)
+    if (k.includes('noise')) return <Volume2 size={18} strokeWidth={1.5} />;
+
+    // 6. 充电时间 -> 电池充电 (BatteryCharging)
+    if (k.includes('charg')) return <BatteryCharging size={18} strokeWidth={1.5} />;
+
+    // 7. 电源 -> 闪电 (Zap)
+    if (k.includes('power')) return <Zap size={18} strokeWidth={1.5} />;
+
+    // 8. 材质 & 使用时间 -> 脉冲线 (Activity) - 模仿截图风格
+    if (k.includes('usage')) return <Hourglass size={18} strokeWidth={1.5} />;
+
+    // 9. 防水 -> 水滴 (Droplets)
+    if (k.includes('water')) return <Droplets size={18} strokeWidth={1.5} />;
+
+    // 默认图标
+    return <Activity size={18} strokeWidth={1.5} />;
 };
 
 interface ProductDetailClientProps {
@@ -124,7 +171,7 @@ export default function ProductDetailClient({
     const { openAuthModal, isLoggedIn } = useAuth();
     const addItemToCart = useCartStore(state => state.addItemToCart);
 
-    console.log('product detail : ', product)
+    // console.log('product detail : ', product)
 
     // ✅ 解析 JSON 数据 (Highlight & Box Contents)
     const highlightData: HighlightData | null = useMemo(() => {
@@ -295,7 +342,7 @@ export default function ProductDetailClient({
                                 </div>
                                 <div className="flex items-center gap-1">
                                     {[1, 2, 3, 4, 5].map(i => <Star key={i} size={16} className="fill-yellow-400 text-yellow-400" />)}
-                                    <span className="text-sm text-gray-500 ml-2 font-medium">4.9 (128)</span>
+                                    <span className="text-sm text-gray-500 ml-2 font-medium">4.9</span>
                                 </div>
                             </div>
                         </div>
@@ -535,6 +582,10 @@ export default function ProductDetailClient({
                     </div>
                 </div>
             </div>
+
+            <ProductReviews
+                productId={product.id}
+            />
 
             {/* --- STICKY MOBILE BAR --- */}
             <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-3 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] flex items-center gap-3 safe-area-pb" style={{ zIndex: Z_INDEX.STICKY }}>
