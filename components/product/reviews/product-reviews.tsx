@@ -8,7 +8,7 @@ import { useAuth } from '@/contexts/authContext'; // 假设你有这个 hook
 import { useToast } from '@/contexts/toastContext';
 
 interface ProductReviewsProps {
-    productId: string;
+    productId: number;
 }
 
 // 默认空统计数据
@@ -171,7 +171,7 @@ export default function ProductReviews({ productId }: ProductReviewsProps) {
                                         name="authorName"
                                         type="text"
                                         placeholder="e.g. Secret Admirer"
-                                        defaultValue={userInfo?.name || ''}
+                                        defaultValue={userInfo?.displayName || ''}
                                         className="w-full bg-white border border-gray-200 px-4 py-3 rounded-lg focus:outline-none focus:border-black transition-colors"
                                         required
                                     />

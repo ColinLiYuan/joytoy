@@ -26,7 +26,7 @@ class ReviewService {
     }
 
     // ✅ 修改：必须传入 productId
-    async getReviews(productId: string, page: number = 0, size: number = 5): Promise<ReviewListResponse> {
+    async getReviews(productId: number, page: number = 0, size: number = 5): Promise<ReviewListResponse> {
         // 假设后端接口支持 ?productId=xxx
         const url = `${SERVER_CONFIG.apiRoutes.review}/list?productId=${productId}&page=${page}&size=${size}`;
 

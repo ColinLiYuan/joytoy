@@ -1,7 +1,7 @@
 // types/review.ts
 
 export interface ReviewCreateRequest {
-    productId: string;
+    productId: number;
     authorName: string; // 显示的昵称 (用户自己填的，如 "Secret Fan")
     email?: string;     // ✅ 新增：如果是游客，必须填邮箱用于验证身份
     rating: number;
