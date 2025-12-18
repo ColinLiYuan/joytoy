@@ -1,15 +1,31 @@
 // types/review.ts
 
+export interface ReviewCreateRequest {
+    productId: string;
+    authorName: string; // 显示的昵称 (用户自己填的，如 "Secret Fan")
+    email?: string;     // ✅ 新增：如果是游客，必须填邮箱用于验证身份
+    rating: number;
+    title: string;
+    content: string;
+}
+
 export interface Review {
     id: string;
     productId: string;
-    authorName: string; // 显示的昵称
-    rating: number; // 1-5
-    title: string; // 评论标题 (如 "Worth every penny")
-    content: string; // 详细内容
+    authorName: string;
+    rating: number;
+    title: string;
+    content: string;
     createdAt: string;
-    isVerified: boolean; // 是否购买过
-    helpfulCount: number; // 点赞数
+    isVerified: boolean;
+    helpfulCount: number;
+}
+
+export interface ReviewListResponse {
+    content: Review[];
+    totalPages: number;
+    totalElements: number;
+    stats?: ReviewStats;
 }
 
 export interface ReviewStats {

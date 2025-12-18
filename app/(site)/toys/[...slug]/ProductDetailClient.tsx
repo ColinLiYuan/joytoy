@@ -171,7 +171,7 @@ export default function ProductDetailClient({
     const { openAuthModal, isLoggedIn } = useAuth();
     const addItemToCart = useCartStore(state => state.addItemToCart);
 
-    console.log('product detail : ', product)
+    // console.log('product detail : ', product)
 
     // ✅ 解析 JSON 数据 (Highlight & Box Contents)
     const highlightData: HighlightData | null = useMemo(() => {
@@ -342,7 +342,7 @@ export default function ProductDetailClient({
                                 </div>
                                 <div className="flex items-center gap-1">
                                     {[1, 2, 3, 4, 5].map(i => <Star key={i} size={16} className="fill-yellow-400 text-yellow-400" />)}
-                                    <span className="text-sm text-gray-500 ml-2 font-medium">4.9 (128)</span>
+                                    <span className="text-sm text-gray-500 ml-2 font-medium">4.9</span>
                                 </div>
                             </div>
                         </div>
@@ -583,7 +583,9 @@ export default function ProductDetailClient({
                 </div>
             </div>
 
-            <ProductReviews />
+            <ProductReviews
+                productId={product.id}
+            />
 
             {/* --- STICKY MOBILE BAR --- */}
             <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-3 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] flex items-center gap-3 safe-area-pb" style={{ zIndex: Z_INDEX.STICKY }}>
