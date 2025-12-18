@@ -15,7 +15,7 @@ export default function BestSellersSection({ bestSellers, error }: BestSellersSe
                     {/* 标题区域 - 左对齐设计 */}
                     <div className="text-left mb-6">
                         <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2 font-['Playfair_Display']">
-                            Best Sellers
+                            Editor's Choice
                         </h2>
                         <p className="text-gray-600 font-['Inter']">
                             Most loved products for ultimate pleasure
