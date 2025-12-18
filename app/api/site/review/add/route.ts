@@ -11,19 +11,19 @@ export async function POST(request: NextRequest) {
         const reviewData: ReviewCreateRequest = {
             ...body,
         };
-        console.log('create review route: ', reviewData)
+        // console.log('create review route: ', reviewData)
 
         // 获取 token
         const token = await getToken();
-        if (!token) {
-            return NextResponse.json(
-                {
-                    success: false,
-                    error: 'user not login, cant create review'
-                },
-                { status: 401 }
-            );
-        }
+        // if (!token) {
+        //     return NextResponse.json(
+        //         {
+        //             success: false,
+        //             error: 'user not login, cant create review'
+        //         },
+        //         { status: 401 }
+        //     );
+        // }
 
         // 准备请求头，添加 Authorization
         const requestOptions = {
