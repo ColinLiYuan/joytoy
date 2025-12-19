@@ -155,7 +155,7 @@ export default function Cart({ isOpen, onClose }: CartProps) {
                 color: defaultSku.color === '__generic__' ? 'Default' : defaultSku.color,
                 skuId: defaultSku.id
             });
-            showToast('success', 'Added', 'Item added to bag');
+            // showToast('success', 'Added', 'Item added to bag');
         } catch (error) {
             console.error(error);
             showToast('error', 'Error', 'Failed to add item');
