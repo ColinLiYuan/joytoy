@@ -342,7 +342,7 @@ export default function ProductDetailClient({
                                 </div>
                                 <div className="flex items-center gap-1">
                                     {[1, 2, 3, 4, 5].map(i => <Star key={i} size={16} className="fill-yellow-400 text-yellow-400" />)}
-                                    <span className="text-sm text-gray-500 ml-2 font-medium">4.9</span>
+                                    <span className="text-sm text-gray-500 ml-2 font-medium">{product.rating}</span>
                                 </div>
                             </div>
                         </div>

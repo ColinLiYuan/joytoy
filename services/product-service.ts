@@ -1,7 +1,7 @@
 // services/product-service.ts
 
 import { ProductListResponse } from '@/types/product';
-import { ADMIN_CONFIG } from '@/lib/api-config';
+import { ADMIN_CONFIG, SERVER_CONFIG } from '@/lib/api-config';
 import {AdminProductResponse, ReleaseProductRequest} from "@/types/admin/adminProduct";
 import {ProductResponse} from "@/types/product";
 
@@ -205,12 +205,12 @@ class ProductService {
         return filename.slice(filename.lastIndexOf('.'));
     }
 
-    async getRelatedProducts(slug: string, userId?: string): Promise<ProductResponse[]> {
+    async getRelatedProducts(slug: string): Promise<ProductResponse[]> {
         if (!slug) return [];
 
         try {
-            const url = `/api/site/product/related?slug=${encodeURIComponent(slug)}`;
-            // console.log('getRelatedProducts url : ', url)
+            const url = `${SERVER_CONFIG.apiRoutes.product}/related?slug=${encodeURIComponent(slug)}`;
+            console.log('getRelatedProducts url : ', url)
             const response = await fetch(url, {
                 method: 'GET',
                 headers: {
@@ -226,6 +226,28 @@ class ProductService {
             return result || [];
         } catch (error) {
             console.error('Error in product service client:', error);
+            return [];
+        }
+    }
+
+    /**
+     * 获取凑单商品 (Add-ons)
+     * 通常是价格低于 $25 的小商品
+     */
+    async getAddOnProducts(limit: number = 8): Promise<ProductResponse[]> {
+        const url = `${SERVER_CONFIG.apiRoutes.product}/list?maxPrice=25&size=${limit}`;
+        // console.log('product service getAddOnProducts url: ', url)
+        try {
+            const response = await fetch(url, {
+                next: { revalidate: 3600 } // 缓存1小时
+            });
+
+            if (!response.ok) return [];
+
+            const json = await response.json();
+            return json.data?.content || [];
+        } catch (error) {
+            console.error("Failed to fetch add-ons", error);
             return [];
         }
     }

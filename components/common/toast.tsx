@@ -2,7 +2,7 @@
 'use client';
 
 import { Z_INDEX } from '@/lib/constants/z-index';
-import { CheckCircle2, AlertCircle, Info, X } from 'lucide-react'; // ✅ 替换为 Lucide
+import { CheckCircle2, AlertCircle, Info, X } from 'lucide-react';
 
 export interface ToastMessage {
     id: number;
@@ -18,63 +18,53 @@ interface ToastProps {
 
 export default function Toast({ toasts, onRemoveToast }: ToastProps) {
 
+    // 只需要极简图标，不需要大色块
     const getIcon = (type: string) => {
         switch (type) {
-            case 'success': return <CheckCircle2 className="w-5 h-5 text-green-500" />;
-            case 'error': return <AlertCircle className="w-5 h-5 text-red-500" />;
-            case 'warning': return <AlertCircle className="w-5 h-5 text-amber-500" />;
-            default: return <Info className="w-5 h-5 text-blue-500" />;
+            case 'success': return <CheckCircle2 className="w-5 h-5 text-emerald-400" />; // 绿色荧光
+            case 'error': return <AlertCircle className="w-5 h-5 text-rose-500" />;
+            case 'warning': return <AlertCircle className="w-5 h-5 text-amber-400" />;
+            default: return <Info className="w-5 h-5 text-blue-400" />;
         }
     };
 
     return (
         <div
-            className="fixed top-4 right-4 z-[9999] flex flex-col gap-3 w-full max-w-sm pointer-events-none"
+            className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[9999] flex flex-col gap-2 items-center pointer-events-none"
             style={{ zIndex: Z_INDEX.TOAST }}
         >
             {toasts.map(toast => (
                 <div
                     key={toast.id}
                     onClick={() => onRemoveToast(toast.id)}
-                    // ✅ 核心设计升级：
-                    // 1. bg-white: 纯白背景，去大色块
-                    // 2. shadow-xl: 深邃阴影，增加悬浮感
-                    // 3. border-gray-100: 极细边框，增加精致度
-                    // 4. pointer-events-auto: 恢复点击
                     className={`
-                        pointer-events-auto
-                        flex items-start gap-3 p-4
-                        bg-white rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-gray-100
-                        transform transition-all duration-300 ease-out
-                        animate-in slide-in-from-right-10 fade-in
-                        cursor-pointer hover:translate-x-[-4px]
+                        pointer-events-auto cursor-pointer
+                        flex items-center gap-3 px-6 py-3.5
+                        bg-[#1A1A1A] text-white
+                        rounded-full shadow-2xl shadow-black/20
+                        border border-white/10
+                        animate-in slide-in-from-bottom-5 fade-in duration-300
+                        hover:scale-105 transition-transform
                     `}
                 >
-                    {/* 图标区域 */}
-                    <div className="flex-shrink-0 mt-0.5">
+                    {/* Icon */}
+                    <div className="flex-shrink-0">
                         {getIcon(toast.type)}
                     </div>
 
-                    {/* 文字区域 */}
-                    <div className="flex-1 min-w-0">
-                        <h4 className="text-sm font-bold text-gray-900 leading-tight mb-1">
-                            {toast.title}
-                        </h4>
-                        <p className="text-sm text-gray-500 leading-relaxed">
-                            {toast.message}
-                        </p>
+                    {/* Text - 单行显示，极简 */}
+                    <div className="flex items-center gap-2 text-sm font-medium whitespace-nowrap">
+                        <span className="font-bold tracking-wide">{toast.title}</span>
+                        <span className="w-1 h-1 bg-gray-500 rounded-full"></span>
+                        <span className="text-gray-300 font-normal">{toast.message}</span>
                     </div>
 
-                    {/* 关闭按钮 */}
-                    <button
-                        className="flex-shrink-0 text-gray-400 hover:text-gray-900 transition-colors p-1 rounded-md hover:bg-gray-50"
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            onRemoveToast(toast.id);
-                        }}
-                    >
-                        <X size={16} />
-                    </button>
+                    {/* Undo / Close (隐形按钮) */}
+                    <div className="pl-4 border-l border-white/10 ml-1">
+                         <span className="text-xs font-bold text-gray-400 hover:text-white transition-colors uppercase tracking-wider">
+                             Dismiss
+                         </span>
+                    </div>
                 </div>
             ))}
         </div>

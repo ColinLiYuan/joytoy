@@ -1,5 +1,35 @@
 // types/order.ts
 
+export interface OrderCreateRequest {
+    userId?: number;        // 后端新增
+    cartId?: number;        // 后端新增
+    guestEmail?: string;
+    items: OrderItemRequest[];
+    shippingAddress: AddressRequest;
+    billingAddress: AddressRequest; // 后端新增
+    paymentMethod: string;
+    shippingMethod: string;
+    customerNote?: string;
+    shippingFee: number;   // BigDecimal 对应 number
+    discountAmount: number; // BigDecimal 对应 number
+}
+
+// OrderResponse 保持不变...
+export interface OrderResponse {
+    id: number;
+    orderNumber: string;
+    trackingNumber: string;
+    status: string;
+    totalAmount: number;
+    shippingFee: number;
+    discountAmount: number;
+    finalAmount: number;
+    createdAt: string;
+    paymentMethod: string;
+    shippingMethod: string;
+    items: any[];
+}
+
 export interface AddressRequest {
     firstName: string;
     lastName: string;
@@ -24,32 +54,4 @@ export interface OrderItemRequest {
     unitPrice: number;
     color: string;
     skuId?: number;
-}
-
-export interface OrderCreateRequest {
-    userId: number;        // 后端新增
-    cartId: number;        // 后端新增
-    items: OrderItemRequest[];
-    shippingAddress: AddressRequest;
-    billingAddress: AddressRequest; // 后端新增
-    paymentMethod: string;
-    shippingMethod: string;
-    customerNote?: string;
-    shippingFee: number;   // BigDecimal 对应 number
-    discountAmount: number; // BigDecimal 对应 number
-}
-
-// OrderResponse 保持不变...
-export interface OrderResponse {
-    id: number;
-    orderNumber: string;
-    status: string;
-    totalAmount: number;
-    shippingFee: number;
-    discountAmount: number;
-    finalAmount: number;
-    createdAt: string;
-    paymentMethod: string;
-    shippingMethod: string;
-    items: any[];
 }

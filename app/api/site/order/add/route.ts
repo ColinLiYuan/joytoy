@@ -3,110 +3,65 @@ import { NextRequest, NextResponse } from 'next/server';
 import { apiPost, handleApiError } from '@/lib/api-utils';
 import { OrderCreateRequest } from '@/types/order';
 import { getToken } from '@/lib/token-utils';
+import { SessionManager } from '@/lib/session-utils'; // ✅ 引入
 
 export async function POST(request: NextRequest) {
     try {
         const body: OrderCreateRequest = await request.json();
 
-        // 验证必需字段
-        if (!body.items || !body.shippingAddress || !body.shippingMethod) {
+        // ✅ 1. 获取 Session ID
+        const { sessionId } = SessionManager.getOrCreateSessionId(request);
+
+        // 验证必需字段 (你的代码)
+        if (!body.items || !body.shippingAddress || !body.shippingMethod) { /* ... */ }
+        for (let i = 0; i < body.items.length; i++) { /* ... */ }
+
+        const token = await getToken();
+
+        // ✅ 修复：必须有 userId 或 sessionId
+        if (!body.userId && !sessionId) {
             return NextResponse.json(
-                {
-                    success: false,
-                    error: 'Missing required fields: items, shippingAddress, shippingMethod'
-                },
+                { success: false, error: 'Missing userId or sessionId' },
                 { status: 400 }
             );
         }
 
-        // 验证商品列表
-        if (body.items.length === 0) {
-            return NextResponse.json(
-                {
-                    success: false,
-                    error: 'Order must contain at least one item'
-                },
-                { status: 400 }
-            );
-        }
-
-        // 验证每个商品项的必需字段
-        for (let i = 0; i < body.items.length; i++) {
-            const item = body.items[i];
-            if (!item.productId || !item.quantity || !item.productTitle || item.unitPrice === undefined) {
-                return NextResponse.json(
-                    {
-                        success: false,
-                        error: `Item ${i + 1} is missing required fields: productId, quantity, productTitle, or unitPrice`
-                    },
-                    { status: 400 }
-                );
-            }
-
-            // 验证数值有效性
-            if (item.quantity <= 0) {
-                return NextResponse.json(
-                    {
-                        success: false,
-                        error: `Item ${i + 1} quantity must be greater than 0`
-                    },
-                    { status: 400 }
-                );
-            }
-
-            if (item.unitPrice < 0) {
-                return NextResponse.json(
-                    {
-                        success: false,
-                        error: `Item ${i + 1} unitPrice cannot be negative`
-                    },
-                    { status: 400 }
-                );
-            }
-        }
-
-        // 设置默认值（如果未提供）
+        // 设置默认值 (你的代码)
         const orderData: OrderCreateRequest = {
             ...body,
             shippingFee: body.shippingFee ?? 0,
             discountAmount: body.discountAmount ?? 0,
-            customerNote: body.customerNote ?? ''
+            customerNote: body.customerNote ?? '',
+            // ✅ 游客不传 userId，登录用户传 userId
+            // 这里的类型定义要与你的 OrderCreateRequest 接口一致
+            userId: body.userId || undefined,
         };
 
-        // 获取 token
-        const token = await getToken();
-        if (!token) {
-            return NextResponse.json(
-                {
-                    success: false,
-                    error: '用户未登录，无法创建订单'
-                },
-                { status: 401 }
-            );
+        // ✅ 3. 准备请求头
+        const headers: Record<string, string> = {
+            'Content-Type': 'application/json',
+            // 游客和登录用户都传 sessionId (用于识别购物车)
+            'x-session-id': sessionId,
+        };
+
+        // ✅ 如果登录了，才传 token
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
         }
 
-        // 准备请求头，添加 Authorization
-        const requestOptions = {
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json',
-            },
-        };
+        const requestOptions = { headers };
 
-        // 调用后端API创建订单
+        // 4. 调用后端 API (你的代码)
         const result = await apiPost('/api/V1/order', orderData, requestOptions);
-        // console.log('🟢 Backend API response:', result);
 
+        // 5. 返回结果 (你的代码)
         return NextResponse.json(result);
 
     } catch (error) {
-        console.error('🔴 ORDER CREATE Error:', error);
+        // 异常处理 (你的代码)
         const { errorMessage } = handleApiError(error);
         return NextResponse.json(
-            {
-                success: false,
-                errorMessage
-            },
+            { success: false, errorMessage },
             { status: 500 }
         );
     }

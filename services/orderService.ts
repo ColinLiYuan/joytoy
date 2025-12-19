@@ -29,8 +29,8 @@ class OrderService {
     }
 
     // 获取订单详情
-    async getOrder(orderId: number): Promise<OrderResponse> {
-        const url = `${SERVER_CONFIG.apiRoutes.order}/${orderId}`;
+    async getOrder(orderNumber: string): Promise<OrderResponse> {
+        const url = `${SERVER_CONFIG.apiRoutes.order}/${orderNumber}`;
         const response = await fetch(url, {
             credentials: 'include', // 添加这行
         });
@@ -54,8 +54,8 @@ class OrderService {
         return apiResponse.data;
     }
 
-    async payOrder(orderId: number, paymentRequest: PaymentRequest): Promise<OrderResponse> {
-        const url = `${SERVER_CONFIG.apiRoutes.order}/${orderId}/pay`;
+    async payOrder(orderNumber: string, paymentRequest: PaymentRequest): Promise<OrderResponse> {
+        const url = `${SERVER_CONFIG.apiRoutes.order}/${orderNumber}/pay`;
         // console.log('🟢 Paying order, URL:', url);
 
         const response = await fetch(url, {
@@ -74,6 +74,26 @@ class OrderService {
             throw new Error(apiResponse.message || 'order creation failed, please contact support@mythtoy.com');
         }
         return apiResponse.data;
+    }
+
+    async trackGuestOrder(orderNumber: string, email: string) {
+        // 调用我们刚刚写的 Next.js 中间层
+        const url = `${SERVER_CONFIG.apiRoutes.order}/track`;
+
+        const response = await fetch(url, {
+            method: 'POST', // 前端用 POST 提交表单数据，比较规范
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ orderNumber, email })
+        });
+
+        const json = await response.json();
+
+        if (!json.success) {
+            // 这里的 json.message 可能是 "Order not found" 或者 "Email mismatch"
+            throw new Error(json.error || json.message || 'Tracking failed');
+        }
+
+        return json.data;
     }
 }
 
