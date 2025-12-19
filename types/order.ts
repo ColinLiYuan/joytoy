@@ -29,6 +29,7 @@ export interface OrderItemRequest {
 export interface OrderCreateRequest {
     userId: number;        // 后端新增
     cartId: number;        // 后端新增
+    guestEmail: string;
     items: OrderItemRequest[];
     shippingAddress: AddressRequest;
     billingAddress: AddressRequest; // 后端新增

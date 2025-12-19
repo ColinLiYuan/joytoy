@@ -235,10 +235,8 @@ class ProductService {
      * 通常是价格低于 $25 的小商品
      */
     async getAddOnProducts(limit: number = 8): Promise<ProductResponse[]> {
-        // 假设接口支持 maxPrice 参数
-        // 如果后端没有专门接口，你可以请求 list 然后在前端 slice
         const url = `${SERVER_CONFIG.apiRoutes.product}/list?maxPrice=25&size=${limit}`;
-
+        console.log('product service getAddOnProducts url: ', url)
         try {
             const response = await fetch(url, {
                 next: { revalidate: 3600 } // 缓存1小时

@@ -10,37 +10,43 @@ interface ToastContextType {
 
 const ToastContext = createContext<ToastContextType | undefined>(undefined);
 
-// 1. 全局状态管理 (Store 也可以访问)
+// 全局状态 (Module Level)
 let toasts: ToastMessage[] = [];
 let listeners: ((toasts: ToastMessage[]) => void)[] = [];
 
-// 2. ✅ 核心修改：导出一个全局函数，供非 React 组件 (如 Zustand) 调用
-export const globalToast = {
-    success: (title: string, message: string) => addToast('success', title, message),
-    error: (title: string, message: string) => addToast('error', title, message),
-    warning: (title: string, message: string) => addToast('warning', title, message),
-};
-
-// 内部辅助函数
-const addToast = (type: 'success' | 'error' | 'warning', title: string, message: string) => {
-    const id = Date.now();
-    const newToast: ToastMessage = { id, type, title, message };
-
-    toasts = [...toasts, newToast];
-    emitChange();
-
-    setTimeout(() => {
-        toasts = toasts.filter(t => t.id !== id);
-        emitChange();
-    }, 3000);
+// ✅ 1. 修复：ID 生成器 (时间戳 + 随机数)，确保绝对唯一
+const generateId = () => {
+    return Date.now() + Math.random();
 };
 
 const emitChange = () => {
     listeners.forEach(listener => listener([...toasts]));
 };
 
+// 内部添加函数
+const addToast = (type: 'success' | 'error' | 'warning', title: string, message: string) => {
+    const id = generateId(); // ✅ 使用新生成器
+    const newToast: ToastMessage = { id, type, title, message };
+
+    toasts = [...toasts, newToast];
+    emitChange();
+
+    // 3秒后自动移除
+    setTimeout(() => {
+        toasts = toasts.filter(t => t.id !== id);
+        emitChange();
+    }, 3000);
+};
+
+// 2. 导出全局方法 (给 Store/Service 用)
+export const globalToast = {
+    success: (title: string, message: string) => addToast('success', title, message),
+    error: (title: string, message: string) => addToast('error', title, message),
+    warning: (title: string, message: string) => addToast('warning', title, message),
+};
+
 export function ToastProvider({ children }: { children: ReactNode }) {
-    // 这里只需要暴露给 Hook 使用即可
+    // 暴露给 Hook 使用
     const showToast = (type: 'success' | 'error' | 'warning', title: string, message: string) => {
         addToast(type, title, message);
     };
@@ -53,12 +59,17 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     );
 }
 
+// 独立的容器组件，监听全局 toasts 变化
 function ToastContainer() {
     const [currentToasts, setCurrentToasts] = useState<ToastMessage[]>([]);
 
     useEffect(() => {
         const listener = (newToasts: ToastMessage[]) => setCurrentToasts(newToasts);
         listeners.push(listener);
+
+        // 初始化同步一次
+        setCurrentToasts([...toasts]);
+
         return () => {
             listeners = listeners.filter(l => l !== listener);
         };

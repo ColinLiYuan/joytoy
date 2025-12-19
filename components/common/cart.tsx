@@ -6,7 +6,7 @@ import { useToast } from '@/contexts/toastContext';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/authContext';
 import { useCartStore } from '@/stores/useCartStore';
-import { productService } from '@/services/product-service'; // ✅ 引入 Service
+import { productService } from '@/services/product-service';
 import { ProductResponse } from '@/types/product';
 import { Z_INDEX } from '@/lib/constants/z-index';
 import { colorMap } from '@/lib/constants/color-map';
@@ -21,7 +21,6 @@ interface CartProps {
 
 const FREE_SHIPPING_THRESHOLD = 49;
 
-// 截断文本辅助函数
 const truncateText = (text: string, maxLength: number = 30): string => {
     if (!text) return '';
     if (text.length <= maxLength) return text;
@@ -38,7 +37,7 @@ export default function Cart({ isOpen, onClose }: CartProps) {
     // UI States
     const [isInitialLoading, setIsInitialLoading] = useState(false);
     const [isUpdating, setIsUpdating] = useState<number | null>(null);
-    const [addingAddOnId, setAddingAddOnId] = useState<string | null>(null); // 凑单品添加 Loading 状态
+    const [addingAddOnId, setAddingAddOnId] = useState<string | null>(null);
     const [isCheckingOut, setIsCheckingOut] = useState(false);
     const [isMounted, setIsMounted] = useState(false);
 
@@ -47,7 +46,7 @@ export default function Cart({ isOpen, onClose }: CartProps) {
     const [upsellTitle, setUpsellTitle] = useState('');
     const [upsellLoading, setUpsellLoading] = useState(false);
 
-    // 1. 初始化加载
+    // 1. 初始化 & 挂载
     useEffect(() => {
         setIsMounted(true);
         if (isOpen && isLoggedIn) {
@@ -56,7 +55,7 @@ export default function Cart({ isOpen, onClose }: CartProps) {
         }
     }, [isOpen, isLoggedIn, getCart]);
 
-    // 2. 路由变化自动关闭购物车
+    // 2. 路由变化自动关闭
     useEffect(() => {
         if (isOpen) {
             onClose();
@@ -64,14 +63,15 @@ export default function Cart({ isOpen, onClose }: CartProps) {
         }
     }, [pathname]);
 
-    // 3. 计算当前总金额
+    // 3. ✅ 修复：前端实时计算总金额 (解决后端同步延迟问题)
     const subtotal = useMemo(() => {
-        return cart?.items ? cart.items.reduce((t, i) => t + i.totalPrice, 0) : 0;
+        if (!cart?.items) return 0;
+        return cart.items.reduce((t, i) => t + (i.unitPrice * i.quantity), 0);
     }, [cart?.items]);
 
-    // 4. 智能推荐逻辑 (核心)
+    // 4. ✅ 智能推荐逻辑 (Smart Upsell Logic)
     useEffect(() => {
-        // 条件：购物车打开 && 已登录 && 购物车不为空
+        // 如果没打开，或者没登录，或者购物车为空，不加载推荐
         if (!isOpen || !cart?.items || cart.items.length === 0) return;
 
         const fetchSmartUpsells = async () => {
@@ -79,12 +79,15 @@ export default function Cart({ isOpen, onClose }: CartProps) {
             try {
                 let products: ProductResponse[] = [];
 
+                // 处理浮点数精度
+                const currentTotal = parseFloat(subtotal.toFixed(2));
+
                 // === 场景 1: 未满 $49 (凑单模式) ===
-                if (subtotal < FREE_SHIPPING_THRESHOLD) {
-                    const gap = FREE_SHIPPING_THRESHOLD - subtotal;
+                if (currentTotal < FREE_SHIPPING_THRESHOLD) {
+                    const gap = FREE_SHIPPING_THRESHOLD - currentTotal;
                     setUpsellTitle(`Add $${gap.toFixed(2)} for Free Shipping`);
 
-                    // 获取 < $25 的商品
+                    // 获取低价凑单品
                     products = await productService.getAddOnProducts(8);
                 }
 
@@ -92,17 +95,15 @@ export default function Cart({ isOpen, onClose }: CartProps) {
                 else {
                     setUpsellTitle("Complete Your Experience");
 
-                    // A. 找到购物车里单价最高的商品
+                    // A. 找出购物车里最贵的商品
                     const maxPriceItem = [...cart.items].sort((a, b) => b.unitPrice - a.unitPrice)[0];
 
-                    // B. 尝试获取它的关联商品
-                    // 注意：这里假设 cartItem 中包含 productSlug 字段。
-                    // 如果你的 store 里没存 slug，需要去后端 CartItem DTO 加一下，或者这里暂时拿不到关联。
+                    // B. 尝试获取该商品的关联推荐 (需要 productSlug)
                     if (maxPriceItem && (maxPriceItem as any).productSlug) {
                         products = await productService.getRelatedProducts((maxPriceItem as any).productSlug);
                     }
 
-                    // C. 兜底：如果关联商品为空 (或者没取到)，依然展示 < $25 的好物
+                    // C. 兜底：如果没关联品，还是展示 Add-ons
                     if (!products || products.length === 0) {
                         products = await productService.getAddOnProducts(8);
                     }
@@ -117,7 +118,7 @@ export default function Cart({ isOpen, onClose }: CartProps) {
             }
         };
 
-        // 防抖，防止频繁计算
+        // 简单的防抖，避免频繁请求
         const timer = setTimeout(fetchSmartUpsells, 300);
         return () => clearTimeout(timer);
 
@@ -133,7 +134,6 @@ export default function Cart({ isOpen, onClose }: CartProps) {
 
     // --- Actions ---
 
-    // 快速添加凑单品
     const handleAddAddOn = async (product: ProductResponse) => {
         // 默认选择第一个有库存的 SKU
         const defaultSku = product.productSkus?.find(s => (s.stock || 0) > 0) || product.productSkus?.[0];
@@ -155,7 +155,7 @@ export default function Cart({ isOpen, onClose }: CartProps) {
                 color: defaultSku.color === '__generic__' ? 'Default' : defaultSku.color,
                 skuId: defaultSku.id
             });
-            showToast('success', 'Added', `${truncateText(product.title, 20)} added to cart`);
+            showToast('success', 'Added', 'Item added to bag');
         } catch (error) {
             console.error(error);
             showToast('error', 'Error', 'Failed to add item');
@@ -189,7 +189,7 @@ export default function Cart({ isOpen, onClose }: CartProps) {
         router.push('/checkout');
     };
 
-    // Helper Styles
+    // --- Helpers ---
     const getColorValue = (n: string) => colorMap[n.toLowerCase().trim()] || '#CCCCCC';
     const formatColorDisplay = (color: string | undefined) => {
         if (!color) return null;
@@ -221,29 +221,29 @@ export default function Cart({ isOpen, onClose }: CartProps) {
                 style={{ zIndex: Z_INDEX.DRAWER }}
             >
                 {/* Header */}
-                <div className="flex justify-between items-center p-5 border-b border-gray-100 bg-white z-10 relative shadow-sm">
+                <div className="flex justify-between items-center px-6 py-5 border-b border-gray-100 bg-white z-10 relative shadow-sm">
                     <h3 className="text-gray-900 font-bold text-xl font-['Playfair_Display'] m-0 flex items-center gap-2">
                         Bag <span className="text-sm font-sans font-normal text-gray-500">({totalItems})</span>
                         {isInitialLoading && <Loader2 className="animate-spin text-gray-400 w-4 h-4" />}
                     </h3>
-                    <button className="p-2 hover:bg-gray-100 rounded-full transition-colors" onClick={onClose}>
-                        <X size={24} />
+                    <button className="p-2 -mr-2 hover:bg-gray-50 rounded-full transition-colors text-gray-500" onClick={onClose}>
+                        <X size={22} />
                     </button>
                 </div>
 
                 {/* Free Shipping Progress (Sticky top under header) */}
                 {hasCartItems && (
-                    <div className="px-5 py-3 bg-[#F9FAFB] border-b border-gray-100">
+                    <div className="px-6 py-4 bg-white border-b border-gray-50">
                         {subtotal >= FREE_SHIPPING_THRESHOLD ? (
-                            <p className="text-xs font-bold text-green-700 flex items-center gap-1.5 animate-in fade-in">
+                            <p className="text-xs font-bold text-emerald-700 flex items-center gap-2 animate-in fade-in">
                                 <Truck size={14} /> You've unlocked Free Express Shipping!
                             </p>
                         ) : (
-                            <div className="space-y-1.5">
-                                <p className="text-xs text-gray-500">
-                                    Add <span className="text-black font-bold">${(FREE_SHIPPING_THRESHOLD - subtotal).toFixed(2)}</span> for Free Shipping
+                            <div className="space-y-2">
+                                <p className="text-xs font-medium text-gray-500">
+                                    You are <span className="text-black font-bold">${(FREE_SHIPPING_THRESHOLD - subtotal).toFixed(2)}</span> away from Free Shipping
                                 </p>
-                                <div className="h-1.5 w-full bg-gray-200 rounded-full overflow-hidden">
+                                <div className="h-1 w-full bg-gray-100 rounded-full overflow-hidden">
                                     <div
                                         className="h-full bg-black rounded-full transition-all duration-500 ease-out"
                                         style={{ width: `${(subtotal / FREE_SHIPPING_THRESHOLD) * 100}%` }}
@@ -255,58 +255,50 @@ export default function Cart({ isOpen, onClose }: CartProps) {
                 )}
 
                 {/* Cart Items List (Scrollable) */}
-                <div className="flex-1 overflow-y-auto p-5 custom-scrollbar bg-white">
-                    {!isInitialLoading && (!cart?.items || cart.items.length === 0) && (
-                        <div className="flex flex-col items-center justify-center h-full text-center p-6 space-y-4">
-                            <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center"><ShoppingBag className="w-8 h-8 text-gray-300" /></div>
+                <div className="flex-1 overflow-y-auto px-6 py-4 custom-scrollbar bg-white">
+                    {!isInitialLoading && !hasCartItems && (
+                        <div className="flex flex-col items-center justify-center h-full text-center space-y-4">
+                            <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center"><ShoppingBag className="w-6 h-6 text-gray-300" /></div>
                             <div>
-                                <h4 className="text-lg font-bold text-gray-900">Your bag is empty</h4>
-                                <p className="text-sm text-gray-500 mt-1">Treat yourself to something nice.</p>
+                                <h4 className="text-base font-bold text-gray-900">Your bag is empty</h4>
+                                <p className="text-xs text-gray-400 mt-1">Start filling it with pleasure.</p>
                             </div>
-                            <button className="w-full bg-black text-white py-3 rounded-lg font-bold text-sm hover:bg-gray-800 transition-colors" onClick={onClose}>Start Shopping</button>
+                            <button className="px-8 py-3 bg-black text-white rounded-full font-bold text-xs uppercase tracking-widest hover:bg-[#E11D48] transition-colors" onClick={onClose}>Shop Now</button>
                         </div>
                     )}
 
                     {hasCartItems && (
-                        <div className="flex flex-col gap-6 pb-4">
+                        <div className="flex flex-col gap-8 pb-4">
                             {cart.items.map(item => (
-                                <div key={item.itemId} className="flex gap-4 group animate-in fade-in slide-in-from-right-4 duration-300">
-                                    <div className="relative w-24 h-24 flex-shrink-0 border border-gray-100 rounded-lg overflow-hidden bg-[#F5F5F7]">
-                                        {item.productImage ? (
-                                            <Image
-                                                src={getProductImageUrl('', item.productImage)}
-                                                alt={item.productTitle}
-                                                fill
-                                                className="object-cover mix-blend-multiply"
-                                            />
-                                        ) : null}
+                                <div key={item.itemId} className="flex gap-5 group animate-in fade-in slide-in-from-right-4 duration-300">
+                                    <div className="relative w-20 h-24 flex-shrink-0 border border-gray-100 rounded-sm overflow-hidden bg-[#F9FAFB]">
+                                        {item.productImage && <Image src={getProductImageUrl('', item.productImage)} alt={item.productTitle} fill className="object-cover mix-blend-multiply" />}
                                     </div>
-                                    <div className="flex-1 flex flex-col justify-between min-w-0">
-                                        <div className="min-w-0">
-                                            <div className="flex justify-between items-start gap-2">
+                                    <div className="flex-1 flex flex-col justify-between min-w-0 py-1">
+                                        <div className="space-y-1">
+                                            <div className="flex justify-between items-start gap-3">
                                                 <h4
-                                                    className="font-medium text-sm text-gray-900 line-clamp-2 leading-snug cursor-pointer hover:text-[#E11D48] transition-colors"
+                                                    className="font-medium text-sm text-gray-900 line-clamp-2 leading-relaxed cursor-pointer hover:text-[#E11D48] transition-colors"
                                                     onClick={() => {
-                                                        // 尝试跳转 (如果有 ID)
                                                         if (item.productId) {
-                                                            router.push(`/toys/product/${item.productId}`); // 或者 slug
+                                                            router.push(`/toys/product/${item.productId}`);
                                                             onClose();
                                                         }
                                                     }}
                                                 >
-                                                    {truncateText(item.productTitle, 40)}
+                                                    {item.productTitle}
                                                 </h4>
                                                 <button className="text-gray-300 hover:text-red-500 p-1 flex-shrink-0 transition-colors" onClick={() => handleRemoveItem(item.itemId)} disabled={isUpdating === item.itemId}>
                                                     {isUpdating === item.itemId ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-4 h-4" />}
                                                 </button>
                                             </div>
-                                            {item.color && <div className="mt-1.5">{formatColorDisplay(item.color)}</div>}
+                                            {item.color && formatColorDisplay(item.color)}
                                         </div>
-                                        <div className="flex justify-between items-center mt-2">
-                                            <div className="flex items-center border border-gray-200 rounded-md h-8">
-                                                <button onClick={() => handleDecreaseQuantity(item.itemId, item.quantity)} className="w-8 h-full flex items-center justify-center hover:bg-gray-50 text-gray-500 transition-colors"><Minus size={12} /></button>
-                                                <span className="text-xs w-8 text-center font-medium text-gray-900">{item.quantity}</span>
-                                                <button onClick={() => handleIncreaseQuantity(item.itemId, item.quantity)} className="w-8 h-full flex items-center justify-center hover:bg-gray-50 text-gray-500 transition-colors"><Plus size={12} /></button>
+                                        <div className="flex justify-between items-center">
+                                            <div className="flex items-center border border-gray-200 rounded-sm h-7 w-20">
+                                                <button onClick={() => handleDecreaseQuantity(item.itemId, item.quantity)} className="w-7 h-full flex items-center justify-center hover:bg-gray-50 text-gray-500 transition-colors"><Minus size={10} /></button>
+                                                <span className="flex-1 text-center text-xs font-medium text-gray-900">{item.quantity}</span>
+                                                <button onClick={() => handleIncreaseQuantity(item.itemId, item.quantity)} className="w-7 h-full flex items-center justify-center hover:bg-gray-50 text-gray-500 transition-colors"><Plus size={10} /></button>
                                             </div>
                                             <p className="font-bold text-sm text-gray-900">${item.unitPrice.toFixed(2)}</p>
                                         </div>
@@ -319,43 +311,43 @@ export default function Cart({ isOpen, onClose }: CartProps) {
 
                 {/* Footer Section: Upsell + Checkout (Fixed at bottom) */}
                 {hasCartItems && (
-                    <div className="border-t border-gray-100 bg-white shadow-[0_-4px_10px_rgba(0,0,0,0.05)] z-20 relative">
+                    <div className="border-t border-gray-100 bg-white shadow-[0_-10px_40px_rgba(0,0,0,0.05)] z-20 relative">
 
                         {/* ✅ In-Cart Upsell Carousel */}
                         {filteredUpsells.length > 0 && !upsellLoading && (
-                            <div className="py-4 pl-5 border-b border-gray-100 bg-gray-50/50">
-                                <div className="flex items-center gap-2 mb-3">
-                                    <Sparkles size={14} className="text-[#E11D48] fill-[#E11D48]" />
-                                    <span className="text-xs font-bold uppercase tracking-wider text-gray-900">{upsellTitle}</span>
+                            <div className="pt-5 pb-2 pl-6 bg-white">
+                                <div className="flex items-center gap-2 mb-4">
+                                    <Sparkles size={12} className="text-[#E11D48] fill-[#E11D48]" />
+                                    <span className="text-xs font-bold uppercase tracking-widest text-gray-900">{upsellTitle}</span>
                                 </div>
 
-                                <div className="flex gap-3 overflow-x-auto pb-2 pr-5 scrollbar-hide snap-x">
+                                <div className="flex gap-4 overflow-x-auto pb-4 pr-6 scrollbar-hide snap-x">
                                     {filteredUpsells.map((addon) => (
-                                        <div key={addon.id} className="flex-shrink-0 w-[210px] bg-white border border-gray-100 rounded-xl p-2.5 flex gap-3 items-center snap-start shadow-sm hover:border-gray-300 transition-colors group">
-                                            {/* Mini Image */}
-                                            <div className="relative w-12 h-12 bg-[#F5F5F7] rounded-lg overflow-hidden flex-shrink-0">
+                                        <div key={addon.id} className="flex-shrink-0 w-[200px] flex gap-3 items-center snap-start group cursor-pointer">
+                                            {/* Mini Image (No Border, Light BG) */}
+                                            <div className="relative w-14 h-14 bg-[#F5F5F7] rounded-md overflow-hidden flex-shrink-0">
                                                 <Image
                                                     src={getProductImageUrl('', addon.image)}
                                                     alt={addon.title}
                                                     fill
-                                                    className="object-cover mix-blend-multiply"
+                                                    className="object-cover mix-blend-multiply transition-transform group-hover:scale-110 duration-500"
                                                 />
                                             </div>
 
                                             {/* Info & Add Btn */}
                                             <div className="flex-1 min-w-0">
-                                                <p className="text-[11px] font-medium text-gray-900 truncate mb-1 leading-tight group-hover:text-[#E11D48] transition-colors">{addon.title}</p>
+                                                <p className="text-xs font-medium text-gray-900 truncate mb-1 leading-tight group-hover:text-[#E11D48] transition-colors">{addon.title}</p>
                                                 <div className="flex justify-between items-center">
-                                                    <span className="text-xs font-bold text-[#E11D48]">${addon.currentPrice}</span>
+                                                    <span className="text-xs font-bold text-gray-500">${addon.currentPrice}</span>
                                                     <button
                                                         onClick={(e) => {
                                                             e.stopPropagation();
                                                             handleAddAddOn(addon);
                                                         }}
                                                         disabled={addingAddOnId === addon.id}
-                                                        className="w-6 h-6 rounded-full border border-gray-200 text-gray-500 flex items-center justify-center hover:bg-black hover:border-black hover:text-white transition-all disabled:opacity-50 active:scale-95"
+                                                        className="h-6 px-3 rounded-full border border-gray-200 text-[10px] font-bold uppercase text-gray-900 hover:border-black hover:bg-black hover:text-white transition-all disabled:opacity-50 active:scale-95 flex items-center justify-center"
                                                     >
-                                                        {addingAddOnId === addon.id ? <Loader2 size={12} className="animate-spin" /> : <Plus size={14} />}
+                                                        {addingAddOnId === addon.id ? <Loader2 size={10} className="animate-spin" /> : 'Add'}
                                                     </button>
                                                 </div>
                                             </div>
@@ -366,15 +358,15 @@ export default function Cart({ isOpen, onClose }: CartProps) {
                         )}
 
                         {/* Subtotal & Checkout Button */}
-                        <div className="p-5 pb-8 bg-white safe-area-pb">
+                        <div className="px-6 pb-8 pt-4 bg-white safe-area-pb border-t border-gray-50">
                             <div className="flex justify-between text-base font-bold mb-2 text-gray-900">
                                 <span>Subtotal</span>
                                 <span>${subtotal.toFixed(2)}</span>
                             </div>
-                            <p className="text-[10px] text-gray-400 mb-4 text-center">Shipping & taxes calculated at checkout.</p>
+                            <p className="text-[10px] text-gray-400 mb-5 text-center">Shipping & taxes calculated at checkout.</p>
 
                             <button
-                                className="w-full bg-black text-white py-4 rounded-full font-bold hover:bg-[#E11D48] transition-all shadow-lg hover:shadow-[#E11D48]/20 flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed text-sm uppercase tracking-widest active:scale-[0.99]"
+                                className="w-full bg-black text-white py-4 rounded-full font-bold hover:bg-[#E11D48] transition-all shadow-lg hover:shadow-[#E11D48]/20 flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed text-xs uppercase tracking-[0.15em] active:scale-[0.99]"
                                 onClick={handleCheckout}
                                 disabled={isCheckingOut}
                             >
@@ -385,7 +377,7 @@ export default function Cart({ isOpen, onClose }: CartProps) {
                                     </>
                                 ) : (
                                     <>
-                                        Checkout <ArrowRight size={16} />
+                                        Checkout <ArrowRight size={14} />
                                     </>
                                 )}
                             </button>

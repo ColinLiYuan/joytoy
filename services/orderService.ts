@@ -7,7 +7,7 @@ class OrderService {
     // 创建订单
     async createOrder(orderCreateRequest: OrderCreateRequest): Promise<OrderResponse> {
         const url = `${SERVER_CONFIG.apiRoutes.order}/add`;
-        // console.log('🟢 Creating order, URL:', url);
+        console.log('🟢 Creating order, URL:', url);
 
         const response = await fetch(url, {
             method: 'POST',
