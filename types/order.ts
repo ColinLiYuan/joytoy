@@ -1,31 +1,5 @@
 // types/order.ts
 
-export interface AddressRequest {
-    firstName: string;
-    lastName: string;
-    phone: string;
-    email: string;
-    country: string;
-    province: string;
-    city: string;
-    addressLine1: string;
-    addressLine2?: string;
-    zipCode: string;
-    company?: string;      // 后端新增字段
-    useAsBilling?: boolean; // 前端辅助字段
-}
-
-export interface OrderItemRequest {
-    productId: number;
-    productTitle: string;
-    productSku: string;
-    productImage?: string;
-    quantity: number;
-    unitPrice: number;
-    color: string;
-    skuId?: number;
-}
-
 export interface OrderCreateRequest {
     userId: number;        // 后端新增
     cartId: number;        // 后端新增
@@ -44,6 +18,7 @@ export interface OrderCreateRequest {
 export interface OrderResponse {
     id: number;
     orderNumber: string;
+    trackingNumber: string;
     status: string;
     totalAmount: number;
     shippingFee: number;
@@ -53,4 +28,31 @@ export interface OrderResponse {
     paymentMethod: string;
     shippingMethod: string;
     items: any[];
+}
+
+export interface AddressRequest {
+    firstName: string;
+    lastName: string;
+    phone: string;
+    email: string;
+    country: string;
+    province: string;
+    city: string;
+    addressLine1: string;
+    addressLine2?: string;
+    zipCode: string;
+    company?: string;      // 后端新增字段
+    useAsBilling?: boolean; // 前端辅助字段
+    shippingAddress: AddressRequest;
+}
+
+export interface OrderItemRequest {
+    productId: number;
+    productTitle: string;
+    productSku: string;
+    productImage?: string;
+    quantity: number;
+    unitPrice: number;
+    color: string;
+    skuId?: number;
 }

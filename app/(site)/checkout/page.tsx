@@ -149,7 +149,7 @@ export default function CheckoutPage() {
             }));
 
             useCartStore.getState().clearCart();
-            router.push(`/payment?orderId=${result.id}`);
+            router.push(`/payment?orderNumber=${result.orderNumber}`);
         } catch (error: any) {
             showToast('error', 'Order Failed', error.message || 'Could not create order');
         } finally {

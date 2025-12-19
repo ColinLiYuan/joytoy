@@ -6,11 +6,13 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 import { Loader2, CheckCircle2, AlertCircle, ShieldCheck, Lock } from 'lucide-react';
 import { orderService } from '@/services/orderService';
+import { useAuth } from '@/contexts/authContext';
 
 function PaymentContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const orderId = searchParams.get('orderId');
+    const orderNumber = searchParams.get('orderNumber');
+    const { isLoggedIn } = useAuth();
 
     const [isLoading, setIsLoading] = useState(true);
     const [orderData, setOrderData] = useState<any>(null);
@@ -26,8 +28,8 @@ function PaymentContent() {
                 setIsLoading(false);
                 return;
             }
-            console.log('payment fetch order')
-            if (!orderId) {
+            // console.log('payment fetch order')
+            if (!orderNumber) {
                 setIsLoading(false);
                 return;
             }
@@ -35,11 +37,11 @@ function PaymentContent() {
             try {
                 // 1. 尝试从 LocalStorage 获取（最快）
                 const storedOrder = localStorage.getItem('currentOrder');
-                console.log('payment fetch order from storedOrder: ', storedOrder)
+                // console.log('payment fetch order from storedOrder: ', storedOrder)
                 if (storedOrder) {
                     const parsed = JSON.parse(storedOrder);
                     // 强制转字符串对比，防止类型不一致
-                    if (String(parsed.orderId) === String(orderId)) {
+                    if (String(parsed.orderNumber) === String(orderNumber)) {
                         setOrderData(parsed);
                         setIsLoading(false);
                         return;
@@ -47,7 +49,7 @@ function PaymentContent() {
                 }
 
                 // 2. 如果 LocalStorage 没有，或者 ID 不匹配，尝试从后端获取
-                const data = await orderService.getOrder(Number(orderId));
+                const data = await orderService.getOrder(orderNumber);
                 console.log('payment fetch order from service: ', data)
                 setOrderData(data);
                 setIsLoading(false);
@@ -62,13 +64,13 @@ function PaymentContent() {
             }
         };
         fetchOrder();
-    }, [orderId, clientId]);
+    }, [orderNumber, clientId]);
 
     const createPayPalOrder = (data: any, actions: any) => {
         return actions.order.create({
             purchase_units: [
                 {
-                    reference_id: orderId || 'unknown',
+                    reference_id: orderNumber || 'unknown',
                     description: `Order #${orderData?.orderNumber}`,
                     amount: {
                         currency_code: "USD",
@@ -82,28 +84,36 @@ function PaymentContent() {
     // app/(site)/payment/page.tsx - 更新 onApprove 函数
     const onApprove = async (data: any) => {
         try {
-            // 1. 显示"处理中"
             setPaymentStatus('processing');
 
-            // 2. 只把 PayPal Order ID 传给后端
-            await orderService.payOrder(Number(orderId), {
-                transactionId: data.orderID,      // PayPal 订单ID
+            // 2. 调用后端支付接口
+            await orderService.payOrder(orderNumber, {
+                transactionId: data.orderID,
                 paymentMethod: 'PAYPAL',
-                amount: orderData.totalAmount,    // 金额
-                currency: 'USD'                  // 币种
+                amount: orderData.totalAmount,
+                currency: 'USD'
             });
 
-            // 3. 💡 关键：如果后端返回成功，说明：
-            //    - PayPal 扣款成功了 ✅
-            //    - 后端状态更新成功了 ✅
-            //    - 库存扣减成功了 ✅
-            //    - 所有业务逻辑都完成了 ✅
+            setPaymentStatus('success');
 
-            setPaymentStatus('success');  // 真正的双重确认成功！
-            localStorage.removeItem('currentOrder');
-            router.push(`/orders/${orderId}?payment_success=1`);
+            // 3. ✅ 分流跳转逻辑
+            if (isLoggedIn) {
+                // === 登录用户 ===
+                // 清除临时数据
+                localStorage.removeItem('currentOrder');
+                // 跳转到会员中心的订单详情页 (受保护路由)
+                router.push(`/orders/${orderNumber}?payment_success=1`);
+            } else {
+                // === 游客 ===
+                // ⚠️ 注意：不要清除 'currentOrder'，因为下一页(Order Confirmation)
+                // 需要读取里面的 email 来提示用户 "Receipt sent to xxx@..."
+
+                // 跳转到公开的订单确认页
+                router.push(`/order-confirmation?orderId=${orderNumber}`);
+            }
 
         } catch (error: any) {
+            console.error(error);
             setPaymentStatus('error');
         }
     };

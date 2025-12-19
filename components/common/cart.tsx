@@ -85,7 +85,7 @@ export default function Cart({ isOpen, onClose }: CartProps) {
                 // === 场景 1: 未满 $49 (凑单模式) ===
                 if (currentTotal < FREE_SHIPPING_THRESHOLD) {
                     const gap = FREE_SHIPPING_THRESHOLD - currentTotal;
-                    setUpsellTitle(`Add $${gap.toFixed(2)} for Free Shipping`);
+                    setUpsellTitle(`Complete Your Routine`);
 
                     // 获取低价凑单品
                     products = await productService.getAddOnProducts(8);
