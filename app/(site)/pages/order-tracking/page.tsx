@@ -1,7 +1,9 @@
+// app/pages/order-tracking/page.tsx
 'use client';
 
-import { useState } from 'react';
-import { Search, Loader2, Package, Truck, CheckCircle2, Clock, AlertCircle, ExternalLink, Hourglass} from 'lucide-react';
+import { useState, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { Search, Loader2, Package, Truck, CheckCircle2, Clock, AlertCircle, ExternalLink, Hourglass } from 'lucide-react';
 import { orderService } from '@/services/orderService';
 
 // 订单状态枚举
@@ -12,23 +14,25 @@ const STATUS_STEPS = [
     { key: 'DELIVERED', label: 'Delivered', icon: CheckCircle2 },
 ];
 
-export default function OrderTracking() {
+function TrackingContent() {
+    const searchParams = useSearchParams();
+
     const [isLoading, setIsLoading] = useState(false);
     const [orderData, setOrderData] = useState<any>(null);
     const [error, setError] = useState('');
 
-    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
+    // Form State (用于受控组件，实现自动填充)
+    const [formOrderNumber, setFormOrderNumber] = useState('');
+    const [formEmail, setFormEmail] = useState('');
+
+    // 核心查询逻辑 (复用)
+    const executeTracking = async (orderNum: string, emailStr: string) => {
         setIsLoading(true);
         setError('');
         setOrderData(null);
 
-        const formData = new FormData(e.currentTarget);
-        const orderNumber = formData.get('orderNumber') as string;
-        const email = formData.get('email') as string;
-
         try {
-            const data = await orderService.trackGuestOrder(orderNumber, email);
+            const data = await orderService.trackGuestOrder(orderNum, emailStr);
             setOrderData(data);
         } catch (err: any) {
             setError(err.message || 'Order not found. Please check your details.');
@@ -37,15 +41,31 @@ export default function OrderTracking() {
         }
     };
 
+    // ✅ 初始化：检查 URL 参数并自动查询
+    useEffect(() => {
+        const urlOrderNum = searchParams.get('orderNumber');
+        const urlEmail = searchParams.get('email');
+
+        if (urlOrderNum) setFormOrderNumber(urlOrderNum);
+        if (urlEmail) setFormEmail(urlEmail);
+
+        if (urlOrderNum && urlEmail) {
+            executeTracking(urlOrderNum, urlEmail);
+        }
+    }, [searchParams]);
+
+    // 手动提交表单
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        await executeTracking(formOrderNumber, formEmail);
+    };
+
     const getCurrentStepIndex = (status: string) => {
         const index = STATUS_STEPS.findIndex(s => s.key === status);
         return index === -1 ? 0 : index;
     };
 
-    // ✅ 格式化订单号：移除开头的 #
     const displayOrderNumber = orderData?.orderNumber?.replace(/^#/, '') || '';
-
-    // ✅ 生成 17Track 链接
     const trackingUrl = orderData?.trackingNumber
         ? `https://t.17track.net/en#nums=${orderData.trackingNumber}`
         : '#';
@@ -69,6 +89,8 @@ export default function OrderTracking() {
                                     name="orderNumber"
                                     type="text"
                                     placeholder="e.g. MT2512345"
+                                    value={formOrderNumber}
+                                    onChange={(e) => setFormOrderNumber(e.target.value)}
                                     className="w-full bg-gray-50 border border-gray-200 px-4 py-3 rounded-lg focus:outline-none focus:border-black transition-colors font-mono"
                                     required
                                 />
@@ -79,6 +101,8 @@ export default function OrderTracking() {
                                     name="email"
                                     type="email"
                                     placeholder="john@example.com"
+                                    value={formEmail}
+                                    onChange={(e) => setFormEmail(e.target.value)}
                                     className="w-full bg-gray-50 border border-gray-200 px-4 py-3 rounded-lg focus:outline-none focus:border-black transition-colors"
                                     required
                                 />
@@ -96,7 +120,7 @@ export default function OrderTracking() {
 
                 {/* Error Message */}
                 {error && (
-                    <div className="max-w-2xl mx-auto bg-red-50 text-red-600 p-4 rounded-xl flex items-center gap-3 mb-8 animate-in fade-in">
+                    <div className="max-w-2xl mx-auto bg-red-50 text-red-600 p-4 rounded-xl flex items-center gap-3 mb-8 animate-in fade-in border border-red-100">
                         <AlertCircle size={20} />
                         <span className="font-medium">{error}</span>
                     </div>
@@ -106,13 +130,13 @@ export default function OrderTracking() {
                 {orderData && (
                     <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden animate-in slide-in-from-bottom-8 duration-500">
 
-                        {/* Header: 修复 Order # 显示 */}
+                        {/* Header */}
                         <div className="bg-gray-900 text-white p-6 md:p-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                             <div>
                                 <h2 className="text-2xl font-bold font-['Playfair_Display']">Order #{displayOrderNumber}</h2>
                                 <p className="text-gray-400 text-sm mt-1">Placed on {new Date(orderData.createdAt).toLocaleDateString()}</p>
                             </div>
-                            <span className="bg-white/10 px-4 py-1.5 rounded-full text-sm font-bold border border-white/20">
+                            <span className="bg-white/10 px-4 py-1.5 rounded-full text-sm font-bold border border-white/20 uppercase tracking-wide">
                                 {orderData.status}
                             </span>
                         </div>
@@ -128,7 +152,7 @@ export default function OrderTracking() {
                                     const isCurrent = index === currentIdx;
                                     const Icon = step.icon;
                                     return (
-                                        <div key={step.key} className={`relative flex items-center gap-6 ${isCompleted ? 'opacity-100' : 'opacity-40'}`}>
+                                        <div key={step.key} className={`relative flex items-center gap-6 ${isCompleted ? 'opacity-100' : 'opacity-30'}`}>
                                             <div className={`
                                                 relative z-10 w-14 h-14 rounded-full flex items-center justify-center border-4 transition-all duration-500
                                                 ${isCompleted ? 'bg-black border-gray-100 text-white' : 'bg-white border-gray-100 text-gray-300'}
@@ -138,7 +162,7 @@ export default function OrderTracking() {
                                             </div>
                                             <div>
                                                 <h4 className={`font-bold text-lg ${isCurrent ? 'text-green-600' : 'text-gray-900'}`}>{step.label}</h4>
-                                                {isCurrent && <p className="text-xs text-gray-500 mt-1">Current Status</p>}
+                                                {isCurrent && <p className="text-xs text-gray-500 mt-1 font-medium">Current Status</p>}
                                             </div>
                                         </div>
                                     );
@@ -146,23 +170,24 @@ export default function OrderTracking() {
                             </div>
                         </div>
 
-                        {/* Order Items & Carrier Info */}
+                        {/* Details Grid */}
                         <div className="p-8 bg-gray-50/50 grid md:grid-cols-2 gap-8">
 
                             {/* Address */}
                             <div>
                                 <h3 className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-4">Shipping To</h3>
-                                <div className="bg-white p-6 rounded-xl border border-gray-200 text-sm text-gray-600 leading-relaxed shadow-sm">
-                                    <p className="font-bold text-gray-900 mb-1 text-base">
+                                <div className="bg-white p-6 rounded-xl border border-gray-200 text-sm text-gray-600 leading-relaxed shadow-sm h-full">
+                                    <p className="font-bold text-gray-900 mb-2 text-base">
                                         {orderData.shippingAddress.firstName} {orderData.shippingAddress.lastName}
                                     </p>
                                     <p>{orderData.shippingAddress.addressLine1}</p>
+                                    {orderData.shippingAddress.addressLine2 && <p>{orderData.shippingAddress.addressLine2}</p>}
                                     <p>{orderData.shippingAddress.city}, {orderData.shippingAddress.province}</p>
-                                    <p>{orderData.shippingAddress.country}</p>
+                                    <p>{orderData.shippingAddress.country} {orderData.shippingAddress.zipCode}</p>
                                 </div>
                             </div>
 
-                            {/* Carrier Info (Optimized) */}
+                            {/* Carrier Info */}
                             <div>
                                 <h3 className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-4">Carrier Details</h3>
                                 <div className="bg-white p-6 rounded-xl border border-gray-200 text-sm text-gray-600 leading-relaxed shadow-sm h-full flex flex-col justify-center">
@@ -186,13 +211,13 @@ export default function OrderTracking() {
                                                 href={trackingUrl}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="inline-flex items-center gap-2 bg-black text-white px-5 py-3 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-[#E11D48] transition-colors"
+                                                className="inline-flex items-center gap-2 bg-black text-white px-5 py-3 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-[#E11D48] transition-colors shadow-lg hover:shadow-xl hover:-translate-y-0.5 active:scale-95"
                                             >
                                                 Track Package <ExternalLink size={14} />
                                             </a>
                                         </div>
                                     ) : (
-                                        // ✅ 修改部分：极简灰色状态
+                                        // ✅ 极简灰色状态 (Pending)
                                         <div className="space-y-3">
                                             <div className="flex items-center gap-3 text-gray-900">
                                                 <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
@@ -212,5 +237,13 @@ export default function OrderTracking() {
                 )}
             </div>
         </div>
+    );
+}
+
+export default function OrderTrackingPage() {
+    return (
+        <Suspense fallback={<div className="min-h-screen bg-gray-50" />}>
+            <TrackingContent />
+        </Suspense>
     );
 }

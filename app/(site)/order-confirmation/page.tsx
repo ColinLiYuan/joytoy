@@ -95,7 +95,13 @@ function ConfirmationContent() {
                         {/* Actions */}
                         <div className="space-y-3">
                             <button
-                                onClick={() => router.push('/pages/order-tracking')}
+                                onClick={() => {
+                                    const query = new URLSearchParams({
+                                        orderNumber: orderInfo?.orderNumber?.replace(/^#/, '') || orderNumber || '',
+                                        email: orderInfo?.guestEmail || ''
+                                    }).toString();
+                                    router.push(`/pages/order-tracking?${query}`);
+                                }}
                                 className="w-full bg-white border-2 border-gray-100 text-gray-900 py-4 rounded-xl font-bold hover:border-black hover:bg-gray-50 transition-all flex items-center justify-center gap-2"
                             >
                                 Track Order Status
