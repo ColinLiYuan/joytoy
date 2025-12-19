@@ -97,6 +97,7 @@ export default function Cart({ isOpen, onClose }: CartProps) {
 
                     // A. 找出购物车里最贵的商品
                     const maxPriceItem = [...cart.items].sort((a, b) => b.unitPrice - a.unitPrice)[0];
+                    // console.log('maxPriceItem : ', maxPriceItem)
 
                     // B. 尝试获取该商品的关联推荐 (需要 productSlug)
                     if (maxPriceItem && (maxPriceItem as any).productSlug) {
@@ -142,11 +143,13 @@ export default function Cart({ isOpen, onClose }: CartProps) {
             showToast('error', 'Out of Stock', 'This item is currently unavailable.');
             return;
         }
+        console.log('handleAddAddOn product : ', product)
 
         setAddingAddOnId(product.id.toString());
         try {
             await addItemToCart({
                 productId: product.id,
+                productSlug: product.slug,
                 productTitle: product.title,
                 productSku: defaultSku.sku,
                 productImage: getProductImageUrl('', product.image),

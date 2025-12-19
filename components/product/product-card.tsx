@@ -66,6 +66,7 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
 
             await addItemToCart({
                 productId: product.id,
+                productSlug: product.slug,
                 productTitle: product.title,
                 productSku: selectedSku.sku,
                 productImage: product.image,

@@ -8,6 +8,8 @@ import { Loader2, CheckCircle2, AlertCircle, ShieldCheck, Lock } from 'lucide-re
 import { orderService } from '@/services/orderService';
 import { useAuth } from '@/contexts/authContext';
 import { COUNTRY_DATA } from '@/lib/constants/country-data';
+import { useCartStore } from '@/stores/useCartStore'; // ✅ 引入 store
+
 
 function PaymentContent() {
     const router = useRouter();
@@ -24,6 +26,7 @@ function PaymentContent() {
     const [paymentStatus, setPaymentStatus] = useState<'processing' | 'success' | 'error'>('processing');
     const [errorMessage, setErrorMessage] = useState('');
     const [isMounted, setIsMounted] = useState(false);
+    const { clearCart } = useCartStore();
 
     const clientId = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID;
 
@@ -144,6 +147,7 @@ function PaymentContent() {
             });
 
             setPaymentStatus('success');
+            clearCart();
 
             if (isLoggedIn) {
                 localStorage.removeItem('currentOrder');

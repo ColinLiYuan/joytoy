@@ -206,11 +206,12 @@ class ProductService {
     }
 
     async getRelatedProducts(slug: string): Promise<ProductResponse[]> {
+        console.log('getRelatedProducts slug : ', slug)
         if (!slug) return [];
 
         try {
             const url = `${SERVER_CONFIG.apiRoutes.product}/related?slug=${encodeURIComponent(slug)}`;
-            console.log('getRelatedProducts url : ', url)
+            // console.log('getRelatedProducts url : ', url)
             const response = await fetch(url, {
                 method: 'GET',
                 headers: {
