@@ -116,7 +116,7 @@ function PaymentContent() {
                 // 需要读取里面的 email 来提示用户 "Receipt sent to xxx@..."
 
                 // 跳转到公开的订单确认页
-                router.push(`/order-confirmation?orderId=${orderNumber}`);
+                router.push(`/order-confirmation?orderNumber=${orderNumber}`);
             }
 
         } catch (error: any) {
