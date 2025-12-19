@@ -1,10 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { Search, Loader2, Package, Truck, CheckCircle2, Clock, MapPin, AlertCircle } from 'lucide-react';
+import { Search, Loader2, Package, Truck, CheckCircle2, Clock, AlertCircle, ExternalLink, Hourglass} from 'lucide-react';
 import { orderService } from '@/services/orderService';
 
-// 订单状态枚举 (根据你后端实际情况修改)
+// 订单状态枚举
 const STATUS_STEPS = [
     { key: 'PENDING', label: 'Order Placed', icon: Clock },
     { key: 'PROCESSING', label: 'Processing', icon: Package },
@@ -28,9 +28,7 @@ export default function OrderTracking() {
         const email = formData.get('email') as string;
 
         try {
-            // ✅ 调用 Service 查询
             const data = await orderService.trackGuestOrder(orderNumber, email);
-            console.log('tracking order page: ', data)
             setOrderData(data);
         } catch (err: any) {
             setError(err.message || 'Order not found. Please check your details.');
@@ -39,11 +37,18 @@ export default function OrderTracking() {
         }
     };
 
-    // 辅助函数：判断进度条状态
     const getCurrentStepIndex = (status: string) => {
         const index = STATUS_STEPS.findIndex(s => s.key === status);
-        return index === -1 ? 0 : index; // 如果是 CANCELLED 或其他，默认0
+        return index === -1 ? 0 : index;
     };
+
+    // ✅ 格式化订单号：移除开头的 #
+    const displayOrderNumber = orderData?.orderNumber?.replace(/^#/, '') || '';
+
+    // ✅ 生成 17Track 链接
+    const trackingUrl = orderData?.trackingNumber
+        ? `https://t.17track.net/en#nums=${orderData.trackingNumber}`
+        : '#';
 
     return (
         <div className="min-h-screen bg-gray-50 py-16 md:py-24">
@@ -63,7 +68,7 @@ export default function OrderTracking() {
                                 <input
                                     name="orderNumber"
                                     type="text"
-                                    placeholder="e.g. #MYT2512345"
+                                    placeholder="e.g. MYT2512345"
                                     className="w-full bg-gray-50 border border-gray-200 px-4 py-3 rounded-lg focus:outline-none focus:border-black transition-colors font-mono"
                                     required
                                 />
@@ -101,10 +106,10 @@ export default function OrderTracking() {
                 {orderData && (
                     <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden animate-in slide-in-from-bottom-8 duration-500">
 
-                        {/* Header */}
+                        {/* Header: 修复 Order # 显示 */}
                         <div className="bg-gray-900 text-white p-6 md:p-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                             <div>
-                                <h2 className="text-2xl font-bold font-['Playfair_Display']">Order #{orderData.orderNumber}</h2>
+                                <h2 className="text-2xl font-bold font-['Playfair_Display']">Order #{displayOrderNumber}</h2>
                                 <p className="text-gray-400 text-sm mt-1">Placed on {new Date(orderData.createdAt).toLocaleDateString()}</p>
                             </div>
                             <span className="bg-white/10 px-4 py-1.5 rounded-full text-sm font-bold border border-white/20">
@@ -112,20 +117,16 @@ export default function OrderTracking() {
                             </span>
                         </div>
 
-                        {/* Tracking Timeline (Vertical) */}
+                        {/* Tracking Timeline */}
                         <div className="p-8 border-b border-gray-100">
                             <h3 className="text-sm font-bold uppercase tracking-widest text-gray-500 mb-8">Shipment Progress</h3>
-
                             <div className="space-y-8 relative pl-4">
-                                {/* Vertical Line */}
                                 <div className="absolute left-[27px] top-4 bottom-4 w-0.5 bg-gray-100"></div>
-
                                 {STATUS_STEPS.map((step, index) => {
                                     const currentIdx = getCurrentStepIndex(orderData.status);
                                     const isCompleted = index <= currentIdx;
                                     const isCurrent = index === currentIdx;
                                     const Icon = step.icon;
-
                                     return (
                                         <div key={step.key} className={`relative flex items-center gap-6 ${isCompleted ? 'opacity-100' : 'opacity-40'}`}>
                                             <div className={`
@@ -145,13 +146,14 @@ export default function OrderTracking() {
                             </div>
                         </div>
 
-                        {/* Order Items & Address Summary */}
+                        {/* Order Items & Carrier Info */}
                         <div className="p-8 bg-gray-50/50 grid md:grid-cols-2 gap-8">
+
                             {/* Address */}
                             <div>
                                 <h3 className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-4">Shipping To</h3>
-                                <div className="bg-white p-5 rounded-xl border border-gray-200 text-sm text-gray-600 leading-relaxed">
-                                    <p className="font-bold text-gray-900 mb-1">
+                                <div className="bg-white p-6 rounded-xl border border-gray-200 text-sm text-gray-600 leading-relaxed shadow-sm">
+                                    <p className="font-bold text-gray-900 mb-1 text-base">
                                         {orderData.shippingAddress.firstName} {orderData.shippingAddress.lastName}
                                     </p>
                                     <p>{orderData.shippingAddress.addressLine1}</p>
@@ -160,18 +162,48 @@ export default function OrderTracking() {
                                 </div>
                             </div>
 
-                            {/* Carrier Info */}
+                            {/* Carrier Info (Optimized) */}
                             <div>
                                 <h3 className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-4">Carrier Details</h3>
-                                <div className="bg-white p-5 rounded-xl border border-gray-200 text-sm text-gray-600 leading-relaxed">
-                                    <p className="mb-2"><strong>Method:</strong> {orderData.shippingMethod}</p>
+                                <div className="bg-white p-6 rounded-xl border border-gray-200 text-sm text-gray-600 leading-relaxed shadow-sm h-full flex flex-col justify-center">
+                                    <div className="mb-6">
+                                        <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">Carrier</p>
+                                        <p className="font-medium text-gray-900">
+                                            {orderData.carrier || 'Standard Shipping'}
+                                        </p>
+                                    </div>
+
                                     {orderData.trackingNumber ? (
-                                        <>
-                                            <p className="mb-1"><strong>Tracking #:</strong> {orderData.trackingNumber}</p>
-                                            <a href="#" className="text-blue-600 underline hover:text-blue-800 text-xs">Track on Carrier Site</a>
-                                        </>
+                                        <div className="space-y-4">
+                                            <div>
+                                                <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">Tracking Number</p>
+                                                <p className="font-mono text-lg font-bold text-gray-900 tracking-wide select-all">
+                                                    {orderData.trackingNumber}
+                                                </p>
+                                            </div>
+
+                                            <a
+                                                href={trackingUrl}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="inline-flex items-center gap-2 bg-black text-white px-5 py-3 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-[#E11D48] transition-colors"
+                                            >
+                                                Track Package <ExternalLink size={14} />
+                                            </a>
+                                        </div>
                                     ) : (
-                                        <p className="text-gray-400 italic">Tracking number pending...</p>
+                                        // ✅ 修改部分：极简灰色状态
+                                        <div className="space-y-3">
+                                            <div className="flex items-center gap-3 text-gray-900">
+                                                <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                                                    <Hourglass size={16} className="text-gray-500" />
+                                                </div>
+                                                <span className="font-bold text-sm">Preparing Shipment</span>
+                                            </div>
+                                            <p className="text-xs text-gray-400 pl-11 leading-relaxed">
+                                                Tracking info will update soon. Usually within 24 hours.
+                                            </p>
+                                        </div>
                                     )}
                                 </div>
                             </div>
