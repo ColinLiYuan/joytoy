@@ -1,9 +1,9 @@
 // types/order.ts
 
 export interface OrderCreateRequest {
-    userId: number;        // 后端新增
-    cartId: number;        // 后端新增
-    guestEmail: string;
+    userId?: number;        // 后端新增
+    cartId?: number;        // 后端新增
+    guestEmail?: string;
     items: OrderItemRequest[];
     shippingAddress: AddressRequest;
     billingAddress: AddressRequest; // 后端新增
@@ -43,7 +43,6 @@ export interface AddressRequest {
     zipCode: string;
     company?: string;      // 后端新增字段
     useAsBilling?: boolean; // 前端辅助字段
-    shippingAddress: AddressRequest;
 }
 
 export interface OrderItemRequest {

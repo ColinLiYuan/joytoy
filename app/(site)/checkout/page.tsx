@@ -122,8 +122,8 @@ export default function CheckoutPage() {
         };
 
         const orderData: OrderCreateRequest = {
-            userId: userId || undefined, // ✅ 允许 undefined，后端需要处理 null userId
-            cartId: cartId || undefined,
+            userId: userId ?? undefined,
+            cartId: cartId ?? undefined,
             items: orderItems,
             shippingAddress: addressData,
             billingAddress: addressData,

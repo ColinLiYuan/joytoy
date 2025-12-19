@@ -143,7 +143,7 @@ export default function Cart({ isOpen, onClose }: CartProps) {
             return;
         }
 
-        setAddingAddOnId(product.id);
+        setAddingAddOnId(product.id.toString());
         try {
             await addItemToCart({
                 productId: product.id,
@@ -155,7 +155,7 @@ export default function Cart({ isOpen, onClose }: CartProps) {
                 color: defaultSku.color === '__generic__' ? 'Default' : defaultSku.color,
                 skuId: defaultSku.id
             });
-            showToast('success', 'Added', 'Item added to bag');
+            // showToast('success', 'Added', 'Item added to bag');
         } catch (error) {
             console.error(error);
             showToast('error', 'Error', 'Failed to add item');
@@ -344,10 +344,10 @@ export default function Cart({ isOpen, onClose }: CartProps) {
                                                             e.stopPropagation();
                                                             handleAddAddOn(addon);
                                                         }}
-                                                        disabled={addingAddOnId === addon.id}
+                                                        disabled={addingAddOnId === addon.id.toString()}
                                                         className="h-6 px-3 rounded-full border border-gray-200 text-[10px] font-bold uppercase text-gray-900 hover:border-black hover:bg-black hover:text-white transition-all disabled:opacity-50 active:scale-95 flex items-center justify-center"
                                                     >
-                                                        {addingAddOnId === addon.id ? <Loader2 size={10} className="animate-spin" /> : 'Add'}
+                                                        {addingAddOnId === addon.id.toString() ? <Loader2 size={10} className="animate-spin" /> : 'Add'}
                                                     </button>
                                                 </div>
                                             </div>

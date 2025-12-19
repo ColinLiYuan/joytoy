@@ -192,7 +192,7 @@ export default function AdminProductForm() {
             }
 
             // 2. 提交API
-            console.log('Submitting Product:', submitData);
+            // console.log('Submitting Product:', submitData);
             await productService.adminRelease(submitData);
 
             // 3. 成功反馈

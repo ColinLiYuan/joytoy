@@ -1,4 +1,4 @@
-// app/(site)/orders/[id]/page.tsx
+// app/(site)/orders/[orderNumber]/page.tsx
 'use client';
 
 import { useState, useEffect, use } from 'react';
@@ -20,9 +20,9 @@ import {
     Receipt
 } from 'lucide-react';
 
-export default function OrderDetailsPage({ params }: { params: Promise<{ id: string }> }) {
+export default function OrderDetailsPage({ params }: { params: Promise<{ orderNumber: string }> }) {
     // Next.js 15: 解包异步 params
-    const { id } = use(params);
+    const { orderNumber } = use(params);
     const searchParams = useSearchParams();
 
     // 获取 URL 参数判断是否刚支付成功
@@ -36,7 +36,7 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
             try {
                 // 注意：如果你的后端接收的是数字ID，这里可能需要转换，或者后端兼容字符串
                 // 假设 getOrder 接收 string | number
-                const data = await orderService.getOrder(Number(id));
+                const data = await orderService.getOrder(orderNumber);
                 setOrder(data);
             } catch (error) {
                 console.error('Failed to load order:', error);
@@ -45,7 +45,7 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
             }
         };
         fetchOrder();
-    }, [id]);
+    }, [orderNumber]);
 
     if (isLoading) {
         return (

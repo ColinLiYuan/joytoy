@@ -149,8 +149,8 @@ export default function OrdersPage() {
 
                             return (
                                 <Link
-                                    href={`/orders/${order.id}`}
-                                    key={order.id}
+                                    href={`/orders/${order.orderNumber}`}
+                                    key={order.orderNumber}
                                     className="block bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden group"
                                 >
                                     {/* Top Bar */}

@@ -24,12 +24,14 @@ function PaymentContent() {
     useEffect(() => {
         const fetchOrder = async () => {
             if (!clientId) {
+                // console.log('🔍 fetchOrder function called');
                 setErrorMessage("Configuration Error: PayPal Client ID missing");
                 setIsLoading(false);
                 return;
             }
-            // console.log('payment fetch order')
+            // console.log('payment fetch order: ', orderNumber)
             if (!orderNumber) {
+                setErrorMessage('Order number is missing');
                 setIsLoading(false);
                 return;
             }
@@ -50,7 +52,6 @@ function PaymentContent() {
 
                 // 2. 如果 LocalStorage 没有，或者 ID 不匹配，尝试从后端获取
                 const data = await orderService.getOrder(orderNumber);
-                console.log('payment fetch order from service: ', data)
                 setOrderData(data);
                 setIsLoading(false);
 
@@ -84,6 +85,12 @@ function PaymentContent() {
     // app/(site)/payment/page.tsx - 更新 onApprove 函数
     const onApprove = async (data: any) => {
         try {
+            if (!orderNumber) {
+                setErrorMessage('Order number is missing');
+                setPaymentStatus('error');
+                return;
+            }
+
             setPaymentStatus('processing');
 
             // 2. 调用后端支付接口

@@ -68,7 +68,7 @@ export default function OrderTracking() {
                                 <input
                                     name="orderNumber"
                                     type="text"
-                                    placeholder="e.g. MYT2512345"
+                                    placeholder="e.g. MT2512345"
                                     className="w-full bg-gray-50 border border-gray-200 px-4 py-3 rounded-lg focus:outline-none focus:border-black transition-colors font-mono"
                                     required
                                 />

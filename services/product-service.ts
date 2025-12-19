@@ -236,7 +236,7 @@ class ProductService {
      */
     async getAddOnProducts(limit: number = 8): Promise<ProductResponse[]> {
         const url = `${SERVER_CONFIG.apiRoutes.product}/list?maxPrice=25&size=${limit}`;
-        console.log('product service getAddOnProducts url: ', url)
+        // console.log('product service getAddOnProducts url: ', url)
         try {
             const response = await fetch(url, {
                 next: { revalidate: 3600 } // 缓存1小时
