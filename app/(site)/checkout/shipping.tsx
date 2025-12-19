@@ -3,6 +3,8 @@ import { Loader2, ArrowRight } from 'lucide-react';
 import { useState } from 'react';
 // 引入类型，确保类型安全
 import { AddressRequest } from '@/types/order';
+// 引入国家数据
+import { COUNTRY_DATA, COUNTRIES_FOR_SELECT } from '@/lib/constants/country-data';
 
 interface ShippingFormProps {
     // ✅ 接收父组件的数据
@@ -34,6 +36,11 @@ export default function ShippingForm({
         if (!shippingAddress.country?.trim()) newErrors.country = 'Country is required';
         if (!shippingAddress.phone?.trim()) newErrors.phone = 'Phone is required';
 
+        // 验证国家是否在支持的列表中
+        if (shippingAddress.country && !COUNTRY_DATA[shippingAddress.country]) {
+            newErrors.country = 'Please select a valid country from the list';
+        }
+
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
@@ -61,8 +68,6 @@ export default function ShippingForm({
         : 'border-gray-200 bg-gray-50 focus:bg-white focus:border-black focus:ring-1 focus:ring-black'
     }
     `;
-
-    const countries = ["United States", "United Kingdom", "Canada", "Australia", "Germany", "France", "Italy", "Spain"].sort();
 
     return (
         <form onSubmit={handleSubmit} className="space-y-8">
@@ -99,41 +104,91 @@ export default function ShippingForm({
                 <div className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <input type="text" placeholder="First Name" value={shippingAddress.firstName || ''} onChange={(e) => handleChange('firstName', e.target.value)} className={inputClass(errors.firstName)} />
+                            <input
+                                type="text"
+                                placeholder="First Name"
+                                value={shippingAddress.firstName || ''}
+                                onChange={(e) => handleChange('firstName', e.target.value)}
+                                className={inputClass(errors.firstName)}
+                            />
                             {errors.firstName && <p className="text-red-500 text-xs mt-1 ml-1">{errors.firstName}</p>}
                         </div>
                         <div>
-                            <input type="text" placeholder="Last Name" value={shippingAddress.lastName || ''} onChange={(e) => handleChange('lastName', e.target.value)} className={inputClass(errors.lastName)} />
+                            <input
+                                type="text"
+                                placeholder="Last Name"
+                                value={shippingAddress.lastName || ''}
+                                onChange={(e) => handleChange('lastName', e.target.value)}
+                                className={inputClass(errors.lastName)}
+                            />
                             {errors.lastName && <p className="text-red-500 text-xs mt-1 ml-1">{errors.lastName}</p>}
                         </div>
                     </div>
 
                     <div>
-                        <select value={shippingAddress.country || ''} onChange={(e) => handleChange('country', e.target.value)} className={`${inputClass(errors.country)} appearance-none`}>
+                        <select
+                            value={shippingAddress.country || ''}
+                            onChange={(e) => handleChange('country', e.target.value)}
+                            className={`${inputClass(errors.country)} appearance-none`}
+                        >
                             <option value="">Select Country</option>
-                            {countries.map(c => <option key={c} value={c}>{c}</option>)}
+                            {COUNTRIES_FOR_SELECT.map(country => (
+                                <option key={country} value={country}>
+                                    {country}
+                                </option>
+                            ))}
                         </select>
                         {errors.country && <p className="text-red-500 text-xs mt-1 ml-1">{errors.country}</p>}
                     </div>
 
                     <div>
-                        <input type="text" placeholder="Address Line 1" value={shippingAddress.addressLine1 || ''} onChange={(e) => handleChange('addressLine1', e.target.value)} className={inputClass(errors.addressLine1)} />
+                        <input
+                            type="text"
+                            placeholder="Address Line 1"
+                            value={shippingAddress.addressLine1 || ''}
+                            onChange={(e) => handleChange('addressLine1', e.target.value)}
+                            className={inputClass(errors.addressLine1)}
+                        />
                         {errors.addressLine1 && <p className="text-red-500 text-xs mt-1 ml-1">{errors.addressLine1}</p>}
                     </div>
 
-                    <input type="text" placeholder="Apartment, suite, etc. (optional)" value={shippingAddress.addressLine2 || ''} onChange={(e) => handleChange('addressLine2', e.target.value)} className={inputClass()} />
+                    <input
+                        type="text"
+                        placeholder="Apartment, suite, etc. (optional)"
+                        value={shippingAddress.addressLine2 || ''}
+                        onChange={(e) => handleChange('addressLine2', e.target.value)}
+                        className={inputClass()}
+                    />
 
                     <div className="grid grid-cols-3 gap-4">
                         <div className="col-span-1">
-                            <input type="text" placeholder="City" value={shippingAddress.city || ''} onChange={(e) => handleChange('city', e.target.value)} className={inputClass(errors.city)} />
+                            <input
+                                type="text"
+                                placeholder="City"
+                                value={shippingAddress.city || ''}
+                                onChange={(e) => handleChange('city', e.target.value)}
+                                className={inputClass(errors.city)}
+                            />
                             {errors.city && <p className="text-red-500 text-xs mt-1 ml-1">{errors.city}</p>}
                         </div>
                         <div className="col-span-1">
-                            <input type="text" placeholder="State" value={shippingAddress.province || ''} onChange={(e) => handleChange('province', e.target.value)} className={inputClass(errors.province)} />
+                            <input
+                                type="text"
+                                placeholder="State"
+                                value={shippingAddress.province || ''}
+                                onChange={(e) => handleChange('province', e.target.value)}
+                                className={inputClass(errors.province)}
+                            />
                             {errors.province && <p className="text-red-500 text-xs mt-1 ml-1">{errors.province}</p>}
                         </div>
                         <div className="col-span-1">
-                            <input type="text" placeholder="Zip" value={shippingAddress.zipCode || ''} onChange={(e) => handleChange('zipCode', e.target.value)} className={inputClass(errors.zipCode)} />
+                            <input
+                                type="text"
+                                placeholder="Zip"
+                                value={shippingAddress.zipCode || ''}
+                                onChange={(e) => handleChange('zipCode', e.target.value)}
+                                className={inputClass(errors.zipCode)}
+                            />
                             {errors.zipCode && <p className="text-red-500 text-xs mt-1 ml-1">{errors.zipCode}</p>}
                         </div>
                     </div>

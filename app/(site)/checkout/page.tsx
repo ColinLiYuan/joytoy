@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { Loader2, ShoppingBag, Tag, ArrowLeft, User } from 'lucide-react'; // 新增 User 图标
+import { Loader2, ShoppingBag, Tag, ArrowLeft, User } from 'lucide-react';
 import ShippingForm from './shipping';
 import OrderSummary from './orderSummary';
 import { useShipping } from '@/hooks/useShipping';
@@ -47,7 +47,6 @@ export default function CheckoutPage() {
             if (!isClient) return;
             try {
                 setIsLoading(true);
-                // 无论是否登录，都尝试获取购物车
                 await getCart();
             } catch (e) {
                 console.error(e);
@@ -56,9 +55,9 @@ export default function CheckoutPage() {
             }
         };
         init();
-    }, [getCart, isClient]); // 移除了 isLoggedIn 依赖
+    }, [getCart, isClient]);
 
-    // 2. 数据转换 (保持不变)
+    // 2. 数据转换
     useEffect(() => {
         if (cart?.items?.length) {
             setOrderItems(cart.items.map(item => ({
@@ -74,7 +73,7 @@ export default function CheckoutPage() {
         }
     }, [cart?.items]);
 
-    // 3. 计算逻辑 (保持不变)
+    // 3. 计算逻辑
     const { subtotal, shippingFee, discountAmount, total } = useMemo(() => {
         const sub = orderItems.reduce((sum, i) => sum + (i.unitPrice * i.quantity), 0);
         let discount = 0;
@@ -83,40 +82,57 @@ export default function CheckoutPage() {
         return { subtotal: sub, shippingFee: shipping, discountAmount: discount, total: Math.max(0, sub - discount + shipping) };
     }, [orderItems, appliedCoupon]);
 
-    const handleApplyCoupon = async () => { /* 保持不变 */ };
+    const handleApplyCoupon = async () => {
+        if (!couponCode.trim()) return;
+        setIsApplyingCoupon(true);
+        setTimeout(() => {
+            if (couponCode.toUpperCase() === 'MYTH20') {
+                setAppliedCoupon('MYTH20');
+                showToast('success', 'Success', '20% discount applied!');
+            } else {
+                setAppliedCoupon('');
+                showToast('error', 'Invalid Code', 'This coupon code is invalid.');
+            }
+            setIsApplyingCoupon(false);
+        }, 600);
+    };
 
-    // 4. 创建订单逻辑 (核心修改：兼容游客)
+    // 4. 创建订单逻辑
     const handleProceedToPayment = async () => {
-        const userId = getUserId(); // 可能为空
-        const cartId = getCartId(); // 必须有 (无论是登录还是游客的 LocalStorage 购物车)
-
-        // if (!cartId) {
-        //     showToast('error', 'Error', 'Cart session expired.');
-        //     return;
-        // }
+        const userId = getUserId();
+        const cartId = getCartId();
 
         const formData = getShippingFormData();
+        const addr = formData.shippingAddress;
 
-        // 校验：游客必须填邮箱 (虽然 ShippingForm 里通常已经校验了)
-        if (!isLoggedIn && !formData.shippingAddress.email) {
-            showToast('error', 'Missing Email', 'Please provide an email for your receipt.');
+        // ✅ 手动校验必填项 (防御性编程)
+        if (!addr.firstName || !addr.lastName || !addr.addressLine1 || !addr.city || !addr.zipCode || !addr.country) {
+            showToast('error', 'Incomplete Address', 'Please fill in all required shipping fields.');
+            return;
+        }
+
+        // ✅ 校验邮箱 (游客或登录用户都必须有邮箱)
+        const emailToUse = isLoggedIn ? (addr.email || getUserEmail()) : addr.email;
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+        if (!emailToUse || !emailRegex.test(emailToUse)) {
+            showToast('error', 'Invalid Email', 'Please provide a valid email address.');
             return;
         }
 
         setIsCreatingOrder(true);
 
         const addressData = {
-            firstName: formData.shippingAddress.firstName,
-            lastName: formData.shippingAddress.lastName,
-            phone: formData.shippingAddress.phone,
-            // 优先用表单填的邮箱，其次用游客输入的邮箱
-            email: formData.shippingAddress.email || guestEmail,
-            country: formData.shippingAddress.country,
-            province: formData.shippingAddress.province,
-            city: formData.shippingAddress.city,
-            addressLine1: formData.shippingAddress.addressLine1,
-            addressLine2: formData.shippingAddress.addressLine2 || '',
-            zipCode: formData.shippingAddress.zipCode,
+            firstName: addr.firstName,
+            lastName: addr.lastName,
+            phone: addr.phone,
+            email: emailToUse,
+            country: addr.country,
+            province: addr.province,
+            city: addr.city,
+            addressLine1: addr.addressLine1,
+            addressLine2: addr.addressLine2 || '',
+            zipCode: addr.zipCode,
             company: '',
             useAsBilling: true
         };
@@ -132,24 +148,28 @@ export default function CheckoutPage() {
             customerNote: formData.orderNotes,
             shippingFee: shippingFee,
             discountAmount: discountAmount,
-            // ✅ 新增：如果是游客，可能需要传 email 给后端记录 (如果后端 createOrder 支持的话)
             guestEmail: !userId ? addressData.email : undefined
         };
 
         try {
             const result = await orderService.createOrder(orderData);
 
-            // 存储订单信息用于支付页
+            // ✅ 核心修复：存储完整的 addressData，供支付页使用
             localStorage.setItem('currentOrder', JSON.stringify({
                 orderId: result.id,
                 orderNumber: result.orderNumber,
                 totalAmount: result.finalAmount,
                 items: orderItems,
-                guestEmail: addressData.email // ✅ 存下邮箱，支付页可能用到
+                guestEmail: addressData.email,
+                shippingAddress: addressData // 👈 必须存这个！
             }));
 
             useCartStore.getState().clearCart();
-            router.push(`/payment?orderNumber=${result.orderNumber}`);
+
+            // ✅ URL 参数去 # 号
+            const cleanOrderNumber = result.orderNumber.replace(/^#/, '');
+            router.push(`/payment?orderNumber=${cleanOrderNumber}`);
+
         } catch (error: any) {
             showToast('error', 'Order Failed', error.message || 'Could not create order');
         } finally {
@@ -166,14 +186,30 @@ export default function CheckoutPage() {
         );
     }
 
-    // 空购物车 (保持不变)
-    if (orderItems.length === 0) { /* ... 保持不变 ... */ }
+    if (orderItems.length === 0) {
+        return (
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 w-full max-w-full overflow-x-hidden">
+                <div className="bg-white p-10 rounded-3xl shadow-sm text-center max-w-md w-full border border-gray-100">
+                    <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <ShoppingBag className="w-10 h-10 text-gray-400" />
+                    </div>
+                    <h2 className="text-2xl font-bold text-gray-900 mb-3 font-['Playfair_Display']">Your bag is empty</h2>
+                    <p className="text-gray-500 mb-8 text-sm">Looks like you haven't added anything yet.</p>
+                    <button
+                        className="w-full bg-black text-white px-8 py-3.5 rounded-xl font-bold hover:bg-gray-900 transition-all shadow-lg"
+                        onClick={() => router.push('/collections/all')}
+                    >
+                        Start Shopping
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-gray-50 pb-24 pt-8 w-full overflow-x-hidden">
             <div className="container mx-auto px-4 max-w-6xl">
 
-                {/* Header: 新增登录提示条 (如果是游客) */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
                     <h1 className="text-3xl font-bold text-gray-900 font-['Playfair_Display']">Checkout</h1>
 
@@ -209,7 +245,44 @@ export default function CheckoutPage() {
                             discount={discountAmount}
                             total={total}
                         />
-                        {/* Coupon ... 保持不变 ... */}
+
+                        {/* Coupon Input */}
+                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                            <h3 className="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
+                                <Tag size={16} /> Gift Card or Discount Code
+                            </h3>
+                            <div className="flex gap-2">
+                                <input
+                                    type="text"
+                                    value={couponCode}
+                                    onChange={(e) => setCouponCode(e.target.value)}
+                                    placeholder="Enter code"
+                                    className="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm outline-none focus:border-black focus:ring-1 focus:ring-black transition-all uppercase placeholder:normal-case"
+                                    disabled={!!appliedCoupon}
+                                />
+                                {appliedCoupon ? (
+                                    <button
+                                        onClick={() => { setAppliedCoupon(''); setCouponCode(''); }}
+                                        className="bg-gray-200 text-gray-600 px-5 py-2.5 rounded-lg text-sm font-bold hover:bg-gray-300 transition-all"
+                                    >
+                                        Remove
+                                    </button>
+                                ) : (
+                                    <button
+                                        onClick={handleApplyCoupon}
+                                        disabled={isApplyingCoupon || !couponCode}
+                                        className="bg-black text-white px-5 py-2.5 rounded-lg text-sm font-bold hover:bg-gray-800 disabled:opacity-50 transition-all min-w-[80px]"
+                                    >
+                                        {isApplyingCoupon ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : 'Apply'}
+                                    </button>
+                                )}
+                            </div>
+                            {appliedCoupon && (
+                                <p className="text-green-600 text-xs mt-2 font-medium flex items-center gap-1">
+                                    <Tag size={12} /> Code <strong>{appliedCoupon}</strong> applied!
+                                </p>
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>
