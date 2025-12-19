@@ -45,7 +45,7 @@ class ProductServiceServer {
             }
         }
 
-        const url = `/api/V1/product/queryByCategory?${queryParams}`;
+        const url = `/api/V1/product/list?${queryParams}`;
 
         const result = await callBackendGet<any>(url, {
             requiresAuth: true
