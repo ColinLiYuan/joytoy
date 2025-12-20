@@ -8,8 +8,8 @@ import { Loader2, CheckCircle2, AlertCircle, ShieldCheck, Lock } from 'lucide-re
 import { orderService } from '@/services/orderService';
 import { useAuth } from '@/contexts/authContext';
 import { COUNTRY_DATA } from '@/lib/constants/country-data';
-import { useCartStore } from '@/stores/useCartStore'; // ✅ 引入 store
-
+import { useCartStore } from '@/stores/useCartStore';
+import { sendOrderConfirmationEmail } from '@/app/actions/send-order-email';
 
 function PaymentContent() {
     const router = useRouter();
@@ -148,6 +148,30 @@ function PaymentContent() {
 
             setPaymentStatus('success');
             clearCart();
+
+            const emailData = {
+                orderNumber: orderData.orderNumber,
+                email: orderData.shippingAddress.email || orderData.guestEmail, // 确保有邮箱
+                firstName: orderData.shippingAddress.firstName,
+                totalAmount: orderData.totalAmount,
+                shippingFee: orderData.shippingFee,
+                items: orderData.items.map((item: any) => ({
+                    title: item.productTitle,
+                    quantity: item.quantity,
+                    price: item.unitPrice,
+                    sku: item.productSku
+                })),
+                shippingAddress: {
+                    addressLine1: orderData.shippingAddress.addressLine1,
+                    city: orderData.shippingAddress.city,
+                    state: orderData.shippingAddress.province,
+                    zip: orderData.shippingAddress.zipCode,
+                    country: orderData.shippingAddress.country
+                }
+            };
+
+            // 触发 Server Action
+            sendOrderConfirmationEmail(emailData).catch(err => console.error('Email failed', err));
 
             if (isLoggedIn) {
                 localStorage.removeItem('currentOrder');
