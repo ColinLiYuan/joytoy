@@ -16,17 +16,38 @@ export interface UploadResult {
 class ProductService {
 
     async adminList(
-        slug: string,
+        category: string,
         page: number = 0,
-        size: number = 12
+        size: number = 12,
+        keyword: string = '',  // 添加默认值
+        status: string = ''    // 添加默认值
     ): Promise<ProductListResponse> {
         try {
-            const queryParams = new URLSearchParams({
-                page: page.toString(),
-                size: size.toString()
-            });
+            // 构建查询参数
+            const queryParams = new URLSearchParams();
 
-            const url = `${ADMIN_CONFIG.apiRoutes.product}/list?category=${slug}&${queryParams}`;
+            // 添加所有参数，包括 category
+            if (category) {
+                queryParams.append('category', category);
+            }
+            if (page !== undefined) {
+                queryParams.append('page', page.toString());
+            }
+            if (size !== undefined) {
+                queryParams.append('size', size.toString());
+            }
+            if (keyword) {
+                queryParams.append('keyword', keyword);
+            }
+            if (status) {
+                queryParams.append('status', status);
+            }
+
+            // 构建完整 URL
+            const url = `${ADMIN_CONFIG.apiRoutes.product}/list?${queryParams.toString()}`;
+
+            console.log('Fetching products from URL:', url); // 添加调试日志
+
             const response = await fetch(url, {
                 cache: 'no-store',
                 headers: {
@@ -40,13 +61,12 @@ class ProductService {
 
             const apiResponse = await response.json();
 
-            console.log('productService response ' + apiResponse.data)
+            console.log('API Response:', apiResponse);
 
             if (!apiResponse.success) {
-                throw new Error(apiResponse.error || 'Failed to fetch products ad');
+                throw new Error(apiResponse.error || 'Failed to fetch products');
             }
 
-            // console.log('productService apiResponse ' + apiResponse.success)
             return apiResponse.data || {
                 content: [],
                 currentPage: page,
@@ -206,7 +226,7 @@ class ProductService {
     }
 
     async getRelatedProducts(slug: string): Promise<ProductResponse[]> {
-        console.log('getRelatedProducts slug : ', slug)
+        // console.log('getRelatedProducts slug : ', slug)
         if (!slug) return [];
 
         try {

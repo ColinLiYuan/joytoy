@@ -1,7 +1,7 @@
 // /app/admin/products/page.tsx
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { productService } from '@/services/product-service'
 import { ProductResponse, ProductListResponse } from '@/types/product'
@@ -34,47 +34,76 @@ export default function ProductList() {
         category: '',
         status: ''
     })
+    const [searchFilters, setSearchFilters] = useState({
+        keyword: '',
+        category: '',
+        status: ''
+    })
     const [pagination, setPagination] = useState({
         currentPage: 0,
         totalPages: 1,
         totalElements: 0
     })
 
-    // 使用接口获取产品数据
-    useEffect(() => {
-        const fetchProducts = async () => {
-            try {
-                setLoading(true)
-                setError('')
+    // 获取产品数据
+    const fetchProducts = useCallback(async () => {
+        try {
+            setLoading(true)
+            setError('')
 
-                // 调用产品服务获取数据
-                const result: ProductListResponse = await productService.adminList(
-                    filters.category || '', // slug参数
-                    pagination.currentPage, // page
-                    12 // size
-                )
-
-                setProducts(result.content || [])
-                setPagination({
-                    currentPage: result.currentPage || 0,
-                    totalPages: result.totalPages || 1,
-                    totalElements: result.totalElements || 0
-                })
-            } catch (err) {
-                console.error('获取产品列表失败:', err)
-                setError('获取产品列表失败，请重试')
-                setProducts([])
-            } finally {
-                setLoading(false)
+            // 转换状态值为后端需要的格式
+            let statusParam = ''
+            if (searchFilters.status === 'active') {
+                statusParam = 'ACTIVE'
+            } else if (searchFilters.status === 'inactive') {
+                statusParam = 'INACTIVE'
             }
-        }
 
+            // 调用产品服务获取数据，传递所有筛选条件
+            const result: ProductListResponse = await productService.adminList(
+                searchFilters.category || '', // category slug参数
+                pagination.currentPage, // page
+                12, // size
+                searchFilters.keyword || '', // 搜索关键词（产品名称）
+                statusParam || '' // 状态
+            )
+
+            setProducts(result.content || [])
+            setPagination({
+                currentPage: result.currentPage || 0,
+                totalPages: result.totalPages || 1,
+                totalElements: result.totalElements || 0
+            })
+        } catch (err) {
+            console.error('获取产品列表失败:', err)
+            setError('获取产品列表失败，请重试')
+            setProducts([])
+        } finally {
+            setLoading(false)
+        }
+    }, [searchFilters, pagination.currentPage])
+
+    // 初始加载和搜索条件变化时获取数据
+    useEffect(() => {
         fetchProducts()
-    }, [filters, pagination.currentPage])
+    }, [fetchProducts])
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault()
-        // 重新获取数据
+        // 将当前的筛选条件设置为搜索条件，并重置页码
+        setSearchFilters(filters)
+        setPagination(prev => ({ ...prev, currentPage: 0 }))
+    }
+
+    // 添加重置筛选功能
+    const handleResetFilters = () => {
+        const resetFilters = {
+            keyword: '',
+            category: '',
+            status: ''
+        }
+        setFilters(resetFilters)
+        setSearchFilters(resetFilters)
         setPagination(prev => ({ ...prev, currentPage: 0 }))
     }
 
@@ -176,7 +205,7 @@ export default function ProductList() {
                                 <option value="inactive">下架</option>
                             </select>
                         </div>
-                        <div className="md:col-span-2">
+                        <div className="md:col-span-2 flex gap-2">
                             <button
                                 type="submit"
                                 className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center justify-center transition-colors"
@@ -184,8 +213,28 @@ export default function ProductList() {
                                 <Search className="h-4 w-4 mr-1" />
                                 搜索
                             </button>
+                            {(searchFilters.keyword || searchFilters.category || searchFilters.status) && (
+                                <button
+                                    type="button"
+                                    onClick={handleResetFilters}
+                                    className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg flex items-center justify-center transition-colors"
+                                >
+                                    重置
+                                </button>
+                            )}
                         </div>
                     </form>
+                    {/* 显示当前搜索条件 */}
+                    {(searchFilters.keyword || searchFilters.category || searchFilters.status) && (
+                        <div className="mt-3 text-sm text-gray-500">
+                            当前搜索：
+                            {searchFilters.keyword && <span className="ml-2">名称包含：{searchFilters.keyword}</span>}
+                            {searchFilters.category && <span className="ml-2">分类：{searchFilters.category}</span>}
+                            {searchFilters.status && (
+                                <span className="ml-2">状态：{searchFilters.status === 'active' ? '上架' : '下架'}</span>
+                            )}
+                        </div>
+                    )}
                 </div>
             </div>
 
