@@ -19,8 +19,9 @@ class ProductService {
         category: string,
         page: number = 0,
         size: number = 12,
-        keyword: string = '',  // 添加默认值
-        status: string = ''    // 添加默认值
+        keyword: string = '',
+        status: string = '',
+        vendor: string = ''
     ): Promise<ProductListResponse> {
         try {
             // 构建查询参数
@@ -41,6 +42,9 @@ class ProductService {
             }
             if (status) {
                 queryParams.append('status', status);
+            }
+            if (vendor) {
+                queryParams.append('vendor', vendor);
             }
 
             // 构建完整 URL

@@ -151,25 +151,29 @@ function PaymentContent() {
 
             const emailData = {
                 orderNumber: orderData.orderNumber,
-                email: orderData.shippingAddress.email || orderData.guestEmail, // 确保有邮箱
-                firstName: orderData.shippingAddress.firstName,
-                totalAmount: orderData.totalAmount,
-                shippingFee: orderData.shippingFee,
-                items: orderData.items.map((item: any) => ({
-                    title: item.productTitle,
-                    quantity: item.quantity,
-                    price: item.unitPrice,
+                email: orderData.shippingAddress?.email || orderData.guestEmail || '',
+                firstName: orderData.shippingAddress?.firstName || 'Valued Customer',
+
+                totalAmount: Number(orderData.totalAmount || 0),
+                shippingFee: Number(orderData.shippingFee || 0),
+
+                items: (orderData.items || []).map((item: any) => ({
+                    title: item.productTitle || 'Unknown Item',
+                    quantity: Number(item.quantity || 1),
+                    price: Number(item.unitPrice || 0),
                     sku: item.productSku
                 })),
+
                 shippingAddress: {
-                    addressLine1: orderData.shippingAddress.addressLine1,
-                    city: orderData.shippingAddress.city,
-                    state: orderData.shippingAddress.province,
-                    zip: orderData.shippingAddress.zipCode,
-                    country: orderData.shippingAddress.country
+                    addressLine1: orderData.shippingAddress?.addressLine1 || '',
+                    city: orderData.shippingAddress?.city || '',
+                    state: orderData.shippingAddress?.province || '',
+                    zip: orderData.shippingAddress?.zipCode || '',
+                    country: orderData.shippingAddress?.country || ''
                 }
             };
 
+            console.log('sendOrderConfirmationEmail : ', emailData)
             // 触发 Server Action
             sendOrderConfirmationEmail(emailData).catch(err => console.error('Email failed', err));
 

@@ -5,6 +5,7 @@ import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { productService } from '@/services/product-service'
 import { ProductResponse, ProductListResponse } from '@/types/product'
+import { VENDORS } from '@/lib/constants/product-options'
 
 import {
     Search,
@@ -32,12 +33,14 @@ export default function ProductList() {
     const [filters, setFilters] = useState({
         keyword: '',
         category: '',
-        status: ''
+        status: '',
+        vendor: ''
     })
     const [searchFilters, setSearchFilters] = useState({
         keyword: '',
         category: '',
-        status: ''
+        status: '',
+        vendor: ''
     })
     const [pagination, setPagination] = useState({
         currentPage: 0,
@@ -65,7 +68,8 @@ export default function ProductList() {
                 pagination.currentPage, // page
                 12, // size
                 searchFilters.keyword || '', // 搜索关键词（产品名称）
-                statusParam || '' // 状态
+                statusParam || '', // 状态
+                searchFilters.vendor || '' // 供应商
             )
 
             setProducts(result.content || [])
@@ -100,7 +104,8 @@ export default function ProductList() {
         const resetFilters = {
             keyword: '',
             category: '',
-            status: ''
+            status: '',
+            vendor: ''
         }
         setFilters(resetFilters)
         setSearchFilters(resetFilters)
@@ -168,7 +173,7 @@ export default function ProductList() {
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
                 <div className="p-4">
                     <form onSubmit={handleSearch} className="grid grid-cols-1 md:grid-cols-12 gap-4">
-                        <div className="md:col-span-4">
+                        <div className="md:col-span-3">
                             <div className="relative">
                                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                                 <input
@@ -180,7 +185,7 @@ export default function ProductList() {
                                 />
                             </div>
                         </div>
-                        <div className="md:col-span-3">
+                        <div className="md:col-span-2">
                             <select
                                 value={filters.category}
                                 onChange={(e) => handleFilterChange('category', e.target.value)}
@@ -194,7 +199,7 @@ export default function ProductList() {
                                 ))}
                             </select>
                         </div>
-                        <div className="md:col-span-3">
+                        <div className="md:col-span-2">
                             <select
                                 value={filters.status}
                                 onChange={(e) => handleFilterChange('status', e.target.value)}
@@ -205,6 +210,18 @@ export default function ProductList() {
                                 <option value="inactive">下架</option>
                             </select>
                         </div>
+                        <div className="md:col-span-3">
+                            <select
+                                value={filters.vendor}
+                                onChange={(e) => handleFilterChange('vendor', e.target.value)}
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            >
+                                <option value="">所有供应商</option>
+                                {VENDORS.map((vendor) => (
+                                    <option key={vendor} value={vendor}>{vendor}</option>
+                                ))}
+                            </select>
+                        </div>
                         <div className="md:col-span-2 flex gap-2">
                             <button
                                 type="submit"
@@ -213,7 +230,7 @@ export default function ProductList() {
                                 <Search className="h-4 w-4 mr-1" />
                                 搜索
                             </button>
-                            {(searchFilters.keyword || searchFilters.category || searchFilters.status) && (
+                            {(searchFilters.keyword || searchFilters.category || searchFilters.status || searchFilters.vendor) && (
                                 <button
                                     type="button"
                                     onClick={handleResetFilters}
@@ -225,7 +242,7 @@ export default function ProductList() {
                         </div>
                     </form>
                     {/* 显示当前搜索条件 */}
-                    {(searchFilters.keyword || searchFilters.category || searchFilters.status) && (
+                    {(searchFilters.keyword || searchFilters.category || searchFilters.status || searchFilters.vendor) && (
                         <div className="mt-3 text-sm text-gray-500">
                             当前搜索：
                             {searchFilters.keyword && <span className="ml-2">名称包含：{searchFilters.keyword}</span>}
@@ -233,6 +250,7 @@ export default function ProductList() {
                             {searchFilters.status && (
                                 <span className="ml-2">状态：{searchFilters.status === 'active' ? '上架' : '下架'}</span>
                             )}
+                            {searchFilters.vendor && <span className="ml-2">供应商：{searchFilters.vendor}</span>}
                         </div>
                     )}
                 </div>
@@ -251,20 +269,16 @@ export default function ProductList() {
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider max-w-xs">
                                     标题
                                 </th>
-                                {/* 移除了不需要显示的供应商列，如果需要可以取消注释并调整宽度 */}
-                                {/*<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                {/* 添加供应商列 */}
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     供应商
-                                </th>*/}
+                                </th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     分类
                                 </th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     价格
                                 </th>
-                                {/* 状态列当前被注释了，根据需要启用 */}
-                                {/*<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    状态
-                                </th>*/}
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     操作
                                 </th>
@@ -294,9 +308,10 @@ export default function ProductList() {
                                         </div>
                                     </td>
 
-                                    {/*<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">*/}
-                                    {/*    {product.sourceVendor || '-'}*/}
-                                    {/*</td>*/}
+                                    {/* 添加供应商列 */}
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        {product.sourceVendor || '-'}
+                                    </td>
 
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="flex flex-wrap gap-1 max-w-[200px]">
@@ -305,17 +320,14 @@ export default function ProductList() {
                                                     key={index}
                                                     className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800"
                                                 >
-                                                        {category}
-                                                    </span>
+                                                    {category}
+                                                </span>
                                             ))}
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
                                         {formatPrice(product.currentPrice)}
                                     </td>
-                                    {/*<td className="px-6 py-4 whitespace-nowrap">*/}
-                                    {/*    {getStatusBadge(product.status)}*/}
-                                    {/*</td>*/}
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="flex items-center space-x-2">
                                             {/* 完整编辑 */}
