@@ -54,8 +54,20 @@ export async function POST(request: NextRequest) {
         // 4. 调用后端 API (你的代码)
         const result = await apiPost('/api/V1/order', orderData, requestOptions);
 
-        // 5. 返回结果 (你的代码)
-        return NextResponse.json(result);
+        // 1. 先创建 Response 对象
+        const response = NextResponse.json(result);
+
+        // 2. 如果后端返回成功，说明订单已创建
+        // 此时我们删除游客的 Session Cookie
+        // 注意：如果是登录用户，是否删除取决于你的业务。
+        // 通常如果是混合购物车逻辑，下单后清空 Session 也是安全的，因为 Session 代表临时购物车。
+        if (result && (result.success === true || result.id)) {
+            SessionManager.deleteSessionCookie(response);
+        }
+
+        // 3. 返回带有 "Set-Cookie: CART_SESSION_ID=; Max-Age=0" 的响应
+        return response;
+        // ✅ 核心修改结束
 
     } catch (error) {
         // 异常处理 (你的代码)

@@ -30,6 +30,15 @@ export class SessionManager {
         });
     }
 
+
+    /**
+     * ✅ 新增：删除 Session Cookie
+     * 这会让浏览器在收到响应后立刻丢弃该 Cookie
+     */
+    static deleteSessionCookie(response: NextResponse): void {
+        response.cookies.delete('CART_SESSION_ID');
+    }
+
     /**
      * 为会话购物车准备请求头
      */
