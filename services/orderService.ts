@@ -131,7 +131,7 @@ class OrderService {
             // 构建完整 URL
             const url = `${ADMIN_CONFIG.apiRoutes.order}/list?${queryParams.toString()}`;
 
-            // console.log('Fetching orders from URL:', url);
+            console.log('Fetching orders from URL:', url);
 
             const response = await fetch(url, {
                 cache: 'no-store',

@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
         if (status) url += `&status=${status}`;
         if (category) url += `&category=${category}`;
         if (keyword) url += `&keyword=${keyword}`;
-        if (guestEmail) url += `&vendor=${guestEmail}`;
+        if (guestEmail) url += `&guestEmail=${guestEmail}`;
         if (orderNumber) url += `&orderNumber=${orderNumber}`;
         // console.log('query list url ' + url)
 
