@@ -64,7 +64,7 @@ export default function OrderSummary({ orderItems, subtotal, discount, shipping,
                 {/* 优惠显示 */}
                 {discount > 0 && (
                     <div className="flex justify-between text-pink-600 font-medium">
-                        <span>Discount (20% OFF)</span>
+                        <span>Discount (10% OFF)</span>
                         <span>-${discount.toFixed(2)}</span>
                     </div>
                 )}

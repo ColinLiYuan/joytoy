@@ -77,7 +77,7 @@ export default function CheckoutPage() {
     const { subtotal, shippingFee, discountAmount, total } = useMemo(() => {
         const sub = orderItems.reduce((sum, i) => sum + (i.unitPrice * i.quantity), 0);
         let discount = 0;
-        if (appliedCoupon === 'MYTH20') discount = sub * 0.2;
+        if (appliedCoupon === 'MYTH10') discount = sub * 0.1;
         const shipping = sub >= 49 ? 0 : 5.99;
         return { subtotal: sub, shippingFee: shipping, discountAmount: discount, total: Math.max(0, sub - discount + shipping) };
     }, [orderItems, appliedCoupon]);
@@ -86,9 +86,9 @@ export default function CheckoutPage() {
         if (!couponCode.trim()) return;
         setIsApplyingCoupon(true);
         setTimeout(() => {
-            if (couponCode.toUpperCase() === 'MYTH20') {
-                setAppliedCoupon('MYTH20');
-                showToast('success', 'Success', '20% discount applied!');
+            if (couponCode.toUpperCase() === 'MYTH10') {
+                setAppliedCoupon('MYTH10');
+                showToast('success', 'Success', '10% discount applied!');
             } else {
                 setAppliedCoupon('');
                 showToast('error', 'Invalid Code', 'This coupon code is invalid.');
