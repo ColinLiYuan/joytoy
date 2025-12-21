@@ -26,7 +26,7 @@ export default function Footer() {
 
         if (result.success) {
             // ✅ 成功后显示折扣码，而不是清空表单
-            setSuccessCode(result.code || 'MYTH20');
+            setSuccessCode(result.code || 'MYTH10');
             showToast('success', 'Welcome!', 'Discount code unlocked!');
         } else {
             showToast('error', 'Error', 'Failed to subscribe. Please try again.');
@@ -89,7 +89,7 @@ export default function Footer() {
 
                     {/* Subscribe Section (Gatekeeper Strategy) */}
                     <div id="footer-subscribe" className="footer-section">
-                        <h3 className="text-lg font-bold text-gray-900 mb-6 font-['Playfair_Display']">Get 20% Off</h3>
+                        <h3 className="text-lg font-bold text-gray-900 mb-6 font-['Playfair_Display']">Get 10% Off</h3>
 
                         {/* ✅ 状态切换：成功后显示折扣码 */}
                         {successCode ? (

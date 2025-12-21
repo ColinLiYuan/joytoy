@@ -29,12 +29,12 @@ export async function subscribeToNewsletter(formData: FormData) {
 
                 to: email,
 
-                subject: 'Welcome! Here is your 20% OFF Code',
+                subject: 'Welcome! Here is your 10% OFF Code',
                 html: `
                     <h1>Welcome to the Club!</h1>
                     <p>Thanks for subscribing. As promised, here is your discount code:</p>
-                    <h2 style="color: #d63031; font-size: 24px;">MYTH20</h2>
-                    <p>Use this code at checkout to get 20% off your first order.</p>
+                    <h2 style="color: #d63031; font-size: 24px;">MYTH10</h2>
+                    <p>Use this code at checkout to get 10% off your first order.</p>
                     <br/>
                     <a href="https://mythtoy.com/collections/all">Shop Now</a>
                 `,
@@ -43,7 +43,7 @@ export async function subscribeToNewsletter(formData: FormData) {
             console.log('无法发送给客户(可能是域名未验证):', emailError);
         }
 
-        return { success: true, code: 'MYTH20' };
+        return { success: true, code: 'MYTH10' };
     } catch (error) {
         console.error('Subscribe error:', error);
         return { success: false, error: 'Failed to subscribe' };

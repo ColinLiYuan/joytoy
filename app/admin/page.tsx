@@ -66,7 +66,7 @@ export default function AdminDashboard() {
     const navigation = [
         { name: '仪表盘', href: '/admin', icon: BarChart3, current: true },
         { name: '商品管理', href: '/admin/product', icon: Package, current: false },
-        { name: '订单管理', href: '#', icon: ShoppingCart, current: false },
+        { name: '订单管理', href: '/admin/order', icon: ShoppingCart, current: false },
         { name: '用户管理', href: '#', icon: Users, current: false },
         { name: '博客管理', href: '/admin/blog', icon: BookOpen, current: false }, // 新增
         { name: '系统设置', href: '#', icon: Settings, current: false }
