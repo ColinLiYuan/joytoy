@@ -30,6 +30,7 @@ export interface OrderResponse {
     paymentMethod: string;
     shippingMethod: string;
     items: any[];
+    shippingAddress: AddressRequest;
 }
 
 export interface OrderListResponse {

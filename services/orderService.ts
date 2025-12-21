@@ -101,6 +101,7 @@ class OrderService {
         size: number = 12,
         keyword: string = '',
         status: string = '',
+        orderNumber: string = '',
         guestEmail: string = ''
     ): Promise<OrderListResponse> {
         try {
@@ -122,6 +123,9 @@ class OrderService {
             }
             if (guestEmail) {
                 queryParams.append('guestEmail', guestEmail);
+            }
+            if (orderNumber) {
+                queryParams.append('orderNumber', orderNumber);
             }
 
             // 构建完整 URL

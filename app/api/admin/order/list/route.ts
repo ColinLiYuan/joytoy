@@ -8,6 +8,7 @@ export async function GET(request: NextRequest) {
         const category = searchParams.get('category');
         const status = searchParams.get('status');
         const keyword = searchParams.get('keyword');
+        const orderNumber = searchParams.get('orderNumber');
         const guestEmail = searchParams.get('guestEmail');
         const page = searchParams.get('page') || '0';
         const size = searchParams.get('size') || '12';
@@ -17,6 +18,7 @@ export async function GET(request: NextRequest) {
         if (category) url += `&category=${category}`;
         if (keyword) url += `&keyword=${keyword}`;
         if (guestEmail) url += `&vendor=${guestEmail}`;
+        if (orderNumber) url += `&orderNumber=${orderNumber}`;
         // console.log('query list url ' + url)
 
         const result = await apiGet(url);

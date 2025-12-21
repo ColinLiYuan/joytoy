@@ -1,4 +1,3 @@
-// app/admin/order/page.tsx
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
@@ -8,15 +7,16 @@ import {
     Filter,
     Truck,
     Eye,
-    MoreHorizontal,
     Calendar,
     MapPin,
     CreditCard,
-    X,
-    Check
+    Mail,
+    Hash,
+    User
 } from 'lucide-react'
+import { sendShippingConfirmationEmail } from '@/app/actions/send-shipping-email';
 
-// ✅ 1. 更新为最新的 Java 枚举状态
+// ... (Type definitions 保持不变: OrderStatus, AddressSnapshot, OrderItemResponse, OrderResponse) ...
 type OrderStatus =
     | 'PENDING'
     | 'PAID'
@@ -28,7 +28,6 @@ type OrderStatus =
     | 'REFUNDED'
     | 'EXPIRED';
 
-// 类型定义保持不变...
 interface AddressSnapshot {
     firstName?: string;
     lastName?: string;
@@ -71,34 +70,39 @@ export default function OrderManagementPage() {
     const [orders, setOrders] = useState<OrderResponse[]>([])
     const [loading, setLoading] = useState(true)
 
+    // ✅ 1. 拆分搜索状态
     const [statusFilter, setStatusFilter] = useState<string>('ALL')
-    const [searchTerm, setSearchTerm] = useState('')
+    const [searchOrderNumber, setSearchOrderNumber] = useState('') // 精确/模糊订单号
+    const [searchEmail, setSearchEmail] = useState('')             // 邮箱
+    const [searchKeyword, setSearchKeyword] = useState('')         // 其他关键字(如姓名)
 
     // 分页
     const [page, setPage] = useState(0)
-    const [size] = useState(10)
+    const [size] = useState(12) // Service 默认是 12
     const [totalPages, setTotalPages] = useState(0)
     const [totalElements, setTotalElements] = useState(0)
 
-    // 发货弹窗
+    // 发货弹窗状态
     const [isShipModalOpen, setIsShipModalOpen] = useState(false)
     const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null)
-    const [selectedOrderNumber, setSelectedOrderNumber] = useState<string>('') // 用于弹窗显示
+    const [selectedOrderNumber, setSelectedOrderNumber] = useState<string>('')
     const [trackingNumberInput, setTrackingNumberInput] = useState('')
     const [shipLoading, setShipLoading] = useState(false)
 
-    // 加载数据
+    // ✅ 2. 适配新的 Service 参数签名
     const fetchOrders = useCallback(async () => {
         try {
             setLoading(true)
             const data = await orderService.adminList(
                 page,
                 size,
-                searchTerm,
-                statusFilter === 'ALL' ? '' : statusFilter,
-                ''
+                searchKeyword, // keyword: 其他通用搜索
+                statusFilter === 'ALL' ? '' : statusFilter, // status
+                searchOrderNumber, // orderNumber: 独立参数
+                searchEmail        // guestEmail: 独立参数
             )
-            // 强制类型转换，确保前端使用的是新的 OrderStatus 类型
+
+            // 强制类型转换
             setOrders(data.content as unknown as OrderResponse[])
             setTotalPages(data.totalPages)
             setTotalElements(data.totalElements)
@@ -107,38 +111,29 @@ export default function OrderManagementPage() {
         } finally {
             setLoading(false)
         }
-    }, [page, size, statusFilter, searchTerm])
+    }, [page, size, statusFilter, searchKeyword, searchOrderNumber, searchEmail])
 
     useEffect(() => {
         fetchOrders()
     }, [fetchOrders])
 
-    // ✅ 2. 更新状态标签样式
+    // 状态标签样式 (保持不变)
     const getStatusBadge = (status: OrderStatus) => {
         const styles: Record<OrderStatus, string> = {
             PENDING: 'bg-yellow-100 text-yellow-800 border-yellow-200',
             PAID: 'bg-blue-100 text-blue-800 border-blue-200',
-            PROCESSING: 'bg-indigo-100 text-indigo-800 border-indigo-200', // 新增
+            PROCESSING: 'bg-indigo-100 text-indigo-800 border-indigo-200',
             SHIPPED: 'bg-purple-100 text-purple-800 border-purple-200',
-            DELIVERED: 'bg-cyan-100 text-cyan-800 border-cyan-200', // 新增
+            DELIVERED: 'bg-cyan-100 text-cyan-800 border-cyan-200',
             COMPLETED: 'bg-green-100 text-green-800 border-green-200',
             CANCELLED: 'bg-gray-100 text-gray-600 border-gray-200',
-            REFUNDED: 'bg-pink-100 text-pink-800 border-pink-200', // 新增
+            REFUNDED: 'bg-pink-100 text-pink-800 border-pink-200',
             EXPIRED: 'bg-red-50 text-red-600 border-red-100',
         }
-
         const labels: Record<OrderStatus, string> = {
-            PENDING: '待支付',
-            PAID: '已支付',
-            PROCESSING: '处理中',
-            SHIPPED: '已发货',
-            DELIVERED: '已送达',
-            COMPLETED: '已完成',
-            CANCELLED: '已取消',
-            REFUNDED: '已退款',
-            EXPIRED: '已过期',
+            PENDING: '待支付', PAID: '已支付', PROCESSING: '处理中', SHIPPED: '已发货',
+            DELIVERED: '已送达', COMPLETED: '已完成', CANCELLED: '已取消', REFUNDED: '已退款', EXPIRED: '已过期',
         }
-
         return (
             <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium border ${styles[status] || 'bg-gray-100 border-gray-200 text-gray-800'}`}>
                 {labels[status] || status}
@@ -150,12 +145,11 @@ export default function OrderManagementPage() {
         return new Intl.NumberFormat('zh-CN', { style: 'currency', currency: 'CNY' }).format(amount)
     }
 
-    // --- 操作逻辑 ---
-
+    // --- 操作逻辑 (发货部分保持不变) ---
     const openShipModal = (order: OrderResponse) => {
         setSelectedOrderId(order.id)
         setSelectedOrderNumber(order.orderNumber)
-        setTrackingNumberInput(order.trackingNumber || '') // 如果已有单号则回显
+        setTrackingNumberInput(order.trackingNumber || '')
         setIsShipModalOpen(true)
     }
 
@@ -164,26 +158,53 @@ export default function OrderManagementPage() {
             alert('请输入物流单号')
             return
         }
+        const order = orders.find(o => o.id === selectedOrderId);
+        if (!order) return;
 
         try {
             setShipLoading(true)
             await orderService.shipOrder(selectedOrderId, trackingNumberInput)
             setIsShipModalOpen(false)
-            fetchOrders() // 刷新列表
 
+            await sendShippingConfirmationEmail({
+                orderNumber: order.orderNumber,
+                email: order.guestEmail || order.shippingAddress.email || "",
+                firstName: order.shippingAddress.firstName || "Customer",
+                carrier: 'Standard Shipping',
+                trackingNumber: trackingNumberInput,
+                shippingAddress: {
+                    addressLine1: order.shippingAddress.addressLine1 || "",
+                    city: order.shippingAddress.city || "",
+                    country: order.shippingAddress.country || ""
+                },
+                items: order.items.map(item => ({
+                    title: item.productName,
+                    quantity: item.quantity,
+                    image: ""
+                }))
+            });
+
+            fetchOrders()
+            alert('发货成功并已触发邮件发送')
         } catch (error) {
-            console.error(error)
+            console.error('发货操作失败:', error)
             alert('发货失败，请重试')
         } finally {
             setShipLoading(false)
         }
     }
 
-    // 筛选 Tab 定义
+    const handleSearchKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter') {
+            setPage(0)
+            fetchOrders()
+        }
+    }
+
     const tabs = [
         { key: 'ALL', label: '全部' },
         { key: 'PENDING', label: '待支付' },
-        { key: 'PAID', label: '待发货' }, // 这里把 PAID 视为待发货
+        { key: 'PAID', label: '待发货' },
         { key: 'PROCESSING', label: '处理中' },
         { key: 'SHIPPED', label: '已发货' },
         { key: 'REFUNDED', label: '售后/退款' },
@@ -199,8 +220,9 @@ export default function OrderManagementPage() {
                     </div>
                 </div>
 
-                {/* 筛选与搜索 */}
+                {/* ✅ 3. 筛选与操作栏 (更新UI) */}
                 <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
+                    {/* Tabs */}
                     <div className="border-b border-gray-200 px-2 overflow-x-auto">
                         <nav className="-mb-px flex space-x-6" aria-label="Tabs">
                             {tabs.map((tab) => (
@@ -220,31 +242,77 @@ export default function OrderManagementPage() {
                         </nav>
                     </div>
 
-                    <div className="p-4 flex flex-col sm:flex-row gap-4 items-center">
-                        <div className="relative flex-1 max-w-md w-full">
-                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <Search className="h-4 w-4 text-gray-400" />
+                    {/* Search Bars - 使用 Grid 布局适应多输入框 */}
+                    <div className="p-4 grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+
+                        {/* 订单号搜索 */}
+                        <div>
+                            <label className="block text-xs font-medium text-gray-500 mb-1 ml-1">订单号</label>
+                            <div className="relative">
+                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <Hash className="h-4 w-4 text-gray-400" />
+                                </div>
+                                <input
+                                    type="text"
+                                    className="block w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+                                    placeholder="#MT25..."
+                                    value={searchOrderNumber}
+                                    onChange={(e) => setSearchOrderNumber(e.target.value)}
+                                    onKeyDown={handleSearchKeyDown}
+                                />
                             </div>
-                            <input
-                                type="text"
-                                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg text-sm placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
-                                placeholder="搜索订单号 (回车搜索)"
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                onKeyDown={(e) => e.key === 'Enter' && (setPage(0), fetchOrders())}
-                            />
                         </div>
-                        <button
-                            onClick={() => { setPage(0); fetchOrders(); }}
-                            className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 w-full sm:w-auto justify-center"
-                        >
-                            <Filter className="h-4 w-4 mr-2" />
-                            刷新列表
-                        </button>
+
+                        {/* 邮箱搜索 */}
+                        <div>
+                            <label className="block text-xs font-medium text-gray-500 mb-1 ml-1">客户邮箱</label>
+                            <div className="relative">
+                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <Mail className="h-4 w-4 text-gray-400" />
+                                </div>
+                                <input
+                                    type="text"
+                                    className="block w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+                                    placeholder="name@example.com"
+                                    value={searchEmail}
+                                    onChange={(e) => setSearchEmail(e.target.value)}
+                                    onKeyDown={handleSearchKeyDown}
+                                />
+                            </div>
+                        </div>
+
+                        {/* 关键字搜索 (姓名等) */}
+                        <div>
+                            <label className="block text-xs font-medium text-gray-500 mb-1 ml-1">其他关键字</label>
+                            <div className="relative">
+                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <User className="h-4 w-4 text-gray-400" />
+                                </div>
+                                <input
+                                    type="text"
+                                    className="block w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+                                    placeholder="姓名/备注..."
+                                    value={searchKeyword}
+                                    onChange={(e) => setSearchKeyword(e.target.value)}
+                                    onKeyDown={handleSearchKeyDown}
+                                />
+                            </div>
+                        </div>
+
+                        {/* 搜索按钮 */}
+                        <div>
+                            <button
+                                onClick={() => { setPage(0); fetchOrders(); }}
+                                className="w-full inline-flex items-center justify-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors h-[38px]"
+                            >
+                                <Filter className="h-4 w-4 mr-2" />
+                                筛选查询
+                            </button>
+                        </div>
                     </div>
                 </div>
 
-                {/* 订单列表 */}
+                {/* 订单列表 - 保持不变 */}
                 <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
                     <div className="overflow-x-auto">
                         <table className="min-w-full divide-y divide-gray-200">
@@ -286,6 +354,7 @@ export default function OrderManagementPage() {
                                                 <Calendar className="h-3 w-3 mr-1" />
                                                 {new Date(order.createdAt).toLocaleDateString()} {new Date(order.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                                             </div>
+                                            <div className="text-sm font-bold text-gray-500">共{order.items.length}个商品</div>
                                         </td>
 
                                         <td className="px-6 py-4">
@@ -328,7 +397,6 @@ export default function OrderManagementPage() {
 
                                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                             <div className="flex justify-end space-x-2">
-                                                {/* ✅ 3. 发货按钮：支持 PAID 和 PROCESSING 状态 */}
                                                 {(order.status === 'PAID' || order.status === 'PROCESSING') && (
                                                     <button
                                                         onClick={() => openShipModal(order)}
@@ -350,14 +418,9 @@ export default function OrderManagementPage() {
                             </tbody>
                         </table>
                     </div>
-                    {/* 分页组件 (复用) */}
+                    {/* 分页组件 (保持不变) */}
                     {totalPages > 1 && (
                         <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
-                            {/* ... 分页代码与之前相同，省略 ... */}
-                            <div className="flex flex-1 justify-between sm:hidden">
-                                <button onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0} className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50">上一页</button>
-                                <button onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))} disabled={page >= totalPages - 1} className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50">下一页</button>
-                            </div>
                             <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
                                 <div>
                                     <p className="text-sm text-gray-700">
@@ -376,22 +439,17 @@ export default function OrderManagementPage() {
                 </div>
             </div>
 
-            {/* ✅ 4. 发货弹窗 */}
+            {/* 发货弹窗 (保持不变) */}
             {isShipModalOpen && (
                 <div className="relative z-50" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-                    {/* 背景遮罩：使用 fixed inset-0 确保覆盖全屏 */}
                     <div
                         className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
                         onClick={() => !shipLoading && setIsShipModalOpen(false)}
                     ></div>
 
-                    {/* 弹窗定位容器：使用 fixed inset-0 + flex 居中 */}
                     <div className="fixed inset-0 z-10 overflow-y-auto">
                         <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
-
-                            {/* 弹窗主体 */}
                             <div className="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
-                                {/* 弹窗内容 */}
                                 <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                                     <div className="sm:flex sm:items-start">
                                         <div className="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-indigo-100 sm:mx-0 sm:h-10 sm:w-10">
@@ -425,8 +483,6 @@ export default function OrderManagementPage() {
                                         </div>
                                     </div>
                                 </div>
-
-                                {/* 底部按钮区 */}
                                 <div className="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
                                     <button
                                         type="button"
