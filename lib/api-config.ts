@@ -28,6 +28,7 @@ export const SERVER_CONFIG = {
 
 export const ADMIN_CONFIG = {
     apiRoutes: {
+        order: '/api/admin/order',
         product: '/api/admin/product',
         category: '/api/admin/category',
         filter: '/api/admin/filter',

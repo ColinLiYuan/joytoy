@@ -159,6 +159,7 @@ export default function CheckoutPage() {
                 orderId: result.id,
                 orderNumber: result.orderNumber,
                 shippingFee: result.shippingFee,
+                discountAmount: result.discountAmount,
                 totalAmount: result.finalAmount,
                 items: orderItems,
                 guestEmail: addressData.email,
