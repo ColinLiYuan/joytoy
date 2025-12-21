@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
         // 此时我们删除游客的 Session Cookie
         // 注意：如果是登录用户，是否删除取决于你的业务。
         // 通常如果是混合购物车逻辑，下单后清空 Session 也是安全的，因为 Session 代表临时购物车。
-        if (result && (result.success === true || result.id)) {
+        if (result && (result.success === true)) {
             SessionManager.deleteSessionCookie(response);
         }
 
