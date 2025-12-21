@@ -46,7 +46,7 @@ export default function BlogContent({ blog }: BlogContentProps) {
         const result = await subscribeToNewsletter(formData);
 
         if (result.success) {
-            setSuccessCode(result.code || 'MYTH20');
+            setSuccessCode(result.code || 'MYTH10');
             showToast('success', 'Welcome!', 'Discount code unlocked!');
         } else {
             showToast('error', 'Error', 'Failed to subscribe. Please try again.');
@@ -167,7 +167,7 @@ export default function BlogContent({ blog }: BlogContentProps) {
                             <Mail size={12} /> The Inner Circle
                         </div>
                         <h2 className="text-3xl md:text-5xl font-serif text-white mb-6">
-                            Unlock <span className="italic text-[#C5A059]">20% Off</span>
+                            Unlock <span className="italic text-[#C5A059]">10% Off</span>
                         </h2>
 
                         {successCode ? (
