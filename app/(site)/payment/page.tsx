@@ -7,29 +7,42 @@ import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 import { Loader2, CheckCircle2, AlertCircle, ShieldCheck, Lock } from 'lucide-react';
 import { orderService } from '@/services/orderService';
 import { useAuth } from '@/contexts/authContext';
+import { COUNTRY_DATA } from '@/lib/constants/country-data';
+import { useCartStore } from '@/stores/useCartStore';
+import { sendOrderConfirmationEmail } from '@/app/actions/send-order-email';
 
 function PaymentContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const orderNumber = searchParams.get('orderNumber');
+
+    // ✅ 统一参数处理：去 #
+    const rawOrderNumber = searchParams.get('orderNumber');
+    const orderNumber = rawOrderNumber ? rawOrderNumber.replace(/^#/, '') : null;
+
     const { isLoggedIn } = useAuth();
 
     const [isLoading, setIsLoading] = useState(true);
     const [orderData, setOrderData] = useState<any>(null);
     const [paymentStatus, setPaymentStatus] = useState<'processing' | 'success' | 'error'>('processing');
     const [errorMessage, setErrorMessage] = useState('');
+    const [isMounted, setIsMounted] = useState(false);
+    const { clearCart } = useCartStore();
 
     const clientId = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID;
 
     useEffect(() => {
+        setIsMounted(true);
+    }, []);
+
+    useEffect(() => {
+        if (!isMounted) return;
+
         const fetchOrder = async () => {
             if (!clientId) {
-                // console.log('🔍 fetchOrder function called');
                 setErrorMessage("Configuration Error: PayPal Client ID missing");
                 setIsLoading(false);
                 return;
             }
-            // console.log('payment fetch order: ', orderNumber)
             if (!orderNumber) {
                 setErrorMessage('Order number is missing');
                 setIsLoading(false);
@@ -37,64 +50,96 @@ function PaymentContent() {
             }
 
             try {
-                // 1. 尝试从 LocalStorage 获取（最快）
+                // 1. 尝试从 LocalStorage 获取
                 const storedOrder = localStorage.getItem('currentOrder');
-                // console.log('payment fetch order from storedOrder: ', storedOrder)
                 if (storedOrder) {
-                    const parsed = JSON.parse(storedOrder);
-                    // 强制转字符串对比，防止类型不一致
-                    if (String(parsed.orderNumber) === String(orderNumber)) {
-                        setOrderData(parsed);
-                        setIsLoading(false);
-                        return;
+                    try {
+                        const parsed = JSON.parse(storedOrder);
+                        const storedNumber = String(parsed.orderNumber).replace(/^#/, '');
+
+                        if (storedNumber === orderNumber) {
+                            setOrderData(parsed);
+                            setIsLoading(false);
+                            return;
+                        }
+                    } catch (e) {
+                        console.error('LS parse error', e);
                     }
                 }
 
-                // 2. 如果 LocalStorage 没有，或者 ID 不匹配，尝试从后端获取
+                // 2. LocalStorage 没命中，尝试 API (游客可能失败)
                 const data = await orderService.getOrder(orderNumber);
-                setOrderData(data);
-                setIsLoading(false);
-
-                // 暂时这就样：
-                setIsLoading(false);
+                if (data) {
+                    setOrderData(data);
+                } else {
+                    throw new Error('Order not found');
+                }
 
             } catch (error) {
                 console.error(error);
                 setErrorMessage('Failed to load order details');
+            } finally {
                 setIsLoading(false);
             }
         };
+
         fetchOrder();
-    }, [orderNumber, clientId]);
+    }, [orderNumber, clientId, isMounted]);
 
     const createPayPalOrder = (data: any, actions: any) => {
+        if (!orderData) return Promise.reject("Order data missing");
+
+        const shippingAddr = orderData.shippingAddress;
+        if (!shippingAddr) {
+            setErrorMessage("Shipping address missing. Please go back.");
+            return Promise.reject("Shipping address missing");
+        }
+
+        // ✅ 2. 国家代码转换 (PayPal 必须用 ISO 2位码)
+        // 逻辑：如果本身就是2位，直接用；如果是全称，查表；查不到默认 US
+        let isoCountryCode = shippingAddr.country;
+        if (shippingAddr.country.length > 2) {
+            isoCountryCode = COUNTRY_DATA[shippingAddr.country] || 'US';
+        }
+
         return actions.order.create({
             purchase_units: [
                 {
-                    reference_id: orderNumber || 'unknown',
-                    description: `Order #${orderData?.orderNumber}`,
+                    reference_id: orderNumber,
+                    description: `Order #${orderData.orderNumber}`,
                     amount: {
                         currency_code: "USD",
-                        value: orderData?.totalAmount ? Number(orderData.totalAmount).toFixed(2) : "0.00",
+                        value: Number(orderData.totalAmount).toFixed(2),
                     },
+                    shipping: {
+                        name: {
+                            full_name: `${shippingAddr.firstName || ''} ${shippingAddr.lastName || ''}`.trim()
+                        },
+                        address: {
+                            address_line_1: shippingAddr.addressLine1 || '',
+                            address_line_2: shippingAddr.addressLine2 || "",
+                            admin_area_2: shippingAddr.city || '',
+                            admin_area_1: shippingAddr.province || '',
+                            postal_code: shippingAddr.zipCode || '',
+                            // ✅ 使用转换后的代码
+                            country_code: isoCountryCode
+                        }
+                    }
                 },
             ],
+            application_context: {
+                shipping_preference: "SET_PROVIDED_ADDRESS",
+                brand_name: "MythToy",
+                user_action: "PAY_NOW"
+            }
         });
     };
 
-    // app/(site)/payment/page.tsx - 更新 onApprove 函数
     const onApprove = async (data: any) => {
         try {
-            if (!orderNumber) {
-                setErrorMessage('Order number is missing');
-                setPaymentStatus('error');
-                return;
-            }
-
             setPaymentStatus('processing');
 
-            // 2. 调用后端支付接口
-            await orderService.payOrder(orderNumber, {
+            await orderService.payOrder(orderNumber!, {
                 transactionId: data.orderID,
                 paymentMethod: 'PAYPAL',
                 amount: orderData.totalAmount,
@@ -102,28 +147,52 @@ function PaymentContent() {
             });
 
             setPaymentStatus('success');
+            clearCart();
 
-            // 3. ✅ 分流跳转逻辑
+            const emailData = {
+                orderNumber: orderData.orderNumber,
+                email: orderData.shippingAddress?.email || orderData.guestEmail || '',
+                firstName: orderData.shippingAddress?.firstName || 'Valued Customer',
+
+                totalAmount: Number(orderData.totalAmount || 0),
+                shippingFee: Number(orderData.shippingFee || 0),
+
+                items: (orderData.items || []).map((item: any) => ({
+                    title: item.productTitle || 'Unknown Item',
+                    quantity: Number(item.quantity || 1),
+                    price: Number(item.unitPrice || 0),
+                    sku: item.productSku
+                })),
+
+                shippingAddress: {
+                    addressLine1: orderData.shippingAddress?.addressLine1 || '',
+                    city: orderData.shippingAddress?.city || '',
+                    state: orderData.shippingAddress?.province || '',
+                    zip: orderData.shippingAddress?.zipCode || '',
+                    country: orderData.shippingAddress?.country || ''
+                }
+            };
+
+            console.log('sendOrderConfirmationEmail : ', emailData)
+            // 触发 Server Action
+            sendOrderConfirmationEmail(emailData).catch(err => console.error('Email failed', err));
+
             if (isLoggedIn) {
-                // === 登录用户 ===
-                // 清除临时数据
                 localStorage.removeItem('currentOrder');
-                // 跳转到会员中心的订单详情页 (受保护路由)
                 router.push(`/orders/${orderNumber}?payment_success=1`);
             } else {
-                // === 游客 ===
-                // ⚠️ 注意：不要清除 'currentOrder'，因为下一页(Order Confirmation)
-                // 需要读取里面的 email 来提示用户 "Receipt sent to xxx@..."
-
-                // 跳转到公开的订单确认页
+                // 游客去确认页
                 router.push(`/order-confirmation?orderNumber=${orderNumber}`);
             }
 
         } catch (error: any) {
             console.error(error);
             setPaymentStatus('error');
+            setErrorMessage(error.message || "Payment verification failed");
         }
     };
+
+    if (!isMounted) return null;
 
     if (isLoading) {
         return (
@@ -140,7 +209,7 @@ function PaymentContent() {
                 <div className="bg-white p-8 rounded-2xl shadow-sm text-center max-w-md">
                     <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
                     <h2 className="text-xl font-bold text-gray-900 mb-2">Order Not Found</h2>
-                    <p className="text-gray-500 mb-6">We couldn't retrieve the order details.</p>
+                    <p className="text-gray-500 mb-6">{errorMessage || "We couldn't retrieve the order details."}</p>
                     <button onClick={() => router.push('/checkout')} className="bg-black text-white px-6 py-3 rounded-lg font-bold">
                         Return to Checkout
                     </button>
@@ -168,7 +237,7 @@ function PaymentContent() {
                                     <CheckCircle2 size={40} />
                                 </div>
                                 <h3 className="text-2xl font-bold text-gray-900 mb-2">Payment Successful!</h3>
-                                <p className="text-gray-500">Redirecting to your receipt...</p>
+                                <p className="text-gray-500">Redirecting...</p>
                             </div>
                         ) : paymentStatus === 'error' ? (
                             <div className="text-center py-8">
@@ -186,18 +255,25 @@ function PaymentContent() {
                                     <span>Secure 256-bit SSL Encrypted</span>
                                 </div>
 
-                                <div className="relative z-0">
-                                    <PayPalScriptProvider options={{
-                                        clientId: clientId!,
-                                        currency: "USD",
-                                        intent: "capture"
-                                    }}>
-                                        <PayPalButtons
-                                            style={{ layout: "vertical", shape: "rect", borderRadius: 12, height: 48 }}
-                                            createOrder={createPayPalOrder}
-                                            onApprove={onApprove}
-                                        />
-                                    </PayPalScriptProvider>
+                                <div className="relative z-0 min-h-[150px]">
+                                    {clientId && (
+                                        <PayPalScriptProvider options={{
+                                            clientId: clientId,
+                                            currency: "USD",
+                                            intent: "capture"
+                                        }}>
+                                            <PayPalButtons
+                                                style={{ layout: "vertical", shape: "rect", borderRadius: 12, height: 48 }}
+                                                createOrder={createPayPalOrder}
+                                                onApprove={onApprove}
+                                                onError={(err) => {
+                                                    console.error("PayPal Error:", err);
+                                                    setErrorMessage("PayPal encountered an error.");
+                                                    setPaymentStatus('error');
+                                                }}
+                                            />
+                                        </PayPalScriptProvider>
+                                    )}
                                 </div>
 
                                 <div className="text-center">
@@ -223,7 +299,7 @@ function PaymentContent() {
 
 export default function PaymentPage() {
     return (
-        <Suspense fallback={<div className="min-h-screen bg-gray-50" />}>
+        <Suspense fallback={<div className="min-h-screen bg-gray-50 flex items-center justify-center"><Loader2 className="animate-spin" /></div>}>
             <PaymentContent />
         </Suspense>
     );

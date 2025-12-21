@@ -17,7 +17,7 @@ export async function subscribeToNewsletter(formData: FormData) {
         await resend.emails.send({
             from: 'MythToy System <system@mythtoy.com>',
 
-            to: 'colin@mythtoy.com',
+            to: 'support@mythtoy.com',
 
             subject: '[New Subscriber]',
             text: `New sub: ${email}`,
@@ -25,7 +25,7 @@ export async function subscribeToNewsletter(formData: FormData) {
 
         try {
             await resend.emails.send({
-                from: 'MythToy Support <support@mythtoy.com>',
+                from: 'MythToy <support@mythtoy.com>',
 
                 to: email,
 

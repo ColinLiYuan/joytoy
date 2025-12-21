@@ -1,10 +1,11 @@
 // /app/admin/products/page.tsx
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { productService } from '@/services/product-service'
 import { ProductResponse, ProductListResponse } from '@/types/product'
+import { VENDORS } from '@/lib/constants/product-options'
 
 import {
     Search,
@@ -32,7 +33,14 @@ export default function ProductList() {
     const [filters, setFilters] = useState({
         keyword: '',
         category: '',
-        status: ''
+        status: '',
+        vendor: ''
+    })
+    const [searchFilters, setSearchFilters] = useState({
+        keyword: '',
+        category: '',
+        status: '',
+        vendor: ''
     })
     const [pagination, setPagination] = useState({
         currentPage: 0,
@@ -40,41 +48,67 @@ export default function ProductList() {
         totalElements: 0
     })
 
-    // 使用接口获取产品数据
-    useEffect(() => {
-        const fetchProducts = async () => {
-            try {
-                setLoading(true)
-                setError('')
+    // 获取产品数据
+    const fetchProducts = useCallback(async () => {
+        try {
+            setLoading(true)
+            setError('')
 
-                // 调用产品服务获取数据
-                const result: ProductListResponse = await productService.adminList(
-                    filters.category || '', // slug参数
-                    pagination.currentPage, // page
-                    12 // size
-                )
-
-                setProducts(result.content || [])
-                setPagination({
-                    currentPage: result.currentPage || 0,
-                    totalPages: result.totalPages || 1,
-                    totalElements: result.totalElements || 0
-                })
-            } catch (err) {
-                console.error('获取产品列表失败:', err)
-                setError('获取产品列表失败，请重试')
-                setProducts([])
-            } finally {
-                setLoading(false)
+            // 转换状态值为后端需要的格式
+            let statusParam = ''
+            if (searchFilters.status === 'active') {
+                statusParam = 'ACTIVE'
+            } else if (searchFilters.status === 'inactive') {
+                statusParam = 'INACTIVE'
             }
-        }
 
+            // 调用产品服务获取数据，传递所有筛选条件
+            const result: ProductListResponse = await productService.adminList(
+                searchFilters.category || '', // category slug参数
+                pagination.currentPage, // page
+                12, // size
+                searchFilters.keyword || '', // 搜索关键词（产品名称）
+                statusParam || '', // 状态
+                searchFilters.vendor || '' // 供应商
+            )
+
+            setProducts(result.content || [])
+            setPagination({
+                currentPage: result.currentPage || 0,
+                totalPages: result.totalPages || 1,
+                totalElements: result.totalElements || 0
+            })
+        } catch (err) {
+            console.error('获取产品列表失败:', err)
+            setError('获取产品列表失败，请重试')
+            setProducts([])
+        } finally {
+            setLoading(false)
+        }
+    }, [searchFilters, pagination.currentPage])
+
+    // 初始加载和搜索条件变化时获取数据
+    useEffect(() => {
         fetchProducts()
-    }, [filters, pagination.currentPage])
+    }, [fetchProducts])
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault()
-        // 重新获取数据
+        // 将当前的筛选条件设置为搜索条件，并重置页码
+        setSearchFilters(filters)
+        setPagination(prev => ({ ...prev, currentPage: 0 }))
+    }
+
+    // 添加重置筛选功能
+    const handleResetFilters = () => {
+        const resetFilters = {
+            keyword: '',
+            category: '',
+            status: '',
+            vendor: ''
+        }
+        setFilters(resetFilters)
+        setSearchFilters(resetFilters)
         setPagination(prev => ({ ...prev, currentPage: 0 }))
     }
 
@@ -139,7 +173,7 @@ export default function ProductList() {
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
                 <div className="p-4">
                     <form onSubmit={handleSearch} className="grid grid-cols-1 md:grid-cols-12 gap-4">
-                        <div className="md:col-span-4">
+                        <div className="md:col-span-3">
                             <div className="relative">
                                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                                 <input
@@ -151,7 +185,7 @@ export default function ProductList() {
                                 />
                             </div>
                         </div>
-                        <div className="md:col-span-3">
+                        <div className="md:col-span-2">
                             <select
                                 value={filters.category}
                                 onChange={(e) => handleFilterChange('category', e.target.value)}
@@ -165,7 +199,7 @@ export default function ProductList() {
                                 ))}
                             </select>
                         </div>
-                        <div className="md:col-span-3">
+                        <div className="md:col-span-2">
                             <select
                                 value={filters.status}
                                 onChange={(e) => handleFilterChange('status', e.target.value)}
@@ -176,7 +210,19 @@ export default function ProductList() {
                                 <option value="inactive">下架</option>
                             </select>
                         </div>
-                        <div className="md:col-span-2">
+                        <div className="md:col-span-3">
+                            <select
+                                value={filters.vendor}
+                                onChange={(e) => handleFilterChange('vendor', e.target.value)}
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            >
+                                <option value="">所有供应商</option>
+                                {VENDORS.map((vendor) => (
+                                    <option key={vendor} value={vendor}>{vendor}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="md:col-span-2 flex gap-2">
                             <button
                                 type="submit"
                                 className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center justify-center transition-colors"
@@ -184,8 +230,29 @@ export default function ProductList() {
                                 <Search className="h-4 w-4 mr-1" />
                                 搜索
                             </button>
+                            {(searchFilters.keyword || searchFilters.category || searchFilters.status || searchFilters.vendor) && (
+                                <button
+                                    type="button"
+                                    onClick={handleResetFilters}
+                                    className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg flex items-center justify-center transition-colors"
+                                >
+                                    重置
+                                </button>
+                            )}
                         </div>
                     </form>
+                    {/* 显示当前搜索条件 */}
+                    {(searchFilters.keyword || searchFilters.category || searchFilters.status || searchFilters.vendor) && (
+                        <div className="mt-3 text-sm text-gray-500">
+                            当前搜索：
+                            {searchFilters.keyword && <span className="ml-2">名称包含：{searchFilters.keyword}</span>}
+                            {searchFilters.category && <span className="ml-2">分类：{searchFilters.category}</span>}
+                            {searchFilters.status && (
+                                <span className="ml-2">状态：{searchFilters.status === 'active' ? '上架' : '下架'}</span>
+                            )}
+                            {searchFilters.vendor && <span className="ml-2">供应商：{searchFilters.vendor}</span>}
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -202,20 +269,16 @@ export default function ProductList() {
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider max-w-xs">
                                     标题
                                 </th>
-                                {/* 移除了不需要显示的供应商列，如果需要可以取消注释并调整宽度 */}
-                                {/*<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                {/* 添加供应商列 */}
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     供应商
-                                </th>*/}
+                                </th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     分类
                                 </th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     价格
                                 </th>
-                                {/* 状态列当前被注释了，根据需要启用 */}
-                                {/*<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    状态
-                                </th>*/}
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     操作
                                 </th>
@@ -245,9 +308,10 @@ export default function ProductList() {
                                         </div>
                                     </td>
 
-                                    {/*<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">*/}
-                                    {/*    {product.sourceVendor || '-'}*/}
-                                    {/*</td>*/}
+                                    {/* 添加供应商列 */}
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        {product.sourceVendor || '-'}
+                                    </td>
 
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="flex flex-wrap gap-1 max-w-[200px]">
@@ -256,17 +320,14 @@ export default function ProductList() {
                                                     key={index}
                                                     className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800"
                                                 >
-                                                        {category}
-                                                    </span>
+                                                    {category}
+                                                </span>
                                             ))}
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
                                         {formatPrice(product.currentPrice)}
                                     </td>
-                                    {/*<td className="px-6 py-4 whitespace-nowrap">*/}
-                                    {/*    {getStatusBadge(product.status)}*/}
-                                    {/*</td>*/}
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="flex items-center space-x-2">
                                             {/* 完整编辑 */}

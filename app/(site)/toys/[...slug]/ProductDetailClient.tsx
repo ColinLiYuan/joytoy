@@ -265,7 +265,17 @@ export default function ProductDetailClient({
     const performAddToCart = async () => {
         if (!product || !selectedSku || getAvailableStock(selectedSku) <= 0) return false;
         try {
-            await addItemToCart({ productId: product.id, productTitle: product.title, productSku: selectedSku.sku, productImage: getProductImageUrl('', product.image), unitPrice: product.currentPrice, quantity: 1, color: selectedSku.color, skuId: selectedSku.id });
+            await addItemToCart({
+                productId: product.id,
+                productSlug: product.slug,
+                productTitle: product.title,
+                productSku: selectedSku.sku,
+                productImage: getProductImageUrl('', product.image),
+                unitPrice: product.currentPrice,
+                quantity: 1,
+                color: selectedSku.color,
+                skuId: selectedSku.id
+            });
             return true;
         } catch (error) { console.error(error); showToast('error', 'Error', 'Failed to add product.'); return false; }
     };

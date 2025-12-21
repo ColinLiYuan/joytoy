@@ -1,5 +1,6 @@
 export interface AddToCartRequest {
     productId: number;
+    productSlug: string;
     productTitle: string;     // 新增字段
     skuId?: number;
     productSku: string;       // 新增字段
@@ -31,6 +32,7 @@ export interface CartResponse {
 export interface CartItem {
     itemId: number;
     productId: number;
+    productSlug: string;
     productTitle: string;
     productSku: string;
     productImage: string;
