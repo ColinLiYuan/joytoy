@@ -1,6 +1,6 @@
 // services/orderService.ts
-import { OrderCreateRequest, OrderResponse } from '@/types/order';
-import { SERVER_CONFIG } from '@/lib/api-config';
+import { OrderCreateRequest, OrderResponse, OrderListResponse } from '@/types/order';
+import { SERVER_CONFIG, ADMIN_CONFIG } from '@/lib/api-config';
 import { PaymentRequest } from '@/types/payment';
 
 class OrderService {
@@ -94,6 +94,96 @@ class OrderService {
         }
 
         return json.data;
+    }
+
+    async adminList(
+        page: number = 0,
+        size: number = 12,
+        keyword: string = '',
+        status: string = '',
+        orderNumber: string = '',
+        guestEmail: string = ''
+    ): Promise<OrderListResponse> {
+        try {
+            // 构建查询参数
+            const queryParams = new URLSearchParams();
+
+            // 添加所有参数，包括 category
+            if (page !== undefined) {
+                queryParams.append('page', page.toString());
+            }
+            if (size !== undefined) {
+                queryParams.append('size', size.toString());
+            }
+            if (keyword) {
+                queryParams.append('keyword', keyword);
+            }
+            if (status) {
+                queryParams.append('status', status);
+            }
+            if (guestEmail) {
+                queryParams.append('guestEmail', guestEmail);
+            }
+            if (orderNumber) {
+                queryParams.append('orderNumber', orderNumber);
+            }
+
+            // 构建完整 URL
+            const url = `${ADMIN_CONFIG.apiRoutes.order}/list?${queryParams.toString()}`;
+
+            console.log('Fetching orders from URL:', url);
+
+            const response = await fetch(url, {
+                cache: 'no-store',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch orders');
+            }
+
+            const apiResponse = await response.json();
+
+            if (!apiResponse.success) {
+                throw new Error(apiResponse.error || 'Failed to fetch orders');
+            }
+
+            return apiResponse.data || {
+                content: [],
+                currentPage: page,
+                pageSize: size,
+                totalElements: 0,
+                totalPages: 0,
+                hasNext: false,
+                hasPrevious: false
+            };
+        } catch (error) {
+            console.error('Error fetching orders:', error);
+            throw error;
+        }
+    }
+
+    // ✅ 新增：管理员发货
+    async shipOrder(orderId: number, trackingNumber: string): Promise<OrderResponse> {
+        // 假设后端接口为 PUT /api/admin/order/{id}/ship
+        // 你需要在后端 AdminOrderController 实现这个接口
+        const url = `${ADMIN_CONFIG.apiRoutes.order}/ship`;
+
+        const response = await fetch(url, {
+            method: 'POST', // 或 POST，取决于后端定义
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ orderId, trackingNumber })
+        });
+
+        const apiResponse = await response.json();
+
+        if (!apiResponse.success) {
+            throw new Error(apiResponse.message || 'Shipping failed');
+        }
+
+        return apiResponse.data;
     }
 }
 

@@ -1,5 +1,7 @@
 // types/order.ts
 
+import {ProductResponse} from "./product";
+
 export interface OrderCreateRequest {
     userId?: number;        // 后端新增
     cartId?: number;        // 后端新增
@@ -28,6 +30,17 @@ export interface OrderResponse {
     paymentMethod: string;
     shippingMethod: string;
     items: any[];
+    shippingAddress: AddressRequest;
+}
+
+export interface OrderListResponse {
+    content: OrderResponse[];
+    currentPage: number;
+    pageSize: number;
+    totalElements: number;
+    totalPages: number;
+    hasNext: boolean;
+    hasPrevious: boolean;
 }
 
 export interface AddressRequest {

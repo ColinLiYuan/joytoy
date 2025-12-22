@@ -9,8 +9,9 @@ interface OrderEmailData {
     orderNumber: string;
     email: string;
     firstName: string;
-    totalAmount: number;
+    totalAmount: number; // 最终支付金额
     shippingFee: number;
+    discountAmount?: number; // ✅ 新增：折扣金额
     items: {
         title: string;
         quantity: number;
@@ -26,7 +27,6 @@ interface OrderEmailData {
     };
 }
 
-// ✅ 1. 新增：安全金额格式化函数
 const formatMoney = (amount: any) => {
     const num = Number(amount);
     return isNaN(num) ? '0.00' : num.toFixed(2);
@@ -44,8 +44,6 @@ export async function sendOrderConfirmationEmail(order: OrderEmailData) {
             subject: `Order Confirmation #${order.orderNumber}`,
             html: generateUserEmailHtml(order),
         });
-
-        // 管理员邮件可以简化，这里略去，重点修 User Email
 
         return { success: true };
     } catch (error) {
@@ -65,6 +63,17 @@ function generateUserEmailHtml(order: OrderEmailData) {
             <td style="padding: 10px 0; text-align: right;">$${formatMoney(item.price * item.quantity)}</td> 
         </tr>
     `).join('');
+
+    // ✅ 动态生成 Discount 行
+    const discountHtml = (order.discountAmount && order.discountAmount > 0) ? `
+        <tr>
+            <td colspan="2" style="text-align: right; padding-top: 5px; color: #16a34a;">Discount:</td>
+            <td style="text-align: right; padding-top: 5px; color: #16a34a;">-$${formatMoney(order.discountAmount)}</td>
+        </tr>
+    ` : '';
+
+    // ✅ 计算 Subtotal (Total - Shipping + Discount)
+    const subtotal = order.totalAmount - (order.shippingFee || 0) + (order.discountAmount || 0);
 
     return `
         <!DOCTYPE html>
@@ -94,12 +103,17 @@ function generateUserEmailHtml(order: OrderEmailData) {
                     </tbody>
                     <tfoot>
                         <tr>
-                            <td colspan="2" style="text-align: right; padding-top: 10px; color: #666;">Shipping:</td>
-                            <td style="text-align: right; padding-top: 10px;">$${formatMoney(order.shippingFee)}</td>
+                            <td colspan="2" style="text-align: right; padding-top: 15px; color: #666;">Subtotal:</td>
+                            <td style="text-align: right; padding-top: 15px;">$${formatMoney(subtotal)}</td>
                         </tr>
+                        ${discountHtml}
                         <tr>
-                            <td colspan="2" style="text-align: right; font-weight: bold; padding-top: 5px;">Total:</td>
-                            <td style="text-align: right; font-weight: bold; padding-top: 5px; font-size: 18px;">$${formatMoney(order.totalAmount)}</td>
+                            <td colspan="2" style="text-align: right; padding-top: 5px; color: #666;">Shipping:</td>
+                            <td style="text-align: right; padding-top: 5px;">$${formatMoney(order.shippingFee)}</td>
+                        </tr>
+                        <tr style="border-top: 2px solid #000; margin-top: 10px;">
+                            <td colspan="2" style="text-align: right; font-weight: bold; padding-top: 10px;">Total:</td>
+                            <td style="text-align: right; font-weight: bold; padding-top: 10px; font-size: 18px;">$${formatMoney(order.totalAmount)}</td>
                         </tr>
                     </tfoot>
                 </table>
