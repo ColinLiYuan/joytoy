@@ -80,6 +80,7 @@ function PaymentContent() {
                 setErrorMessage('Failed to load order details');
             } finally {
                 setIsLoading(false);
+                window.scrollTo(0, 0);
             }
         };
 
