@@ -24,7 +24,8 @@ export default function OrderSummary({ orderItems, subtotal, discount, shipping,
             <div className="space-y-5 mb-8 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
                 {orderItems.map((item, i) => (
                     <div key={i} className="flex gap-4">
-                        <div className="relative w-16 h-16 rounded-xl overflow-hidden border border-gray-100 bg-gray-50 flex-shrink-0">
+                        {/* ✅ 锁定图片：禁止点击、禁止长按保存 */}
+                        <div className="relative w-16 h-16 rounded-xl overflow-hidden border border-gray-100 bg-gray-50 flex-shrink-0 pointer-events-none select-none">
                             {item.productImage ? (
                                 <Image
                                     src={getProductImageUrl('', item.productImage)}
@@ -43,7 +44,6 @@ export default function OrderSummary({ orderItems, subtotal, discount, shipping,
                         </div>
                         <div className="flex-1 min-w-0">
                             <h4 className="text-sm font-medium text-gray-900 line-clamp-2 leading-snug">{item.productTitle}</h4>
-                            {/* 🛠️ 修复点：闭合标签改为 </p> */}
                             <p className="text-xs text-gray-500 mt-1 capitalize flex items-center gap-1">
                                 <span className="w-2 h-2 rounded-full inline-block border border-gray-200" style={{backgroundColor: getColorValue(item.color)}}></span>
                                 {item.color}
@@ -54,22 +54,18 @@ export default function OrderSummary({ orderItems, subtotal, discount, shipping,
                 ))}
             </div>
 
-            {/* 金额计算区 */}
+            {/* 金额计算区 (保持不变) */}
             <div className="border-t border-gray-100 pt-4 space-y-3 text-sm">
                 <div className="flex justify-between text-gray-600">
                     <span>Subtotal</span>
                     <span className="font-medium">${subtotal.toFixed(2)}</span>
                 </div>
-
-                {/* 优惠显示 */}
                 {discount > 0 && (
                     <div className="flex justify-between text-pink-600 font-medium">
                         <span>Discount (10% OFF)</span>
                         <span>-${discount.toFixed(2)}</span>
                     </div>
                 )}
-
-                {/* 运费显示 */}
                 <div className="flex justify-between text-gray-600">
                     <span>Shipping</span>
                     {shipping === 0 ? (
@@ -78,16 +74,8 @@ export default function OrderSummary({ orderItems, subtotal, discount, shipping,
                         <span className="font-medium">${shipping.toFixed(2)}</span>
                     )}
                 </div>
-
-                {/* 运费门槛提示 */}
-                {shipping > 0 && (
-                    <div className="text-xs text-gray-400 text-right italic">
-                        Add ${(49 - subtotal).toFixed(2)} more for free shipping
-                    </div>
-                )}
             </div>
 
-            {/* 总计 */}
             <div className="border-t border-gray-100 mt-4 pt-4 flex justify-between items-center">
                 <span className="text-lg font-bold text-gray-900 font-['Playfair_Display']">Total</span>
                 <div className="flex items-end gap-2">
