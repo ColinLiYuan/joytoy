@@ -209,26 +209,31 @@ export default function CheckoutPage() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 pb-24 pt-8 w-full overflow-x-hidden">
-            <div className="container mx-auto px-4 max-w-6xl">
+        // ✅ 修复 1: 强制限制根容器宽度
+        <div className="min-h-screen bg-gray-50 pb-24 pt-8 w-full max-w-[100vw] overflow-x-hidden">
 
+            <div className="container mx-auto px-4 max-w-6xl w-full"> {/* ✅ 确保 container 也是 w-full */}
+
+                {/* Header */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
-                    <h1 className="text-3xl font-bold text-gray-900 font-['Playfair_Display']">Checkout</h1>
+                    <h1 className="text-2xl md:text-3xl font-bold text-gray-900 font-['Playfair_Display']">Checkout</h1> {/* ✅ 缩小手机端字号 */}
 
                     {!isLoggedIn && (
                         <button
                             onClick={() => openAuthModal('login')}
-                            className="text-sm font-medium text-black underline flex items-center gap-2 hover:text-gray-600"
+                            className="text-sm font-medium text-black underline flex items-center gap-2 hover:text-gray-600 self-start md:self-auto" // ✅ 修复对齐
                         >
                             <User size={16} /> Already have an account? Sign in
                         </button>
                     )}
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16">
+                {/* ✅ 修复 2: 确保 Grid 在移动端是单列 (grid-cols-1) */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16 w-full">
+
                     {/* Left: Form */}
-                    <div className="lg:col-span-7">
-                        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-6 md:p-8 lg:p-10">
+                    <div className="lg:col-span-7 w-full">
+                        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-5 md:p-8 lg:p-10 w-full overflow-hidden"> {/* ✅ 增加 overflow-hidden 防止子元素溢出 */}
                             <ShippingForm
                                 shippingAddress={shippingAddress}
                                 updateShippingAddress={updateShippingAddress}
@@ -239,17 +244,19 @@ export default function CheckoutPage() {
                     </div>
 
                     {/* Right: Summary */}
-                    <div className="lg:col-span-5 space-y-6">
-                        <OrderSummary
-                            orderItems={orderItems}
-                            subtotal={subtotal}
-                            shipping={shippingFee}
-                            discount={discountAmount}
-                            total={total}
-                        />
+                    <div className="lg:col-span-5 space-y-6 w-full">
+                        <div className="w-full overflow-hidden rounded-2xl"> {/* ✅ 包裹 Summary 防止溢出 */}
+                            <OrderSummary
+                                orderItems={orderItems}
+                                subtotal={subtotal}
+                                shipping={shippingFee}
+                                discount={discountAmount}
+                                total={total}
+                            />
+                        </div>
 
                         {/* Coupon Input */}
-                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                        <div className="bg-white p-5 md:p-6 rounded-2xl shadow-sm border border-gray-100 w-full">
                             <h3 className="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
                                 <Tag size={16} /> Gift Card or Discount Code
                             </h3>
@@ -259,13 +266,13 @@ export default function CheckoutPage() {
                                     value={couponCode}
                                     onChange={(e) => setCouponCode(e.target.value)}
                                     placeholder="Enter code"
-                                    className="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm outline-none focus:border-black focus:ring-1 focus:ring-black transition-all uppercase placeholder:normal-case"
+                                    className="flex-1 min-w-0 bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm outline-none focus:border-black focus:ring-1 focus:ring-black transition-all uppercase placeholder:normal-case"
                                     disabled={!!appliedCoupon}
                                 />
                                 {appliedCoupon ? (
                                     <button
                                         onClick={() => { setAppliedCoupon(''); setCouponCode(''); }}
-                                        className="bg-gray-200 text-gray-600 px-5 py-2.5 rounded-lg text-sm font-bold hover:bg-gray-300 transition-all"
+                                        className="bg-gray-200 text-gray-600 px-4 py-2.5 rounded-lg text-xs md:text-sm font-bold hover:bg-gray-300 transition-all whitespace-nowrap"
                                     >
                                         Remove
                                     </button>
@@ -273,7 +280,7 @@ export default function CheckoutPage() {
                                     <button
                                         onClick={handleApplyCoupon}
                                         disabled={isApplyingCoupon || !couponCode}
-                                        className="bg-black text-white px-5 py-2.5 rounded-lg text-sm font-bold hover:bg-gray-800 disabled:opacity-50 transition-all min-w-[80px]"
+                                        className="bg-black text-white px-4 py-2.5 rounded-lg text-xs md:text-sm font-bold hover:bg-gray-800 disabled:opacity-50 transition-all min-w-[70px] whitespace-nowrap"
                                     >
                                         {isApplyingCoupon ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : 'Apply'}
                                     </button>

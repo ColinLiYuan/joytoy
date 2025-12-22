@@ -102,7 +102,7 @@ export default function ShippingForm({
             <div>
                 <h3 className="text-lg font-bold text-gray-900 mb-5 font-['Playfair_Display']">Shipping Address</h3>
                 <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <input
                                 type="text"
