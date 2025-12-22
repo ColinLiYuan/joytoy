@@ -384,7 +384,7 @@ export default function BlogForm({
                 </label>
                 <div className="flex space-x-2">
                     <input
-                        type="url"
+                        type="text"
                         id="coverImage"
                         value={formData.coverImage}
                         onChange={(e) => handleChange('coverImage', e.target.value)}
