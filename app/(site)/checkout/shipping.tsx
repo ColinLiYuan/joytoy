@@ -62,7 +62,7 @@ export default function ShippingForm({
     };
 
     const inputClass = (error?: string) => `
-        w-full p-4 rounded-xl border text-sm transition-all outline-none
+        w-full p-4 rounded-xl border text-base md:text-sm transition-all outline-none
         ${error
         ? 'border-red-500 bg-red-50 focus:border-red-500 placeholder:text-red-400'
         : 'border-gray-200 bg-gray-50 focus:bg-white focus:border-black focus:ring-1 focus:ring-black'
@@ -102,7 +102,7 @@ export default function ShippingForm({
             <div>
                 <h3 className="text-lg font-bold text-gray-900 mb-5 font-['Playfair_Display']">Shipping Address</h3>
                 <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <input
                                 type="text"

@@ -16,11 +16,14 @@ const geistMono = Geist_Mono({
     display: 'swap',
 });
 
-// 🚀 配置视口
+// 🚀 配置视口 (关键修复)
 export const viewport: Viewport = {
     themeColor: 'black',
     width: 'device-width',
     initialScale: 1,
+    // 🔥 禁止 iOS 自动缩放，解决左右滑动问题
+    maximumScale: 1,
+    userScalable: false,
 };
 
 // 🚀 全局 SEO 默认配置
@@ -53,7 +56,8 @@ export default function RootLayout({
 }>) {
     return (
         <html lang="en">
-        <body className={`${geistSans.variable} ${geistMono.variable} antialiased`} suppressHydrationWarning>
+        {/* ✅ 加上 overflow-x-hidden 防止水平溢出 */}
+        <body className={`${geistSans.variable} ${geistMono.variable} antialiased w-full max-w-[100vw] overflow-x-hidden`} suppressHydrationWarning>
         <Providers>
             {children}
         </Providers>
