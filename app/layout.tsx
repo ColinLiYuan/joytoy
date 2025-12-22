@@ -16,14 +16,14 @@ const geistMono = Geist_Mono({
     display: 'swap',
 });
 
-// 🚀 配置视口
+// ✅ 1. 恢复标准 Viewport，允许用户缩放
 export const viewport: Viewport = {
     themeColor: 'black',
     width: 'device-width',
     initialScale: 1,
+    // 移除了 maximumScale: 1 和 userScalable: false
 };
 
-// 🚀 全局 SEO 默认配置
 export const metadata: Metadata = {
     metadataBase: new URL('https://mythtoy.com'),
     title: {
@@ -53,7 +53,8 @@ export default function RootLayout({
 }>) {
     return (
         <html lang="en">
-        <body className={`${geistSans.variable} ${geistMono.variable} antialiased`} suppressHydrationWarning>
+        {/* ✅ 保持 overflow-x-hidden 防止水平溢出 */}
+        <body className={`${geistSans.variable} ${geistMono.variable} antialiased w-full max-w-[100vw] overflow-x-hidden`} suppressHydrationWarning>
         <Providers>
             {children}
         </Providers>

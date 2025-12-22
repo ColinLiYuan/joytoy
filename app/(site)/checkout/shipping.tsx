@@ -1,14 +1,13 @@
 // app/checkout/shipping.tsx
-import { Loader2, ArrowRight } from 'lucide-react';
+'use client'; // 确保是客户端组件
+
 import { useState } from 'react';
-// 引入类型，确保类型安全
 import { AddressRequest } from '@/types/order';
-// 引入国家数据
-import { COUNTRY_DATA, COUNTRIES_FOR_SELECT } from '@/lib/constants/country-data';
+import { COUNTRIES_FOR_SELECT, COUNTRY_DATA } from '@/lib/constants/country-data';
+import { Loader2, ArrowRight } from 'lucide-react';
 
 interface ShippingFormProps {
-    // ✅ 接收父组件的数据
-    shippingAddress: AddressRequest; // 这里最好也精确一点
+    shippingAddress: AddressRequest;
     updateShippingAddress: (field: keyof AddressRequest, value: string) => void;
     onProceedToPayment: () => void;
     isCreatingOrder: boolean;
@@ -23,7 +22,6 @@ export default function ShippingForm({
 
     const [errors, setErrors] = useState<Record<string, string>>({});
 
-    // 本地验证逻辑
     const validateForm = () => {
         const newErrors: Record<string, string> = {};
         if (!shippingAddress.email?.trim()) newErrors.email = 'Email is required';
@@ -36,7 +34,6 @@ export default function ShippingForm({
         if (!shippingAddress.country?.trim()) newErrors.country = 'Country is required';
         if (!shippingAddress.phone?.trim()) newErrors.phone = 'Phone is required';
 
-        // 验证国家是否在支持的列表中
         if (shippingAddress.country && !COUNTRY_DATA[shippingAddress.country]) {
             newErrors.country = 'Please select a valid country from the list';
         }
@@ -55,14 +52,15 @@ export default function ShippingForm({
         }
     };
 
-    // ✅ 修复：将 field 的类型改为 keyof AddressRequest
     const handleChange = (field: keyof AddressRequest, value: string) => {
         updateShippingAddress(field, value);
         if (errors[field]) setErrors(prev => ({ ...prev, [field]: '' }));
     };
 
+    // ✅ 关键：text-base (16px) 防止 iOS 自动放大
     const inputClass = (error?: string) => `
-        w-full p-4 rounded-xl border text-base md:text-sm transition-all outline-none
+        w-full p-4 rounded-xl border transition-all outline-none
+        text-base md:text-sm 
         ${error
         ? 'border-red-500 bg-red-50 focus:border-red-500 placeholder:text-red-400'
         : 'border-gray-200 bg-gray-50 focus:bg-white focus:border-black focus:ring-1 focus:ring-black'
@@ -129,7 +127,7 @@ export default function ShippingForm({
                         <select
                             value={shippingAddress.country || ''}
                             onChange={(e) => handleChange('country', e.target.value)}
-                            className={`${inputClass(errors.country)} appearance-none`}
+                            className={`${inputClass(errors.country)} appearance-none cursor-pointer`}
                         >
                             <option value="">Select Country</option>
                             {COUNTRIES_FOR_SELECT.map(country => (
@@ -160,8 +158,9 @@ export default function ShippingForm({
                         className={inputClass()}
                     />
 
-                    <div className="grid grid-cols-3 gap-4">
-                        <div className="col-span-1">
+                    {/* ✅ 修复布局：手机端单列 (grid-cols-1)，防止挤压溢出 */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
                             <input
                                 type="text"
                                 placeholder="City"
@@ -171,20 +170,20 @@ export default function ShippingForm({
                             />
                             {errors.city && <p className="text-red-500 text-xs mt-1 ml-1">{errors.city}</p>}
                         </div>
-                        <div className="col-span-1">
+                        <div>
                             <input
                                 type="text"
-                                placeholder="State"
+                                placeholder="State / Province"
                                 value={shippingAddress.province || ''}
                                 onChange={(e) => handleChange('province', e.target.value)}
                                 className={inputClass(errors.province)}
                             />
                             {errors.province && <p className="text-red-500 text-xs mt-1 ml-1">{errors.province}</p>}
                         </div>
-                        <div className="col-span-1">
+                        <div>
                             <input
                                 type="text"
-                                placeholder="Zip"
+                                placeholder="ZIP / Postal Code"
                                 value={shippingAddress.zipCode || ''}
                                 onChange={(e) => handleChange('zipCode', e.target.value)}
                                 className={inputClass(errors.zipCode)}
