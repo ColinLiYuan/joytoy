@@ -154,7 +154,7 @@ export default function Footer() {
 
                                 {/* ✅ 添加 aria-label */}
                                 <a
-                                    href="https://www.instagram.com/colinliyuan"
+                                    href="https://www.instagram.com/myth.w.studio"
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     aria-label="Follow us on Instagram"

@@ -47,7 +47,7 @@ export default async function SiteLayout({
         "description": "Premium adult lifestyle products direct from source.",
         "foundingDate": "2024",
         "sameAs": [
-            "https://www.instagram.com/colinliyuan",
+            "https://www.instagram.com/myth.w.studio",
             "https://www.facebook.com/profile.php?id=61581471022682",
         ],
         "contactPoint": {
