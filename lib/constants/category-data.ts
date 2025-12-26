@@ -28,7 +28,7 @@ export const CATEGORIES_DATA: CategoriesData = {
                         name: "Best Sellers",
                         title: "Best Selling Sex Toys | Top Rated Adult Products",
                         description: "Shop best selling sex toys and top rated adult products. Premium quality discreet shipping.",
-                        image: "swan-1.webp", // 👈 新增
+                        image: "piston.png", // 👈 新增
                         root: "shop",
                         priority: 0.7,
                         changefreq: "weekly"
@@ -121,7 +121,7 @@ export const CATEGORIES_DATA: CategoriesData = {
                 name: "For Him",
                 title: "Male Sex Toys | Men's Pleasure Products",
                 description: "Advanced sex toys for men. Masturbators, prostate massagers and strokers.",
-                image: "forHim.png", // 👈 新增
+                image: "cat-banner-for-him.png", // 👈 新增
                 priority: 0.7,
                 changefreq: "weekly",
                 categories: [
@@ -130,7 +130,7 @@ export const CATEGORIES_DATA: CategoriesData = {
                         name: "Male Masturbators",
                         title: "Male Masturbators | Handheld Sex Toys",
                         description: "Realistic male masturbators and strokers. Textured sleeves for men.",
-                        image: "piston.png", // 👈 新增
+                        image: "cat-banner-male-masturbators.png", // 👈 新增
                         root: "male-sex-toys",
                         priority: 0.7,
                         changefreq: "weekly"
