@@ -68,15 +68,15 @@ export default async function ProductListPage({ params, searchParams }: PageProp
     };
 
     try {
-        const [categoriesResult, productsResult, colorsResult, featuresResult, materialsResult] = await Promise.allSettled([
-            categoryService.getCategories(),
+        const [rootsResult, productsResult, colorsResult, featuresResult, materialsResult] = await Promise.allSettled([
+            categoryService.getRoots(),  // ✅ 使用 getRoots() 获取嵌套结构
             productServiceServer.getProductsByCategory(fullSlug, page, ITEMS_PER_PAGE, filters),
             filterServiceServer.getFilters('colors'),
             filterServiceServer.getFilters('features'),
             filterServiceServer.getFilters('materials'),
         ]);
 
-        const categoriesData = categoriesResult.status === 'fulfilled' ? categoriesResult.value : [];
+        const rootsData = rootsResult.status === 'fulfilled' ? rootsResult.value : [];
         const productsData = productsResult.status === 'fulfilled' ? productsResult.value : { content: [], totalPages: 0, totalElements: 0, currentPage: 0 };
         const availableFilters = {
             colors: extractFilterArray(colorsResult.status === 'fulfilled' ? colorsResult.value : []),
@@ -84,28 +84,57 @@ export default async function ProductListPage({ params, searchParams }: PageProp
             materials: extractFilterArray(materialsResult.status === 'fulfilled' ? materialsResult.value : [])
         };
 
-        // 查找分类逻辑
+        // ✅ 使用 rootsData 查找分类逻辑
         let currentCategory: CategoryResponse | RootResponse | null = null;
         let parentCategory: RootResponse | null = null;
 
-        if (categoriesData.length > 0) {
+        if (rootsData.length > 0) {
             const rootSlug = urlSegments[0];
-            const rootMatch = categoriesData.find(root => root.slug === rootSlug);
+            const rootMatch = rootsData.find(root => root.slug === rootSlug);
 
+            // 如果是根分类 (例如: /collections/female-sex-toys)
             if (urlSegments.length === 1) {
                 currentCategory = rootMatch || null;
-            } else if (urlSegments.length >= 2 && rootMatch) {
+            }
+            // 如果是二级分类 (例如: /collections/female-sex-toys/clit-vibrators)
+            else if (urlSegments.length >= 2 && rootMatch) {
                 parentCategory = rootMatch;
-                const subSlug = urlSegments[1];
-                console.log('currentCategory:', rootMatch)
-                if (rootMatch.categories) {
-                    currentCategory = rootMatch.categories.find(sub =>
-                        sub.slug === subSlug || sub.slug.endsWith(`/${subSlug}`) || sub.slug === fullSlug
-                    ) || null;
+
+                // 构建子分类的完整slug
+                const subSlug = urlSegments.slice(1).join('/');
+
+                if (rootMatch.categories && rootMatch.categories.length > 0) {
+                    // 在子分类中查找
+                    currentCategory = rootMatch.categories.find(sub => {
+                        // 完全匹配完整slug
+                        if (sub.slug === fullSlug) return true;
+
+                        // 匹配子分类slug (例如: clit-vibrators 匹配 female-sex-toys/clit-vibrators)
+                        if (sub.slug.endsWith(`/${subSlug}`)) return true;
+
+                        // 匹配最后一段
+                        const lastSegment = urlSegments[urlSegments.length - 1];
+                        if (sub.slug.endsWith(`/${lastSegment}`)) return true;
+
+                        return false;
+                    }) || null;
                 }
             }
         }
 
+        // 如果还是没找到，尝试在所有分类中查找
+        if (!currentCategory) {
+            const allCategories = await categoryService.getCategories();
+            currentCategory = allCategories.find(cat => cat.slug === fullSlug) || null;
+
+            // 如果找到了，尝试找到父分类
+            if (currentCategory && (currentCategory as any).root) {
+                const rootSlug = (currentCategory as any).root;
+                parentCategory = rootsData.find(root => root.slug === rootSlug) || null;
+            }
+        }
+
+        // 如果还是没找到，使用回退逻辑
         if (!currentCategory) {
             const lastSegment = urlSegments[urlSegments.length - 1];
             currentCategory = {
@@ -118,12 +147,20 @@ export default async function ProductListPage({ params, searchParams }: PageProp
 
         // 面包屑逻辑
         const breadcrumbs: BreadcrumbItem[] = [{ name: 'Home', path: '/' }];
+
+        // 如果是二级分类，添加父分类
         if (parentCategory) {
             breadcrumbs.push({
                 name: parentCategory.name,
                 path: `/collections/${parentCategory.slug}`
             });
         }
+
+        // 如果是根分类且不是当前分类（避免重复）
+        if (!parentCategory && urlSegments.length === 1 && currentCategory) {
+            // 已经在breadcrumbs中添加了当前分类，这里不需要重复添加
+        }
+
         breadcrumbs.push({
             name: currentCategory?.name || 'Collection',
             path: null
