@@ -97,6 +97,7 @@ export default async function ProductListPage({ params, searchParams }: PageProp
             } else if (urlSegments.length >= 2 && rootMatch) {
                 parentCategory = rootMatch;
                 const subSlug = urlSegments[1];
+                console.log('currentCategory:', rootMatch)
                 if (rootMatch.categories) {
                     currentCategory = rootMatch.categories.find(sub =>
                         sub.slug === subSlug || sub.slug.endsWith(`/${subSlug}`) || sub.slug === fullSlug
