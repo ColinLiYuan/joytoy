@@ -141,7 +141,7 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
 
     return (
         <div className="group flex flex-col bg-white rounded-2xl overflow-hidden border border-gray-100 hover:border-gray-200 hover:shadow-xl transition-all duration-300 relative h-full">
-            <Link href={productDetailPath} className="block relative aspect-[4/5] sm:aspect-square overflow-hidden bg-[#F5F5F7]">
+            <Link href={productDetailPath} className="block relative aspect-[4/5] sm:aspect-square overflow-hidden bg-[#F0F0F0]">
 
                 <div className="absolute inset-0 p-6 sm:p-8 flex items-center justify-center">
                     <Image
@@ -149,7 +149,7 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
                         alt={product.title}
                         width={400}
                         height={400}
-                        className="object-contain w-full h-full group-hover:scale-110 transition-transform duration-500 drop-shadow-sm mix-blend-multiply"
+                        className="object-contain w-full h-full group-hover:scale-110 transition-transform duration-500 drop-shadow-lg"
                         placeholder="blur"
                         blurDataURL={BLUR_DATA_URL}
                     />

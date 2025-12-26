@@ -101,8 +101,8 @@ export default async function HomePage() {
             {/* 直接作为一个纯净的容器，或者干脆去掉这个 div，用 Fragment 包裹 */}
             <div className="w-full max-w-full overflow-x-hidden">
                 <HeroSection />
-                <BestSellersSection bestSellers={bestSellers} error={error} />
                 <CategoriesSection />
+                <BestSellersSection bestSellers={bestSellers} error={error} />
                 <TrustSignals />
             </div>
         </>

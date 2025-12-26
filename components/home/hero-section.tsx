@@ -4,45 +4,69 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowRight } from 'lucide-react';
-// 1. 引入工具函数
 import { getProductImageUrl } from '@/lib/image-utils';
 
-// 🔴 2. 这里只需要填你在 Cloudflare (或后台) 保存的那个“路径”或“文件名”
-// 不需要填完整的 https://...，工具函数会自动拼接前缀
-const HERO_IMAGE_PATH = "banner.webp?v=20241216"; // 示例文件名，请替换为你上传的具体文件名
+// 🔴 确保这里是那张“黑金丝绸背景 + 钢笔”的宽屏横图
+const HERO_IMAGE_PATH = "banner.webp?v=20251226";
 
 export default function HeroSection() {
-
-    // 3. 使用工具函数生成最终的 URL
-    // 第一个参数传空字符串 ''，第二个参数传路径，逻辑与详情页完全一致
     const finalHeroImageUrl = getProductImageUrl('', HERO_IMAGE_PATH);
 
     return (
-        <section className="relative w-full min-h-[85vh] bg-[#050505] overflow-hidden flex items-center">
+        // 1. 修改高度：min-h-[85vh] -> h-[90vh] 或 h-screen，让首屏更震撼
+        <section className="relative w-full min-h-screen md:h-[90vh] bg-[#050505] overflow-hidden flex items-center">
+            {/* --- 背景氛围光效 (保持不变) --- */}
+            <div className="absolute top-1/2 right-[-10%] md:right-[5%] -translate-y-1/2 w-[300px] md:w-[600px] h-[300px] md:h-[600px] bg-[#C5A059] opacity-10 blur-[120px] rounded-full pointer-events-none" />
 
-            {/* --- 背景氛围光效 --- */}
-            <div className="absolute top-1/2 right-[-10%] md:right-[5%] -translate-y-1/2 w-[300px] md:w-[600px] h-[300px] md:h-[600px] bg-[#C5A059] opacity-20 blur-[120px] rounded-full pointer-events-none" />
-            <div className="absolute bottom-0 left-[-10%] w-[400px] h-[400px] bg-blue-900/10 blur-[100px] rounded-full pointer-events-none" />
+            {/* ------------------------------------------------------ */}
+            {/* 核心修改区域：把图片层放在底层，做成半屏背景融合 */}
+            {/* ------------------------------------------------------ */}
+            <div className="absolute top-0 right-0 w-full md:w-[65%] h-full z-0">
+                {HERO_IMAGE_PATH && (
+                    <>
+                        <Image
+                            src={finalHeroImageUrl}
+                            alt="MythToy Hero Product"
+                            fill
+                            priority={true}
+                            quality={90}
+                            // 2. 修改：object-contain -> object-cover
+                            // 让图片铺满右半边，不要留黑边
+                            className="object-cover object-[72%_center] md:object-center"
+                            sizes="100vw"
+                        />
+
+                        {/* 3. 魔法遮罩层 (Magic Gradient Overlay) */}
+                        {/* 这是一个渐变层，从左边的背景色(#050505)渐变到右边的透明 */}
+                        {/* 作用：消除图片的左边缘，让它完美融入背景 */}
+                        <div className="absolute inset-0 bg-gradient-to-b from-[#050505] via-[#050505]/10 to-transparent md:bg-gradient-to-r md:from-[#050505] md:via-[#050505]/60 md:to-transparent z-10" />
+
+                        {/* 底部遮罩，防止图片切断 */}
+                        <div className="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-[#050505] to-transparent z-10" />
+                    </>
+                )}
+            </div>
 
             {/* --- 内容容器 --- */}
-            <div className="container relative mx-auto px-6 md:px-12 z-10 h-full">
-                <div className="flex flex-col md:flex-row items-center justify-between gap-12 h-full py-20">
+            <div className="container relative mx-auto px-6 md:px-12 z-20 h-full">
+                <div className="flex flex-col md:flex-row items-center h-full">
 
-                    {/* Left: 文字区域 */}
-                    <div className="w-full md:w-1/2 space-y-8 text-center md:text-left order-2 md:order-1">
+                    {/* Left: 文字区域 (现在字会浮在图片的渐变边缘上) */}
+                    <div className="w-full md:w-1/2 space-y-8 text-center md:text-left pt-20 md:pt-0">
                         <div className="inline-flex items-center gap-3 animate-fade-in-up">
                             <span className="h-[1px] w-8 bg-[#C5A059]"></span>
+                            {/* 4. 修改文案：去掉 TOY，改用 Collection 或 Studio */}
                             <span className="text-[#C5A059] text-xs font-bold tracking-[0.25em] uppercase">
-                                Myth Toy Exclusive
+                                Myth Collection
                             </span>
                         </div>
 
-                        <h1 className="text-5xl md:text-7xl lg:text-8xl font-serif text-white leading-[1.1] tracking-tight">
+                        <h1 className="text-5xl md:text-7xl lg:text-8xl font-serif text-white leading-[1.1] tracking-tight drop-shadow-lg">
                             Elegance in <br/>
-                            <span className="italic text-[#ffffff]/90">Darkness</span>.
+                            <span className="italic text-[#ffffff]">Darkness</span>.
                         </h1>
 
-                        <p className="text-gray-400 text-lg md:text-xl font-light max-w-lg mx-auto md:mx-0 leading-relaxed">
+                        <p className="text-gray-300 text-lg md:text-xl font-light max-w-lg mx-auto md:mx-0 leading-relaxed drop-shadow-md">
                             Curated pleasure objects for the modern lifestyle.
                             Where wellness meets technological artistry.
                         </p>
@@ -58,25 +82,8 @@ export default function HeroSection() {
                         </div>
                     </div>
 
-                    {/* Right: 图片区域 */}
-                    <div className="w-full md:w-1/2 relative h-[40vh] md:h-[70vh] flex items-center justify-center order-1 md:order-2">
-                        <div className="relative w-full h-full">
-                            {HERO_IMAGE_PATH ? (
-                                <Image
-                                    src={finalHeroImageUrl} // 4. 使用处理后的 URL
-                                    alt="MythToy Hero Product"
-                                    fill
-                                    priority={true}
-                                    className="object-contain drop-shadow-2xl animate-float"
-                                    sizes="(max-width: 768px) 100vw, 50vw"
-                                />
-                            ) : (
-                                <div className="w-full h-full border border-white/10 flex items-center justify-center text-white/20">
-                                    <p>Image Placeholder</p>
-                                </div>
-                            )}
-                        </div>
-                    </div>
+                    {/* 右边不需要放 Image 组件了，因为 Image 已经变成背景了 */}
+                    <div className="w-full md:w-1/2" />
 
                 </div>
             </div>

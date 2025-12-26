@@ -9,7 +9,7 @@ export const CATEGORIES_DATA: CategoriesData = {
                 name: "Shop",
                 title: "Shop | Sex Toys & Adult Products",
                 description: "Browse our complete collection of sex toys, lingerie and adult products. New arrivals, best sellers and more.",
-                image: "eclipse.webp", // 👈 新增
+                image: "forAll.png", // 👈 新增
                 priority: 0.8,
                 changefreq: "weekly",
                 categories: [
@@ -40,7 +40,7 @@ export const CATEGORIES_DATA: CategoriesData = {
                 name: "For Her",
                 title: "Female Sex Toys | Women's Vibrators & Pleasure Products",
                 description: "Premium sex toys for women. Clit vibrators, rabbit toys, dildos and intimate massagers.",
-                image: "swan.webp", // 👈 新增
+                image: "forHer.png", // 👈 新增
                 priority: 0.7,
                 changefreq: "weekly",
                 categories: [
@@ -49,7 +49,7 @@ export const CATEGORIES_DATA: CategoriesData = {
                         name: "Clit Vibrators",
                         title: "Clit Vibrators | Clitoral Stimulation Toys",
                         description: "Best clit vibrators for intense orgasms. External stimulation toys for women.",
-                        image: "muse.png", // 👈 新增
+                        image: "clitVibrator.png", // 👈 新增
                         root: "female-sex-toys",
                         priority: 0.7,
                         changefreq: "weekly"
@@ -59,7 +59,7 @@ export const CATEGORIES_DATA: CategoriesData = {
                         name: "Nipple Stimulator",
                         title: "Nipple Toys | Nipple Stimulators & Clamps",
                         description: "Nipple stimulators and clamps for sensual play. Gentle to intense stimulation.",
-                        image: "brush.png", // 👈 新增
+                        image: "nippleToy.png", // 👈 新增
                         root: "female-sex-toys",
                         priority: 0.7,
                         changefreq: "weekly"
@@ -121,7 +121,7 @@ export const CATEGORIES_DATA: CategoriesData = {
                 name: "For Him",
                 title: "Male Sex Toys | Men's Pleasure Products",
                 description: "Advanced sex toys for men. Masturbators, prostate massagers and strokers.",
-                image: "titan.png", // 👈 新增
+                image: "forHim.png", // 👈 新增
                 priority: 0.7,
                 changefreq: "weekly",
                 categories: [
@@ -182,7 +182,7 @@ export const CATEGORIES_DATA: CategoriesData = {
                 name: "Anal Play",
                 title: "Anal Play | Butt Plugs, Beads & Accessories",
                 description: "Explore our curated collection of anal play essentials. From beginner-friendly butt plugs to progressive beads and fantasy tails.",
-                image: "/images/categories/sex-toys.jpg", // 👈 新增
+                image: "forAnal.png", // 👈 新增
                 priority: 0.7,
                 changefreq: "weekly",
                 categories: [

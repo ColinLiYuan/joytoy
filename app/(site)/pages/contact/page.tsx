@@ -96,7 +96,7 @@ export default function Contact() {
 
                                 {/* ✅ Add aria-label */}
                                 <a
-                                    href="https://www.instagram.com/colinliyuan"
+                                    href="https://www.instagram.com/myth.w.studio"
                                     aria-label="Visit our Instagram profile"
                                     className="text-gray-400 hover:text-black transition-colors"
                                 >
