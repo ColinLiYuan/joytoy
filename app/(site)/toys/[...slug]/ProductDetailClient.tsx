@@ -416,32 +416,35 @@ export default function ProductDetailClient({
 
             {/* --- ✅ SECTION 2: PRODUCT HIGHLIGHTS (Data Driven) --- */}
             {highlightData && (
-                <div className="w-full bg-[#F9FAFB] py-20 lg:py-32 border-t border-gray-100">
-                    <div className="container mx-auto px-4 max-w-7xl">
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-                            {/* Text Content (Romance Copy) */}
-                            <div className="order-2 lg:order-1">
-                                <div className="mb-8">
-                                    <span className="text-[#E11D48] font-bold tracking-[0.2em] uppercase text-xs mb-4 block">Why You'll Love It</span>
-                                    <h2 className="text-3xl md:text-5xl font-bold text-gray-900 font-['Playfair_Display'] mb-6 leading-tight">
-                                        {highlightData.title}
-                                    </h2>
-                                    <p className="text-lg md:text-xl text-gray-600 font-light leading-relaxed">
-                                        {highlightData.body}
-                                    </p>
-                                </div>
-                            </div>
+                <div className="w-full relative bg-black overflow-hidden group">
+                    {/* 黑色遮罩：保证文字清晰 */}
+                    <div className="absolute inset-0 bg-black/40 z-10 pointer-events-none" />
 
-                            {/* Mood Image (Right Side) */}
-                            <div className="order-1 lg:order-2 h-[400px] lg:h-[600px] relative rounded-3xl overflow-hidden shadow-2xl">
-                                <Image
-                                    // 自动处理 Cloudflare 图片路径
-                                    src={getProductImageUrl('', highlightData.image)}
-                                    alt={highlightData.title}
-                                    fill
-                                    className="object-cover"
-                                />
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+                    {/* 背景大图：16:9 比例的场景图 */}
+                    <div className="relative w-full h-[500px] md:h-[700px]">
+                        <Image
+                            // 确保你已经 import 了 getProductImageUrl
+                            src={getProductImageUrl('', highlightData.image)}
+                            alt={highlightData.title}
+                            fill
+                            className="object-cover transition-transform duration-1000 group-hover:scale-105"
+                            quality={90}
+                        />
+                    </div>
+
+                    {/* 文字内容：悬浮在左侧 */}
+                    <div className="absolute inset-0 z-20 flex items-center justify-center md:justify-start">
+                        <div className="container mx-auto px-6 md:px-12">
+                            <div className="max-w-xl text-center md:text-left text-white animate-fade-in-up">
+                                <span className="inline-block px-3 py-1 mb-6 border border-white/30 rounded-full text-xs font-bold tracking-[0.2em] uppercase backdrop-blur-sm">
+                                    Why You'll Love It
+                                </span>
+                                <h2 className="text-4xl md:text-6xl font-bold font-['Playfair_Display'] mb-6 leading-tight drop-shadow-lg">
+                                    {highlightData.title}
+                                </h2>
+                                <p className="text-lg md:text-xl text-gray-200 font-light leading-relaxed drop-shadow-md">
+                                    {highlightData.body}
+                                </p>
                             </div>
                         </div>
                     </div>

@@ -8,37 +8,33 @@ const categories = [
     {
         id: 'for-her',
         title: "For Her",
-        // 文案升级：强调“隐蔽”和“美学”
         description: "Discreet pleasure objects disguised as everyday beauty essentials.",
         link: "/collections/female-sex-toys",
-        image: "cat-for-her.png", // 对应：绿色化妆刷图
+        image: "home-banner-for-her.png", // 对应：绿色化妆刷图
         alt: "Luxury discreet vibrator for women",
     },
     {
         id: 'for-him',
         title: "For Him",
-        // 文案升级：强调“科技”和“性能”
         description: "High-tech wellness gadgets designed for performance and relief.",
         link: "/collections/male-sex-toys",
-        image: "cat-for-him.png", // 对应：游戏桌/科技风圆柱图
+        image: "home-banner-for-him.png", // 对应：游戏桌/科技风圆柱图
         alt: "High-tech male pleasure gadget",
     },
     {
         id: 'sex-toys',
         title: "Crystal & Play", // 改名：比 "Couples" 更神秘，突出材质
-        // 文案升级：强调“纯净”和“感官”
         description: "Hypoallergenic glass and sensory tools for shared intimacy.",
         link: "/collections/sex-toys",
-        image: "cat-couples.png", // 对应：彩虹光玻璃棒图
+        image: "home-banner-couples.png", // 对应：彩虹光玻璃棒图
         alt: "Crystal glass pleasure wand",
     },
     {
         id: 'lingerie',
         title: "Sensory & Lingerie", // 改名：加入“感官”，包含羽毛/束缚
-        // 文案升级：强调“触感”
         description: "Soft touches, silk textures, and confidence in every layer.",
         link: "/collections/lingerie",
-        image: "cat-lingerie.png", // 对应：绿色羽毛丝绸图
+        image: "home-banner-lingerie.png?v=1", // 对应：绿色羽毛丝绸图
         alt: "Sensory feather tickler on silk",
     }
 ];
