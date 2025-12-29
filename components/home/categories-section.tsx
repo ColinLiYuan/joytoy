@@ -34,7 +34,7 @@ const categories = [
         title: "Sensory & Lingerie", // 改名：加入“感官”，包含羽毛/束缚
         description: "Soft touches, silk textures, and confidence in every layer.",
         link: "/collections/lingerie",
-        image: "home-banner-lingerie.png", // 对应：绿色羽毛丝绸图
+        image: "home-banner-lingerie.png?v=1", // 对应：绿色羽毛丝绸图
         alt: "Sensory feather tickler on silk",
     }
 ];

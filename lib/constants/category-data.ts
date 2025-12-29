@@ -99,7 +99,7 @@ export const CATEGORIES_DATA: CategoriesData = {
                         name: "Wand Vibrators",
                         title: "Wand Massagers | Powerful Body Vibrators",
                         description: "Powerful wand massagers for deep vibrations. Full body stimulation toys.",
-                        image: "", // 👈 新增
+                        image: "cat-banner-wand-vibe.png", // 👈 新增
                         root: "female-sex-toys",
                         priority: 0.7,
                         changefreq: "weekly"
@@ -109,7 +109,7 @@ export const CATEGORIES_DATA: CategoriesData = {
                         name: "Dildos",
                         title: "Dildos | Realistic Sex Toys for Women",
                         description: "Premium dildos in various sizes. Realistic and non-vibrating toys.",
-                        image: "", // 👈 新增
+                        image: "cat-banner-dildos.png", // 👈 新增
                         root: "female-sex-toys",
                         priority: 0.7,
                         changefreq: "weekly"
@@ -140,7 +140,7 @@ export const CATEGORIES_DATA: CategoriesData = {
                         name: "Cock Rings",
                         title: "Cock Rings | Performance & Vibrating Rings",
                         description: "Enhance stamina and pleasure with premium cock rings. Vibrating and stretchy options for couples.",
-                        image: "", // 👈 新增
+                        image: "cat-banner-cock-ring.png", // 👈 新增
                         root: "male-sex-toys",
                         priority: 0.7,
                         changefreq: "weekly"

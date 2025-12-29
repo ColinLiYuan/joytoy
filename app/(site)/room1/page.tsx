@@ -112,7 +112,7 @@ export default function EldestRoomDesign() {
                                         <div className={`flex-1 ${warmWhite} border border-stone-200`}></div>
                                         <div className={`flex-1 ${warmWhite} border border-stone-200`}></div>
                                         <div className={`flex-1 ${warmWhite} border border-stone-200`}></div>
-                                        {showDims && <div className={centerLabel}>被褥囤货</div>}
+                                        {/*{showDims && <div className={centerLabel}>被褥囤货</div>}*/}
                                     </div>
                                     {/* 主衣柜 */}
                                     <div className="flex-1 flex gap-[1px] mt-[1px]">
@@ -146,10 +146,10 @@ export default function EldestRoomDesign() {
                                     {/* 上部：吊柜书架 */}
                                     <div className={`h-[40%] ${warmWhite} border border-stone-200 relative mb-[1px]`}>
                                         <div className="absolute bottom-0 w-full h-[2px] bg-yellow-400 opacity-50"></div> {/* 灯带 */}
-                                        <div className={centerLabel}>
-                                            <span>吊柜书架</span>
-                                            <span className="text-[8px] font-normal">放不常用的书</span>
-                                        </div>
+                                        {/*<div className={centerLabel}>*/}
+                                        {/*    <span>吊柜书架</span>*/}
+                                        {/*    <span className="text-[8px] font-normal">放不常用的书</span>*/}
+                                        {/*</div>*/}
                                     </div>
 
                                     {/* 中部：洞洞板区域 */}
