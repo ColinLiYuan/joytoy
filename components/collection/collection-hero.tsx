@@ -58,6 +58,7 @@ export default function CollectionHero({ title, description, imagePath }: Collec
                         fill
                         priority
                         className="object-cover"
+                        style={{ objectPosition: 'right center' }}
                         sizes="(max-width: 768px) 100vw, 60vw"
                     />
 
