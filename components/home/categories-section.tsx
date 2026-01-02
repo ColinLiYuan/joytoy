@@ -74,7 +74,7 @@ export default function CategoriesSection() {
                                 2. aspect-[3/4]: 强制纵横比 (时尚杂志常用比例)，如果是横图产品可以改 aspect-[4/3]
                                 3. bg-[#F5F5F7]: 图片加载前的占位底色
                             */}
-                            <div className="relative w-full aspect-[3/4] md:aspect-[4/5] bg-[#F5F5F7] overflow-hidden">
+                            <div className="relative w-full aspect-[4/5] bg-[#F5F5F7] overflow-hidden">
                                 <Image
                                     src={getProductImageUrl('', cat.image)}
                                     alt={cat.alt}
