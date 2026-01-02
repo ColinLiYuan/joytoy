@@ -10,7 +10,7 @@ import { RootResponse, CategoryResponse } from '@/types/category';
 // 👇 引入新组件
 import CollectionHero from '@/components/collection/collection-hero';
 
-const ITEMS_PER_PAGE = 120;
+const ITEMS_PER_PAGE = 12;
 
 interface PageProps {
     params: Promise<{ category: string | string[] }>;
