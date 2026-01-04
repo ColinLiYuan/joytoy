@@ -50,7 +50,7 @@ class ProductService {
             // 构建完整 URL
             const url = `${ADMIN_CONFIG.apiRoutes.product}/list?${queryParams.toString()}`;
 
-            console.log('Fetching products from URL:', url); // 添加调试日志
+            // console.log('Fetching products from URL:', url); // 添加调试日志
 
             const response = await fetch(url, {
                 cache: 'no-store',
@@ -65,7 +65,7 @@ class ProductService {
 
             const apiResponse = await response.json();
 
-            console.log('API Response:', apiResponse);
+            // console.log('API Response:', apiResponse);
 
             if (!apiResponse.success) {
                 throw new Error(apiResponse.error || 'Failed to fetch products');
