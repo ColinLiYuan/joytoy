@@ -123,7 +123,7 @@ export default function ProductReviews({ productId }: ProductReviewsProps) {
                                     {stats.averageRating.toFixed(1)}
                                 </div>
                                 <div className="mb-2">{renderStars(Math.round(stats.averageRating), 20)}</div>
-                                <p className="text-gray-500 text-sm">Based on {stats.totalReviews} reviews</p>
+                                {/*<p className="text-gray-500 text-sm">Based on {stats.totalReviews} reviews</p>*/}
                             </div>
                         ) : (
                             <p className="text-gray-500 mb-4">No reviews yet. Be the first to share your experience.</p>

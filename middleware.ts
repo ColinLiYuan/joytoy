@@ -9,26 +9,26 @@ const redirectMap: Record<string, string> = {
     '/toys/male-sex-toys/male-masturbators/auto-suction-masturbator-fire': '/toys/male-sex-toys/masturbators/titan-electric-cup',
     '/toys/female-sex-toys/clit-vibrators/rose-vibes-tongue': '/toys/female-sex-toys/clit-vibrators/rose-licking-vibrator',
     '/toys/sex-toys/butt-plugs/medal-butt-plug-ht019': '/toys/sex-toys/butt-plugs/gem-remote-metal-plug',
+    '/collections/sex-toy': '/collections/sex-toys',
+    '/contact': '/pages/contact',
+    '/collections/new': '/collections/new-arrivals',
+    '/collections/male': '/collections/male-sex-toys',
+    '/collections/female': '/collections/female-sex-toys',
+    '/collections/nipple-toys': '/collections/female-sex-toys/nipple-toys',
+    '/toys/male-sex-toys/sex-dolls/sex-doll-linda': '/toys/male-sex-toys/sex-dolls/the-venus',
+    '/female-sex-toys/wand-vibrators/the-feather': '/toys/female-sex-toys/wand-vibrators/the-feather',
+    '/female-sex-toys/g-spot-vibrators/the-link': '/toys/female-sex-toys/g-spot-vibrators/the-link'
 };
 
 // 2. 定义 410 删除规则 (Gone)
 // 使用 Set 提高查找性能 (O(1))，比数组 includes (O(n)) 快
 const gonePaths = new Set([
+
+    // 下架的产品
     '/female-sex-toys/bullet-vibrators/matte-red-lipstick-bullet-vibes',
     '/sex-toys/butt-plugs/medal-butt-plug-HT019',
     '/male-sex-toys/pussy-masturbators/life-like-miru',
-    '/products/vibrator-g-sucking-usb-szm',
-    '/products/vibrator-silicone-sucking-mirro',
-    '/membership',
-    '/products/suction-sex-toy-soft-szm',
-    '/products/sex-doll-vagina-dghs',
-    '/contact',
-    '/collections/male-sex-toys/pocket-pussy',
-    '/collections/female-sex-toys/fairy-dildos',
-    '/collections/sex-toys/pocket-pussy',
     '/toys/male-sex-toys/sex-doll/mini-sex-doll-cui',
-    '/collections/sex-toys/vibrator',
-    '/collections/male-sex-toys/silicone-male-masturbator',
     '/toys/female-sex-toys/clit-suction-vibrators/suction-sex-toy-soft-szm',
     '/toys/female-sex-toys/clit-suction-vibrators/squirrel-auto-suction-vibes',
     '/toys/female-sex-toys/clit-suction-vibrators/charming-vibes',
@@ -42,23 +42,36 @@ const gonePaths = new Set([
     '/toys/male-sex-toys/pocket-pussy/realistic-pocket-pussy-snow',
     '/toys/male-sex-toys/pocket-pussy/realistic-pocket-pussy-south',
     '/toys/male-sex-toys/pocket-pussy/realistic-pocket-pussy-dream',
+    '/toys/female-sex-toys/clit-vibrators/secret-wearable-app-vibe',
+    '/female-sex-toys/clit-vibrators/charming-vibes',
+    '/female-sex-toys/rabbit-vibrators/mythtoy-jade-rabbit-heated',
+    '/female-sex-toys/wand-vibrators/scepter-smart-wand',
+    '/female-sex-toys/bullet-vibrators/dart-precision-bullet',
+    '/male-sex-toys/male-masturbators/auto-suction-masturbator-fire',
+    '/male-sex-toys/pussy-masturbators/realistic-pocket-pussy-dream',
+    // 不再需要的分类
     '/collections/vibrator',
     '/collections/sextoy',
     '/collections/pocket-pussy',
     '/collections/female-sex-toys/realistic-dildos',
     '/collections/lingerie/cos-play',
+    '/collections/cos-play',
     '/collections/sex-lingerie',
-    '/male-sex-toys/male-masturbators/auto-suction-masturbator-fire',
-    '/female-sex-toys/clit-vibrators/charming-vibes',
     '/collections/male-sex-toys/sex-doll',
     '/collections/female-sex-toys/vibrators',
-    '/collections/new',
-    '/collections/male',
     '/collections/fairy-dildos',
     '/collections/valentine',
-    '/collections/nipple-toys',
     '/collections/silicone-male-masturbator',
-    '/collections/female'
+    '/collections/male-sex-toys/pocket-pussy',
+    '/collections/female-sex-toys/fairy-dildos',
+    '/collections/sex-toys/pocket-pussy',
+    '/collections/sex-toys/vibrator',
+    '/collections/male-sex-toys/silicone-male-masturbator',
+    // 下架的博客
+    '/blog/why-do-men-sleep-after-sex',
+    // 莫名其妙出现的
+    '/membership',
+
 ]);
 
 // 3. 定义 410 前缀匹配规则

@@ -78,7 +78,7 @@ export default function CheckoutPage() {
         const sub = orderItems.reduce((sum, i) => sum + (i.unitPrice * i.quantity), 0);
         let discount = 0;
         if (appliedCoupon === 'MYTH10') discount = sub * 0.1;
-        const shipping = sub >= 49 ? 0 : 5.99;
+        const shipping = sub >= 49 ? 0 : 7.99;
         return { subtotal: sub, shippingFee: shipping, discountAmount: discount, total: Math.max(0, sub - discount + shipping) };
     }, [orderItems, appliedCoupon]);
 

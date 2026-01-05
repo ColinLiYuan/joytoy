@@ -5,7 +5,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
-import { ProductResponse, ProductSku, HighlightData } from '@/types/product'; // 记得更新类型定义
+import { ProductResponse, ProductSku, HighlightData } from '@/types/product';
 import { useToast } from '@/contexts/toastContext';
 import { useAuth } from '@/contexts/authContext';
 import { useCartStore } from '@/stores/useCartStore';
@@ -21,15 +21,7 @@ import ProductReviews from '@/components/product/reviews/product-reviews';
 import {
     ShoppingBag, ShieldCheck, Package, Truck, ChevronDown, ChevronUp, Star, Heart,
     Loader2, BatteryCharging, Droplets, Box, Smartphone, Feather, Volume2, Check,
-    // 👇 更新这些 Spec 相关的图标
-    Ruler,          // Dimensions (尺子)
-    Scale,          // Weight (天平)
-    Activity,       // Material/Usage Time (脉冲线)
-    EyeOff,         // Discreet (闭眼)
-    Waves,          // Vibration (波纹)
-    Zap,            // Power (闪电),
-    Power,
-    Hourglass
+    Ruler, Scale, Activity, EyeOff, Waves, Zap, Power, Hourglass, AlertCircle
 } from 'lucide-react';
 
 import '@uiw/react-md-editor/markdown-editor.css';
@@ -40,24 +32,18 @@ const MDViewer = dynamic(
     { ssr: false, loading: () => <div className="h-40 bg-gray-50 animate-pulse rounded-lg"></div> }
 );
 
-// ✅ 规格参数映射表 (Key -> Display Label)
 const SPEC_LABEL_MAP: Record<string, string> = {
-    // 基础
     "Material": "Material",
     "Size": "Dimensions",
     "Dimensions": "Dimensions",
     "Weight": "Weight",
-
-    // 电源与时间
     "Power Source": "Power",
     "Power": "Power",
-    "Battery Life": "Usage Time", // 截图显示为 Usage Time
+    "Battery Life": "Usage Time",
     "Play Time": "Usage Time",
     "Usage Time": "Usage Time",
     "Charging Time": "Charge Time",
     "Charge Time": "Charge Time",
-
-    // 性能
     "Noise Level": "Noise",
     "Noise": "Noise",
     "Waterproof": "Waterproof",
@@ -65,40 +51,18 @@ const SPEC_LABEL_MAP: Record<string, string> = {
     "Vibration Modes": "Vibration Modes",
 };
 
-// 辅助函数：获取规格图标 (可选，增加视觉丰富度)
 const getSpecIcon = (key: string) => {
     const k = key.toLowerCase();
-
     if (k.includes('material')) return <Feather size={18} strokeWidth={1.5} />;
-
-    // 1. 隐秘等级 -> 闭眼 (EyeOff)
     if (k.includes('discreet')) return <EyeOff size={18} strokeWidth={1.5} />;
-
-    // 2. 震动模式 -> 波纹 (Waves)
     if (k.includes('vibration') || k.includes('mode')) return <Waves size={18} strokeWidth={1.5} />;
-
-    // 3. 尺寸 -> 尺子 (Ruler)
     if (k.includes('size') || k.includes('dimension')) return <Ruler size={18} strokeWidth={1.5} />;
-
-    // 4. 重量 -> 天平 (Scale)
     if (k.includes('weight')) return <Scale size={18} strokeWidth={1.5} />;
-
-    // 5. 噪音 -> 喇叭 (Volume2)
     if (k.includes('noise')) return <Volume2 size={18} strokeWidth={1.5} />;
-
-    // 6. 充电时间 -> 电池充电 (BatteryCharging)
     if (k.includes('charg')) return <BatteryCharging size={18} strokeWidth={1.5} />;
-
-    // 7. 电源 -> 闪电 (Zap)
     if (k.includes('power')) return <Zap size={18} strokeWidth={1.5} />;
-
-    // 8. 材质 & 使用时间 -> 脉冲线 (Activity) - 模仿截图风格
     if (k.includes('usage')) return <Hourglass size={18} strokeWidth={1.5} />;
-
-    // 9. 防水 -> 水滴 (Droplets)
     if (k.includes('water')) return <Droplets size={18} strokeWidth={1.5} />;
-
-    // 默认图标
     return <Activity size={18} strokeWidth={1.5} />;
 };
 
@@ -108,12 +72,11 @@ interface ProductDetailClientProps {
     galleryImages: any[];
     specifications: any[];
     features: string[];
-    description: string; // 这是"说明书"
+    description: string;
     defaultColor: string | null;
     colorMap: { [key: string]: string };
 }
 
-// 辅助函数：Feature Icon
 const getFeatureIconAndStyle = (text: string) => {
     const lowerText = text.toLowerCase();
     if (lowerText.includes('water') || lowerText.includes('proof')) return { icon: Droplets, color: 'text-gray-600' };
@@ -124,7 +87,6 @@ const getFeatureIconAndStyle = (text: string) => {
     return { icon: Check, color: 'text-gray-600' };
 };
 
-// 轮播组件保持不变
 const ProductCarousel = ({ title, products }: { title: string; products: ProductResponse[] }) => {
     if (!products || products.length === 0) return null;
     return (
@@ -154,16 +116,12 @@ export default function ProductDetailClient({
                                                 colorMap
                                             }: ProductDetailClientProps) {
     const router = useRouter();
-    // 状态管理
     const [addingToCart, setAddingToCart] = useState(false);
     const [buyingNow, setBuyingNow] = useState(false);
     const [selectedSku, setSelectedSku] = useState<ProductSku | null>(null);
     const [isFavorited, setIsFavorited] = useState(product.favorited || false);
     const [isWishlistLoading, setIsWishlistLoading] = useState(false);
-
-    // 折叠面板状态：默认展开 Description
     const [activeAccordion, setActiveAccordion] = useState<string | null>('details');
-
     const [relatedProducts, setRelatedProducts] = useState<ProductResponse[]>([]);
     const [recentlyViewed, setRecentlyViewed] = useState<ProductResponse[]>([]);
 
@@ -171,17 +129,19 @@ export default function ProductDetailClient({
     const { openAuthModal, isLoggedIn } = useAuth();
     const addItemToCart = useCartStore(state => state.addItemToCart);
 
-    // console.log('product detail : ', product)
+    // --- ✅ 状态控制逻辑 ---
+    // 检查商品是否上架
+    const isProductActive = product.status === 'ACTIVE';
 
-    // ✅ 解析 JSON 数据 (Highlight & Box Contents)
+    // 检查 SKU 库存逻辑
+    const getAvailableStock = (sku: ProductSku | null | undefined) => sku ? (sku.stock || 0) - (sku.lockedStock || 0) : 0;
+
+    // 是否允许购买的最终判定
+    const canPurchase = isProductActive && selectedSku && getAvailableStock(selectedSku) > 0;
+
     const highlightData: HighlightData | null = useMemo(() => {
         if (!product.highlightData) return null;
-        try {
-            return JSON.parse(product.highlightData);
-        } catch (e) {
-            console.error("Failed to parse highlight_data", e);
-            return null;
-        }
+        try { return JSON.parse(product.highlightData); } catch (e) { return null; }
     }, [product.highlightData]);
 
     const boxContents: string[] = useMemo(() => {
@@ -189,13 +149,9 @@ export default function ProductDetailClient({
         try {
             const parsed = JSON.parse(product.boxContents);
             return Array.isArray(parsed) ? parsed : [];
-        } catch (e) {
-            return [];
-        }
+        } catch (e) { return []; }
     }, [product.boxContents]);
 
-
-    // SKU Logic
     useEffect(() => {
         if (product.productSkus && product.productSkus.length > 0) {
             if (defaultColor) {
@@ -206,7 +162,6 @@ export default function ProductDetailClient({
         }
     }, [product.productSkus, defaultColor]);
 
-    // Fetch Related & Recent
     useEffect(() => {
         const fetchRelated = async () => {
             if (!product.slug) return;
@@ -229,17 +184,14 @@ export default function ProductDetailClient({
         } catch (e) { console.error(e); }
     }, [product]);
 
-    // Helpers
-    const getAvailableStock = (sku: ProductSku | null | undefined) => sku ? (sku.stock || 0) - (sku.lockedStock || 0) : 0;
     const getMappedColor = (color: string) => colorMap[color.toLowerCase().trim()] || color;
     const isOnSale = product.originalPrice > product.currentPrice;
-    const isCurrentSkuInStock = selectedSku ? getAvailableStock(selectedSku) > 0 : true;
 
-    // Actions (Favorite & Add to Cart) - 保持不变
     const handleToggleFavorite = async () => {
         if (!isLoggedIn) { openAuthModal('login', { onSuccess: executeToggleFavorite }); return; }
         executeToggleFavorite();
     };
+
     const executeToggleFavorite = async () => {
         if (isWishlistLoading) return;
         setIsWishlistLoading(true);
@@ -262,7 +214,13 @@ export default function ProductDetailClient({
             }
         } catch (error) { setIsFavorited(!newState); showToast('error', 'Error', 'Failed to update wishlist'); } finally { setIsWishlistLoading(false); }
     };
+
     const performAddToCart = async () => {
+        // ✅ 增加后端逻辑双重检查：如果下架，直接拦截
+        if (!isProductActive) {
+            showToast('error', 'Unavailable', 'This product is no longer available.');
+            return false;
+        }
         if (!product || !selectedSku || getAvailableStock(selectedSku) <= 0) return false;
         try {
             await addItemToCart({
@@ -279,15 +237,12 @@ export default function ProductDetailClient({
             return true;
         } catch (error) { console.error(error); showToast('error', 'Error', 'Failed to add product.'); return false; }
     };
-    const handleAddToCart = async () => { setAddingToCart(true); const success = await performAddToCart(); setAddingToCart(false); };
+
+    const handleAddToCart = async () => { setAddingToCart(true); await performAddToCart(); setAddingToCart(false); };
     const handleBuyNow = async () => { setBuyingNow(true); const success = await performAddToCart(); if (success) router.push('/checkout'); setBuyingNow(false); };
 
-    // Accordion Helper
-    const toggleAccordion = (id: string) => {
-        setActiveAccordion(activeAccordion === id ? null : id);
-    };
+    const toggleAccordion = (id: string) => setActiveAccordion(activeAccordion === id ? null : id);
 
-    // Title Render
     const renderDetailTitle = (fullTitle: string) => {
         if (fullTitle.includes('|')) {
             const [name, desc] = fullTitle.split('|');
@@ -303,25 +258,22 @@ export default function ProductDetailClient({
 
     const galleryBadges = (
         <ProductBadge
-            stockStatus={isCurrentSkuInStock}
+            stockStatus={isProductActive && (selectedSku ? getAvailableStock(selectedSku) > 0 : true)}
             originalPrice={product.originalPrice}
             currentPrice={product.currentPrice}
-            badge={product.badge}
+            badge={!isProductActive ? 'OFF-SHELF' : product.badge}
             className="absolute top-6 left-6 z-20 scale-110"
         />
     );
 
     return (
         <div className="w-full">
-            {/* --- SECTION 0: BREADCRUMBS --- */}
             <div className="container mx-auto px-4 max-w-7xl pt-4 pb-4">
                 <Breadcrumb items={breadcrumbs} showLastItem={false} />
             </div>
 
-            {/* --- SECTION 1: THE FOLD (Gallery + Purchase Info) --- */}
             <div className="container mx-auto px-4 max-w-7xl pb-16 lg:pb-24">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20">
-                    {/* Left: Gallery */}
                     <div className="w-full">
                         <ProductGallery
                             images={galleryImages}
@@ -331,7 +283,6 @@ export default function ProductDetailClient({
                         />
                     </div>
 
-                    {/* Right: Info */}
                     <div className="flex flex-col h-full justify-center">
                         <div className="border-b border-gray-100 pb-8 mb-8">
                             <div className="flex justify-between items-start gap-4 mb-2">
@@ -341,14 +292,26 @@ export default function ProductDetailClient({
                                 </button>
                             </div>
 
+                            {/* --- ✅ 下架提示横幅 --- */}
+                            {!isProductActive && (
+                                <div className="mt-4 mb-6 p-4 bg-gray-50 border border-gray-100 rounded-xl flex items-center gap-3 text-gray-500">
+                                    <AlertCircle size={20} className="text-gray-400" />
+                                    <span className="text-sm font-bold uppercase tracking-wider">This item is currently unavailable</span>
+                                </div>
+                            )}
+
                             <div className="flex items-center justify-between mt-4">
                                 <div className="flex items-baseline gap-4">
-                                    {isOnSale ? (
-                                        <>
-                                            <span className="text-3xl font-bold text-[#E11D48]">${product.currentPrice.toFixed(2)}</span>
-                                            <span className="text-xl text-gray-400 line-through decoration-gray-300">${product.originalPrice.toFixed(2)}</span>
-                                        </>
-                                    ) : (<span className="text-3xl font-bold text-gray-900">${product.currentPrice.toFixed(2)}</span>)}
+                                    {isProductActive ? (
+                                        isOnSale ? (
+                                            <>
+                                                <span className="text-3xl font-bold text-[#E11D48]">${product.currentPrice.toFixed(2)}</span>
+                                                <span className="text-xl text-gray-400 line-through decoration-gray-300">${product.originalPrice.toFixed(2)}</span>
+                                            </>
+                                        ) : (<span className="text-3xl font-bold text-gray-900">${product.currentPrice.toFixed(2)}</span>)
+                                    ) : (
+                                        <span className="text-3xl font-bold text-gray-300">Unavailable</span>
+                                    )}
                                 </div>
                                 <div className="flex items-center gap-1">
                                     {[1, 2, 3, 4, 5].map(i => <Star key={i} size={16} className="fill-yellow-400 text-yellow-400" />)}
@@ -357,7 +320,6 @@ export default function ProductDetailClient({
                             </div>
                         </div>
 
-                        {/* ✅ Feature Pills (Tech Badge Style) */}
                         {features.length > 0 && (
                             <div className="flex flex-wrap gap-2 mb-8">
                                 {features.slice(0, 4).map((feature, idx) => {
@@ -373,7 +335,7 @@ export default function ProductDetailClient({
                             </div>
                         )}
 
-                        {/* SKU Selector */}
+                        {/* SKU Selector (下架时也可以看，但操作无效) */}
                         {product.productSkus && product.productSkus.length > 0 && (
                             <div className="mb-10">
                                 <h3 className="text-sm font-bold text-gray-900 uppercase tracking-widest mb-4">
@@ -382,7 +344,7 @@ export default function ProductDetailClient({
                                 <div className="flex flex-wrap gap-4">
                                     {product.productSkus.map((sku) => {
                                         const isSelected = selectedSku?.id === sku.id;
-                                        const isOutOfStock = getAvailableStock(sku) <= 0;
+                                        const isOutOfStock = getAvailableStock(sku) <= 0 || !isProductActive;
                                         const colorHex = getMappedColor(sku.color || '');
                                         return (
                                             <button key={sku.id} onClick={() => !isOutOfStock && setSelectedSku(sku)} disabled={isOutOfStock} className={`w-12 h-12 rounded-full flex items-center justify-center transition-all relative ${isSelected ? 'ring-2 ring-offset-2 ring-black scale-110' : 'hover:scale-105'} ${isOutOfStock ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer shadow-sm'}`} style={{ backgroundColor: colorHex === '#FFFFFF' ? '#F3F4F6' : colorHex }} title={sku.color}>
@@ -394,17 +356,34 @@ export default function ProductDetailClient({
                             </div>
                         )}
 
-                        {/* Actions */}
+                        {/* --- ✅ 购买操作区 (根据 canPurchase 禁用) --- */}
                         <div className="flex flex-col sm:flex-row gap-4 mb-10">
-                            <button className={`flex-1 py-4 px-8 rounded-full font-bold text-lg flex items-center justify-center gap-3 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 ${!selectedSku || getAvailableStock(selectedSku) <= 0 ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-black text-white hover:bg-gray-900'}`} onClick={handleAddToCart} disabled={addingToCart || buyingNow || !selectedSku || getAvailableStock(selectedSku) <= 0}>
-                                {addingToCart ? <Loader2 size={24} className="animate-spin" /> : <><ShoppingBag size={20} strokeWidth={2} /> Add to Bag</>}
+                            <button
+                                className={`flex-1 py-4 px-8 rounded-full font-bold text-lg flex items-center justify-center gap-3 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 ${!canPurchase ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-black text-white hover:bg-gray-900'}`}
+                                onClick={handleAddToCart}
+                                disabled={addingToCart || buyingNow || !canPurchase}
+                            >
+                                {addingToCart ? <Loader2 size={24} className="animate-spin" /> : (
+                                    <>
+                                        <ShoppingBag size={20} strokeWidth={2} />
+                                        {!isProductActive ? 'Off-shelf' : 'Add to Bag'}
+                                    </>
+                                )}
                             </button>
-                            <button className={`flex-1 py-4 px-8 rounded-full font-bold text-lg flex items-center justify-center gap-3 transition-all shadow-sm border-2 ${!selectedSku || getAvailableStock(selectedSku) <= 0 ? 'border-gray-200 text-gray-400 cursor-not-allowed' : 'border-black text-black hover:bg-gray-50'}`} onClick={handleBuyNow} disabled={addingToCart || buyingNow || !selectedSku || getAvailableStock(selectedSku) <= 0}>
-                                {buyingNow ? <Loader2 size={24} className="animate-spin" /> : <><Zap size={20} strokeWidth={2} /> Buy Now</>}
+                            <button
+                                className={`flex-1 py-4 px-8 rounded-full font-bold text-lg flex items-center justify-center gap-3 transition-all shadow-sm border-2 ${!canPurchase ? 'border-gray-200 text-gray-400 cursor-not-allowed' : 'border-black text-black hover:bg-gray-50'}`}
+                                onClick={handleBuyNow}
+                                disabled={addingToCart || buyingNow || !canPurchase}
+                            >
+                                {buyingNow ? <Loader2 size={24} className="animate-spin" /> : (
+                                    <>
+                                        <Zap size={20} strokeWidth={2} />
+                                        {!isProductActive ? 'Unavailable' : 'Buy Now'}
+                                    </>
+                                )}
                             </button>
                         </div>
 
-                        {/* Trust Signals */}
                         <div className="flex justify-between items-center py-6 border-t border-gray-100 text-xs font-bold text-gray-600 uppercase tracking-wider">
                             <span className="flex items-center gap-2"><Truck size={16} /> Discreet Shipping</span>
                             <span className="flex items-center gap-2"><ShieldCheck size={16} /> Body-Safe</span>
@@ -414,16 +393,11 @@ export default function ProductDetailClient({
                 </div>
             </div>
 
-            {/* --- ✅ SECTION 2: PRODUCT HIGHLIGHTS (Data Driven) --- */}
             {highlightData && (
                 <div className="w-full relative bg-black overflow-hidden group">
-                    {/* 黑色遮罩：保证文字清晰 */}
                     <div className="absolute inset-0 bg-black/40 z-10 pointer-events-none" />
-
-                    {/* 背景大图：16:9 比例的场景图 */}
                     <div className="relative w-full h-[500px] md:h-[700px]">
                         <Image
-                            // 确保你已经 import 了 getProductImageUrl
                             src={getProductImageUrl('', highlightData.image)}
                             alt={highlightData.title}
                             fill
@@ -431,8 +405,6 @@ export default function ProductDetailClient({
                             quality={90}
                         />
                     </div>
-
-                    {/* 文字内容：悬浮在左侧 */}
                     <div className="absolute inset-0 z-20 flex items-center justify-center md:justify-start">
                         <div className="container mx-auto px-6 md:px-12">
                             <div className="max-w-xl text-center md:text-left text-white animate-fade-in-up">
@@ -451,7 +423,6 @@ export default function ProductDetailClient({
                 </div>
             )}
 
-            {/* --- SECTION 3: HOW TO USE (Static Visuals) --- */}
             <div className="w-full bg-white py-20 lg:py-28">
                 <div className="container mx-auto px-4 max-w-5xl text-center">
                     <h2 className="text-3xl md:text-4xl font-bold text-gray-900 font-['Playfair_Display'] mb-16">
@@ -483,7 +454,6 @@ export default function ProductDetailClient({
                 </div>
             </div>
 
-            {/* --- ✅ SECTION 4: WHAT'S IN THE BOX (Data Driven) --- */}
             {boxContents.length > 0 && (
                 <div className="w-full bg-[#F9FAFB] py-20 border-y border-gray-100">
                     <div className="container mx-auto px-4 max-w-4xl">
@@ -509,17 +479,11 @@ export default function ProductDetailClient({
                 </div>
             )}
 
-            {/* --- ✅ SECTION 5: ACCORDIONS (Details + Mapped Specs) --- */}
             <div className="w-full bg-white py-16">
                 <div className="container mx-auto px-4 max-w-3xl">
-
-                    {/* 1. Product Details (Description) */}
                     {description && (
                         <div className="border-b border-gray-100">
-                            <button
-                                onClick={() => toggleAccordion('details')}
-                                className="w-full flex justify-between items-center py-6 text-left"
-                            >
+                            <button onClick={() => toggleAccordion('details')} className="w-full flex justify-between items-center py-6 text-left">
                                 <span className="text-xl font-bold text-gray-900 font-['Playfair_Display']">Product Details</span>
                                 {activeAccordion === 'details' ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
                             </button>
@@ -543,13 +507,9 @@ export default function ProductDetailClient({
                         </div>
                     )}
 
-                    {/* 2. Specifications (Mapped) */}
                     {specifications.length > 0 && (
                         <div className="border-b border-gray-100">
-                            <button
-                                onClick={() => toggleAccordion('specs')}
-                                className="w-full flex justify-between items-center py-6 text-left"
-                            >
+                            <button onClick={() => toggleAccordion('specs')} className="w-full flex justify-between items-center py-6 text-left">
                                 <span className="text-xl font-bold text-gray-900 font-['Playfair_Display']">Technical Specifications</span>
                                 {activeAccordion === 'specs' ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
                             </button>
@@ -557,10 +517,8 @@ export default function ProductDetailClient({
                                 <div className="pb-8 animate-fadeIn">
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-12">
                                         {specifications.map((spec, idx) => {
-                                            // 使用映射表转换 Label
                                             const displayLabel = SPEC_LABEL_MAP[spec.specKey] || spec.specKey.replace(/_/g, ' ');
                                             const Icon = getSpecIcon(displayLabel);
-
                                             return (
                                                 <div key={idx} className="flex justify-between items-center py-3 border-b border-dashed border-gray-100">
                                                     <div className="flex items-center gap-2 text-gray-500">
@@ -577,12 +535,8 @@ export default function ProductDetailClient({
                         </div>
                     )}
 
-                    {/* 3. Static Shipping Info (Optional) */}
                     <div className="border-b border-gray-100">
-                        <button
-                            onClick={() => toggleAccordion('shipping')}
-                            className="w-full flex justify-between items-center py-6 text-left"
-                        >
+                        <button onClick={() => toggleAccordion('shipping')} className="w-full flex justify-between items-center py-6 text-left">
                             <span className="text-xl font-bold text-gray-900 font-['Playfair_Display']">Shipping & Returns</span>
                             {activeAccordion === 'shipping' ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
                         </button>
@@ -596,22 +550,25 @@ export default function ProductDetailClient({
                 </div>
             </div>
 
-            <ProductReviews
-                productId={product.id}
-            />
+            <ProductReviews productId={product.id} />
 
-            {/* --- STICKY MOBILE BAR --- */}
+            {/* --- ✅ STICKY MOBILE BAR (同步禁用) --- */}
             <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-3 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] flex items-center gap-3 safe-area-pb" style={{ zIndex: Z_INDEX.STICKY }}>
                 <div className="flex-1 min-w-0 flex flex-col justify-center">
                     <p className="text-xs font-bold text-gray-900 truncate">{product.title}</p>
-                    <p className="text-xs font-bold text-[#E11D48]">${product.currentPrice}</p>
+                    <p className={`text-xs font-bold ${isProductActive ? 'text-[#E11D48]' : 'text-gray-300'}`}>
+                        {isProductActive ? `$${product.currentPrice}` : 'Unavailable'}
+                    </p>
                 </div>
-                <button className={`h-11 px-8 rounded-full font-bold text-sm transition-all shadow-md whitespace-nowrap flex-shrink-0 flex items-center justify-center ${!selectedSku || getAvailableStock(selectedSku) <= 0 ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-black text-white hover:bg-gray-800'}`} onClick={handleAddToCart} disabled={addingToCart || !selectedSku || getAvailableStock(selectedSku) <= 0}>
-                    {addingToCart ? <Loader2 size={18} className="animate-spin" /> : 'Add to Bag'}
+                <button
+                    className={`h-11 px-8 rounded-full font-bold text-sm transition-all shadow-md whitespace-nowrap flex-shrink-0 flex items-center justify-center ${!canPurchase ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-black text-white hover:bg-gray-800'}`}
+                    onClick={handleAddToCart}
+                    disabled={addingToCart || !canPurchase}
+                >
+                    {addingToCart ? <Loader2 size={18} className="animate-spin" /> : (!isProductActive ? 'Off-shelf' : 'Add to Bag')}
                 </button>
             </div>
 
-            {/* --- CAROUSELS --- */}
             <div className="mt-8">
                 {relatedProducts.length > 0 && <ProductCarousel title="You May Also Like" products={relatedProducts} />}
                 {recentlyViewed.length > 0 && <ProductCarousel title="Recently Viewed" products={recentlyViewed} />}
