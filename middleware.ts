@@ -61,6 +61,7 @@ const gonePaths = new Set([
     '/collections/female-sex-toys/vibrators',
     '/collections/fairy-dildos',
     '/collections/valentine',
+    '/collections/realistic-dildos',
     '/collections/silicone-male-masturbator',
     '/collections/male-sex-toys/pocket-pussy',
     '/collections/female-sex-toys/fairy-dildos',
@@ -76,6 +77,8 @@ const gonePaths = new Set([
 
 // 3. 定义 410 前缀匹配规则
 const gonePrefixes = [
+    '/female-sex-toys',
+    '/male-sex-toys',
     '/collections/vibrators',
     '/sex-toys',
     '/products'
