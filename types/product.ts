@@ -35,6 +35,7 @@ export interface ProductResponse {
     alt?: string;
     rating?: number;
     reviewId?: string;
+    status: string;
 }
 
 export interface ProductListResponse {
