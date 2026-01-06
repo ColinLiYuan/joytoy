@@ -32,9 +32,9 @@ export const metadata: Metadata = {
     },
     description: 'Find the best toys, figures and collectibles at MythToy. Discreet shipping and secure checkout.',
     icons: {
-        icon: '/icon.svg',
-        shortcut: '/icon.svg',
-        apple: '/icon.svg',
+        icon: '/icon.svg?v=2',
+        shortcut: '/icon.svg?v=2',
+        apple: '/icon.svg?v=2',
     },
     openGraph: {
         title: 'MythToy',
