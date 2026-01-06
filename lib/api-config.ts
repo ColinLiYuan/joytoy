@@ -33,5 +33,6 @@ export const ADMIN_CONFIG = {
         category: '/api/admin/category',
         filter: '/api/admin/filter',
         blog: '/api/admin/blog',
+        review: '/api/admin/review',
     }
 };

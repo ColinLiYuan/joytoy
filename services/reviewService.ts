@@ -1,6 +1,6 @@
 // services/reviewService.ts
 import { ReviewCreateRequest, ReviewListResponse, ReviewAuditRequest } from '@/types/review';
-import { SERVER_CONFIG } from '@/lib/api-config';
+import { ADMIN_CONFIG, SERVER_CONFIG, ReviewStatus } from '@/lib/api-config';
 
 class ReviewService {
 
@@ -46,7 +46,7 @@ class ReviewService {
 
     async getAdminReviews(page: number = 0, size: number = 10, status?: ReviewStatus): Promise<ReviewListResponse> {
         // 构建 URL，例如 /api/admin/review/list?page=0&size=10&status=PENDING
-        let url = `${SERVER_CONFIG.apiRoutes.review}/admin/list?page=${page}&size=${size}`;
+        let url = `${ADMIN_CONFIG.apiRoutes.review}/list?page=${page}&size=${size}`;
         if (status) {
             url += `&status=${status}`;
         }
@@ -74,7 +74,7 @@ class ReviewService {
      * ✅ 新增：审核评论
      */
     async auditReview(request: ReviewAuditRequest): Promise<boolean> {
-        const url = `${SERVER_CONFIG.apiRoutes.review}/admin/audit`;
+        const url = `${ADMIN_CONFIG.apiRoutes.review}/audit`;
 
         const response = await fetch(url, {
             method: 'POST', // 或 PUT，取决于后端定义
