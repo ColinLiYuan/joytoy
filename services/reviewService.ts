@@ -73,22 +73,25 @@ class ReviewService {
     /**
      * ✅ 新增：审核评论
      */
-    async auditReview(request: ReviewAuditRequest): Promise<boolean> {
+    async auditReview(reviewId: string | number, status: 'APPROVED' | 'REJECTED'): Promise<boolean> {
+        // 注意：这里路径要和 SpringBoot Controller @RequestMapping 对应
         const url = `${ADMIN_CONFIG.apiRoutes.review}/audit`;
 
         const response = await fetch(url, {
-            method: 'POST', // 或 PUT，取决于后端定义
+            method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                // 如果用了 JWT，记得带 Authorization: `Bearer ${token}`
             },
-            body: JSON.stringify(request),
+            // 后端 DTO 需要 reviewId 和 status
+            body: JSON.stringify({ reviewId, status }),
             credentials: 'include',
         });
 
         const apiResponse = await response.json();
 
-        if (!apiResponse.success && !response.ok) {
-            throw new Error(apiResponse.message || 'Audit failed');
+        if (!response.ok || !apiResponse.success) {
+            throw new Error(apiResponse.message || '审核操作失败');
         }
 
         return true;

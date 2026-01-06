@@ -3,11 +3,11 @@
 
 import { useEffect, useState } from 'react'
 import { reviewService } from '@/services/reviewService'
-import { Review, ReviewStatus } from '@/types/review'
+import { Review, ReviewStatus } from '@/types/review' // 确保 ReviewStatus 枚举值是 'PENDING', 'APPROVED', 'REJECTED'
 import {
     CheckCircle,
     XCircle,
-    AlertCircle,
+    AlertCircle, // 这个图标似乎没有用到，可以移除
     Star,
     Loader2
 } from 'lucide-react'
@@ -15,7 +15,8 @@ import {
 export default function AdminReviewPage() {
     const [reviews, setReviews] = useState<Review[]>([])
     const [loading, setLoading] = useState(true)
-    const [currentStatus, setCurrentStatus] = useState<ReviewStatus | 'ALL'>('ALL')
+    // ✅ 修正：确保 initial state 是 'ALL'，并且类型正确
+    const [currentStatus, setCurrentStatus] = useState<'ALL' | ReviewStatus>('ALL')
     const [page, setPage] = useState(0)
     const [totalPages, setTotalPages] = useState(0)
 
@@ -23,11 +24,11 @@ export default function AdminReviewPage() {
     const fetchReviews = async () => {
         setLoading(true)
         try {
-            // 如果是 ALL，传 undefined 给 service
-            const statusFilter = currentStatus === 'ALL' ? undefined : currentStatus
-            const data = await reviewService.getAdminReviews(page, 10, statusFilter)
-            setReviews(data.content)
-            setTotalPages(data.totalPages)
+            // 如果是 ALL，传 undefined 给 service，否则传当前状态
+            const statusFilter = currentStatus === 'ALL' ? undefined : currentStatus;
+            const data = await reviewService.getAdminReviews(page, 10, statusFilter);
+            setReviews(data.content);
+            setTotalPages(data.totalPages);
         } catch (error) {
             console.error('Failed to load reviews:', error)
             alert('加载评论失败')
@@ -38,19 +39,25 @@ export default function AdminReviewPage() {
 
     useEffect(() => {
         fetchReviews()
-    }, [page, currentStatus])
+    }, [page, currentStatus]) // 依赖项正确
 
     // 审核操作
-    const handleAudit = async (id: string | number, status: 'APPROVED' | 'REJECTED') => {
-        if (!confirm(status === 'APPROVED' ? '确认通过该评论？' : '确认拒绝该评论？')) return
+    const handleAudit = async (reviewId: string | number, status: 'APPROVED' | 'REJECTED') => {
+        const actionText = status === 'APPROVED' ? '通过' : '拒绝';
+
+        // 1. 确认框
+        if (!window.confirm(`确认要【${actionText}】这条评论吗？`)) {
+            return;
+        }
 
         try {
-            await reviewService.auditReview({ reviewId: id, status })
-            // 操作成功后刷新列表
-            fetchReviews()
-        } catch (error) {
-            console.error(error)
-            alert('操作失败')
+            // 2. 调用接口
+            await reviewService.auditReview(reviewId, status);
+            // 3. 刷新列表
+            fetchReviews();
+        } catch (error: any) {
+            console.error(error);
+            alert(`操作失败: ${error.message}`);
         }
     }
 
@@ -68,16 +75,31 @@ export default function AdminReviewPage() {
         )
     }
 
-    // 状态标签颜色
+    // 状态标签渲染 (已优化)
     const getStatusBadge = (status: ReviewStatus) => {
+        let text = '';
+        let bgColor = '';
+        let textColor = '';
+
         switch (status) {
             case 'APPROVED':
-                return <span className="px-2 py-1 text-xs font-semibold text-green-700 bg-green-100 rounded-full">已通过</span>
+                text = '已通过';
+                bgColor = 'bg-green-100';
+                textColor = 'text-green-700';
+                break;
             case 'REJECTED':
-                return <span className="px-2 py-1 text-xs font-semibold text-red-700 bg-red-100 rounded-full">已拒绝</span>
+                text = '已拒绝';
+                bgColor = 'bg-red-100';
+                textColor = 'text-red-700';
+                break;
+            case 'PENDING': // 假设你的后端枚举是 PENDING
             default:
-                return <span className="px-2 py-1 text-xs font-semibold text-yellow-700 bg-yellow-100 rounded-full">待审核</span>
+                text = '待审核';
+                bgColor = 'bg-yellow-100';
+                textColor = 'text-yellow-700';
+                break;
         }
+        return <span className={`px-2 py-1 text-xs font-semibold rounded-full ${bgColor} ${textColor}`}>{text}</span>
     }
 
     return (
@@ -89,6 +111,7 @@ export default function AdminReviewPage() {
             {/* 状态筛选 Tabs */}
             <div className="mb-6 border-b border-gray-200">
                 <nav className="-mb-px flex space-x-8">
+                    {/* ✅ 修正 Map 的 key */}
                     {(['ALL', 'PENDING', 'APPROVED', 'REJECTED'] as const).map((tab) => (
                         <button
                             key={tab}
@@ -134,6 +157,7 @@ export default function AdminReviewPage() {
                         <tbody className="bg-white divide-y divide-gray-200">
                         {reviews.length === 0 ? (
                             <tr>
+                                {/* ✅ 修正 colspan 为 5 */}
                                 <td colSpan={5} className="px-6 py-10 text-center text-gray-500">
                                     暂无评论数据
                                 </td>
@@ -163,34 +187,40 @@ export default function AdminReviewPage() {
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
-                                        {getStatusBadge(review.status)}
+                                        {getStatusBadge(review.status)} {/* 使用 getStatusBadge */}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                         {new Date(review.createdAt).toLocaleDateString()}
                                     </td>
+
+                                    {/* ✅ 操作列：只保留一个，逻辑统一 */}
                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                        {/* 仅待审核时显示操作按钮 */}
                                         {review.status === 'PENDING' && (
                                             <div className="flex justify-end space-x-3">
                                                 <button
                                                     onClick={() => handleAudit(review.id, 'APPROVED')}
-                                                    className="text-green-600 hover:text-green-900 flex items-center"
-                                                    title="通过"
+                                                    className="text-green-600 hover:text-green-900 inline-flex items-center gap-1"
+                                                    title="通过审核"
                                                 >
                                                     <CheckCircle className="w-5 h-5" />
+                                                    <span className="hidden sm:inline">通过</span>
                                                 </button>
                                                 <button
                                                     onClick={() => handleAudit(review.id, 'REJECTED')}
-                                                    className="text-red-600 hover:text-red-900 flex items-center"
-                                                    title="拒绝"
+                                                    className="text-red-600 hover:text-red-900 inline-flex items-center gap-1"
+                                                    title="拒绝评论"
                                                 >
                                                     <XCircle className="w-5 h-5" />
+                                                    <span className="hidden sm:inline">拒绝</span>
                                                 </button>
                                             </div>
                                         )}
+                                        {/* 非待审核状态，显示“已审核”或“不可操作” */}
                                         {review.status !== 'PENDING' && (
-                                            <span className="text-gray-400 cursor-not-allowed">
-                                                    已审核
-                                                </span>
+                                            <span className="text-gray-400">
+                                                {review.status === 'APPROVED' ? '已通过' : '已拒绝'}
+                                            </span>
                                         )}
                                     </td>
                                 </tr>
