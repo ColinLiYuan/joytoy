@@ -12,7 +12,8 @@ import {
     Settings,
     BookOpen,
     Menu,
-    X
+    X,
+    MessageSquare
 } from 'lucide-react'
 
 export default function AdminLayout({
@@ -29,6 +30,7 @@ export default function AdminLayout({
         { name: '商品管理', href: '/admin/product', icon: Package },
         { name: '订单管理', href: '/admin/order', icon: ShoppingCart },
         { name: '用户管理', href: '/admin/user', icon: Users }, // 修正了 href
+        { name: '评论管理', href: '/admin/review', icon: MessageSquare },
         { name: '博客管理', href: '/admin/blog', icon: BookOpen },
         { name: '系统设置', href: '/admin/settings', icon: Settings }, // 修正了 href
     ]

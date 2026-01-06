@@ -1,5 +1,5 @@
 // services/reviewService.ts
-import { ReviewCreateRequest, ReviewListResponse } from '@/types/review';
+import { ReviewCreateRequest, ReviewListResponse, ReviewAuditRequest } from '@/types/review';
 import { SERVER_CONFIG } from '@/lib/api-config';
 
 class ReviewService {
@@ -42,6 +42,56 @@ class ReviewService {
         // 确保返回的数据结构符合前端预期
         // 如果后端 data 直接是数组，这里可能需要适配一下
         return apiResponse.data;
+    }
+
+    async getAdminReviews(page: number = 0, size: number = 10, status?: ReviewStatus): Promise<ReviewListResponse> {
+        // 构建 URL，例如 /api/admin/review/list?page=0&size=10&status=PENDING
+        let url = `${SERVER_CONFIG.apiRoutes.review}/admin/list?page=${page}&size=${size}`;
+        if (status) {
+            url += `&status=${status}`;
+        }
+
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                // 如果需要 Authorization header，请在这里添加
+            },
+            credentials: 'include', // 携带 Admin Cookie/Session
+            cache: 'no-store' // 后台数据不缓存
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to fetch admin reviews');
+        }
+
+        const apiResponse = await response.json();
+        // 假设后端返回结构是 { success: true, data: { ... } }
+        return apiResponse.data || apiResponse;
+    }
+
+    /**
+     * ✅ 新增：审核评论
+     */
+    async auditReview(request: ReviewAuditRequest): Promise<boolean> {
+        const url = `${SERVER_CONFIG.apiRoutes.review}/admin/audit`;
+
+        const response = await fetch(url, {
+            method: 'POST', // 或 PUT，取决于后端定义
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(request),
+            credentials: 'include',
+        });
+
+        const apiResponse = await response.json();
+
+        if (!apiResponse.success && !response.ok) {
+            throw new Error(apiResponse.message || 'Audit failed');
+        }
+
+        return true;
     }
 }
 
