@@ -34,7 +34,7 @@ export interface ProductResponse {
     brand?: string;
     alt?: string;
     rating?: number;
-    reviewId?: string;
+    reviewCount?: number;
     status?: string;
 }
 
