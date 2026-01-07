@@ -1,6 +1,6 @@
 // services/reviewService.ts
-import { ReviewCreateRequest, ReviewListResponse, ReviewAuditRequest } from '@/types/review';
-import { ADMIN_CONFIG, SERVER_CONFIG, ReviewStatus } from '@/lib/api-config';
+import { ReviewCreateRequest, ReviewListResponse, ReviewStatus } from '@/types/review';
+import { ADMIN_CONFIG, SERVER_CONFIG } from '@/lib/api-config';
 
 class ReviewService {
 

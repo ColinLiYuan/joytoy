@@ -25,6 +25,17 @@ export interface Review {
     status: ReviewStatus; // ✅ 新增：状态字段
 }
 
+export interface ReviewListResponse {
+    content: Review[];
+    currentPage: number;
+    pageSize: number;
+    totalElements: number;
+    totalPages: number;
+    hasNext: boolean;
+    hasPrevious: boolean;
+    stats?: ReviewStats;
+}
+
 export interface ReviewStats {
     averageRating: number;
     totalReviews: number;
