@@ -1,6 +1,6 @@
 // services/reviewService.ts
-import { ReviewCreateRequest, ReviewListResponse } from '@/types/review';
-import { SERVER_CONFIG } from '@/lib/api-config';
+import { ReviewCreateRequest, ReviewListResponse, ReviewStatus } from '@/types/review';
+import { ADMIN_CONFIG, SERVER_CONFIG } from '@/lib/api-config';
 
 class ReviewService {
 
@@ -42,6 +42,59 @@ class ReviewService {
         // 确保返回的数据结构符合前端预期
         // 如果后端 data 直接是数组，这里可能需要适配一下
         return apiResponse.data;
+    }
+
+    async getAdminReviews(page: number = 0, size: number = 10, status?: ReviewStatus): Promise<ReviewListResponse> {
+        // 构建 URL，例如 /api/admin/review/list?page=0&size=10&status=PENDING
+        let url = `${ADMIN_CONFIG.apiRoutes.review}/list?page=${page}&size=${size}`;
+        if (status) {
+            url += `&status=${status}`;
+        }
+
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                // 如果需要 Authorization header，请在这里添加
+            },
+            credentials: 'include', // 携带 Admin Cookie/Session
+            cache: 'no-store' // 后台数据不缓存
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to fetch admin reviews');
+        }
+
+        const apiResponse = await response.json();
+        // 假设后端返回结构是 { success: true, data: { ... } }
+        return apiResponse.data || apiResponse;
+    }
+
+    /**
+     * ✅ 新增：审核评论
+     */
+    async auditReview(reviewId: string | number, status: 'APPROVED' | 'REJECTED'): Promise<boolean> {
+        // 注意：这里路径要和 SpringBoot Controller @RequestMapping 对应
+        const url = `${ADMIN_CONFIG.apiRoutes.review}/audit`;
+
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                // 如果用了 JWT，记得带 Authorization: `Bearer ${token}`
+            },
+            // 后端 DTO 需要 reviewId 和 status
+            body: JSON.stringify({ reviewId, status }),
+            credentials: 'include',
+        });
+
+        const apiResponse = await response.json();
+
+        if (!response.ok || !apiResponse.success) {
+            throw new Error(apiResponse.message || '审核操作失败');
+        }
+
+        return true;
     }
 }
 

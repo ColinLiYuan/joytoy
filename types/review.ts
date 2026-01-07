@@ -1,4 +1,5 @@
 // types/review.ts
+export type ReviewStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
 
 export interface ReviewCreateRequest {
     productId: number;
@@ -10,21 +11,28 @@ export interface ReviewCreateRequest {
 }
 
 export interface Review {
-    id: string;
-    productId: string;
+    id: number; // 或者是 number，取决于你的数据库
+    productId: number;
+    productName?: string; // ✅ 新增：后台列表最好能显示是哪个商品的评论
     authorName: string;
+    email?: string;       // ✅ 新增：后台可能需要看到邮箱
     rating: number;
     title: string;
     content: string;
     createdAt: string;
     isVerified: boolean;
     helpfulCount: number;
+    status: ReviewStatus; // ✅ 新增：状态字段
 }
 
 export interface ReviewListResponse {
     content: Review[];
-    totalPages: number;
+    currentPage: number;
+    pageSize: number;
     totalElements: number;
+    totalPages: number;
+    hasNext: boolean;
+    hasPrevious: boolean;
     stats?: ReviewStats;
 }
 
@@ -38,4 +46,9 @@ export interface ReviewStats {
         2: number;
         1: number;
     };
+}
+
+export interface ReviewAuditRequest {
+    reviewId: number;
+    status: 'APPROVED' | 'REJECTED';
 }

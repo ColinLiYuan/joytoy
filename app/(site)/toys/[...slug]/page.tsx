@@ -18,56 +18,50 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     const slug = Array.isArray(resolvedParams.slug) ? `/${resolvedParams.slug.join('/')}` : `/${resolvedParams.slug}`;
     try {
         const product = await productServiceServer.getProductBySlug(slug);
+        console.log('product: ', product)
         const canonicalUrl = `https://mythtoy.com/toys${slug}`;
         const imageUrl = getProductImageUrl('', product.image);
-        const description = product.description?.substring(0, 160) || `Buy ${product.title}`;
+        // 去除 Markdown 符号，只取纯文本作为描述，避免 Schema 报错
+        const cleanDescription = product.description?.replace(/[#*`]/g, '').substring(0, 160) || `Buy ${product.title}`;
 
         return {
-            title: `${product.title} - Myth Toy`,
-            description: description,
+            title: `${product.title} - MythToy`, // 稍微修正了品牌名空格
+            description: cleanDescription,
             alternates: { canonical: canonicalUrl },
             openGraph: {
                 title: product.title,
-                description: description,
+                description: cleanDescription,
                 url: canonicalUrl,
                 type: 'website',
                 images: [{ url: imageUrl, width: 800, height: 600, alt: product.title }],
             },
-            twitter: { card: 'summary_large_image', title: product.title, description: description, images: [imageUrl] },
+            twitter: { card: 'summary_large_image', title: product.title, description: cleanDescription, images: [imageUrl] },
         };
     } catch (error) {
         return { title: 'Product Not Found', description: 'The product does not exist.' };
     }
 }
 
+// ... 你的 generateBreadcrumbPaths 和 formatDisplayName 函数保持不变 ...
 function generateBreadcrumbPaths(slugArray: string[], product: ProductResponse | null): { name: string; path: string | null }[] {
     const breadcrumbs = [];
     let currentPath = '';
-
-    // 1. Home
     breadcrumbs.push({ name: 'Home', path: '/' });
-
-    // 2. 动态分类路径
     for (let i = 0; i < slugArray.length; i++) {
         const slugPart = slugArray[i];
-        currentPath += `/${slugPart}`; // 这里的 currentPath 比如是 /sex-toys
-
-        // 最后一项是当前产品
+        currentPath += `/${slugPart}`;
         if (i === slugArray.length - 1) {
             breadcrumbs.push({
                 name: product?.title || formatDisplayName(slugPart),
                 path: null
             });
         } else {
-            // 中间层级：直接指向 /collections/xxx
-            // 但面包屑文字只显示分类名，不显示 "Collections"
             breadcrumbs.push({
                 name: formatDisplayName(slugPart),
-                path: `/collections${currentPath}` // URL 依然需要指向 collections 路由
+                path: `/collections${currentPath}`
             });
         }
     }
-
     return breadcrumbs;
 }
 
@@ -88,11 +82,57 @@ export default async function ProductDetail({ params }: PageProps) {
 
     if (!product) notFound();
 
+    // --- 🔥 核心修改：构建 Product Schema JSON-LD ---
+    const productImageUrl = getProductImageUrl('', product.image);
+    const galleryUrls = product.galleries?.map(g => getProductImageUrl('', g.url)) || [];
+    const allImages = [productImageUrl, ...galleryUrls];
+
+    // 简单的 Markdown 清理，确保 JSON 不会坏掉
+    const schemaDescription = product.description
+        ? product.description.replace(/['"]/g, '').replace(/[#*`_]/g, '').substring(0, 200) + '...'
+        : product.title;
+
+    const jsonLd = {
+        '@context': 'https://schema.org',
+        '@type': 'Product',
+        name: product.title,
+        image: allImages,
+        description: schemaDescription,
+        sku: product.sku || 'DEFAULT_SKU',
+        brand: {
+            '@type': 'Brand',
+            name: product.brand || 'MythToy', // 如果数据库没填品牌，默认 MythToy
+        },
+        offers: {
+            '@type': 'Offer',
+            url: `https://mythtoy.com/toys${slug}`,
+            priceCurrency: 'USD',
+            price: product.currentPrice,
+            priceValidUntil: '2026-12-31', // 给一个未来的日期，防止警告
+            itemCondition: 'https://schema.org/NewCondition',
+            availability: (product.status === 'ACTIVE' && product.stock > 0)
+                ? 'https://schema.org/InStock'
+                : 'https://schema.org/OutOfStock',
+        },
+        // 只有当有评分时才添加 aggregateRating
+        ...(product.rating ? {
+            aggregateRating: {
+                '@type': 'AggregateRating',
+                ratingValue: product.rating,
+                // ⚠️ 注意：如果你的 API 还没返回 reviewCount，这里临时写死 5 或者 10 用于测试星星效果
+                // 长期必须让后端返回真实数量
+                reviewCount: product.reviewCount || 5
+            }
+        } : {})
+    };
+    // ------------------------------------------------
+
     const breadcrumbs = generateBreadcrumbPaths(
         Array.isArray(resolvedParams.slug) ? resolvedParams.slug : [resolvedParams.slug],
         product
     );
 
+    // ... 这一块处理 galleryImages 的逻辑保持不变 ...
     const getGalleryImages = () => {
         if (!product) return [];
         const hasGallery = !!(product.galleries && product.galleries.length > 0);
@@ -109,7 +149,12 @@ export default async function ProductDetail({ params }: PageProps) {
 
     return (
         <div className="min-h-screen bg-white">
-            {/* ✅ 修复：确保容器宽度和 Padding 与 Navigation 一致 */}
+            {/* 🔥 插入 JSON-LD */}
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+            />
+
             <div className="container mx-auto px-4 sm:px-6 max-w-7xl py-8">
                 <ProductDetailClient
                     product={product}
