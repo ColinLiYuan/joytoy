@@ -1,7 +1,7 @@
 // types/payment.ts
 export interface PaymentRequest {
     transactionId: string;
-    paymentMethod: 'PAYPAL' | 'CREDIT_CARD' | 'DEBIT_CARD' | 'BANK_TRANSFER';
+    paymentMethod: 'PAYPAL' | 'CREDIT_CARD' | 'DEBIT_CARD' | 'BANK_TRANSFER' | 'STRIPE';
     currency?: string;
     cardNumber?: string;
     expiryDate?: string;

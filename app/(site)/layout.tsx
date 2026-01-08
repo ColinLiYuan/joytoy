@@ -1,4 +1,3 @@
-// app/(site)/layout.tsx
 import { categoryService } from '@/services/category-service';
 import { RootResponse } from '@/types/category';
 import Notice from '@/components/common/notice';
@@ -7,20 +6,7 @@ import Footer from '@/components/footer';
 import GARouteTracker from '@/components/analytics/ga-route-tracker';
 import Script from 'next/script';
 import { Suspense } from 'react';
-import { Playfair_Display, Inter } from 'next/font/google';
-
-// 字体配置
-const playfair = Playfair_Display({
-    subsets: ['latin'],
-    variable: '--font-playfair',
-    display: 'swap',
-});
-
-const inter = Inter({
-    subsets: ['latin'],
-    variable: '--font-inter',
-    display: 'swap',
-});
+// ❌ 不需要再在这里引入 next/font 了
 
 export default async function SiteLayout({
                                              children,
@@ -28,11 +14,14 @@ export default async function SiteLayout({
     children: React.ReactNode;
 }) {
     let rootsData: RootResponse[] = [];
+
+    // ✅ 保持 API 请求的安全性
     try {
-        const roots = await categoryService.getRoots();
-        rootsData = Array.isArray(roots) ? roots : [];
+        // 建议：如果 categoryService 内部没有 timeout 机制，
+        // 最好在这里或者 service 内部加上，防止 database 死锁导致前端卡死
+        rootsData = await categoryService.getRoots() || [];
     } catch (error) {
-        console.error('Failed to load categories:', error);
+        console.error('Failed to load categories in layout:', error);
         rootsData = [];
     }
 
@@ -60,11 +49,13 @@ export default async function SiteLayout({
 
     return (
         <>
+            {/* JSON-LD 结构化数据 */}
             <script
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationStructuredData) }}
             />
 
+            {/* Google Analytics */}
             {gaId && (
                 <>
                     <Script
@@ -86,8 +77,8 @@ export default async function SiteLayout({
                 </>
             )}
 
-            {/* ✅ 确保这里没有 <html> 或 <body>，只用 div */}
-            <div className={`${playfair.variable} ${inter.variable} relative flex flex-col min-h-screen w-full max-w-[100vw] overflow-x-hidden bg-white font-sans antialiased text-[#1A1A1A]`}>
+            {/* ✅ 这里的 div 不再需要字体变量，因为 RootLayout 已经给了 */}
+            <div className="relative flex flex-col min-h-screen w-full">
                 <Suspense fallback={null}>
                     <GARouteTracker />
                 </Suspense>
@@ -97,11 +88,11 @@ export default async function SiteLayout({
                     <Notice />
                 </div>
 
-                <main className="flex-grow w-full max-w-[100vw]">
+                <main className="flex-grow w-full">
                     {children}
                 </main>
 
-                <div className="w-full max-w-[100vw]">
+                <div className="w-full">
                     <Footer />
                 </div>
             </div>
