@@ -18,7 +18,7 @@ import { createStripePaymentIntent } from '@/app/actions/stripe';
 // 针对高风险行业，这里做开关。如果 PayPal 被封，改为 false 即可。
 const PAYMENT_CONFIG = {
     ENABLE_PAYPAL: true,
-    ENABLE_STRIPE: true,
+    ENABLE_STRIPE: false,
 };
 
 // 初始化 Stripe (放在组件外)
@@ -331,8 +331,8 @@ function PaymentContent() {
                                     <PayPalScriptProvider options={{
                                                 clientId: paypalClientId,
                                                 currency: "USD",
-                                                intent: "capture",
-                                                "disable-funding": "card"
+                                                intent: "capture"
+                                                // "disable-funding": "card"
                                             }}>
                                         <PayPalButtons
                                             style={{ layout: "vertical", shape: "rect", borderRadius: 12, height: 48 }}
