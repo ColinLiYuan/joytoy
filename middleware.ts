@@ -107,6 +107,34 @@ export function middleware(request: NextRequest) {
         }
     }
 
+    // 白名单
+    const exactAllowList = new Set([
+        '/robots.txt',
+        '/sitemap.xml',              // 索引文件
+        '/sitemap-products.xml',     // 子 sitemap
+        '/sitemap-categories.xml',   // 子 sitemap
+        '/sitemap-pages.xml',        // 子 sitemap
+        '/sitemap-blogs.xml',        // 子 sitemap
+        '/manifest.json',            // PWA
+        '/favicon.ico'               // 虽然 matcher 排除了，加这里双保险
+    ]);
+
+    // 3.2 目录白名单 (Directory Allowlist)
+    // 某些标准协议文件夹
+    const isDirectoryAllowed = pathname.startsWith('/.well-known/');
+
+    // 如果在白名单内，直接放行，Next.js 会接管处理 (生成文件或返回静态文件)
+    if (exactAllowList.has(pathname) || isDirectoryAllowed) {
+        return NextResponse.next();
+    }
+
+     const isFileRequest = /\/[^/]+\.[^/]+$/.test(pathname);
+
+    if (isFileRequest) {
+        console.log(`🔒 Blocked missing file request: ${pathname}`);
+        return new NextResponse('File not found', { status: 404 });
+    }
+
     return NextResponse.next();
 }
 
