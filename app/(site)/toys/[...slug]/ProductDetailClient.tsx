@@ -21,7 +21,8 @@ import ProductReviews from '@/components/product/reviews/product-reviews';
 import {
     ShoppingBag, ShieldCheck, Package, Truck, ChevronDown, ChevronUp, Star, Heart,
     Loader2, BatteryCharging, Droplets, Box, Smartphone, Feather, Volume2, Check,
-    Ruler, Scale, Activity, EyeOff, Waves, Zap, Power, Hourglass, AlertCircle
+    Ruler, Scale, Activity, EyeOff, Waves, Zap, Power, Hourglass, AlertCircle,
+    FileText // ✅ 新增引入 FileText 图标
 } from 'lucide-react';
 
 import '@uiw/react-md-editor/markdown-editor.css';
@@ -129,15 +130,19 @@ export default function ProductDetailClient({
     const { openAuthModal, isLoggedIn } = useAuth();
     const addItemToCart = useCartStore(state => state.addItemToCart);
 
-    // --- ✅ 状态控制逻辑 ---
-    // 检查商品是否上架
     const isProductActive = product.status === 'ACTIVE';
-
-    // 检查 SKU 库存逻辑
     const getAvailableStock = (sku: ProductSku | null | undefined) => sku ? (sku.stock || 0) - (sku.lockedStock || 0) : 0;
-
-    // 是否允许购买的最终判定
     const canPurchase = isProductActive && selectedSku && getAvailableStock(selectedSku) > 0;
+
+    // --- ✅ 动态生成 PDF 说明书链接 ---
+    const manualUrl = useMemo(() => {
+        // 1. 获取 | 之前的部分 (例如 "The Muse | Sucker" -> "The Muse")
+        const baseTitle = product.title.split('|')[0].trim();
+        // 2. 转换为 kebab-case (例如 "the-muse")
+        const slug = baseTitle.toLowerCase().replace(/\s+/g, '-');
+        // 3. 拼接最终 URL
+        return `/manuals/${slug}-guide.pdf`;
+    }, [product.title]);
 
     const highlightData: HighlightData | null = useMemo(() => {
         if (!product.highlightData) return null;
@@ -216,7 +221,6 @@ export default function ProductDetailClient({
     };
 
     const performAddToCart = async () => {
-        // ✅ 增加后端逻辑双重检查：如果下架，直接拦截
         if (!isProductActive) {
             showToast('error', 'Unavailable', 'This product is no longer available.');
             return false;
@@ -292,7 +296,6 @@ export default function ProductDetailClient({
                                 </button>
                             </div>
 
-                            {/* --- ✅ 下架提示横幅 --- */}
                             {!isProductActive && (
                                 <div className="mt-4 mb-6 p-4 bg-gray-50 border border-gray-100 rounded-xl flex items-center gap-3 text-gray-500">
                                     <AlertCircle size={20} className="text-gray-400" />
@@ -335,7 +338,6 @@ export default function ProductDetailClient({
                             </div>
                         )}
 
-                        {/* SKU Selector (下架时也可以看，但操作无效) */}
                         {product.productSkus && product.productSkus.length > 0 && (
                             <div className="mb-10">
                                 <h3 className="text-sm font-bold text-gray-900 uppercase tracking-widest mb-4">
@@ -356,7 +358,6 @@ export default function ProductDetailClient({
                             </div>
                         )}
 
-                        {/* --- ✅ 购买操作区 (根据 canPurchase 禁用) --- */}
                         <div className="flex flex-col sm:flex-row gap-4 mb-10">
                             <button
                                 className={`flex-1 py-4 px-8 rounded-full font-bold text-lg flex items-center justify-center gap-3 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 ${!canPurchase ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-black text-white hover:bg-gray-900'}`}
@@ -535,6 +536,30 @@ export default function ProductDetailClient({
                         </div>
                     )}
 
+                    {/* --- ✅ 4. 新增：用户手册下载 --- */}
+                    <div className="border-b border-gray-100">
+                        <button onClick={() => toggleAccordion('manual')} className="w-full flex justify-between items-center py-6 text-left">
+                            <span className="text-xl font-bold text-gray-900 font-['Playfair_Display']">User Guide & Manual</span>
+                            {activeAccordion === 'manual' ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                        </button>
+                        {activeAccordion === 'manual' && (
+                            <div className="pb-8 animate-fadeIn">
+                                <p className="text-gray-600 text-sm mb-6 leading-relaxed">
+                                    Download the complete guide for usage, charging, and safety instructions.
+                                </p>
+                                <a
+                                    href={manualUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-2 px-6 py-3 bg-gray-50 hover:bg-gray-100 text-gray-900 rounded-full text-sm font-bold transition-colors border border-gray-200"
+                                >
+                                    <FileText size={16} />
+                                    View Guide
+                                </a>
+                            </div>
+                        )}
+                    </div>
+
                     <div className="border-b border-gray-100">
                         <button onClick={() => toggleAccordion('shipping')} className="w-full flex justify-between items-center py-6 text-left">
                             <span className="text-xl font-bold text-gray-900 font-['Playfair_Display']">Shipping & Returns</span>
@@ -552,7 +577,6 @@ export default function ProductDetailClient({
 
             <ProductReviews productId={product.id} />
 
-            {/* --- ✅ STICKY MOBILE BAR (同步禁用) --- */}
             <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-3 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] flex items-center gap-3 safe-area-pb" style={{ zIndex: Z_INDEX.STICKY }}>
                 <div className="flex-1 min-w-0 flex flex-col justify-center">
                     <p className="text-xs font-bold text-gray-900 truncate">{product.title}</p>

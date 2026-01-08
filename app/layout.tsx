@@ -1,27 +1,26 @@
-// app/layout.tsx
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Playfair_Display, Inter } from "next/font/google"; // ✅ 换成你实际用的字体
 import "./globals.css";
 import { Providers } from './providers';
 
-const geistSans = Geist({
-    variable: "--font-geist-sans",
-    subsets: ["latin"],
+// ✅ 1. 定义全局主字体 (Inter)
+const inter = Inter({
+    subsets: ['latin'],
+    variable: '--font-inter',
     display: 'swap',
 });
 
-const geistMono = Geist_Mono({
-    variable: "--font-geist-mono",
-    subsets: ["latin"],
+// ✅ 2. 定义标题字体 (Playfair Display)
+const playfair = Playfair_Display({
+    subsets: ['latin'],
+    variable: '--font-playfair',
     display: 'swap',
 });
 
-// ✅ 1. 恢复标准 Viewport，允许用户缩放
 export const viewport: Viewport = {
     themeColor: 'black',
     width: 'device-width',
     initialScale: 1,
-    // 移除了 maximumScale: 1 和 userScalable: false
 };
 
 export const metadata: Metadata = {
@@ -53,8 +52,8 @@ export default function RootLayout({
 }>) {
     return (
         <html lang="en">
-        {/* ✅ 保持 overflow-x-hidden 防止水平溢出 */}
-        <body className={`${geistSans.variable} ${geistMono.variable} antialiased w-full max-w-[100vw] overflow-x-hidden`} suppressHydrationWarning>
+        {/* ✅ 将字体变量注入 Body，全局生效，无需在子 Layout 重复定义 */}
+        <body className={`${inter.variable} ${playfair.variable} font-sans antialiased w-full max-w-[100vw] overflow-x-hidden bg-white text-[#1A1A1A]`} suppressHydrationWarning>
         <Providers>
             {children}
         </Providers>
