@@ -18,7 +18,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     const slug = Array.isArray(resolvedParams.slug) ? `/${resolvedParams.slug.join('/')}` : `/${resolvedParams.slug}`;
     try {
         const product = await productServiceServer.getProductBySlug(slug);
-        console.log('product: ', product)
+        // console.log('product: ', product)
         const canonicalUrl = `https://mythtoy.com/toys${slug}`;
         const imageUrl = getProductImageUrl('', product.image);
         // 去除 Markdown 符号，只取纯文本作为描述，避免 Schema 报错

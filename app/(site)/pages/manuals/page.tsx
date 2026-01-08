@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Search, FileText, Download, ArrowRight, BookOpen, AlertCircle } from 'lucide-react';
+import { Search, FileText, Download, ArrowRight, BookOpen, AlertCircle, Loader2 } from 'lucide-react';
 import { MANUALS_DATA } from '@/lib/constants/manuals-data';
 import { getProductImageUrl } from '@/lib/image-utils';
+import { useToast } from '@/contexts/toastContext'; // ✅ 1. 引入 Toast
 
 const ITEMS_PER_PAGE = 12;
 
@@ -11,17 +12,14 @@ export default function ManualsPage() {
     const [searchQuery, setSearchQuery] = useState('');
     const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
 
-    // ✅ 修改后的搜索逻辑：支持忽略空格
+    // ✅ 2. 新增：记录当前正在检查哪个 ID 的文件 (用于显示转圈圈)
+    const [checkingId, setCheckingId] = useState<string | null>(null);
+    const { showToast } = useToast();
+
+    // 搜索过滤逻辑
     const filteredManuals = MANUALS_DATA.filter((item) => {
-        // 1. 获取标准化后的标题：转小写 + 去掉所有空格
-        // "The Slate" -> "theslate"
         const normalizedTitle = item.title.toLowerCase().replace(/\s+/g, '');
-
-        // 2. 获取标准化后的搜索词：转小写 + 去掉所有空格
-        // "TheSlate" -> "theslate"
         const normalizedQuery = searchQuery.toLowerCase().replace(/\s+/g, '');
-
-        // 3. 比较
         return normalizedTitle.includes(normalizedQuery);
     });
 
@@ -31,8 +29,28 @@ export default function ManualsPage() {
         setVisibleCount(ITEMS_PER_PAGE);
     }, [searchQuery]);
 
-    const handleOpenPdf = (url: string) => {
-        window.open(url, '_blank');
+    // ✅ 3. 核心修改：安全的打开方式
+    const handleOpenPdf = async (id: string, url: string) => {
+        if (checkingId) return; // 防止重复点击
+        setCheckingId(id); // 开始转圈
+
+        try {
+            // 发起一个轻量级的 HEAD 请求，只检查文件在不在，不下载内容
+            const res = await fetch(url, { method: 'HEAD' });
+
+            if (res.ok) {
+                // 如果文件存在 (状态码 200)，则打开
+                window.open(url, '_blank');
+            } else {
+                // 如果文件不存在 (404)，提示错误，阻止跳转
+                showToast('error', 'Unavailable', 'Manual coming soon. Please contact support.');
+            }
+        } catch (error) {
+            console.error(error);
+            showToast('error', 'Error', 'Failed to access the file.');
+        } finally {
+            setCheckingId(null); // 停止转圈
+        }
     };
 
     const handleLoadMore = () => {
@@ -87,6 +105,8 @@ export default function ManualsPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {visibleManuals.map((item) => {
                         const imageUrl = item.image ? getProductImageUrl('', item.image) : null;
+                        // ✅ 判断当前项是否正在检查中
+                        const isCheckingThis = checkingId === item.id;
 
                         return (
                             <div
@@ -119,15 +139,22 @@ export default function ManualsPage() {
 
                                     <div className="mt-auto pt-6 border-t border-gray-50">
                                         <button
-                                            onClick={() => handleOpenPdf(item.pdfUrl)}
-                                            className="w-full flex items-center justify-between group/btn"
+                                            // ✅ 修改：点击时先检查，不是直接 window.open
+                                            onClick={() => handleOpenPdf(item.id, item.pdfUrl)}
+                                            disabled={isCheckingThis}
+                                            className="w-full flex items-center justify-between group/btn disabled:opacity-70 disabled:cursor-not-allowed"
                                         >
                                             <span className="flex items-center gap-2 text-sm font-bold text-gray-600 group-hover/btn:text-black transition-colors">
                                                 <FileText size={16} />
-                                                View User Guide
+                                                {isCheckingThis ? 'Checking...' : 'View User Guide'}
                                             </span>
                                             <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 group-hover/btn:bg-black group-hover/btn:text-white transition-all">
-                                                <Download size={14} />
+                                                {/* ✅ 状态切换：转圈圈图标 */}
+                                                {isCheckingThis ? (
+                                                    <Loader2 size={14} className="animate-spin text-gray-600 group-hover/btn:text-white" />
+                                                ) : (
+                                                    <Download size={14} />
+                                                )}
                                             </div>
                                         </button>
                                     </div>
@@ -152,7 +179,7 @@ export default function ManualsPage() {
                 )}
             </div>
 
-            {/* Footer Section */}
+            {/* Footer Section (保持不变) */}
             <div className="container mx-auto px-4 max-w-4xl mt-24">
                 <div className="bg-[#1A1A1A] rounded-3xl p-10 md:p-12 text-center text-white relative overflow-hidden">
                     <div className="relative z-10">
