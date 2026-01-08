@@ -151,7 +151,7 @@ function PaymentContent() {
     useEffect(() => {
         if (orderData && activeMethod === 'STRIPE' && !stripeClientSecret && PAYMENT_CONFIG.ENABLE_STRIPE) {
             createStripePaymentIntent(Number(orderData.totalAmount))
-                .then(res => setStripeClientSecret(res.clientSecret))
+                .then(res => setStripeClientSecret(res.clientSecret!))
                 .catch(err => {
                     console.error(err);
                     setErrorMessage("Unable to initialize secure credit card payment.");
