@@ -163,7 +163,7 @@ export default function Footer() {
 
                                 {/* Pinterest */}
                                 <a
-                                    href="https://www.pinterest.com/wilsonwstudio"
+                                    href="https://www.pinterest.com/nanausstudio"
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     aria-label="Follow us on Pinterest"
