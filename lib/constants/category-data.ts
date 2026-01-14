@@ -49,7 +49,7 @@ export const CATEGORIES_DATA: CategoriesData = {
                         name: "Clit Vibrators",
                         title: "Clit Vibrators | Clitoral Stimulation Toys",
                         description: "Best clit vibrators for intense orgasms. External stimulation toys for women.",
-                        image: "cat-banner-clit-vibrator.png", // 👈 新增
+                        image: "cat-banner-clit-vibrator.png?v=1", // 👈 新增
                         root: "female-sex-toys",
                         priority: 0.7,
                         changefreq: "weekly"
@@ -223,7 +223,7 @@ export const CATEGORIES_DATA: CategoriesData = {
                 name: "Lingerie",
                 title: "Sexy Lingerie | Intimate Apparel & Costumes",
                 description: "Seductive lingerie for intimate moments. Babydolls, corsets and sexy wear.",
-                image: "cat-banner-lingerie.png", // 👈 新增
+                image: "cat-banner-lingerie.png?v=1", // 👈 新增
                 priority: 0.7,
                 changefreq: "weekly",
                 categories: [

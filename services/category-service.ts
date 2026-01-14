@@ -4,7 +4,7 @@ import { CATEGORIES_DATA } from '@/lib/constants/category-data';
 
 class CategoryService {
 
-    private readonly DATA_VERSION = 'v1.0.12'; // 每次数据更新就改这个版本号
+    private readonly DATA_VERSION = 'v1.0.13'; // 每次数据更新就改这个版本号
     private readonly ROOTS_STORAGE_KEY = `category_roots_${this.DATA_VERSION}`;
     private readonly ALL_CATEGORIES_STORAGE_KEY = `all_categories_${this.DATA_VERSION}`;
 

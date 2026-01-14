@@ -50,6 +50,13 @@ const nextConfig = {
         },
     },
 
+    webpack: (config, { dev }) => {
+        if (dev) {
+            config.devtool = false;
+        }
+        return config;
+    },
+
     async redirects() {
         return [
             {
