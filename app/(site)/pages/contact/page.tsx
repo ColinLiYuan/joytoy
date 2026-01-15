@@ -1,10 +1,10 @@
-// app/pages/contact/page.tsx
 'use client';
 
 import { useState } from 'react';
 import { Mail, Clock, MapPin, Send, Facebook, Instagram, Loader2, ArrowRight } from 'lucide-react';
 import { sendContactEmail } from '@/app/actions/send-email';
 import { useToast } from '@/contexts/toastContext';
+import FAQSection from '@/components/common/faq-section'; // ✅ Import
 
 // WhatsApp Icon (SVG Path)
 const WhatsAppIcon = ({ className }: { className?: string }) => (
@@ -39,7 +39,7 @@ export default function Contact() {
                     <h1 className="text-4xl md:text-5xl font-serif text-[#1A1A1A]">Get in Touch</h1>
                 </div>
 
-                <div className="grid lg:grid-cols-12 gap-12">
+                <div className="grid lg:grid-cols-12 gap-12 mb-24"> {/* ✅ Added mb-24 for spacing */}
 
                     {/* Left Side: Contact Info (占据 4 列 ) */}
                     <div className="lg:col-span-4 space-y-8">
@@ -148,6 +148,11 @@ export default function Contact() {
                             </form>
                         </div>
                     </div>
+                </div>
+
+                {/* ✅ Insert FAQ Section at bottom */}
+                <div className="border-t border-gray-100 pt-16 md:pt-24 max-w-3xl mx-auto">
+                    <FAQSection context="contact" />
                 </div>
             </div>
         </div>

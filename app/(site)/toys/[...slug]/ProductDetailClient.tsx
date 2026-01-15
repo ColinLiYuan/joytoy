@@ -1,4 +1,3 @@
-// app/(site)/toys/[...slug]/ProductDetailClient.tsx
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -18,11 +17,13 @@ import ProductGallery from '@/components/product/product-gallery';
 import Breadcrumb from '@/components/common/breadcrumb';
 import ProductBadge from '@/components/product/product-badge';
 import ProductReviews from '@/components/product/reviews/product-reviews';
+import FAQSection from '@/components/common/faq-section'; // ✅ Added Import
+
 import {
     ShoppingBag, ShieldCheck, Package, Truck, ChevronDown, ChevronUp, Star, Heart,
     Loader2, BatteryCharging, Droplets, Box, Smartphone, Feather, Volume2, Check,
     Ruler, Scale, Activity, EyeOff, Waves, Zap, Power, Hourglass, AlertCircle,
-    FileText // ✅ 新增引入 FileText 图标
+    FileText
 } from 'lucide-react';
 
 import '@uiw/react-md-editor/markdown-editor.css';
@@ -134,13 +135,9 @@ export default function ProductDetailClient({
     const getAvailableStock = (sku: ProductSku | null | undefined) => sku ? (sku.stock || 0) - (sku.lockedStock || 0) : 0;
     const canPurchase = isProductActive && selectedSku && getAvailableStock(selectedSku) > 0;
 
-    // --- ✅ 动态生成 PDF 说明书链接 ---
     const manualUrl = useMemo(() => {
-        // 1. 获取 | 之前的部分 (例如 "The Muse | Sucker" -> "The Muse")
         const baseTitle = product.title.split('|')[0].trim();
-        // 2. 转换为 kebab-case (例如 "the-muse")
         const slug = baseTitle.toLowerCase().replace(/\s+/g, '-');
-        // 3. 拼接最终 URL
         return `/manuals/${slug}-guide.pdf`;
     }, [product.title]);
 
@@ -536,7 +533,6 @@ export default function ProductDetailClient({
                         </div>
                     )}
 
-                    {/* --- ✅ 4. 新增：用户手册下载 --- */}
                     <div className="border-b border-gray-100">
                         <button onClick={() => toggleAccordion('manual')} className="w-full flex justify-between items-center py-6 text-left">
                             <span className="text-xl font-bold text-gray-900 font-['Playfair_Display']">User Guide & Manual</span>
@@ -572,6 +568,13 @@ export default function ProductDetailClient({
                             </div>
                         )}
                     </div>
+                </div>
+            </div>
+
+            {/* ✅ NEW: FAQ Section for PDP */}
+            <div className="w-full bg-white pb-16">
+                <div className="container mx-auto px-4 max-w-3xl">
+                    <FAQSection context="product" />
                 </div>
             </div>
 
