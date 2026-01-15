@@ -7,18 +7,18 @@ export const CATEGORIES_DATA: CategoriesData = {
             {
                 slug: "all",
                 name: "Shop",
-                title: "Shop | Sex Toys & Adult Products",
-                description: "Browse our complete collection of sex toys, lingerie and adult products. New arrivals, best sellers and more.",
-                image: "cat-banner-for-all.png", // 👈 新增
+                title: "Shop All | Curated Intimacy Collection",
+                description: "Explore our complete range of premium pleasure objects. From air-pulse technology to designer aesthetic toys.",
+                image: "cat-banner-for-all.png",
                 priority: 0.8,
                 changefreq: "weekly",
                 categories: [
                     {
                         slug: "new-arrivals",
                         name: "New In",
-                        title: "New Arrivals | Latest Sex Toys & Adult Products",
-                        description: "Discover the newest sex toys and intimate products. Latest releases and innovative designs for ultimate pleasure.",
-                        image: "cat-banner-new-in.png", // 👈 新增
+                        title: "New Arrivals | Latest Innovations",
+                        description: "Discover the latest in pleasure technology. New designs, quieter motors, and premium materials.",
+                        image: "cat-banner-new-in.png",
                         root: "shop",
                         priority: 0.7,
                         changefreq: "weekly"
@@ -26,9 +26,9 @@ export const CATEGORIES_DATA: CategoriesData = {
                     {
                         slug: "best-sellers",
                         name: "Best Sellers",
-                        title: "Best Selling Sex Toys | Top Rated Adult Products",
-                        description: "Shop best selling sex toys and top rated adult products. Premium quality discreet shipping.",
-                        image: "cat-banner-best-seller.png", // 👈 新增
+                        title: "Best Sellers | Most Loved by Our Community",
+                        description: "Shop our most popular items. Verified reviews and proven satisfaction.",
+                        image: "cat-banner-best-seller.png",
                         root: "shop",
                         priority: 0.7,
                         changefreq: "weekly"
@@ -38,78 +38,68 @@ export const CATEGORIES_DATA: CategoriesData = {
             {
                 slug: "female-sex-toys",
                 name: "For Her",
-                title: "Female Sex Toys | Women's Vibrators & Pleasure Products",
-                description: "Premium sex toys for women. Clit vibrators, rabbit toys, dildos and intimate massagers.",
-                image: "cat-banner-for-her.png", // 👈 新增
+                title: "For Her | Premium Vibrators & Massagers",
+                description: "Elegant pleasure products designed for her. Featuring liquid silicone and whisper-quiet technology.",
+                image: "cat-banner-for-her.png",
                 priority: 0.7,
                 changefreq: "weekly",
                 categories: [
                     {
                         slug: "female-sex-toys/clit-vibrators",
-                        name: "Clit Vibrators",
-                        title: "Clit Vibrators | Clitoral Stimulation Toys",
-                        description: "Best clit vibrators for intense orgasms. External stimulation toys for women.",
-                        image: "cat-banner-clit-vibrator.png", // 👈 新增
-                        root: "female-sex-toys",
-                        priority: 0.7,
-                        changefreq: "weekly"
-                    },
-                    {
-                        slug: "female-sex-toys/nipple-toys",
-                        name: "Nipple Stimulator",
-                        title: "Nipple Toys | Nipple Stimulators & Clamps",
-                        description: "Nipple stimulators and clamps for sensual play. Gentle to intense stimulation.",
-                        image: "cat-banner-nipple.png", // 👈 新增
+                        name: "Air-Pulse & Clit",
+                        title: "Clit Vibrators | Air-Pulse Technology",
+                        description: "Experience contactless suction and focused vibration. Our most popular category.",
+                        image: "cat-banner-clit-vibrator.png?v=1",
                         root: "female-sex-toys",
                         priority: 0.7,
                         changefreq: "weekly"
                     },
                     {
                         slug: "female-sex-toys/g-spot-vibrators",
-                        name: "G-Spot Vibrators",
-                        title: "G-Spot Vibrators | Internal Stimulation Toys",
-                        description: "G-spot vibrators for deep orgasms. Curved toys for internal stimulation.",
-                        image: "cat-banner-g-spot.png", // 👈 新增
+                        name: "G-Spot Wands",
+                        title: "G-Spot Vibrators | Internal Massage",
+                        description: "Curved designs for precise internal stimulation. Powerful yet gentle.",
+                        image: "cat-banner-g-spot.png",
                         root: "female-sex-toys",
                         priority: 0.7,
                         changefreq: "weekly"
                     },
                     {
                         slug: "female-sex-toys/bullet-vibrators",
-                        name: "Bullet Vibrators",
-                        title: "Bullet Vibrators | Small Discreet Massagers",
-                        description: "Compact bullet vibrators for targeted stimulation. Quiet and powerful.",
-                        image: "cat-banner-bullet-vibe.png", // 👈 新增
+                        name: "Bullets & Lipsticks",
+                        title: "Bullet Vibrators | Discreet & Travel Friendly",
+                        description: "Pocket-sized power. Perfect for travel or discreet play.",
+                        image: "cat-banner-bullet-vibe.png",
                         root: "female-sex-toys",
                         priority: 0.7,
                         changefreq: "weekly"
                     },
                     {
                         slug: "female-sex-toys/rabbit-vibrators",
-                        name: "Rabbit Vibrators",
-                        title: "Rabbit Vibrators | Dual Stimulation Toys",
-                        description: "Rabbit vibrators for dual stimulation. Internal and clitoral pleasure.",
-                        image: "cat-banner-rabbit-vibe.png", // 👈 新增
+                        name: "Dual Action",
+                        title: "Rabbit Vibrators | Blended Orgasms",
+                        description: "The best of both worlds. Internal and external stimulation simultaneously.",
+                        image: "cat-banner-rabbit-vibe.png",
                         root: "female-sex-toys",
                         priority: 0.7,
                         changefreq: "weekly"
                     },
                     {
                         slug: "female-sex-toys/wand-vibrators",
-                        name: "Wand Vibrators",
-                        title: "Wand Massagers | Powerful Body Vibrators",
-                        description: "Powerful wand massagers for deep vibrations. Full body stimulation toys.",
-                        image: "cat-banner-wand-vibe.png", // 👈 新增
+                        name: "Power Wands",
+                        title: "Wand Massagers | Deep Tissue Relaxation",
+                        description: "For those who need more power. Deep rumbly vibrations for total body release.",
+                        image: "cat-banner-wand-vibe.png",
                         root: "female-sex-toys",
                         priority: 0.7,
                         changefreq: "weekly"
                     },
                     {
-                        slug: "female-sex-toys/dildos",
-                        name: "Dildos",
-                        title: "Dildos | Realistic Sex Toys for Women",
-                        description: "Premium dildos in various sizes. Realistic and non-vibrating toys.",
-                        image: "cat-banner-dildos.png", // 👈 新增
+                        slug: "female-sex-toys/nipple-toys",
+                        name: "Sensory Play",
+                        title: "Sensory & Nipple Toys",
+                        description: "Enhance sensitivity with clamps, suckers, and feather-soft touches.",
+                        image: "cat-banner-nipple.png",
                         root: "female-sex-toys",
                         priority: 0.7,
                         changefreq: "weekly"
@@ -119,38 +109,48 @@ export const CATEGORIES_DATA: CategoriesData = {
             {
                 slug: "male-sex-toys",
                 name: "For Him",
-                title: "Male Sex Toys | Men's Pleasure Products",
-                description: "Advanced sex toys for men. Masturbators, prostate massagers and strokers.",
-                image: "cat-banner-for-him.png", // 👈 新增
+                title: "For Him | Men's Wellness & Pleasure",
+                description: "Advanced engineering for male pleasure. Strokers, rings, and training devices.",
+                image: "cat-banner-for-him.png",
                 priority: 0.7,
                 changefreq: "weekly",
                 categories: [
                     {
                         slug: "male-sex-toys/male-masturbators",
-                        name: "Male Masturbators",
-                        title: "Male Masturbators | Handheld Sex Toys",
-                        description: "Realistic male masturbators and strokers. Textured sleeves for men.",
-                        image: "cat-banner-male-masturbators.png", // 👈 新增
+                        name: "Electric Strokers",
+                        title: "Electric Masturbators | Hands-Free Pleasure",
+                        description: "High-tech devices featuring vibration, suction, and heating.",
+                        image: "cat-banner-male-masturbators.png",
+                        root: "male-sex-toys",
+                        priority: 0.7,
+                        changefreq: "weekly"
+                    },
+                    {
+                        slug: "male-sex-toys/manual-strokers", // 👈 修正了这里！
+                        name: "Manual Sleeves",
+                        title: "Manual Strokers | Realistic Texture",
+                        description: "Textured sleeves and strokers for controlled stimulation.",
+                        image: "",
+                        root: "male-sex-toys",
+                        priority: 0.7,
+                        changefreq: "weekly"
+                    },
+                    {
+                        slug: "male-sex-toys/stamina-training", // 👈 新增：锻炼器分类
+                        name: "Stamina Training",
+                        title: "Endurance & Stamina Training Toys",
+                        description: "Build confidence and control. Devices designed for desensitization and endurance.",
+                        image: "",
                         root: "male-sex-toys",
                         priority: 0.7,
                         changefreq: "weekly"
                     },
                     {
                         slug: "male-sex-toys/cock-rings",
-                        name: "Cock Rings",
-                        title: "Cock Rings | Performance & Vibrating Rings",
-                        description: "Enhance stamina and pleasure with premium cock rings. Vibrating and stretchy options for couples.",
-                        image: "cat-banner-cock-ring.png", // 👈 新增
-                        root: "male-sex-toys",
-                        priority: 0.7,
-                        changefreq: "weekly"
-                    },
-                    {
-                        slug: "male-sex-toys/pussy-masturbators",
-                        name: "Manual Strokers",
-                        title: "Manual Strokers | Realistic Texture",
-                        description: "Realistic sensation and tight textures for men.",
-                        image: "", // 👈 新增
+                        name: "Performance Rings",
+                        title: "Cock Rings | Performance Enhancers",
+                        description: "Stay harder for longer. Vibrating and silicone rings for couples.",
+                        image: "cat-banner-cock-ring.png",
                         root: "male-sex-toys",
                         priority: 0.7,
                         changefreq: "weekly"
@@ -158,19 +158,9 @@ export const CATEGORIES_DATA: CategoriesData = {
                     {
                         slug: "male-sex-toys/prostate-toys",
                         name: "Prostate Massagers",
-                        title: "Prostate Massagers | P-Spot Toys for Men",
-                        description: "Prostate massagers for P-spot stimulation. Anal toys for male orgasms.",
-                        image: "", // 👈 新增
-                        root: "male-sex-toys",
-                        priority: 0.7,
-                        changefreq: "weekly"
-                    },
-                    {
-                        slug: "male-sex-toys/sex-dolls",
-                        name: "Sex Dolls",
-                        title: "Sex Dolls | Realistic Love Dolls",
-                        description: "High-quality sex dolls and love dolls. Lifelike companions for men.",
-                        image: "", // 👈 新增
+                        title: "Prostate Massagers | P-Spot Tools",
+                        description: "Ergonomically designed for P-spot exploration.",
+                        image: "",
                         root: "male-sex-toys",
                         priority: 0.7,
                         changefreq: "weekly"
@@ -179,39 +169,29 @@ export const CATEGORIES_DATA: CategoriesData = {
             },
             {
                 slug: "sex-toys",
-                name: "Anal Play",
-                title: "Anal Play | Butt Plugs, Beads & Accessories",
-                description: "Explore our curated collection of anal play essentials. From beginner-friendly butt plugs to progressive beads and fantasy tails.",
-                image: "cat-banner-for-anal.png", // 👈 新增
+                name: "Anal Play", // 👈 保持原名，为了SEO
+                title: "Anal Play | Plugs & Accessories",
+                description: "Safe, comfortable, and elegant anal toys for beginners and experts.",
+                image: "cat-banner-for-anal.png",
                 priority: 0.7,
                 changefreq: "weekly",
                 categories: [
                     {
-                        slug: "sex-toys/anal-beads",
-                        name: "Anal Beads",
-                        title: "Anal Beads | Progressive Anal Play Toys",
-                        description: "Graduated anal beads for beginners and experts. Unique sensations.",
-                        image: "", // 👈 新增
-                        root: "sex-toys",
-                        priority: 0.7,
-                        changefreq: "weekly"
-                    },
-                    {
                         slug: "sex-toys/butt-plugs",
                         name: "Butt Plugs",
-                        title: "Butt Plugs | Anal Plugs for Extended Wear",
-                        description: "Comfortable butt plugs in various sizes. Safe anal play products.",
-                        image: "", // 👈 新增
+                        title: "Butt Plugs | Comfort Fit Plugs",
+                        description: "Silicone, glass, and metal plugs for extended wear.",
+                        image: "",
                         root: "sex-toys",
                         priority: 0.7,
                         changefreq: "weekly"
                     },
                     {
-                        slug: "sex-toys/tail-plugs",
-                        name: "Tail Toys",
-                        title: "Tail Plugs | Animal Tail Butt Plugs",
-                        description: "Playful tail plugs for fantasy play. Fox, cat and bunny tails.",
-                        image: "", // 👈 新增
+                        slug: "sex-toys/anal-beads",
+                        name: "Beads & Chains",
+                        title: "Anal Beads | Progressive Play",
+                        description: "Graduated sizes for training and sensation.",
+                        image: "",
                         root: "sex-toys",
                         priority: 0.7,
                         changefreq: "weekly"
@@ -221,18 +201,18 @@ export const CATEGORIES_DATA: CategoriesData = {
             {
                 slug: "lingerie",
                 name: "Lingerie",
-                title: "Sexy Lingerie | Intimate Apparel & Costumes",
-                description: "Seductive lingerie for intimate moments. Babydolls, corsets and sexy wear.",
-                image: "cat-banner-lingerie.png", // 👈 新增
+                title: "Lingerie | Bodystockings & Intimates",
+                description: "Confidence you can wear. Seductive styles for every body.",
+                image: "cat-banner-lingerie.png?v=1",
                 priority: 0.7,
                 changefreq: "weekly",
                 categories: [
                     {
                         slug: "lingerie/bodystockings",
                         name: "Bodystockings",
-                        title: "Bodystockings | Full Body Lingerie & Stockings",
-                        description: "Sensual bodystockings for full coverage seduction. Sheer, lace and fishnet styles.",
-                        image: "", // 👈 新增
+                        title: "Bodystockings | Seamless Mesh Lingerie",
+                        description: "Form-fitting designs that celebrate your curves.",
+                        image: "",
                         root: "lingerie",
                         priority: 0.7,
                         changefreq: "weekly"
@@ -241,49 +221,29 @@ export const CATEGORIES_DATA: CategoriesData = {
             },
             {
                 slug: "bondage-play",
-                name: "Bondage & Play",
-                title: "Bondage & SM Toys | Kink, Fetish & BDSM Gear",
-                description: "Explore your kinky side with our collection of bondage gear. Handcuffs, whips, blindfolds and sensory play toys.",
-                image: "cat-banner-bondage-play.png", // 👈 新增
+                name: "Kink & Play",
+                title: "Bondage & Sensory Play | Soft Kink",
+                description: "Explore new sensations with our beginner-friendly restraint and sensory collection.",
+                image: "cat-banner-bondage-play.png",
                 priority: 0.7,
                 changefreq: "weekly",
                 categories: [
                     {
-                        slug: "bondage-play/impact-play",
-                        name: "Whips & Crops",
-                        title: "Impact Play | Sex Whips, Paddles & Crops",
-                        description: "Spankers, whips, and riding crops for impact play. Experience the thrill of sensation.",
-                        image: "", // 👈 新增
-                        root: "bondage-play",
-                        priority: 0.7,
-                        changefreq: "weekly"
-                    },
-                    {
                         slug: "bondage-play/restraints",
-                        name: "Handcuffs & Restraints",
-                        title: "Sex Handcuffs & Restraints | Bondage Gear",
-                        description: "Beginner-friendly handcuffs, ankle cuffs, and soft restraints for bedroom submission.",
-                        image: "", // 👈 新增
+                        name: "Soft Restraints",
+                        title: "Handcuffs & Restraints",
+                        description: "Comfortable silicone and fabric restraints.",
+                        image: "",
                         root: "bondage-play",
                         priority: 0.7,
                         changefreq: "weekly"
                     },
                     {
-                        slug: "bondage-play/sensory-play",
-                        name: "Blindfolds & Masks",
-                        title: "Sensory Deprivation | Blindfolds & Eye Masks",
-                        description: "Enhance sensitivity by removing sight. Satin blindfolds and masks for sensory play.",
-                        image: "", // 👈 新增
-                        root: "bondage-play",
-                        priority: 0.7,
-                        changefreq: "weekly"
-                    },
-                    {
-                        slug: "bondage-play/bdsm-kits",
-                        name: "Bondage Kits",
-                        title: "BDSM Starter Kits | Beginner Bondage Sets",
-                        description: "All-in-one bondage sets for beginners. Includes cuffs, blindfolds, and teasers.",
-                        image: "", // 👈 新增
+                        slug: "bondage-play/impact-play",
+                        name: "Impact & Sensory",
+                        title: "Whips, Paddles & Masks",
+                        description: "Tools for sensation play, from tickle to thud.",
+                        image: "",
                         root: "bondage-play",
                         priority: 0.7,
                         changefreq: "weekly"
