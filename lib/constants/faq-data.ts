@@ -36,7 +36,9 @@ export const FAQ_DATA: FAQCategory[] = [
             {
                 id: "discreet-packaging",
                 question: "Is the packaging discreet?",
-                answer: "100% Discreet. Plain matte black mailers. Sender name: 'MYTH-TECH'. No logos or sensitive words.",
+                answer: "100% Discreet. Depending on the order size, we ship in either **plain matte black mailers**" +
+                    " or **unmarked reinforced cartons**. \n\nThere are **NO** logos, **NO** product images, and" +
+                    " **NO** sensitive words on the label. The sender name appears as 'MYTH-TECH'. It looks exactly like a generic tech shipment.",
                 tags: ["general", "product"] // 产品页核心痛点
             },
             {
