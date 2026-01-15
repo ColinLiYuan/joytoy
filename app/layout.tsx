@@ -29,11 +29,11 @@ export const metadata: Metadata = {
         default: 'MythToy - Premium Adult Lifestyle Products',
         template: '%s | MythToy',
     },
-    description: 'Find the best toys, figures and collectibles at MythToy. Discreet shipping and secure checkout.',
+    description: 'Discover premium body-safe devices for wellness and intimacy. MythToy blends elegance with technology. Discreet shipping and secure checkout.',
     icons: {
         icon: '/icon.svg?v=2',
         shortcut: '/icon.svg?v=2',
-        apple: '/icon.svg?v=2',
+        apple: '/apple-icon.png?v=2',
     },
     openGraph: {
         title: 'MythToy',
