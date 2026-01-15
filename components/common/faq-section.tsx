@@ -1,4 +1,3 @@
-// components/common/faq-section.tsx
 'use client';
 
 import { useState } from 'react';
@@ -9,6 +8,33 @@ interface FAQSectionProps {
     context?: 'all' | 'product' | 'contact';
     className?: string;
 }
+
+// 一个简单的辅助组件，用于渲染支持 **加粗** 和 \n 换行的文本
+const RichText = ({ text }: { text: string }) => {
+    // 1. 处理换行
+    const lines = text.split('\n');
+
+    return (
+        <div className="text-gray-600 font-light leading-relaxed text-sm md:text-base space-y-2">
+            {lines.map((line, index) => {
+                if (!line) return <div key={index} className="h-2" />; // 空行处理
+
+                // 2. 简单的正则处理 **Bold**
+                const parts = line.split(/(\*\*.*?\*\*)/g);
+                return (
+                    <p key={index}>
+                        {parts.map((part, i) => {
+                            if (part.startsWith('**') && part.endsWith('**')) {
+                                return <strong key={i} className="font-semibold text-gray-900">{part.slice(2, -2)}</strong>;
+                            }
+                            return part;
+                        })}
+                    </p>
+                );
+            })}
+        </div>
+    );
+};
 
 const AccordionItem = ({ question, answer }: { question: string; answer: string }) => {
     const [isOpen, setIsOpen] = useState(false);
@@ -28,43 +54,50 @@ const AccordionItem = ({ question, answer }: { question: string; answer: string 
             </button>
             <div
                 className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                    isOpen ? 'max-h-96 opacity-100 pb-6' : 'max-h-0 opacity-0'
+                    isOpen ? 'max-h-[500px] opacity-100 pb-6' : 'max-h-0 opacity-0'
                 }`}
             >
-                <p className="text-gray-600 font-light leading-relaxed text-sm md:text-base">
-                    {answer}
-                </p>
+                {/* 使用 RichText 组件来渲染你的 Markdown 格式答案 */}
+                <RichText text={answer} />
             </div>
         </div>
     );
 };
 
 export default function FAQSection({ context = 'all', className = '' }: FAQSectionProps) {
-    // Filter logic
+
+    // 过滤逻辑
     const filteredData = FAQ_DATA.map(category => ({
         ...category,
         items: category.items.filter(item => {
+            const tags = item.tags || [];
+
             if (context === 'all') return true;
-            // For product page, we typically want Shipping, Privacy, and Returns info
-            return item.tags.includes('product') ||
-                item.tags.includes('shipping') ||
-                item.tags.includes('packaging');
+
+            // 产品页逻辑
+            if (context === 'product') {
+                return tags.includes('product');
+            }
+
+            // 客服页逻辑 (匹配你数据里的 "contact" 标签)
+            if (context === 'contact') {
+                return tags.includes('contact');
+            }
+
+            return false;
         })
     })).filter(category => category.items.length > 0);
 
-    // For Product Page: Flatten the list to avoid big category headers, just show top Q&As
-    // For FAQ Page: Keep the category structure
-
-    if (context === 'product') {
-        // Flatten and take top 4 most relevant for PDP
-        const flatItems = filteredData.flatMap(c => c.items).slice(0, 4);
+    // 渲染逻辑
+    if (context === 'product' || context === 'contact') {
+        const flatItems = filteredData.flatMap(c => c.items); // 取消 .slice(0,5) 限制，显示所有匹配项
 
         if (flatItems.length === 0) return null;
 
         return (
             <section className={`w-full ${className}`}>
                 <h3 className="text-2xl font-bold mb-8 font-['Playfair_Display'] text-center md:text-left">
-                    Frequently Asked Questions
+                    {context === 'contact' ? 'Common Questions' : 'Frequently Asked Questions'}
                 </h3>
                 <div className="w-full">
                     {flatItems.map((item) => (
@@ -75,6 +108,7 @@ export default function FAQSection({ context = 'all', className = '' }: FAQSecti
         );
     }
 
+    // FAQ 主页逻辑
     return (
         <section className={`w-full max-w-3xl mx-auto ${className}`}>
             <h1 className="text-4xl md:text-5xl font-bold text-center mb-16 font-['Playfair_Display']">
