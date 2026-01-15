@@ -208,15 +208,61 @@ function PaymentContent() {
     // --- PayPal 专用逻辑 ---
     const createPayPalOrder = (data: any, actions: any) => {
         const shippingAddr = orderData.shippingAddress;
+
         let isoCountryCode = shippingAddr.country;
-        if (shippingAddr.country.length > 2) {
+        if (shippingAddr.country && shippingAddr.country.length > 2) {
             isoCountryCode = COUNTRY_DATA[shippingAddr.country] || 'US';
         }
+
+        // 动态计算总价，确保金额匹配
+        const calculatedItemTotal = (orderData.items || []).reduce((acc: number, item: any) => {
+            return acc + (Number(item.unitPrice || 0) * Number(item.quantity || 1));
+        }, 0);
+
+        const shippingValue = Number(orderData.shippingFee || 0);
+        const discountValue = Number(orderData.discountAmount || 0);
+        const calculatedTotal = calculatedItemTotal + shippingValue - discountValue;
+
         return actions.order.create({
             purchase_units: [{
                 reference_id: orderNumber,
-                description: `Order #${orderData.orderNumber}`, // 避免写太敏感的词
-                amount: { currency_code: "USD", value: Number(orderData.totalAmount).toFixed(2) },
+                description: `Order #${orderData.orderNumber}`,
+                amount: {
+                    currency_code: "USD",
+                    value: calculatedTotal.toFixed(2),
+                    breakdown: {
+                        item_total: {
+                            value: calculatedItemTotal.toFixed(2),
+                            currency_code: "USD"
+                        },
+                        shipping: {
+                            value: shippingValue.toFixed(2),
+                            currency_code: "USD"
+                        },
+                        discount: {
+                            value: discountValue.toFixed(2),
+                            currency_code: "USD"
+                        }
+                    }
+                },
+                items: (orderData.items || []).map((item: any) => {
+                    // 👇 核心修改在这里：获取 | 之前的名称
+                    const rawName = item.productTitle || 'Item';
+                    // 1. split('|')[0]: 取竖线前部分
+                    // 2. trim(): 去除前后空格
+                    // 3. substring(0, 127): 防止超长报错
+                    const cleanName = rawName.split('|')[0].trim().substring(0, 127);
+
+                    return {
+                        name: cleanName,
+                        sku: item.productSku ? item.productSku.substring(0, 127) : 'SKU',
+                        quantity: String(item.quantity || 1),
+                        unit_amount: {
+                            currency_code: "USD",
+                            value: Number(item.unitPrice || 0).toFixed(2)
+                        },
+                    };
+                }),
                 shipping: {
                     name: { full_name: `${shippingAddr.firstName} ${shippingAddr.lastName}`.trim() },
                     address: {
@@ -229,7 +275,11 @@ function PaymentContent() {
                     }
                 }
             }],
-            application_context: { brand_name: "MYTH STORE", user_action: "PAY_NOW" } // 使用中性名称
+            application_context: {
+                brand_name: "MYTH STORE",
+                user_action: "PAY_NOW",
+                shipping_preference: "SET_PROVIDED_ADDRESS"
+            }
         });
     };
 

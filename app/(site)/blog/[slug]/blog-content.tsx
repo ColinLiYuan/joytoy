@@ -7,8 +7,9 @@ import { Calendar, User, Clock, Share2, ThumbsUp, Mail, ArrowRight, CheckCircle2
 import { useState } from 'react';
 import { subscribeToNewsletter } from '@/app/actions/subscribe';
 import { useToast } from '@/contexts/toastContext';
-// ✅ 1. 引入图片处理工具
 import { getProductImageUrl } from '@/lib/image-utils';
+// ✅ 引入刚才写的配置
+import { getAuthor, MARKETING_CONFIG } from '@/lib/constants/authors';
 
 const MDViewer = dynamic(
     () => import('@uiw/react-md-editor').then((mod) => mod.default.Markdown),
@@ -28,11 +29,13 @@ export default function BlogContent({ blog }: BlogContentProps) {
     const [successCode, setSuccessCode] = useState<string | null>(null);
     const { showToast } = useToast();
 
+    // 1. 获取作者信息 (动态)
+    const author = getAuthor(blog.author);
+
     // 阅读时间估算
     const readingTime = Math.max(1, Math.ceil((blog.content?.length || 0) / 1000));
 
-    // ✅ 2. 处理封面图 URL
-    // 如果有 coverImage，通过工具函数获取完整 URL；如果没有，则是 null
+    // 处理封面图 URL
     const coverImageUrl = blog.coverImage ? getProductImageUrl('', blog.coverImage) : null;
 
     const handleSubscribe = async (e: React.FormEvent) => {
@@ -46,7 +49,8 @@ export default function BlogContent({ blog }: BlogContentProps) {
         const result = await subscribeToNewsletter(formData);
 
         if (result.success) {
-            setSuccessCode(result.code || 'MYTH10');
+            // ✅ 使用配置的折扣码
+            setSuccessCode(result.code || MARKETING_CONFIG.defaultDiscountCode);
             showToast('success', 'Welcome!', 'Discount code unlocked!');
         } else {
             showToast('error', 'Error', 'Failed to subscribe. Please try again.');
@@ -54,15 +58,9 @@ export default function BlogContent({ blog }: BlogContentProps) {
         setIsLoading(false);
     };
 
-    const authorInfo = {
-        name: blog.author || "Colin Li",
-        role: "Founder & Product Expert",
-        bio: "With 8+ years in adult toy manufacturing, Colin bridges the gap between source factories and your bedroom, ensuring premium quality without the markup."
-    };
-
     return (
         <article className="pb-24">
-            {/* 1. Article Header */}
+            {/* Header Section */}
             <header className="container mx-auto px-4 max-w-4xl mb-12 text-center">
                 <div className="flex flex-wrap items-center justify-center gap-4 text-sm text-gray-500 mb-6 font-medium uppercase tracking-wider">
                     <span className="flex items-center gap-1.5">
@@ -86,18 +84,23 @@ export default function BlogContent({ blog }: BlogContentProps) {
                     </p>
                 )}
 
+                {/* 顶部作者信息 (动态渲染) */}
                 <div className="flex items-center justify-center gap-3">
-                    <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-gray-400 overflow-hidden">
-                        <User size={20} />
+                    <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-gray-400 overflow-hidden relative">
+                        {author.avatar ? (
+                            <img src={author.avatar} alt={author.name} className="w-full h-full object-cover" />
+                        ) : (
+                            <User size={20} />
+                        )}
                     </div>
                     <div className="text-left">
-                        <p className="text-sm font-bold text-gray-900">{authorInfo.name}</p>
-                        <p className="text-xs text-gray-500">{authorInfo.role}</p>
+                        <p className="text-sm font-bold text-gray-900">{author.name}</p>
+                        <p className="text-xs text-gray-500">{author.role}</p>
                     </div>
                 </div>
             </header>
 
-            {/* ✅ 3. 封面图区域 (有图才显示) */}
+            {/* 封面图区域 */}
             {coverImageUrl && (
                 <div className="container mx-auto px-4 max-w-5xl mb-16">
                     <div className="relative aspect-[21/9] rounded-3xl overflow-hidden shadow-xl border border-gray-100 bg-gray-50">
@@ -111,7 +114,7 @@ export default function BlogContent({ blog }: BlogContentProps) {
                 </div>
             )}
 
-            {/* 3. Main Content */}
+            {/* Main Content */}
             <div className="container mx-auto px-4 max-w-3xl">
                 <div className="prose prose-lg md:prose-xl prose-stone max-w-none font-serif leading-relaxed">
                     <MDViewer
@@ -120,7 +123,7 @@ export default function BlogContent({ blog }: BlogContentProps) {
                     />
                 </div>
 
-                {/* 4. Tags & Share */}
+                {/* Tags & Share */}
                 <div className="mt-12 pt-8 border-t border-gray-100 flex flex-col md:flex-row justify-between items-center gap-6">
                     {blog.tags && blog.tags.length > 0 && (
                         <div className="flex flex-wrap gap-2">
@@ -144,22 +147,26 @@ export default function BlogContent({ blog }: BlogContentProps) {
                     </div>
                 </div>
 
-                {/* 5. Author Bio Card */}
+                {/* 底部作者卡片 (动态渲染) */}
                 <div className="mt-16 bg-[#F9FAFB] p-8 md:p-10 rounded-2xl flex flex-col md:flex-row items-center gap-8 border border-gray-100">
-                    <div className="w-24 h-24 bg-white rounded-full overflow-hidden flex-shrink-0 border-4 border-white shadow-sm flex items-center justify-center">
-                        <User size={40} className="text-gray-300" />
+                    <div className="w-24 h-24 bg-white rounded-full overflow-hidden flex-shrink-0 border-4 border-white shadow-sm flex items-center justify-center relative">
+                        {author.avatar ? (
+                            <img src={author.avatar} alt={author.name} className="w-full h-full object-cover" />
+                        ) : (
+                            <User size={40} className="text-gray-300" />
+                        )}
                     </div>
                     <div className="text-center md:text-left flex-1">
                         <span className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 block">Written By</span>
-                        <h3 className="font-serif font-bold text-2xl mb-3 text-gray-900">{authorInfo.name}</h3>
+                        <h3 className="font-serif font-bold text-2xl mb-3 text-gray-900">{author.name}</h3>
                         <p className="text-gray-600 text-base leading-relaxed font-light">
-                            {authorInfo.bio}
+                            {author.bio}
                         </p>
                     </div>
                 </div>
             </div>
 
-            {/* 6. Newsletter Signup */}
+            {/* Newsletter Signup */}
             <section className="container mx-auto px-4 max-w-5xl mt-24">
                 <div className="bg-[#1A1A1A] rounded-3xl p-10 md:p-16 text-center relative overflow-hidden shadow-2xl">
                     <div className="relative z-10 max-w-2xl mx-auto">
