@@ -1,9 +1,11 @@
+// app/pages/shipping-policy/page.tsx
+
 import { Metadata } from 'next';
 import PolicyNav from '@/components/policy-nav';
 
 export const metadata: Metadata = {
-    title: 'Shipping Policy | MythToy - 100% Discreet & Fast Delivery',
-    description: 'Learn about MythToy\'s discreet shipping, delivery times to USA/EU, and international shipping options. We prioritize your privacy with plain packaging.',
+    title: 'Shipping Policy | MythToy - 100% Discreet & Global Delivery',
+    description: 'Learn about MythToy\'s discreet shipping, delivery times, and order processing. We prioritize your privacy with plain, secure packaging.',
     alternates: {
         canonical: 'https://mythtoy.com/pages/shipping-policy',
     },
@@ -12,57 +14,83 @@ export const metadata: Metadata = {
 export default function ShippingPolicy() {
     return (
         <div className="min-h-screen bg-gray-50 py-12">
-            <div className="container mx-auto px-4 max-w-5xl w-full">
+            <div className="container mx-auto px-4 max-w-4xl w-full">
                 <PolicyNav />
 
                 <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6 sm:p-10">
                     <h1 className="text-3xl font-bold text-gray-900 mb-8 text-center font-['Playfair_Display']">Shipping Policy</h1>
 
-                    <div className="prose prose-lg max-w-none text-gray-700 space-y-6 font-['Inter']">
-                        <p className="text-sm text-gray-500 text-center border-b border-gray-100 pb-6">Last updated: April 2025</p>
+                    <div className="prose prose-lg max-w-none text-gray-700 space-y-8 font-['Inter']">
+                        <p className="text-sm text-gray-500 text-center border-b border-gray-100 pb-6">Last updated: January 2026</p>
 
+                        {/* 1. 隐私发货 - 核心卖点 */}
                         <section>
-                            <h2 className="text-xl font-bold text-gray-900 mt-8 mb-4">1. Discreet Shipping Guarantee</h2>
-                            <p>MythToy offers fast, reliable, and <strong>100% discreet shipping</strong> to customers worldwide.</p>
-                            <div className="bg-blue-50 p-4 rounded-lg mt-4 border border-blue-100">
-                                <p className="font-semibold text-blue-800">📦 Plain Packaging Promise:</p>
-                                <p className="text-blue-700 text-sm mt-1">All packages are shipped in plain brown boxes or padded envelopes. There are <strong>no logos, no product names, and no "Adult" markings</strong> on the outside. The sender name will appear as a generic fulfillment corporation.</p>
+                            <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
+                                <span className="mr-2">🔒</span> 1. 100% Discreet Shipping
+                            </h2>
+                            <p>Your privacy is our #1 priority. We understand the need for discretion.</p>
+                            <div className="bg-gray-50 p-5 rounded-lg mt-4 border border-gray-200">
+                                <p className="font-semibold text-gray-900 mb-2">What your package looks like:</p>
+                                <ul className="list-disc pl-5 space-y-1 text-sm text-gray-600">
+                                    <li>Plain, unbranded <strong>Matte Black Bubble Mailers</strong>.</li>
+                                    <li>Sender name appears as <strong>"MYTH-TECH"</strong> or "Customer Service".</li>
+                                    <li><strong>NO</strong> logos, <strong>NO</strong> product names, and <strong>NO</strong> sensitive words on the label.</li>
+                                    <li>It looks exactly like a generic tech accessory or clothing package.</li>
+                                </ul>
                             </div>
                         </section>
 
+                        {/* 2. 时效 - 诚实但留有余地 */}
                         <section>
-                            <h2 className="text-xl font-bold text-gray-900 mt-8 mb-4">2. Shipping Times & Costs</h2>
+                            <h2 className="text-xl font-bold text-gray-900 mb-4">2. Shipping Times & Costs</h2>
+                            <p className="mb-4">We ship worldwide via reliable tracked carriers (USPS, Royal Mail, YunExpress, etc.).</p>
 
-                            <h3 className="text-lg font-semibold mt-4 mb-2">United States (Domestic)</h3>
-                            <ul className="list-disc pl-6 mt-2 space-y-1">
-                                <li><strong>Standard Shipping (3-7 days):</strong> $5.99 (Free on orders over $49)</li>
-                                <li><strong>Priority Shipping (2-3 days):</strong> $14.99</li>
-                            </ul>
-
-                            <h3 className="text-lg font-semibold mt-4 mb-2">Europe & UK</h3>
-                            <ul className="list-disc pl-6 mt-2 space-y-1">
-                                <li><strong>Standard EU Shipping (3-8 days):</strong> €4.99 (Free on orders over €59)</li>
-                                <li><strong>Express Shipping (2-4 days):</strong> €12.99</li>
-                            </ul>
+                            <div className="overflow-hidden border border-gray-200 rounded-lg">
+                                <table className="min-w-full divide-y divide-gray-200">
+                                    <thead className="bg-gray-50">
+                                    <tr>
+                                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Region</th>
+                                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estimated Time</th>
+                                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cost</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody className="bg-white divide-y divide-gray-200 text-sm">
+                                    <tr>
+                                        <td className="px-4 py-3 font-medium">United States</td>
+                                        <td className="px-4 py-3">7 - 12 Business Days</td>
+                                        <td className="px-4 py-3">$5.99 (Free over $49)</td>
+                                    </tr>
+                                    <tr>
+                                        <td className="px-4 py-3 font-medium">UK & Europe</td>
+                                        <td className="px-4 py-3">8 - 14 Business Days</td>
+                                        <td className="px-4 py-3">$6.99 (Free over $59)</td>
+                                    </tr>
+                                    <tr>
+                                        <td className="px-4 py-3 font-medium">Rest of World</td>
+                                        <td className="px-4 py-3">10 - 20 Business Days</td>
+                                        <td className="px-4 py-3">Calculated at checkout</td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <p className="text-xs text-gray-500 mt-2">*Timeframes are estimates and do not include the 1-3 day processing time.</p>
                         </section>
 
+                        {/* 3. 处理时间 - 给你留出打包的时间 */}
                         <section>
-                            <h2 className="text-xl font-bold text-gray-900 mt-8 mb-4">3. Order Processing</h2>
-                            <p>Orders placed before 2 PM (local warehouse time) are typically processed the same business day. Orders placed on weekends or holidays will be processed the next business day.</p>
+                            <h2 className="text-xl font-bold text-gray-900 mb-4">3. Order Processing</h2>
+                            <p>Because we hand-pack every order with our signature velvet pouch and honeycomb protection, please allow <strong>1-3 business days</strong> for your order to be processed and dispatched from our warehouse.</p>
+                            <p className="mt-2">You will receive a tracking number via email as soon as your package ships.</p>
                         </section>
 
+                        {/* 4. 解决“假单号”焦虑 - 关键！ */}
                         <section>
-                            <h2 className="text-xl font-bold text-gray-900 mt-8 mb-4">4. Customs & Duties</h2>
-                            <p>For international orders, customers are responsible for any customs duties, taxes, or import fees that may apply. Please check your local regulations regarding the importation of adult products.</p>
-                        </section>
-
-                        <section>
-                            <h2 className="text-xl font-bold text-gray-900 mt-8 mb-4">5. Contact Shipping Support</h2>
-                            <p>If you have questions about your order status, please contact us with your Order ID:</p>
-                            <ul className="list-none pl-0 mt-4 space-y-2 bg-gray-50 p-6 rounded-lg border border-gray-100">
-                                <li><strong>Email:</strong> support@mythtoy.com</li>
-                                <li><strong>Response Time:</strong> Within 24 hours</li>
-                            </ul>
+                            <h2 className="text-xl font-bold text-gray-900 mb-4">4. Tracking Updates</h2>
+                            <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-100">
+                                <p className="text-sm text-yellow-800">
+                                    <strong>Note:</strong> It may take <strong>2-4 days</strong> for the tracking status to update from "Label Created" to "In Transit". This is normal as your package travels from our distribution center to the carrier's sorting facility. Please be patient, your pleasure is on the way!
+                                </p>
+                            </div>
                         </section>
                     </div>
                 </div>

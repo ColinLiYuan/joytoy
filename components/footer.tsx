@@ -71,6 +71,7 @@ export default function Footer() {
                             <li><Link href="/pages/return-refund" className="text-sm text-gray-400 hover:text-white transition-colors duration-200">Returns & Refund</Link></li>
                             <li><Link href="/pages/order-tracking" className="text-sm text-gray-400 hover:text-white transition-colors duration-200">Track Order</Link></li>
                             <li><Link href="/pages/manuals" className="text-sm text-gray-400 hover:text-white transition-colors duration-200">Care & Guides</Link></li>
+                            <li><Link href="/pages/faq" className="text-sm text-gray-400 hover:text-white transition-colors duration-200">FAQ</Link></li>
                         </ul>
                     </div>
 
