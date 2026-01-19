@@ -56,9 +56,9 @@ export const CATEGORIES_DATA: CategoriesData = {
                     },
                     {
                         slug: "female-sex-toys/g-spot-vibrators",
-                        name: "G-Spot Wands",
+                        name: "G-Spot Vibrators",
                         title: "G-Spot Vibrators | Internal Massage",
-                        description: "Curved designs for precise internal stimulation. Powerful yet gentle.",
+                        description: "Ergonomically designed for precise internal stimulation. From flexible curves to targeted power, find your perfect angle.",
                         image: "cat-banner-g-spot.png",
                         root: "female-sex-toys",
                         priority: 0.7,
