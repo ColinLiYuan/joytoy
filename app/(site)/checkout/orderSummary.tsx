@@ -4,6 +4,8 @@ import { OrderItemRequest } from '@/types/order';
 import Image from 'next/image';
 import { getProductImageUrl } from '@/lib/image-utils';
 import { colorMap } from '@/lib/constants/color-map';
+// ✅ 1. 引入 Coupon 类型
+import { Coupon } from '@/lib/constants/coupons';
 
 interface OrderSummaryProps {
     orderItems: OrderItemRequest[];
@@ -11,9 +13,18 @@ interface OrderSummaryProps {
     discount: number;
     shipping: number;
     total: number;
+    // ✅ 2. 接收当前应用的折扣码对象
+    appliedCoupon?: Coupon | null;
 }
 
-export default function OrderSummary({ orderItems, subtotal, discount, shipping, total }: OrderSummaryProps) {
+export default function OrderSummary({
+                                         orderItems,
+                                         subtotal,
+                                         discount,
+                                         shipping,
+                                         total,
+                                         appliedCoupon // ✅ 3. 解构
+                                     }: OrderSummaryProps) {
     const getColorValue = (n: string) => colorMap[n.toLowerCase().trim()] || '#CCCCCC';
 
     return (
@@ -24,7 +35,7 @@ export default function OrderSummary({ orderItems, subtotal, discount, shipping,
             <div className="space-y-5 mb-8 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
                 {orderItems.map((item, i) => (
                     <div key={i} className="flex gap-4">
-                        {/* ✅ 锁定图片：禁止点击、禁止长按保存 */}
+                        {/* ✅ 锁定图片 */}
                         <div className="relative w-16 h-16 rounded-xl overflow-hidden border border-gray-100 bg-gray-50 flex-shrink-0 pointer-events-none select-none">
                             {item.productImage ? (
                                 <Image
@@ -54,18 +65,34 @@ export default function OrderSummary({ orderItems, subtotal, discount, shipping,
                 ))}
             </div>
 
-            {/* 金额计算区 (保持不变) */}
+            {/* 金额计算区 */}
             <div className="border-t border-gray-100 pt-4 space-y-3 text-sm">
                 <div className="flex justify-between text-gray-600">
                     <span>Subtotal</span>
                     <span className="font-medium">${subtotal.toFixed(2)}</span>
                 </div>
+
+                {/* ✅ 4. 动态显示折扣百分比 */}
                 {discount > 0 && (
                     <div className="flex justify-between text-pink-600 font-medium">
-                        <span>Discount (10% OFF)</span>
+                        <span className="flex items-center gap-1">
+                            Discount
+                            {appliedCoupon?.type === 'PERCENTAGE' ? (
+                                // 动态显示百分比 (如 15% OFF)
+                                <span className="text-xs bg-pink-50 px-1.5 py-0.5 rounded ml-1">
+                                    {Math.round(appliedCoupon.value * 100)}% OFF
+                                </span>
+                            ) : (
+                                // 如果是固定金额或未知，显示 Saved
+                                <span className="text-xs bg-pink-50 px-1.5 py-0.5 rounded ml-1">
+                                    SAVED
+                                </span>
+                            )}
+                        </span>
                         <span>-${discount.toFixed(2)}</span>
                     </div>
                 )}
+
                 <div className="flex justify-between text-gray-600">
                     <span>Shipping</span>
                     {shipping === 0 ? (

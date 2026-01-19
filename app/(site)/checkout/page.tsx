@@ -13,6 +13,7 @@ import { getUserFullName, getUserEmail, getUserId, getCartId } from '@/lib/user-
 import { useCartStore } from '@/stores/useCartStore';
 import { useAuth } from '@/contexts/authContext';
 import { useToast } from '@/contexts/toastContext';
+import { validateCoupon, Coupon } from '@/lib/constants/coupons';
 
 export default function CheckoutPage() {
     const router = useRouter();
@@ -21,17 +22,15 @@ export default function CheckoutPage() {
     const [orderItems, setOrderItems] = useState<OrderItemRequest[]>([]);
 
     const [couponCode, setCouponCode] = useState('');
-    const [appliedCoupon, setAppliedCoupon] = useState('');
+    // ✅ 2. 修改状态类型：存储完整的 Coupon 对象，而不仅仅是字符串
+    const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
     const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
 
-    // 游客模式下收集邮箱
+    // ... (中间的 Auth, Cart, Shipping Hook 代码保持不变) ...
     const [guestEmail, setGuestEmail] = useState('');
-
     const { isLoggedIn, openAuthModal, isClient } = useAuth();
     const { cart, getCart, loading: cartLoading } = useCartStore();
     const { showToast } = useToast();
-
-    // Hook: 如果已登录，自动填充；未登录则为空
     const {
         shippingAddress,
         updateShippingAddress,
@@ -41,24 +40,20 @@ export default function CheckoutPage() {
         userName: isLoggedIn ? getUserFullName() : ''
     });
 
-    // 1. 初始化 (不再强制拦截登录)
+    // ... (useEffect init 和 useEffect transform 数据转换代码保持不变) ...
     useEffect(() => {
         const init = async () => {
+            // ... 保持原有逻辑
             if (!isClient) return;
-            try {
-                setIsLoading(true);
-                await getCart();
-            } catch (e) {
-                console.error(e);
-            } finally {
-                setIsLoading(false);
-            }
+            try { setIsLoading(true); await getCart(); }
+            catch (e) { console.error(e); }
+            finally { setIsLoading(false); }
         };
         init();
     }, [getCart, isClient]);
 
-    // 2. 数据转换
     useEffect(() => {
+        // ... 保持原有逻辑
         if (cart?.items?.length) {
             setOrderItems(cart.items.map(item => ({
                 productId: item.productId,
@@ -73,48 +68,70 @@ export default function CheckoutPage() {
         }
     }, [cart?.items]);
 
-    // 3. 计算逻辑
+
+    // ✅ 3. 重构计算逻辑：支持百分比和固定金额
     const { subtotal, shippingFee, discountAmount, total } = useMemo(() => {
         const sub = orderItems.reduce((sum, i) => sum + (i.unitPrice * i.quantity), 0);
         let discount = 0;
-        if (appliedCoupon === 'MYTH10') discount = sub * 0.1;
+
+        if (appliedCoupon) {
+            if (appliedCoupon.type === 'PERCENTAGE') {
+                discount = sub * appliedCoupon.value;
+            } else if (appliedCoupon.type === 'FIXED') {
+                discount = appliedCoupon.value;
+            }
+            // 防止折扣金额超过商品总额
+            discount = Math.min(discount, sub);
+        }
+
         const shipping = sub >= 49 ? 0 : 7.99;
-        return { subtotal: sub, shippingFee: shipping, discountAmount: discount, total: Math.max(0, sub - discount + shipping) };
+
+        // 确保总价不小于 0
+        const finalTotal = Math.max(0, sub - discount + shipping);
+
+        return {
+            subtotal: sub,
+            shippingFee: shipping,
+            discountAmount: discount,
+            total: finalTotal
+        };
     }, [orderItems, appliedCoupon]);
 
+    // ✅ 4. 重构应用折扣码逻辑
     const handleApplyCoupon = async () => {
         if (!couponCode.trim()) return;
         setIsApplyingCoupon(true);
+
+        // 模拟网络延迟 (可选)
         setTimeout(() => {
-            if (couponCode.toUpperCase() === 'MYTH10') {
-                setAppliedCoupon('MYTH10');
-                showToast('success', 'Success', '10% discount applied!');
+            const validCoupon = validateCoupon(couponCode);
+
+            if (validCoupon) {
+                setAppliedCoupon(validCoupon);
+                showToast('success', 'Success', validCoupon.description);
             } else {
-                setAppliedCoupon('');
-                showToast('error', 'Invalid Code', 'This coupon code is invalid.');
+                setAppliedCoupon(null);
+                showToast('error', 'Invalid Code', 'This coupon code is invalid or expired.');
             }
             setIsApplyingCoupon(false);
         }, 600);
     };
 
-    // 4. 创建订单逻辑
+    // ... (handleProceedToPayment 保持不变，它会自动使用上面 useMemo 计算出的 discountAmount) ...
     const handleProceedToPayment = async () => {
+        // ... 原有逻辑完全一致 ...
         const userId = getUserId();
         const cartId = getCartId();
-
         const formData = getShippingFormData();
         const addr = formData.shippingAddress;
 
-        // ✅ 手动校验必填项 (防御性编程)
         if (!addr.firstName || !addr.lastName || !addr.addressLine1 || !addr.city || !addr.zipCode || !addr.country) {
             showToast('error', 'Incomplete Address', 'Please fill in all required shipping fields.');
             return;
         }
 
-        // ✅ 校验邮箱 (游客或登录用户都必须有邮箱)
         const emailToUse = isLoggedIn ? (addr.email || getUserEmail()) : addr.email;
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
         if (!emailToUse || !emailRegex.test(emailToUse)) {
             showToast('error', 'Invalid Email', 'Please provide a valid email address.');
             return;
@@ -147,14 +164,12 @@ export default function CheckoutPage() {
             shippingMethod: 'STANDARD',
             customerNote: formData.orderNotes,
             shippingFee: shippingFee,
-            discountAmount: discountAmount,
+            discountAmount: discountAmount, // 这里会自动使用 useMemo 计算出的新值
             guestEmail: !userId ? addressData.email : undefined
         };
 
         try {
             const result = await orderService.createOrder(orderData);
-
-            // ✅ 核心修复：存储完整的 addressData，供支付页使用
             localStorage.setItem('currentOrder', JSON.stringify({
                 orderId: result.id,
                 orderNumber: result.orderNumber,
@@ -163,15 +178,11 @@ export default function CheckoutPage() {
                 totalAmount: result.finalAmount,
                 items: orderItems,
                 guestEmail: addressData.email,
-                shippingAddress: addressData // 👈 必须存这个！
+                shippingAddress: addressData
             }));
-
             useCartStore.getState().clearCart();
-
-            // ✅ URL 参数去 # 号
             const cleanOrderNumber = result.orderNumber.replace(/^#/, '');
             router.push(`/payment?orderNumber=${cleanOrderNumber}`);
-
         } catch (error: any) {
             showToast('error', 'Order Failed', error.message || 'Could not create order');
         } finally {
@@ -179,61 +190,40 @@ export default function CheckoutPage() {
         }
     };
 
-    // UI 状态
+    // ... (Loading UI 和 Empty Cart UI 保持不变) ...
     if (!isClient || isLoading || cartLoading) {
-        return (
-            <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center">
-                <Loader2 className="w-10 h-10 animate-spin mb-4 text-black" />
-            </div>
-        );
+        return ( <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center"><Loader2 className="w-10 h-10 animate-spin mb-4 text-black" /></div> );
     }
-
     if (orderItems.length === 0) {
+        // ... Empty state JSX ...
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 w-full max-w-full overflow-x-hidden">
                 <div className="bg-white p-10 rounded-3xl shadow-sm text-center max-w-md w-full border border-gray-100">
-                    <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <ShoppingBag className="w-10 h-10 text-gray-400" />
-                    </div>
-                    <h2 className="text-2xl font-bold text-gray-900 mb-3 font-['Playfair_Display']">Your bag is empty</h2>
-                    <p className="text-gray-500 mb-8 text-sm">Looks like you haven't added anything yet.</p>
-                    <button
-                        className="w-full bg-black text-white px-8 py-3.5 rounded-xl font-bold hover:bg-gray-900 transition-all shadow-lg"
-                        onClick={() => router.push('/collections/all')}
-                    >
-                        Start Shopping
-                    </button>
+                    <ShoppingBag className="w-10 h-10 text-gray-400 mx-auto mb-6" />
+                    <h2 className="text-2xl font-bold text-gray-900 mb-3">Your bag is empty</h2>
+                    <button onClick={() => router.push('/collections/all')} className="w-full bg-black text-white px-8 py-3.5 rounded-xl font-bold mt-4">Start Shopping</button>
                 </div>
             </div>
         );
     }
 
     return (
-        // ✅ 修复 1: 强制限制根容器宽度
         <div className="min-h-screen bg-gray-50 pb-24 pt-8 w-full max-w-[100vw] overflow-x-hidden">
-
-            <div className="container mx-auto px-4 max-w-6xl w-full"> {/* ✅ 确保 container 也是 w-full */}
-
-                {/* Header */}
+            <div className="container mx-auto px-4 max-w-6xl w-full">
+                {/* ... Header ... */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
-                    <h1 className="text-2xl md:text-3xl font-bold text-gray-900 font-['Playfair_Display']">Checkout</h1> {/* ✅ 缩小手机端字号 */}
-
+                    <h1 className="text-2xl md:text-3xl font-bold text-gray-900 font-['Playfair_Display']">Checkout</h1>
                     {!isLoggedIn && (
-                        <button
-                            onClick={() => openAuthModal('login')}
-                            className="text-sm font-medium text-black underline flex items-center gap-2 hover:text-gray-600 self-start md:self-auto" // ✅ 修复对齐
-                        >
+                        <button onClick={() => openAuthModal('login')} className="text-sm font-medium text-black underline flex items-center gap-2 hover:text-gray-600 self-start md:self-auto">
                             <User size={16} /> Already have an account? Sign in
                         </button>
                     )}
                 </div>
 
-                {/* ✅ 修复 2: 确保 Grid 在移动端是单列 (grid-cols-1) */}
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16 w-full">
-
                     {/* Left: Form */}
                     <div className="lg:col-span-7 w-full">
-                        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-5 md:p-8 lg:p-10 w-full overflow-hidden"> {/* ✅ 增加 overflow-hidden 防止子元素溢出 */}
+                        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-5 md:p-8 lg:p-10 w-full overflow-hidden">
                             <ShippingForm
                                 shippingAddress={shippingAddress}
                                 updateShippingAddress={updateShippingAddress}
@@ -245,7 +235,7 @@ export default function CheckoutPage() {
 
                     {/* Right: Summary */}
                     <div className="lg:col-span-5 space-y-6 w-full">
-                        <div className="w-full overflow-hidden rounded-2xl"> {/* ✅ 包裹 Summary 防止溢出 */}
+                        <div className="w-full overflow-hidden rounded-2xl">
                             <OrderSummary
                                 orderItems={orderItems}
                                 subtotal={subtotal}
@@ -255,7 +245,7 @@ export default function CheckoutPage() {
                             />
                         </div>
 
-                        {/* Coupon Input */}
+                        {/* ✅ 5. 更新 Coupon Input 部分的 UI 逻辑 */}
                         <div className="bg-white p-5 md:p-6 rounded-2xl shadow-sm border border-gray-100 w-full">
                             <h3 className="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
                                 <Tag size={16} /> Gift Card or Discount Code
@@ -271,7 +261,7 @@ export default function CheckoutPage() {
                                 />
                                 {appliedCoupon ? (
                                     <button
-                                        onClick={() => { setAppliedCoupon(''); setCouponCode(''); }}
+                                        onClick={() => { setAppliedCoupon(null); setCouponCode(''); }}
                                         className="bg-gray-200 text-gray-600 px-4 py-2.5 rounded-lg text-xs md:text-sm font-bold hover:bg-gray-300 transition-all whitespace-nowrap"
                                     >
                                         Remove
@@ -286,9 +276,11 @@ export default function CheckoutPage() {
                                     </button>
                                 )}
                             </div>
+
+                            {/* 显示折扣描述 */}
                             {appliedCoupon && (
                                 <p className="text-green-600 text-xs mt-2 font-medium flex items-center gap-1">
-                                    <Tag size={12} /> Code <strong>{appliedCoupon}</strong> applied!
+                                    <Tag size={12} /> Code <strong>{appliedCoupon.code}</strong>: {appliedCoupon.description}
                                 </p>
                             )}
                         </div>
