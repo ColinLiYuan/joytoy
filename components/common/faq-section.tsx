@@ -5,7 +5,7 @@ import { Plus, Minus } from 'lucide-react';
 import { FAQ_DATA } from '@/lib/constants/faq-data';
 
 interface FAQSectionProps {
-    context?: 'all' | 'product' | 'contact';
+    context?: 'all' | 'product' | 'contact' | 'general';
     tag?: string;
     className?: string;
 }
