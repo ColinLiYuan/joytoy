@@ -6,20 +6,17 @@ import { FAQ_DATA } from '@/lib/constants/faq-data';
 
 interface FAQSectionProps {
     context?: 'all' | 'product' | 'contact';
+    tag?: string;
     className?: string;
 }
 
-// 一个简单的辅助组件，用于渲染支持 **加粗** 和 \n 换行的文本
+// 辅助组件：渲染支持 **加粗** 和 \n 换行的文本 (保持不变)
 const RichText = ({ text }: { text: string }) => {
-    // 1. 处理换行
     const lines = text.split('\n');
-
     return (
         <div className="text-gray-600 font-light leading-relaxed text-sm md:text-base space-y-2">
             {lines.map((line, index) => {
-                if (!line) return <div key={index} className="h-2" />; // 空行处理
-
-                // 2. 简单的正则处理 **Bold**
+                if (!line) return <div key={index} className="h-2" />;
                 const parts = line.split(/(\*\*.*?\*\*)/g);
                 return (
                     <p key={index}>
@@ -36,6 +33,7 @@ const RichText = ({ text }: { text: string }) => {
     );
 };
 
+// 手风琴组件 (保持不变)
 const AccordionItem = ({ question, answer }: { question: string; answer: string }) => {
     const [isOpen, setIsOpen] = useState(false);
 
@@ -57,41 +55,44 @@ const AccordionItem = ({ question, answer }: { question: string; answer: string 
                     isOpen ? 'max-h-[500px] opacity-100 pb-6' : 'max-h-0 opacity-0'
                 }`}
             >
-                {/* 使用 RichText 组件来渲染你的 Markdown 格式答案 */}
                 <RichText text={answer} />
             </div>
         </div>
     );
 };
 
-export default function FAQSection({ context = 'all', className = '' }: FAQSectionProps) {
+export default function FAQSection({ context = 'all', tag, className = '' }: FAQSectionProps) {
 
-    // 过滤逻辑
+    // 1. 修改过滤逻辑
     const filteredData = FAQ_DATA.map(category => ({
         ...category,
         items: category.items.filter(item => {
-            const tags = item.tags || [];
+            const itemTags = item.tags || [];
 
+            // 优先匹配传入的特定 tag (用于 Collection 页面)
+            if (tag) {
+                return itemTags.includes(tag);
+            }
+
+            // 原有的 context 逻辑
             if (context === 'all') return true;
+            if (context === 'product') return itemTags.includes('product');
+            if (context === 'contact') return itemTags.includes('contact');
 
-            // 产品页逻辑
-            if (context === 'product') {
-                return tags.includes('product');
-            }
-
-            // 客服页逻辑 (匹配你数据里的 "contact" 标签)
-            if (context === 'contact') {
-                return tags.includes('contact');
-            }
-
-            return false;
+            return itemTags.includes(context);
         })
-    })).filter(category => category.items.length > 0);
+    })).filter(category => category.items.length > 0); // 移除没有匹配项的分类
 
-    // 渲染逻辑
-    if (context === 'product' || context === 'contact') {
-        const flatItems = filteredData.flatMap(c => c.items); // 取消 .slice(0,5) 限制，显示所有匹配项
+    // 2. 判断是否是“特定场景”模式 (非帮助中心主页)
+    // 如果有 tag，或者 context 不是 'all'，都属于特定场景，需要渲染扁平列表
+    const isSpecificMode = tag || (context !== 'all');
 
+    // 3. 渲染逻辑：特定场景 (Product, Contact, Collection)
+    if (isSpecificMode) {
+        // 展平所有分类下的 items
+        const flatItems = filteredData.flatMap(c => c.items);
+
+        // 如果没有找到相关问题，直接不渲染 (避免显示空标题)
         if (flatItems.length === 0) return null;
 
         return (
@@ -108,7 +109,7 @@ export default function FAQSection({ context = 'all', className = '' }: FAQSecti
         );
     }
 
-    // FAQ 主页逻辑
+    // 4. 渲染逻辑：FAQ 主页 (Help Center) - 保持原有结构
     return (
         <section className={`w-full max-w-3xl mx-auto ${className}`}>
             <h1 className="text-4xl md:text-5xl font-bold text-center mb-16 font-['Playfair_Display']">

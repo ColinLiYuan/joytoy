@@ -7,8 +7,10 @@ import Breadcrumb, { BreadcrumbItem } from '@/components/common/breadcrumb';
 import ErrorSection from '@/components/product/error-section';
 import { Metadata } from 'next';
 import { RootResponse, CategoryResponse } from '@/types/category';
-// 👇 引入新组件
 import CollectionHero from '@/components/collection/collection-hero';
+import FAQSection from '@/components/common/faq-section';
+
+
 
 const ITEMS_PER_PAGE = 12;
 
@@ -195,6 +197,16 @@ export default async function ProductListPage({ params, searchParams }: PageProp
                                 initialFilters={filters}
                             />
                         </main>
+                    </div>
+                </div>
+
+                <div className="container mx-auto px-4 sm:px-6">
+                    <div className="border-t border-gray-100 pt-16 pb-24 max-w-3xl mx-auto">
+                        {/*
+                           tag 传递当前分类的完整 slug (例如 "female-sex-toys")，
+                           FAQSection 内部应根据 tag 获取相关 QA
+                        */}
+                        <FAQSection tag={currentCategory.slug} />
                     </div>
                 </div>
             </section>
