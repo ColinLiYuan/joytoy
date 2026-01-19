@@ -128,7 +128,7 @@ function generateUserEmailHtml(order: OrderEmailData) {
                 </div>
 
                 <div style="background-color: #f5f5f5; padding: 15px; border-radius: 6px; text-align: center; font-size: 13px; color: #666; margin-bottom: 30px;">
-                    <strong>Billing Descriptor:</strong> This charge will appear as "MT HOLDINGS" on your bank statement for your privacy.
+                    <strong>Billing Descriptor:</strong> This charge will appear as "TIANHEQUSIL" on your bank statement for your privacy.
                 </div>
 
                 <div style="text-align: center; font-size: 12px; color: #999; border-top: 1px solid #eee; padding-top: 20px;">
