@@ -22,7 +22,14 @@ export const AVAILABLE_COUPONS: Coupon[] = [
         type: 'PERCENTAGE',
         value: 0.15, // 15% off
         description: 'REDDIT 15% discount applied!'
+    },
+    {
+        code: 'THANKYOU20',
+        type: 'PERCENTAGE',
+        value: 0.20, // 20% off
+        description: 'VIP Support Discount: 20% OFF Applied. Thank You!'
     }
+
 ];
 
 /**
