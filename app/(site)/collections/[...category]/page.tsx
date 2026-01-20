@@ -206,7 +206,7 @@ export default async function ProductListPage({ params, searchParams }: PageProp
                            tag 传递当前分类的完整 slug (例如 "female-sex-toys")，
                            FAQSection 内部应根据 tag 获取相关 QA
                         */}
-                        <FAQSection tag={currentCategory.slug} />
+                        <FAQSection tag={currentCategory?.slug} />
                     </div>
                 </div>
             </section>
