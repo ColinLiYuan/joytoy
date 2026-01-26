@@ -49,7 +49,7 @@ export const CATEGORIES_DATA: CategoriesData = {
                         name: "Air-Pulse & Clit",
                         title: "Clit Vibrators | Air-Pulse Technology",
                         description: "Experience contactless suction and focused vibration. Our most popular category.",
-                        image: "cat-banner-clit-vibrator.png?v=1",
+                        image: "cat-banner-clit-vibrator.png",
                         root: "female-sex-toys",
                         priority: 0.7,
                         changefreq: "weekly"
@@ -59,7 +59,7 @@ export const CATEGORIES_DATA: CategoriesData = {
                         name: "G-Spot Vibrators",
                         title: "G-Spot Vibrators | Internal Massage",
                         description: "Ergonomically designed for precise internal stimulation. From flexible curves to targeted power, find your perfect angle.",
-                        image: "cat-banner-g-spot.png",
+                        image: "cat-banner-g-spot.png?v=1",
                         root: "female-sex-toys",
                         priority: 0.7,
                         changefreq: "weekly"
@@ -69,7 +69,7 @@ export const CATEGORIES_DATA: CategoriesData = {
                         name: "Bullets & Lipsticks",
                         title: "Bullet Vibrators | Discreet & Travel Friendly",
                         description: "Pocket-sized power. Perfect for travel or discreet play.",
-                        image: "cat-banner-bullet-vibe.png",
+                        image: "cat-banner-bullet-vibe.png?v=1",
                         root: "female-sex-toys",
                         priority: 0.7,
                         changefreq: "weekly"
@@ -79,7 +79,7 @@ export const CATEGORIES_DATA: CategoriesData = {
                         name: "Dual Action",
                         title: "Rabbit Vibrators | Blended Orgasms",
                         description: "The best of both worlds. Internal and external stimulation simultaneously.",
-                        image: "cat-banner-rabbit-vibe.png",
+                        image: "cat-banner-rabbit-vibe.png?v=1",
                         root: "female-sex-toys",
                         priority: 0.7,
                         changefreq: "weekly"
@@ -89,7 +89,7 @@ export const CATEGORIES_DATA: CategoriesData = {
                         name: "Power Wands",
                         title: "Wand Massagers | Deep Tissue Relaxation",
                         description: "For those who need more power. Deep rumbly vibrations for total body release.",
-                        image: "cat-banner-wand-vibe.png",
+                        image: "cat-banner-wand-vibe.png?v=1",
                         root: "female-sex-toys",
                         priority: 0.7,
                         changefreq: "weekly"
