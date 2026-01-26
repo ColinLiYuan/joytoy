@@ -49,7 +49,7 @@ export const CATEGORIES_DATA: CategoriesData = {
                         name: "Air-Pulse & Clit",
                         title: "Clit Vibrators | Air-Pulse Technology",
                         description: "Experience contactless suction and focused vibration. Our most popular category.",
-                        image: "cat-banner-clit-vibrator.png",
+                        image: "cat-banner-clit-vibrator.png?v=1",
                         root: "female-sex-toys",
                         priority: 0.7,
                         changefreq: "weekly"
