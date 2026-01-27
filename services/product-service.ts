@@ -255,6 +255,101 @@ class ProductService {
         }
     }
 
+    async searchProducts(
+        keyword: string,
+        page: number = 0,
+        size: number = 12,
+        filters?: {
+            priceRange?: [number, number] | null;
+            colors?: string[];
+            features?: string[];
+            materials?: string[];
+            sortBy?: string;
+            sortDirection?: string;
+        }
+    ): Promise<ProductListResponse> {
+        try {
+            const queryParams = new URLSearchParams({
+                page: page.toString(),
+                size: size.toString(),
+                keyword: keyword || '',
+                sortBy: filters?.sortBy || 'createdAt',
+                sortDirection: filters?.sortDirection || 'DESC'
+            });
+
+            // 添加筛选参数
+            if (filters) {
+                if (filters.priceRange && filters.priceRange.length === 2) {
+                    queryParams.append('minPrice', filters.priceRange[0].toString());
+                    queryParams.append('maxPrice', filters.priceRange[1].toString());
+                }
+                if (filters.colors && filters.colors.length > 0) {
+                    queryParams.append('colors', filters.colors.join(','));
+                }
+                if (filters.features && filters.features.length > 0) {
+                    queryParams.append('features', filters.features.join(','));
+                }
+                if (filters.materials && filters.materials.length > 0) {
+                    queryParams.append('materials', filters.materials.join(','));
+                }
+            }
+
+            // 使用 SERVER_CONFIG (前台API) 而不是 ADMIN_CONFIG
+            const url = `${SERVER_CONFIG.apiRoutes.product}/list?${queryParams.toString()}`;
+
+            // console.log('Search products url:', url);
+
+            const response = await fetch(url, {
+                cache: 'no-store', // 搜索结果通常不缓存，或者使用短缓存
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (!response.ok) {
+                return this.getEmptyList(page, size);
+            }
+
+            const apiResponse = await response.json();
+
+            // 兼容 apiResult 结构
+            const data = apiResponse.data || apiResponse;
+
+            if (!data || (!data.content && !Array.isArray(data))) {
+                return this.getEmptyList(page, size);
+            }
+
+            return {
+                content: Array.isArray(data.content) ? data.content : [],
+                currentPage: data.currentPage || data.page || page,
+                pageSize: data.pageSize || data.size || size,
+                totalElements: data.totalElements || data.total || 0,
+                totalPages: data.totalPages || Math.ceil((data.totalElements || 0) / size),
+                hasNext: data.hasNext || (page + 1) * size < (data.totalElements || 0),
+                hasPrevious: data.hasPrevious || page > 0,
+            };
+
+        } catch (error) {
+            console.error('Search products error:', error);
+            return this.getEmptyList(page, size);
+        }
+    }
+
+    /**
+     * 辅助方法：返回空列表结构，防止页面报错
+     */
+    private getEmptyList(page: number, size: number): ProductListResponse {
+        return {
+            content: [],
+            currentPage: page,
+            pageSize: size,
+            totalElements: 0,
+            totalPages: 0,
+            hasNext: false,
+            hasPrevious: false
+        };
+    }
+
     /**
      * 获取凑单商品 (Add-ons)
      * 通常是价格低于 $25 的小商品
@@ -264,7 +359,7 @@ class ProductService {
         // console.log('product service getAddOnProducts url: ', url)
         try {
             const response = await fetch(url, {
-                next: { revalidate: 3600 } // 缓存1小时
+                next: { revalidate: 36000 } // 缓存10小时
             });
 
             if (!response.ok) return [];
