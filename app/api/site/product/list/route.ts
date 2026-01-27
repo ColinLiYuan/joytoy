@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
         // 拼接后端真实地址
         const url = `/api/V1/product/list?${queryString}`;
 
-        console.log('Proxying to backend:', url);
+        // console.log('Proxying to backend:', url);
 
         const result = await apiGet(url);
 
