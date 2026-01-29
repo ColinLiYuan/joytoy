@@ -60,4 +60,6 @@ export interface HighlightData {
     title: string;
     body: string;
     image: string;
+    imageBox: string;
+    imageTail: string;
 }
