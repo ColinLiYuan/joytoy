@@ -155,7 +155,7 @@ export default function AdminReviewPage() {
                         </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
-                        {reviews.length === 0 ? (
+                        {reviews?.length === 0 ? (
                             <tr>
                                 {/* ✅ 修正 colspan 为 5 */}
                                 <td colSpan={5} className="px-6 py-10 text-center text-gray-500">
@@ -163,7 +163,7 @@ export default function AdminReviewPage() {
                                 </td>
                             </tr>
                         ) : (
-                            reviews.map((review) => (
+                            reviews?.map((review) => (
                                 <tr key={review.id}>
                                     <td className="px-6 py-4">
                                         <div className="flex flex-col">

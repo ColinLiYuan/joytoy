@@ -11,6 +11,9 @@ export async function GET(request: NextRequest) {
 
 
         let url = `/api/V1/review/list/${productId}?page=${page}&size=${size}`;
+
+        // console.log('Proxying to backend:', url);
+
         const result = await apiGet(url);
 
         return NextResponse.json(result);

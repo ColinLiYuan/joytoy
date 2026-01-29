@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
@@ -10,6 +10,7 @@ import { useAuth } from '@/contexts/authContext';
 import { useCartStore } from '@/stores/useCartStore';
 import { wishlistService } from '@/services/wishlistService';
 import { productService } from '@/services/product-service';
+import { joinWaitlist } from '@/app/actions/waitlist'; // ✅ Import the new action
 import { getProductImageUrl } from '@/lib/image-utils';
 import { Z_INDEX } from '@/lib/constants/z-index';
 import ProductCard from '@/components/product/product-card';
@@ -17,13 +18,13 @@ import ProductGallery from '@/components/product/product-gallery';
 import Breadcrumb from '@/components/common/breadcrumb';
 import ProductBadge from '@/components/product/product-badge';
 import ProductReviews from '@/components/product/reviews/product-reviews';
-import FAQSection from '@/components/common/faq-section'; // ✅ Added Import
+import FAQSection from '@/components/common/faq-section';
 
 import {
     ShoppingBag, ShieldCheck, Package, Truck, ChevronDown, ChevronUp, Star, Heart,
     Loader2, BatteryCharging, Droplets, Box, Smartphone, Feather, Volume2, Check,
     Ruler, Scale, Activity, EyeOff, Waves, Zap, Power, Hourglass, AlertCircle,
-    FileText
+    FileText, BellRing
 } from 'lucide-react';
 
 import '@uiw/react-md-editor/markdown-editor.css';
@@ -107,6 +108,79 @@ const ProductCarousel = ({ title, products }: { title: string; products: Product
     );
 };
 
+// --- WAITLIST COMPONENT (UPDATED) ---
+const WaitlistForm = ({ skuColor, productTitle }: { skuColor: string | undefined, productTitle: string }) => {
+    const [status, setStatus] = useState<'idle' | 'loading' | 'success'>('idle');
+    const { showToast } = useToast();
+
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        setStatus('loading');
+
+        const formData = new FormData(e.currentTarget);
+
+        // Call the server action
+        const result = await joinWaitlist(formData);
+
+        if (result.success) {
+            setStatus('success');
+            showToast('success', 'Subscribed', 'You have joined the waitlist.');
+        } else {
+            setStatus('idle');
+            showToast('error', 'Error', result.error || 'Something went wrong. Please try again.');
+        }
+    };
+
+    if (status === 'success') {
+        return (
+            <div className="bg-[#F0FDF4] border border-green-100 rounded-xl p-6 text-center animate-fade-in">
+                <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3 text-green-600">
+                    <Check size={24} strokeWidth={3} />
+                </div>
+                <h3 className="text-lg font-bold text-green-900 mb-2">You're on the list!</h3>
+                <p className="text-green-700 text-sm">We'll email you as soon as the <strong>{skuColor}</strong> variant is back.</p>
+            </div>
+        );
+    }
+
+    return (
+        <div className="bg-gray-50 border border-gray-200 rounded-xl p-6 md:p-8">
+            <div className="flex items-start gap-4 mb-4">
+                <BellRing size={24} className="text-black flex-shrink-0 mt-1" />
+                <div>
+                    <h3 className="text-xl font-bold text-gray-900 font-['Playfair_Display']">Join the Waitlist</h3>
+                    <p className="text-xs md:text-sm text-gray-500 mt-1 font-light">
+                        Get notified when this item is back. Subscribers get a priority discount.
+                    </p>
+                </div>
+            </div>
+
+            <form onSubmit={handleSubmit} className="mt-4">
+                {/* Hidden inputs to pass product context to server action */}
+                <input type="hidden" name="productTitle" value={productTitle} />
+                <input type="hidden" name="skuColor" value={skuColor || 'Default'} />
+
+                <div className="flex flex-col gap-3">
+                    <input
+                        type="email"
+                        name="email"
+                        placeholder="Email Address"
+                        required
+                        className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent text-sm bg-white"
+                    />
+                    <button
+                        type="submit"
+                        disabled={status === 'loading'}
+                        className="w-full bg-black text-white font-bold text-sm uppercase tracking-widest py-3.5 rounded-lg hover:bg-gray-900 transition-colors disabled:opacity-70 flex items-center justify-center gap-2"
+                    >
+                        {status === 'loading' ? <Loader2 size={16} className="animate-spin" /> : 'Notify Me'}
+                    </button>
+                </div>
+            </form>
+        </div>
+    );
+};
+
 export default function ProductDetailClient({
                                                 product,
                                                 breadcrumbs,
@@ -118,6 +192,7 @@ export default function ProductDetailClient({
                                                 colorMap
                                             }: ProductDetailClientProps) {
     const router = useRouter();
+    const waitlistRef = useRef<HTMLDivElement>(null);
     const [addingToCart, setAddingToCart] = useState(false);
     const [buyingNow, setBuyingNow] = useState(false);
     const [selectedSku, setSelectedSku] = useState<ProductSku | null>(null);
@@ -133,6 +208,10 @@ export default function ProductDetailClient({
 
     const isProductActive = product.status === 'ACTIVE';
     const getAvailableStock = (sku: ProductSku | null | undefined) => sku ? (sku.stock || 0) - (sku.lockedStock || 0) : 0;
+
+    // Logic: Product is active, we have a SKU, but stock is 0
+    const isOutOfStock = isProductActive && selectedSku && getAvailableStock(selectedSku) <= 0;
+    // Logic: Can purchase only if active AND has stock
     const canPurchase = isProductActive && selectedSku && getAvailableStock(selectedSku) > 0;
 
     const manualUrl = useMemo(() => {
@@ -242,6 +321,10 @@ export default function ProductDetailClient({
     const handleAddToCart = async () => { setAddingToCart(true); await performAddToCart(); setAddingToCart(false); };
     const handleBuyNow = async () => { setBuyingNow(true); const success = await performAddToCart(); if (success) router.push('/checkout'); setBuyingNow(false); };
 
+    const scrollToWaitlist = () => {
+        waitlistRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    };
+
     const toggleAccordion = (id: string) => setActiveAccordion(activeAccordion === id ? null : id);
 
     const renderDetailTitle = (fullTitle: string) => {
@@ -301,19 +384,28 @@ export default function ProductDetailClient({
                             )}
 
                             <div className="flex items-center justify-between mt-4">
-                                <div className="flex items-baseline gap-4">
-                                    {isProductActive ? (
-                                        isOnSale ? (
-                                            <>
-                                                <span className="text-3xl font-bold text-[#E11D48]">${product.currentPrice.toFixed(2)}</span>
-                                                <span className="text-xl text-gray-400 line-through decoration-gray-300">${product.originalPrice.toFixed(2)}</span>
-                                            </>
-                                        ) : (<span className="text-3xl font-bold text-gray-900">${product.currentPrice.toFixed(2)}</span>)
-                                    ) : (
-                                        <span className="text-3xl font-bold text-gray-300">Unavailable</span>
+                                <div className="flex flex-col">
+                                    <div className="flex items-baseline gap-4">
+                                        {isProductActive ? (
+                                            isOnSale ? (
+                                                <>
+                                                    <span className="text-3xl font-bold text-[#E11D48]">${product.currentPrice.toFixed(2)}</span>
+                                                    <span className="text-xl text-gray-400 line-through decoration-gray-300">${product.originalPrice.toFixed(2)}</span>
+                                                </>
+                                            ) : (<span className="text-3xl font-bold text-gray-900">${product.currentPrice.toFixed(2)}</span>)
+                                        ) : (
+                                            <span className="text-3xl font-bold text-gray-300">Unavailable</span>
+                                        )}
+                                    </div>
+                                    {/* SOLD OUT BADGE */}
+                                    {isOutOfStock && (
+                                        <p className="text-[#EA580C] font-bold text-sm mt-2 flex items-center gap-2 animate-pulse">
+                                            SOLD OUT - RESTOCKING SOON
+                                        </p>
                                     )}
                                 </div>
-                                <div className="flex items-center gap-1">
+
+                                <div className="flex items-center gap-1 self-start mt-2">
                                     {[1, 2, 3, 4, 5].map(i => <Star key={i} size={16} className="fill-yellow-400 text-yellow-400" />)}
                                     <span className="text-sm text-gray-500 ml-2 font-medium">{product.rating}</span>
                                 </div>
@@ -343,11 +435,25 @@ export default function ProductDetailClient({
                                 <div className="flex flex-wrap gap-4">
                                     {product.productSkus.map((sku) => {
                                         const isSelected = selectedSku?.id === sku.id;
-                                        const isOutOfStock = getAvailableStock(sku) <= 0 || !isProductActive;
+                                        // A variant is "Out of stock" if stock <= 0, but we still allow clicking it to see the waitlist form
+                                        const stock = getAvailableStock(sku);
+                                        const isVariantOutOfStock = stock <= 0;
                                         const colorHex = getMappedColor(sku.color || '');
+
                                         return (
-                                            <button key={sku.id} onClick={() => !isOutOfStock && setSelectedSku(sku)} disabled={isOutOfStock} className={`w-12 h-12 rounded-full flex items-center justify-center transition-all relative ${isSelected ? 'ring-2 ring-offset-2 ring-black scale-110' : 'hover:scale-105'} ${isOutOfStock ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer shadow-sm'}`} style={{ backgroundColor: colorHex === '#FFFFFF' ? '#F3F4F6' : colorHex }} title={sku.color}>
-                                                {isOutOfStock && <div className="absolute inset-0 flex items-center justify-center"><div className="w-full h-0.5 bg-gray-400 rotate-45"></div></div>}
+                                            <button
+                                                key={sku.id}
+                                                onClick={() => isProductActive && setSelectedSku(sku)}
+                                                disabled={!isProductActive}
+                                                className={`w-12 h-12 rounded-full flex items-center justify-center transition-all relative ${isSelected ? 'ring-2 ring-offset-2 ring-black scale-110' : 'hover:scale-105'} ${!isProductActive ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer shadow-sm'}`}
+                                                style={{ backgroundColor: colorHex === '#FFFFFF' ? '#F3F4F6' : colorHex }}
+                                                title={sku.color}
+                                            >
+                                                {isVariantOutOfStock && isProductActive && (
+                                                    <div className="absolute inset-0 flex items-center justify-center bg-black/5 rounded-full">
+                                                        <div className="w-full h-0.5 bg-gray-500 rotate-45"></div>
+                                                    </div>
+                                                )}
                                             </button>
                                         );
                                     })}
@@ -355,32 +461,39 @@ export default function ProductDetailClient({
                             </div>
                         )}
 
-                        <div className="flex flex-col sm:flex-row gap-4 mb-10">
-                            <button
-                                className={`flex-1 py-4 px-8 rounded-full font-bold text-lg flex items-center justify-center gap-3 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 ${!canPurchase ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-black text-white hover:bg-gray-900'}`}
-                                onClick={handleAddToCart}
-                                disabled={addingToCart || buyingNow || !canPurchase}
-                            >
-                                {addingToCart ? <Loader2 size={24} className="animate-spin" /> : (
-                                    <>
-                                        <ShoppingBag size={20} strokeWidth={2} />
-                                        {!isProductActive ? 'Off-shelf' : 'Add to Bag'}
-                                    </>
-                                )}
-                            </button>
-                            <button
-                                className={`flex-1 py-4 px-8 rounded-full font-bold text-lg flex items-center justify-center gap-3 transition-all shadow-sm border-2 ${!canPurchase ? 'border-gray-200 text-gray-400 cursor-not-allowed' : 'border-black text-black hover:bg-gray-50'}`}
-                                onClick={handleBuyNow}
-                                disabled={addingToCart || buyingNow || !canPurchase}
-                            >
-                                {buyingNow ? <Loader2 size={24} className="animate-spin" /> : (
-                                    <>
-                                        <Zap size={20} strokeWidth={2} />
-                                        {!isProductActive ? 'Unavailable' : 'Buy Now'}
-                                    </>
-                                )}
-                            </button>
-                        </div>
+                        {/* Purchase Buttons OR Waitlist Form */}
+                        {isOutOfStock ? (
+                            <div className="mb-10" ref={waitlistRef}>
+                                <WaitlistForm skuColor={selectedSku?.color} productTitle={product.title} />
+                            </div>
+                        ) : (
+                            <div className="flex flex-col sm:flex-row gap-4 mb-10">
+                                <button
+                                    className={`flex-1 py-4 px-8 rounded-full font-bold text-lg flex items-center justify-center gap-3 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 ${!canPurchase ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-black text-white hover:bg-gray-900'}`}
+                                    onClick={handleAddToCart}
+                                    disabled={addingToCart || buyingNow || !canPurchase}
+                                >
+                                    {addingToCart ? <Loader2 size={24} className="animate-spin" /> : (
+                                        <>
+                                            <ShoppingBag size={20} strokeWidth={2} />
+                                            {!isProductActive ? 'Off-shelf' : 'Add to Bag'}
+                                        </>
+                                    )}
+                                </button>
+                                <button
+                                    className={`flex-1 py-4 px-8 rounded-full font-bold text-lg flex items-center justify-center gap-3 transition-all shadow-sm border-2 ${!canPurchase ? 'border-gray-200 text-gray-400 cursor-not-allowed' : 'border-black text-black hover:bg-gray-50'}`}
+                                    onClick={handleBuyNow}
+                                    disabled={addingToCart || buyingNow || !canPurchase}
+                                >
+                                    {buyingNow ? <Loader2 size={24} className="animate-spin" /> : (
+                                        <>
+                                            <Zap size={20} strokeWidth={2} />
+                                            {!isProductActive ? 'Unavailable' : 'Buy Now'}
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        )}
 
                         <div className="flex justify-between items-center py-6 border-t border-gray-100 text-xs font-bold text-gray-600 uppercase tracking-wider">
                             <span className="flex items-center gap-2"><Truck size={16} /> Discreet Shipping</span>
@@ -586,7 +699,6 @@ export default function ProductDetailClient({
                 </div>
             </div>
 
-            {/* ✅ NEW: FAQ Section for PDP */}
             <div className="w-full bg-white pb-16">
                 <div className="container mx-auto px-4 max-w-3xl">
                     <FAQSection context="product" />
@@ -663,19 +775,49 @@ export default function ProductDetailClient({
 
             <ProductReviews productId={product.id} />
 
+            {/* Mobile Sticky Footer */}
             <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-3 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] flex items-center gap-3 safe-area-pb" style={{ zIndex: Z_INDEX.STICKY }}>
                 <div className="flex-1 min-w-0 flex flex-col justify-center">
                     <p className="text-xs font-bold text-gray-900 truncate">{product.title}</p>
-                    <p className={`text-xs font-bold ${isProductActive ? 'text-[#E11D48]' : 'text-gray-300'}`}>
-                        {isProductActive ? `$${product.currentPrice}` : 'Unavailable'}
+                    <p className={`text-xs font-bold ${isProductActive && !isOutOfStock ? 'text-[#E11D48]' : 'text-gray-400'}`}>
+                        {!isProductActive
+                            ? 'Unavailable'
+                            : isOutOfStock
+                                ? 'Sold Out'
+                                : `$${product.currentPrice}`
+                        }
                     </p>
                 </div>
+                {/*
+                    Mobile Logic:
+                    - If OOS (Active but 0 stock): Button says "Notify Me" and scrolls to form.
+                    - If Active & Stock: Normal Add to Bag.
+                    - If Inactive: Off-shelf disabled.
+                */}
                 <button
-                    className={`h-11 px-8 rounded-full font-bold text-sm transition-all shadow-md whitespace-nowrap flex-shrink-0 flex items-center justify-center ${!canPurchase ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-black text-white hover:bg-gray-800'}`}
-                    onClick={handleAddToCart}
-                    disabled={addingToCart || !canPurchase}
+                    className={`h-11 px-8 rounded-full font-bold text-sm transition-all shadow-md whitespace-nowrap flex-shrink-0 flex items-center justify-center ${
+                        isOutOfStock 
+                            ? 'bg-black text-white hover:bg-gray-800' // Notify button style
+                            : !canPurchase 
+                                ? 'bg-gray-200 text-gray-400 cursor-not-allowed' 
+                                : 'bg-black text-white hover:bg-gray-800'
+                    }`}
+                    onClick={() => {
+                        if (isOutOfStock) {
+                            scrollToWaitlist();
+                        } else {
+                            handleAddToCart();
+                        }
+                    }}
+                    disabled={addingToCart || (!canPurchase && !isOutOfStock)}
                 >
-                    {addingToCart ? <Loader2 size={18} className="animate-spin" /> : (!isProductActive ? 'Off-shelf' : 'Add to Bag')}
+                    {addingToCart ? <Loader2 size={18} className="animate-spin" /> : (
+                        !isProductActive
+                            ? 'Off-shelf'
+                            : isOutOfStock
+                                ? 'Notify Me'
+                                : 'Add to Bag'
+                    )}
                 </button>
             </div>
 

@@ -9,6 +9,9 @@ export async function GET(request: NextRequest) {
         const size = searchParams.get('size') || '15';
 
         let url = `/api/admin/V1/review/list?page=${page}&size=${size}`;
+
+        console.log('Proxying to backend:', url);
+
         const result = await apiGet(url);
 
         return NextResponse.json(result);
