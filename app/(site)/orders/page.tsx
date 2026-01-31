@@ -86,8 +86,8 @@ export default function OrdersPage() {
     const handleAction = (e: React.MouseEvent, order: OrderResponse, action: string) => {
         e.preventDefault();
         e.stopPropagation();
-        if (action === 'pay') window.location.href = `/payment?orderId=${order.id}`;
-        else if (action === 'track') window.location.href = `/orders/${order.id}/tracking`;
+        if (action === 'pay') window.location.href = `/payment?orderNumber=${order.orderNumber}`;
+        else if (action === 'track') window.location.href = `/orders/${order.orderNumber}/tracking`;
         // 其他状态保持默认跳转
     };
 
