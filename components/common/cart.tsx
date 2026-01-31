@@ -224,7 +224,7 @@ export default function Cart({ isOpen, onClose }: CartProps) {
                 `}
                 style={{ zIndex: Z_INDEX.DRAWER }}
             >
-                {/* Header */}
+                {/* Header  */}
                 <div className="flex justify-between items-center px-6 py-5 border-b border-gray-100 bg-white z-10 relative shadow-sm">
                     <h3 className="text-gray-900 font-bold text-xl font-['Playfair_Display'] m-0 flex items-center gap-2">
                         Bag <span className="text-sm font-sans font-normal text-gray-500">({totalItems})</span>
