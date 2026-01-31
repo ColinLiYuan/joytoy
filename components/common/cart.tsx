@@ -285,7 +285,7 @@ export default function Cart({ isOpen, onClose }: CartProps) {
                                                     className="font-medium text-sm text-gray-900 line-clamp-2 leading-relaxed cursor-pointer hover:text-[#E11D48] transition-colors"
                                                     onClick={() => {
                                                         if (item.productId) {
-                                                            router.push(`/toys/product/${item.productId}`);
+                                                            router.push(`/toys${item.productSlug}`);
                                                             onClose();
                                                         }
                                                     }}
