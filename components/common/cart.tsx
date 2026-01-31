@@ -143,7 +143,7 @@ export default function Cart({ isOpen, onClose }: CartProps) {
             showToast('error', 'Out of Stock', 'This item is currently unavailable.');
             return;
         }
-        console.log('handleAddAddOn product : ', product)
+        // console.log('handleAddAddOn product : ', product)
 
         setAddingAddOnId(product.id.toString());
         try {
@@ -151,6 +151,7 @@ export default function Cart({ isOpen, onClose }: CartProps) {
                 productId: product.id,
                 productSlug: product.slug,
                 productTitle: product.title,
+                productName: product.name,
                 productSku: defaultSku.sku,
                 productImage: getProductImageUrl('', product.image),
                 unitPrice: product.currentPrice,

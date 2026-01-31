@@ -30,7 +30,7 @@
     "react": "^19.2.1",
     "react-dom": "^19.2.1",
     "react-medium-image-zoom": "^5.4.0",
-    "resend": "^6.9.0",
+    "resend": "^6.9.1",
     "stripe": "^20.1.2",
     "winston": "^3.18.3",
     "zustand": "^5.0.8"

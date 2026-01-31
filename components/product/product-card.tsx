@@ -68,6 +68,7 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
                 productId: product.id,
                 productSlug: product.slug,
                 productTitle: product.title,
+                productName: product.name,
                 productSku: selectedSku.sku,
                 productImage: product.image,
                 unitPrice: product.currentPrice,

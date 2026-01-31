@@ -16,6 +16,7 @@ const convertToProductResponse = (wishlistItem: WishlistResponse): ProductRespon
     return {
         id: wishlistItem.productId,
         title: wishlistItem.productTitle,
+        name: wishlistItem.productTitle,
         image: wishlistItem.image,
         currentPrice: wishlistItem.currentPrice ?? 0,
         originalPrice: wishlistItem.originalPrice ?? 0, // ✅ 恢复原价，触发 Sale 徽章

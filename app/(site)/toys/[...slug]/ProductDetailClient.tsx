@@ -307,6 +307,7 @@ export default function ProductDetailClient({
                 productId: product.id,
                 productSlug: product.slug,
                 productTitle: product.title,
+                productName: product.name,
                 productSku: selectedSku.sku,
                 productImage: getProductImageUrl('', product.image),
                 unitPrice: product.currentPrice,
@@ -569,8 +570,23 @@ export default function ProductDetailClient({
                 <div className="w-full bg-[#F9FAFB] py-20 border-y border-gray-100">
                     <div className="container mx-auto px-4 max-w-4xl">
                         <div className="bg-white rounded-3xl p-10 md:p-16 shadow-sm border border-gray-100 flex flex-col md:flex-row items-center gap-12">
-                            <div className="w-full md:w-1/3 flex justify-center text-gray-300">
-                                <Box size={120} strokeWidth={0.5} />
+                            <div className="w-full md:w-1/3 flex justify-center">
+                                {highlightData?.imageBox ? (
+                                    <div className="relative w-full aspect-square max-w-[280px]">
+                                        <Image
+                                            src={getProductImageUrl('', highlightData.imageBox)}
+                                            alt="What's included"
+                                            fill
+                                            className="object-contain"
+                                            sizes="(max-width: 768px) 100vw, 33vw"
+                                        />
+                                    </div>
+                                ) : (
+                                    // 回退到原来的 Box 图标
+                                    <div className="text-gray-300">
+                                        <Box size={120} strokeWidth={0.5} />
+                                    </div>
+                                )}
                             </div>
                             <div className="w-full md:w-2/3">
                                 <h2 className="text-2xl md:text-3xl font-bold text-gray-900 font-['Playfair_Display'] mb-8">
@@ -689,6 +705,74 @@ export default function ProductDetailClient({
                     <FAQSection context="product" />
                 </div>
             </div>
+
+            {/* ✅ Unboxing Seeding Section - 高级动效版 */}
+            {highlightData?.imageTail && (
+                <div className="w-full relative bg-black overflow-hidden mt-12 md:mt-24 min-h-[500px] group">
+                    {/* 注入局部 CSS 动画，确保 100% 兼容 */}
+                    <style dangerouslySetInnerHTML={{ __html: `
+            @keyframes unboxFadeUp {
+                from { opacity: 0; transform: translateY(30px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+            @keyframes lineGrow {
+                from { width: 0; }
+                to { width: 48px; }
+            }
+            .animate-unbox-text { opacity: 0; animation: unboxFadeUp 1s cubic-bezier(0.2, 1, 0.3, 1) forwards; }
+            .animate-unbox-line { width: 0; animation: lineGrow 1s cubic-bezier(0.2, 1, 0.3, 1) forwards; }
+        `}} />
+
+                    <div className="relative w-full h-[500px] md:h-[800px]">
+                        <Image
+                            src={getProductImageUrl('', highlightData.imageTail)}
+                            alt="Unboxing Ritual"
+                            fill
+                            className="object-cover transition-transform duration-[3000ms] ease-out group-hover:scale-110"
+                            quality={95}
+                        />
+                        {/* 电影感渐变遮罩 */}
+                        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/30 to-transparent z-10" />
+                    </div>
+
+                    <div className="absolute inset-0 z-20 flex items-center">
+                        <div className="container mx-auto px-6 md:px-12 lg:px-20">
+                            <div className="max-w-2xl text-left text-white">
+
+                                {/* 1. 顶部小标 - 最先浮现 */}
+                                <div className="flex items-center gap-3 mb-8 animate-unbox-text" style={{ animationDelay: '0.2s' }}>
+                        <span className="text-[10px] md:text-xs font-bold tracking-[0.5em] uppercase text-white/80">
+                            The Unboxing Experience
+                        </span>
+                                    <div className="h-[1px] bg-white/40 animate-unbox-line" style={{ animationDelay: '0.8s' }} />
+                                </div>
+
+                                {/* 2. 主标题 - 延迟 0.4s 浮现 */}
+                                <h2 className="text-5xl md:text-8xl font-bold font-['Playfair_Display'] mb-8 leading-[1.05] drop-shadow-2xl animate-unbox-text"
+                                    style={{ animationDelay: '0.4s' }}>
+                                    Elevate Your <br className="hidden md:block" />
+                                    Intimate Rituals
+                                </h2>
+
+                                {/* 3. 副标题 - 延迟 0.6s 浮现 */}
+                                <div className="animate-unbox-text" style={{ animationDelay: '0.6s' }}>
+                                    <p className="text-lg md:text-2xl text-gray-200 font-light leading-relaxed tracking-wide max-w-lg">
+                                        Beautifully packaged. Thoughtfully designed.
+                                    </p>
+                                    <p className="mt-2 text-xl md:text-3xl font-medium text-white/90 italic font-['Playfair_Display']">
+                                        Ready for you.
+                                    </p>
+                                </div>
+
+                                {/* 4. 底部装饰 (可选) - 增加呼吸感 */}
+                                <div className="mt-12 opacity-40 animate-unbox-text" style={{ animationDelay: '1s' }}>
+                                    <div className="w-px h-16 bg-gradient-to-b from-white to-transparent" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <ProductReviews productId={product.id} />
 

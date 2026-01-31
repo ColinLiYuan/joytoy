@@ -59,6 +59,7 @@ export default function Footer() {
                             <li><Link href="/collections/best-sellers" className="text-sm text-gray-400 hover:text-white transition-colors duration-200">Best Sellers</Link></li>
                             <li><Link href="/collections/female-sex-toys" className="text-sm text-gray-400 hover:text-white transition-colors duration-200">For Her</Link></li>
                             <li><Link href="/collections/male-sex-toys" className="text-sm text-gray-400 hover:text-white transition-colors duration-200">For Him</Link></li>
+                            <li><Link href="/pioneer" className="text-sm text-gray-400 hover:text-white transition-colors duration-200">Free Product</Link></li>
                         </ul>
                     </div>
 

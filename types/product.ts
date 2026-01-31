@@ -4,6 +4,7 @@ export interface ProductResponse {
     id: number;
     slug: string;
     title: string;
+    name: string;
     sourceVendor?: string;
     colors?: string[];
     categories?: string[];
@@ -60,4 +61,6 @@ export interface HighlightData {
     title: string;
     body: string;
     image: string;
+    imageBox: string;
+    imageTail: string;
 }
