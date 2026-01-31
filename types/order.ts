@@ -14,9 +14,17 @@ export interface OrderCreateRequest {
     customerNote?: string;
     shippingFee: number;   // BigDecimal 对应 number
     discountAmount: number; // BigDecimal 对应 number
+
+    // ✅ 新增：联盟字段
+    affiliateCode?: string;
+    affiliateId?: string;
+
+    // ✅ 新增：折扣码信息字段
+    couponCode?: string;
+    couponType?: 'PERCENTAGE' | 'FIXED';
+    couponValue?: number;
 }
 
-// OrderResponse 保持不变...
 export interface OrderResponse {
     id: number;
     orderNumber: string;
@@ -31,6 +39,18 @@ export interface OrderResponse {
     shippingMethod: string;
     items: any[];
     shippingAddress: AddressRequest;
+
+    // ✅ 新增：联盟字段
+    affiliateCode?: string;
+    affiliateId?: string;
+    commissionAmount?: number;
+    commissionRate?: number;
+    affiliatePayoutStatus?: string;
+
+    // ✅ 新增：折扣码信息字段
+    couponCode?: string;
+    couponType?: 'PERCENTAGE' | 'FIXED';
+    couponValue?: number;
 }
 
 export interface OrderListResponse {
@@ -67,4 +87,6 @@ export interface OrderItemRequest {
     unitPrice: number;
     color: string;
     skuId?: number;
+    // ✅ 新增：产品名称字段（用于联盟和折扣验证）
+    productName?: string;
 }

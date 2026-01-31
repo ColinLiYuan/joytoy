@@ -189,7 +189,10 @@ export default function CheckoutPage() {
                     customerNote: formData.orderNotes,
                     shippingFee: shippingFee,
                     discountAmount: discountAmount,
-                    guestEmail: !userId ? addressData.email : undefined
+                    guestEmail: !userId ? addressData.email : undefined,
+                    couponCode: appliedCoupon?.code,
+                    couponType: appliedCoupon?.type,
+                    couponValue: appliedCoupon?.value
                 };
 
                 const result = await orderService.createOrder(orderData);
@@ -242,7 +245,10 @@ export default function CheckoutPage() {
             customerNote: formData.orderNotes,
             shippingFee: shippingFee,
             discountAmount: discountAmount,
-            guestEmail: !userId ? addressData.email : undefined
+            guestEmail: !userId ? addressData.email : undefined,
+            couponCode: appliedCoupon?.code,
+            couponType: appliedCoupon?.type,
+            couponValue: appliedCoupon?.value
         };
 
         try {
@@ -255,7 +261,10 @@ export default function CheckoutPage() {
                 totalAmount: result.finalAmount,
                 items: orderItems,
                 guestEmail: addressData.email,
-                shippingAddress: addressData
+                shippingAddress: addressData,
+                couponCode: appliedCoupon?.code,
+                couponType: appliedCoupon?.type,
+                couponValue: appliedCoupon?.value
             }));
             useCartStore.getState().clearCart();
             const cleanOrderNumber = result.orderNumber.replace(/^#/, '');
