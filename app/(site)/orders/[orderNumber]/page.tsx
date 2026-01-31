@@ -5,7 +5,7 @@ import { useState, useEffect, use } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { orderService } from '@/services/orderService';
-import { OrderResponse } from '@/types/order'; // 确保这里引入的是更新后的类型
+import { OrderResponse } from '@/types/order';
 import { getProductImageUrl } from '@/lib/image-utils';
 import Image from 'next/image';
 import {
@@ -21,23 +21,25 @@ import {
 } from 'lucide-react';
 
 export default function OrderDetailsPage({ params }: { params: Promise<{ orderNumber: string }> }) {
-    // Next.js 15: 解包异步 params
     const { orderNumber } = use(params);
     const searchParams = useSearchParams();
-
-    // 获取 URL 参数判断是否刚支付成功
     const isJustPaid = searchParams.get('payment_success') === '1';
 
     const [order, setOrder] = useState<OrderResponse | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [subtotal, setSubtotal] = useState(0);
 
     useEffect(() => {
         const fetchOrder = async () => {
             try {
-                // 注意：如果你的后端接收的是数字ID，这里可能需要转换，或者后端兼容字符串
-                // 假设 getOrder 接收 string | number
                 const data = await orderService.getOrder(orderNumber);
                 setOrder(data);
+
+                // 计算商品小计
+                const calculatedSubtotal = data.items.reduce((total, item) => {
+                    return total + (item.unitPrice * (item.quantity || 1));
+                }, 0);
+                setSubtotal(calculatedSubtotal);
             } catch (error) {
                 console.error('Failed to load order:', error);
             } finally {
@@ -71,16 +73,14 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ orderNu
         day: 'numeric',
     });
 
-    // 假设 OrderResponse 中没有 shippingAddress，需要从 context 或其他地方获取，
-    // 或者你的 API 实际上返回了 address。
-    // 为了不报错，这里做个防御性检查，或者你需要确认 OrderResponse 是否真的包含了 Address。
-    // **根据你提供的类型，OrderResponse 里并没有 shippingAddress**。
-    // 如果后端确实没返回地址，这部分UI需要隐藏或调整。
-    // 这里我假设你的 API 返回数据比类型定义多，或者你需要去更新类型定义。
-    // 为了代码不报错，我先用 any 绕过，请务必在类型文件中添加 shippingAddress: AddressRequest
+    // 获取收货地址
     const shippingAddress = (order as any).shippingAddress || {
         firstName: 'Guest', lastName: '', addressLine1: 'Address not available', city: '', country: '', zipCode: ''
     };
+
+    // 金额验证（可选，用于开发调试）
+    const calculatedTotal = subtotal + (order.shippingFee || 0) - (order.discountAmount || 0);
+    const isConsistent = Math.abs(calculatedTotal - order.finalAmount) < 0.01;
 
     return (
         <div className="min-h-screen bg-gray-50 py-12 w-full max-w-full overflow-x-hidden">
@@ -110,6 +110,22 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ orderNu
                     </div>
                 )}
 
+                {/* 金额验证提示（仅开发环境或当不一致时显示） */}
+                {!isConsistent && process.env.NODE_ENV === 'development' && (
+                    <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-700 text-sm">
+                        <div className="font-bold mb-1">💰 Amount Calculation Note:</div>
+                        <div className="grid grid-cols-2 gap-2 text-xs">
+                            <div>Items Subtotal: ${subtotal.toFixed(2)}</div>
+                            <div>+ Shipping: ${order.shippingFee.toFixed(2)}</div>
+                            {order.discountAmount > 0 && (
+                                <div>- Discount: ${order.discountAmount.toFixed(2)}</div>
+                            )}
+                            <div className="font-bold">Calculated: ${calculatedTotal.toFixed(2)}</div>
+                            <div className="font-bold">API Final: ${order.finalAmount.toFixed(2)}</div>
+                        </div>
+                    </div>
+                )}
+
                 {/* 主卡片 */}
                 <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
 
@@ -123,7 +139,7 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ orderNu
                             </p>
                         </div>
                         <div className="flex flex-col items-end gap-2">
-                             <span className={`px-4 py-1.5 text-xs font-bold rounded-full uppercase tracking-wide border 
+                            <span className={`px-4 py-1.5 text-xs font-bold rounded-full uppercase tracking-wide border 
                                 ${order.status === 'PAID' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-gray-100 text-gray-700 border-gray-200'}`}>
                                 {order.status}
                             </span>
@@ -163,8 +179,14 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ orderNu
                                             )}
                                             <p className="text-xs text-gray-400 mt-0.5">SKU: {item.productSku}</p>
                                         </div>
-                                        {/* 这里的 price 应该是 unitPrice，根据你的类型定义 */}
-                                        <p className="font-bold text-gray-900 text-lg">${item.unitPrice.toFixed(2)}</p>
+                                        <div className="text-right">
+                                            <p className="font-bold text-gray-900 text-lg">
+                                                ${(item.unitPrice * item.quantity).toFixed(2)}
+                                            </p>
+                                            <p className="text-sm text-gray-500">
+                                                ${item.unitPrice.toFixed(2)} × {item.quantity}
+                                            </p>
+                                        </div>
                                     </div>
                                 ))}
                             </div>
@@ -201,27 +223,45 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ orderNu
                                     <Receipt size={20} className="text-gray-400" /> Payment Summary
                                 </h3>
                                 <div className="space-y-3 text-sm mb-6">
+                                    {/* 商品小计 */}
                                     <div className="flex justify-between text-gray-600">
-                                        <span>Subtotal</span>
-                                        {/* 计算 Subtotal，因为 OrderResponse 里没有单独的 subtotal 字段，可以用 totalAmount 减去 shippingFee */}
-                                        <span>${(order.totalAmount - (order.shippingFee || 0)).toFixed(2)}</span>
+                                        <span>Subtotal ({order.items.length} items)</span>
+                                        <span>${subtotal.toFixed(2)}</span>
                                     </div>
+
+                                    {/* 运费 */}
                                     <div className="flex justify-between text-gray-600">
                                         <span>Shipping</span>
-                                        <span className="text-green-600 font-medium">
-                                            {order.shippingFee > 0 ? `$${order.shippingFee.toFixed(2)}` : 'Free & Discreet'}
-                                        </span>
+                                        <div className="text-right">
+                                            {order.shippingFee > 0 ? (
+                                                <span className="text-green-600 font-medium">
+                                                    ${order.shippingFee.toFixed(2)}
+                                                </span>
+                                            ) : (
+                                                <span className="text-green-600 font-medium">Free & Discreet</span>
+                                            )}
+                                        </div>
                                     </div>
+
+                                    {/* 折扣 */}
                                     {order.discountAmount > 0 && (
                                         <div className="flex justify-between text-pink-600">
                                             <span>Discount</span>
                                             <span>-${order.discountAmount.toFixed(2)}</span>
                                         </div>
                                     )}
+
+                                    {/* 总计 */}
                                     <div className="flex justify-between font-bold text-gray-900 text-xl border-t border-gray-100 pt-3 mt-1">
                                         <span>Total</span>
-                                        {/* 使用 finalAmount 或者是 totalAmount，根据你的业务逻辑，通常 finalAmount 是实付 */}
-                                        <span>${order.finalAmount.toFixed(2)}</span>
+                                        <div className="text-right">
+                                            <div>${order.finalAmount.toFixed(2)}</div>
+                                            {!isConsistent && (
+                                                <div className="text-xs text-gray-400">
+                                                    (Adjusted during checkout)
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
 

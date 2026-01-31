@@ -6,7 +6,6 @@ export interface PaymentRequest {
     cardNumber?: string;
     expiryDate?: string;
     cvv?: string;
-    amount: number;
 }
 
 export interface PaymentResponse {

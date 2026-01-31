@@ -51,7 +51,6 @@ function StripeCheckoutForm({ orderData, onSuccess, onError }: { orderData: any,
                 await orderService.payOrder(orderData.orderNumber, {
                     transactionId: paymentIntent.id,
                     paymentMethod: 'STRIPE',
-                    amount: orderData.totalAmount,
                     currency: 'USD'
                 });
                 // 3. 触发通用成功回调
@@ -75,7 +74,7 @@ function StripeCheckoutForm({ orderData, onSuccess, onError }: { orderData: any,
                 className="w-full bg-black text-white py-3 rounded-xl font-bold hover:bg-gray-800 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
             >
                 {isProcessing ? <Loader2 className="animate-spin w-5 h-5" /> : <Lock className="w-4 h-4" />}
-                {isProcessing ? 'Processing...' : `Pay $${Number(orderData.totalAmount).toFixed(2)}`}
+                {isProcessing ? 'Processing...' : `Pay $${Number(orderData.finalAmount).toFixed(2)}`}
             </button>
         </form>
     );
@@ -125,17 +124,20 @@ function PaymentContent() {
             }
             try {
                 // 优先从 LocalStorage 拿 (防止 API 延迟)
-                const storedOrder = localStorage.getItem('currentOrder');
-                if (storedOrder) {
-                    const parsed = JSON.parse(storedOrder);
-                    if (String(parsed.orderNumber).replace(/^#/, '') === orderNumber) {
-                        setOrderData(parsed);
-                        setIsLoading(false);
-                        return;
-                    }
-                }
+                // const storedOrder = localStorage.getItem('currentOrder');
+                // console.log('get order from local: ', storedOrder);
+                // if (storedOrder) {
+                //     const parsed = JSON.parse(storedOrder);
+                //     if (String(parsed.orderNumber).replace(/^#/, '') === orderNumber) {
+                //         setOrderData(parsed);
+                //         setIsLoading(false);
+                //         return;
+                //     }
+                // }
                 // API fallback
                 const data = await orderService.getOrder(orderNumber);
+                // console.log('order from api: ', data);
+
                 if (data) setOrderData(data);
                 else throw new Error('Order not found');
             } catch (error) {
@@ -150,7 +152,7 @@ function PaymentContent() {
     // 3. 当切换到 Stripe 时，初始化 ClientSecret
     useEffect(() => {
         if (orderData && activeMethod === 'STRIPE' && !stripeClientSecret && PAYMENT_CONFIG.ENABLE_STRIPE) {
-            createStripePaymentIntent(Number(orderData.totalAmount))
+            createStripePaymentIntent(Number(orderData.finalAmount))
                 .then(res => setStripeClientSecret(res.clientSecret!))
                 .catch(err => {
                     console.error(err);
@@ -170,7 +172,7 @@ function PaymentContent() {
                 orderNumber: orderData.orderNumber,
                 email: orderData.shippingAddress?.email || orderData.guestEmail || '',
                 firstName: orderData.shippingAddress?.firstName || 'Valued Customer',
-                totalAmount: Number(orderData.totalAmount || 0),
+                finalAmount: Number(orderData.finalAmount || 0),
                 shippingFee: Number(orderData.shippingFee || 0),
                 discountAmount: Number(orderData.discountAmount || 0),
                 items: (orderData.items || []).map((item: any) => ({
@@ -288,7 +290,6 @@ function PaymentContent() {
             await orderService.payOrder(orderNumber!, {
                 transactionId: data.orderID,
                 paymentMethod: 'PAYPAL',
-                amount: orderData.totalAmount,
                 currency: 'USD'
             });
             await handlePaymentSuccess();
@@ -332,7 +333,7 @@ function PaymentContent() {
                     <div className="bg-black p-8 text-white text-center">
                         <p className="text-xs opacity-80 uppercase tracking-widest mb-2">Total Amount</p>
                         <h1 className="text-4xl md:text-5xl font-bold font-['Playfair_Display'] break-all">
-                            ${Number(orderData.totalAmount).toFixed(2)}
+                            ${Number(orderData.finalAmount).toFixed(2)}
                         </h1>
                         <p className="text-xs mt-3 opacity-60">Ref: {orderData.orderNumber}</p>
                     </div>

@@ -10,11 +10,13 @@ export async function POST(
 ) {
     try {
         const params = await context.params;
-        const orderNumber = params.orderNumber; // ✅ 获取 id
+        const orderNumber = params.orderNumber;
+
+        // console.log('payOrder as : ', orderNumber)
 
         if (!orderNumber) {
             return NextResponse.json(
-                { success: false, error: 'Missing Order ID' },
+                { success: false, error: 'Missing Order Number' },
                 { status: 400 }
             );
         }
@@ -22,7 +24,7 @@ export async function POST(
         const body = await request.json();
 
         // 验证必需字段
-        if (!body.transactionId || !body.paymentMethod || !body.amount) {
+        if (!body.transactionId || !body.paymentMethod) {
             return NextResponse.json(
                 { success: false, error: 'Missing payment details' },
                 { status: 400 }

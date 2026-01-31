@@ -44,7 +44,6 @@ export default function StripePaymentForm({ orderData, onSuccess, onError }: Str
                 await orderService.payOrder(orderData.orderNumber, {
                     transactionId: paymentIntent.id,
                     paymentMethod: 'STRIPE', // 标记为 Stripe
-                    amount: orderData.totalAmount,
                     currency: 'USD'
                 });
 
