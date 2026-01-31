@@ -4,6 +4,7 @@ export interface ProductResponse {
     id: number;
     slug: string;
     title: string;
+    name: string;
     sourceVendor?: string;
     colors?: string[];
     categories?: string[];

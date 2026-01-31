@@ -120,9 +120,10 @@ export default function CheckoutPage() {
                     // 注意：这里用的是 productTitle，根据你的数据结构调整
                     const itemName = item.productName; // 如果实际是 productName，改为 item.productName
 
-                    return validCoupon.applicableProduct.some(applicableName =>
-                        applicableName.toLowerCase() === itemName.toLowerCase()
-                    );
+                    return validCoupon.applicableProduct.some(applicableName => {
+                        const currentItemName = itemName?.toLowerCase() || '';
+                        return applicableName.toLowerCase() === currentItemName;
+                    });
                 });
 
                 if (!allItemsApplicable) {

@@ -1,13 +1,32 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
 import { getProductImageUrl } from '@/lib/image-utils';
 import { Instagram, ArrowRight, CheckCircle, Sparkles, Shield, Clock } from 'lucide-react';
 
+// 这是您的页面组件
 export default function ThankYouPage() {
+    return (
+        <Suspense fallback={
+            <div
+                className="min-h-screen relative overflow-hidden flex items-center justify-center"
+                style={{
+                    background: 'radial-gradient(ellipse at 50% 30%, #0a0a0a 0%, #050505 70%)',
+                }}
+            >
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#C5A059]"></div>
+            </div>
+        }>
+            <ThankYouContent />
+        </Suspense>
+    );
+}
+
+// 主要内容组件
+function ThankYouContent() {
     const searchParams = useSearchParams();
     const [countdown, setCountdown] = useState(10);
     const [isVisible, setIsVisible] = useState(false);

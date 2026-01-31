@@ -37,7 +37,7 @@ export const AVAILABLE_COUPONS: Coupon[] = [
         code: 'FREEPROD100',
         type: 'PERCENTAGE',
         value: 1.00,
-        description: '🎁 恭喜！该指定商品已免费赠送！',
+        description: '🎁 Exclusive Pioneer Reward: Your Onyx is on us!',
         applicableProduct: ['the-onyx']
     }
 
