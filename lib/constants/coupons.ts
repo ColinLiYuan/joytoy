@@ -7,6 +7,7 @@ export interface Coupon {
     type: CouponType;   // 类型: 百分比 或 固定金额
     value: number;      // 值: 0.1 代表 10%, 20 代表减 $20
     description: string; // 成功后的提示文案
+    applicableProduct: string[];
 }
 
 // ✅ 这里定义你的折扣码列表
@@ -15,19 +16,29 @@ export const AVAILABLE_COUPONS: Coupon[] = [
         code: 'MYTH10',
         type: 'PERCENTAGE',
         value: 0.10, // 10% off
-        description: '10% discount applied!'
+        description: '10% discount applied!',
+        applicableProduct: []
     },
     {
         code: 'MYTHR15',
         type: 'PERCENTAGE',
         value: 0.15, // 15% off
-        description: 'REDDIT 15% discount applied!'
+        description: 'REDDIT 15% discount applied!',
+        applicableProduct: []
     },
     {
         code: 'THANKYOU20',
         type: 'PERCENTAGE',
         value: 0.20, // 20% off
-        description: 'VIP Support Discount: 20% OFF Applied. Thank You!'
+        description: 'VIP Support Discount: 20% OFF Applied. Thank You!',
+        applicableProduct: []
+    },
+    {
+        code: 'FREEPROD100',
+        type: 'PERCENTAGE',
+        value: 1.00,
+        description: '🎁 恭喜！该指定商品已免费赠送！',
+        applicableProduct: ['the-onyx']
     }
 
 ];

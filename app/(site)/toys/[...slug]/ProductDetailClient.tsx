@@ -307,6 +307,7 @@ export default function ProductDetailClient({
                 productId: product.id,
                 productSlug: product.slug,
                 productTitle: product.title,
+                productName: product.name,
                 productSku: selectedSku.sku,
                 productImage: getProductImageUrl('', product.image),
                 unitPrice: product.currentPrice,
