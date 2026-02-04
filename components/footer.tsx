@@ -154,7 +154,7 @@ export default function Footer() {
                             <div className="flex gap-4">
                                 {/* Instagram */}
                                 <a
-                                    href="https://www.instagram.com/myth.w.studio"
+                                    href="https://www.instagram.com/mythtoy.official"
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     aria-label="Follow us on Instagram"
@@ -164,19 +164,19 @@ export default function Footer() {
                                 </a>
 
                                 {/* Pinterest */}
-                                <a
-                                    href="https://www.pinterest.com/nanausstudio"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    aria-label="Follow us on Pinterest"
-                                    className="w-10 h-10 bg-white/5 text-gray-400 rounded-full flex items-center justify-center transition-all hover:bg-[#E60023] hover:text-white hover:-translate-y-1"
-                                >
-                                    <PinterestIcon className="w-4 h-4" />
-                                </a>
+                                {/*<a*/}
+                                {/*    href="https://www.pinterest.com/nanausstudio"*/}
+                                {/*    target="_blank"*/}
+                                {/*    rel="noopener noreferrer"*/}
+                                {/*    aria-label="Follow us on Pinterest"*/}
+                                {/*    className="w-10 h-10 bg-white/5 text-gray-400 rounded-full flex items-center justify-center transition-all hover:bg-[#E60023] hover:text-white hover:-translate-y-1"*/}
+                                {/*>*/}
+                                {/*    <PinterestIcon className="w-4 h-4" />*/}
+                                {/*</a>*/}
 
                                 {/* X (Twitter) */}
                                 <a
-                                    href="https://twitter.com/myth_objects"
+                                    href="https://x.com/mythtoy_co"
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     aria-label="Follow us on X"
