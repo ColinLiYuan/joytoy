@@ -5,6 +5,10 @@ export type FAQItem = {
     question: string;
     answer: string;
     tags: string[];
+    images?: {
+        url: string;
+        alt: string;
+    }[];
 };
 
 export type FAQCategory = {
@@ -36,10 +40,19 @@ export const FAQ_DATA: FAQCategory[] = [
             {
                 id: "discreet-packaging",
                 question: "Is the packaging discreet?",
-                answer: "100% Discreet. Depending on the order size, we ship in either **plain matte black mailers**" +
-                    " or **unmarked reinforced cartons**. \n\nThere are **NO** logos, **NO** product images, and" +
-                    " **NO** sensitive words on the label. The sender name appears as 'TIANHEQUSIL'.",
-                tags: ["general", "product"]
+                answer: "100% Discreet. We ship in **unmarked reinforced cartons**. \n\nThere are **NO** logos," +
+                    " **NO** product images, and **NO** sensitive words on the label. \n\n---\n\n**What your neighbors see:**\nPlain black packaging. No logos, no 'adult' words on the label. 100% Confidential.\n\n[IMAGE:packaging-external]\n\n**What you see:**\nA premium matte black gift box inside. Protected and elegant.\n\n[IMAGE:packaging-internal]",
+                tags: ["general", "product"],
+                images: [
+                    {
+                        url: "plain_packing.png",
+                        alt: "Discreet plain black external packaging"
+                    },
+                    {
+                        url: "gift_box.png",
+                        alt: "Premium matte black gift box inside"
+                    }
+                ]
             },
             {
                 id: "billing-name",
@@ -66,7 +79,6 @@ export const FAQ_DATA: FAQCategory[] = [
             }
         ]
     },
-    // 👇👇👇 修改重点区域 👇👇👇
     {
         title: "Vibrator Guide",
         items: [
@@ -90,8 +102,6 @@ export const FAQ_DATA: FAQCategory[] = [
             }
         ]
     },
-    // 👆👆👆 修改结束 👆👆👆
-
     {
         title: "Men's Pleasure Guide",
         items: [
