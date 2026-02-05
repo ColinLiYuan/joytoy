@@ -9,5 +9,5 @@ export const AFFILIATE_MAP = {
     'test10': { affiliateId: 'test10', commissionRate: 0.10 },
     'test15': { affiliateId: 'test15', commissionRate: 0.15 },
     'test20': { affiliateId: 'test20', commissionRate: 0.20 },
-    '20': { affiliateId: 'elia', commissionRate: 0.10 },
+    '76600769': { affiliateId: 'elia', commissionRate: 0.10 },
 };
