@@ -14,6 +14,8 @@ import { useCartStore } from '@/stores/useCartStore';
 import { useAuth } from '@/contexts/authContext';
 import { useToast } from '@/contexts/toastContext';
 import { validateCoupon, Coupon } from '@/lib/constants/coupons';
+import { affiliateService } from '@/services/affiliateService';
+
 
 export default function CheckoutPage() {
     const router = useRouter();
@@ -99,6 +101,9 @@ export default function CheckoutPage() {
 
     // ✅ 应用折扣码逻辑（增加产品适用性检查）
     const handleApplyCoupon = async () => {
+        const affiliateData = affiliateService.getAffiliateFromCookie();
+        console.log('联盟信息:', affiliateData);
+
         if (!couponCode.trim()) return;
         setIsApplyingCoupon(true);
 
@@ -161,6 +166,9 @@ export default function CheckoutPage() {
             return;
         }
 
+        const affiliateData = affiliateService.getAffiliateFromCookie();
+        console.log('联盟信息:', affiliateData);
+
         if (total === 0) {
             setIsCreatingOrder(true);
             try {
@@ -193,7 +201,9 @@ export default function CheckoutPage() {
                     guestEmail: !userId ? addressData.email : undefined,
                     couponCode: appliedCoupon?.code,
                     couponType: appliedCoupon?.type,
-                    couponValue: appliedCoupon?.value
+                    couponValue: appliedCoupon?.value,
+                    affiliateCode: affiliateData.affiliateCode,
+                    affiliateId: affiliateData.affiliateId
                 };
 
                 const result = await orderService.createOrder(orderData);
@@ -249,7 +259,9 @@ export default function CheckoutPage() {
             guestEmail: !userId ? addressData.email : undefined,
             couponCode: appliedCoupon?.code,
             couponType: appliedCoupon?.type,
-            couponValue: appliedCoupon?.value
+            couponValue: appliedCoupon?.value,
+            affiliateCode: affiliateData.affiliateCode,
+            affiliateId: affiliateData.affiliateId
         };
 
         try {
@@ -265,7 +277,9 @@ export default function CheckoutPage() {
                 shippingAddress: addressData,
                 couponCode: appliedCoupon?.code,
                 couponType: appliedCoupon?.type,
-                couponValue: appliedCoupon?.value
+                couponValue: appliedCoupon?.value,
+                affiliateCode: affiliateData.affiliateCode,
+                affiliateId: affiliateData.affiliateId
             }));
             useCartStore.getState().clearCart();
             const cleanOrderNumber = result.orderNumber.replace(/^#/, '');
