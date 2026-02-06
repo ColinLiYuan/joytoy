@@ -40,13 +40,24 @@ export const FAQ_DATA: FAQCategory[] = [
             {
                 id: "discreet-packaging",
                 question: "Is the packaging discreet?",
-                answer: "100% Discreet. We ship in **unmarked reinforced cartons**. There are **NO** logos, **NO** product images, and **NO** sensitive words on the label. Your secret is safe with us.",
-                tags: ["general", "home"] // 首页展示：核心隐私痛点
+                answer: "100% Discreet. We ship in **unmarked reinforced cartons**. \n\nThere are **NO** logos," +
+                    " **NO** product images, and **NO** sensitive words on the label. \n\n---\n\n**What your neighbors see:**\nPlain black packaging. No logos, no 'adult' words on the label. 100% Confidential.\n\n[IMAGE:packaging-external]\n\n**What you see:**\nA premium matte black gift box inside. Protected and elegant.\n\n[IMAGE:packaging-internal]",
+                tags: ["general", "product"],
+                images: [
+                    {
+                        url: "plain_packing.png",
+                        alt: "Discreet plain black external packaging"
+                    },
+                    {
+                        url: "gift_box.png",
+                        alt: "Premium matte black gift box inside"
+                    }
+                ]
             },
             {
                 id: "billing-name",
                 question: "What appears on my bank statement?",
-                answer: "For your privacy, transactions appear as '**TIANHEQUSIL**'. There is no mention of 'MythToy' or adult products on your statement.",
+                answer: "For your privacy, transactions appear as '**MT TECH**'. There is no mention of 'MythToy' or adult products on your statement.",
                 tags: ["general", "home"] // 首页展示：账单隐私
             }
         ]
@@ -89,10 +100,13 @@ export const FAQ_DATA: FAQCategory[] = [
                 tags: ["product", "home"] // 首页展示：推销旗舰机技术
             },
             {
-                id: "waterproof-check",
-                question: "Are the products waterproof?",
-                answer: "Ratings vary. **The Onyx** is **IPX7 Submersible** (bath-safe). Models like **The Eclipse** are **IPX6 Splash-proof**—perfect for cleaning under a tap but not for soaking.",
-                tags: ["product"]
+                id: "waterproof-technology",
+                question: "Are your products waterproof? What charging technology do you use?",
+                answer: "Yes, all our products are designed to be waterproof, though the technology varies by model:\n\n" +
+                    "**Magnetic Charging:** These offer the highest level of waterproof integrity. With no physical openings, they are 100% airtight and the easiest to maintain.\n\n" +
+                    "**Pin-port / DC Charging:** These are also waterproof (typically IPX7). These ports are engineered with internal water-sealing technology or tight-fit silicone sleeves. While safe for bath use, they require more care—you must ensure the port is completely free of water and debris before charging to prevent corrosion.\n\n" +
+                    "In short: All our devices are shower and bath-friendly, but for the best long-term performance, we recommend patting the charging area dry immediately after use.",
+                tags: ["product", "general", "home"]
             }
         ]
     }

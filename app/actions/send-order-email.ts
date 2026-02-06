@@ -201,7 +201,7 @@ function generateUserEmailHtml(order: OrderEmailData) {
                     <div style="display: flex; align-items: start;">
                         <div style="font-size: 14px; color: #1e40af;">
                             <strong style="display: block; margin-bottom: 5px;">🔒 Billing Privacy</strong>
-                            This charge will appear discreetly as "<strong>TIANHEQUSIL</strong>" on your bank statement. No product details are listed for your privacy.
+                            This charge will appear discreetly as "<strong>MT TECH</strong>" on your bank statement. No product details are listed for your privacy.
                         </div>
                     </div>
                 </div>

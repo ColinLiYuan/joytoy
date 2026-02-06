@@ -24,6 +24,7 @@ const RichText = ({ text, images = [] }: { text: string; images?: { url: string;
                 if (part.startsWith('[IMAGE:')) {
                     const imageKey = part.slice(7, -1); // 移除 [IMAGE: 和 ]
                     const image = images[imageIndex];
+                    console.log('3343')
                     imageIndex++;
 
                     if (!image) return null;
