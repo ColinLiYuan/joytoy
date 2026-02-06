@@ -6,6 +6,7 @@ import HeroSection from '@/components/home/hero-section';
 import BestSellersSection from '@/components/home/best-sellers-section';
 import CategoriesSection from '@/components/home/categories-section';
 import TrustSignals from '@/components/home/trust-signals';
+import FAQSection from '@/components/common/faq-section';
 
 // 生成页面元数据
 export async function generateMetadata() {
@@ -104,6 +105,11 @@ export default async function HomePage() {
                 <CategoriesSection />
                 <BestSellersSection bestSellers={bestSellers} error={error} />
                 <TrustSignals />
+                <section className="w-full bg-white py-24">
+                    <div className="container max-w-4xl mx-auto px-6">
+                        <FAQSection context="home" />
+                    </div>
+                </section>
             </div>
         </>
     );
