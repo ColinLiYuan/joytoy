@@ -288,15 +288,20 @@ export default function ProductDetailClient({
 
                 let affiliateData = await affiliateService.getAffiliateByCode(affiliateCode)
 
-                // 记录点击
-                await affiliateService.trackAffiliateClick({
-                    affiliateId: affiliateData.affiliateId, // 这里可能需要根据code查询ID
-                    affiliateCode,
-                    campaignId: campaignId || undefined,
-                    landingPage: window.location.pathname,
-                    referrer: document.referrer,
-                    userAgent: navigator.userAgent
-                });
+                if (affiliateData) {
+                    // 记录点击
+                    await affiliateService.trackAffiliateClick({
+                        affiliateId: affiliateData.affiliateId, // 这里可能需要根据code查询ID
+                        affiliateCode,
+                        campaignId: campaignId || undefined,
+                        landingPage: window.location.pathname,
+                        referrer: document.referrer,
+                        userAgent: navigator.userAgent
+                    });
+                } else {
+                    console.warn(`未找到推广码 ${affiliateCode} 对应的推广员信息`);
+                    // 或者可以选择记录日志但不抛出错误
+                }
             }
         };
 

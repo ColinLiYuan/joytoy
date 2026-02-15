@@ -123,7 +123,7 @@ export class AffiliateService {
         return url.toString();
     }
 
-    private generateSignature(affiliateCode: string, timestamp: number): string {
+    generateSignature(affiliateCode: string, timestamp: number): string {
         // 简单的签名实现，实际应该用更安全的算法
         const secret = process.env.NEXT_PUBLIC_AFFILIATE_SECRET || 'default-secret';
         return btoa(`${affiliateCode}:${timestamp}:${secret}`).slice(0, 32);

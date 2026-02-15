@@ -7,7 +7,7 @@ import Image from 'next/image';
 import { getProductImageUrl } from '@/lib/image-utils'; // 引入图片工具函数
 
 interface FAQSectionProps {
-    context?: 'all' | 'product' | 'contact' | 'general';
+    context?: 'all' | 'product' | 'contact' | 'general' | 'home';
     tag?: string;
     className?: string;
 }
