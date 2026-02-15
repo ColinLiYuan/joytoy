@@ -87,7 +87,7 @@ export default function ProductGallery({ images, productTitle, badges }: Product
                             onClick={() => setActiveImageIndex(index)}
                             className={`
                                 relative flex-shrink-0 w-16 h-16 md:w-20 md:h-20 rounded-xl overflow-hidden border-2 transition-all duration-300
-                                bg-gray-50
+                                bg-[#F5F5F5]
                                 ${index === activeImageIndex ? 'border-black opacity-100 ring-1 ring-black/5' : 'border-transparent opacity-60 hover:opacity-100'}
                             `}
                         >
@@ -104,7 +104,7 @@ export default function ProductGallery({ images, productTitle, badges }: Product
 
             {/* 主图区域 (右侧) */}
             <div
-                className="flex-1 relative w-full aspect-square md:aspect-auto md:h-[600px] bg-gray-50 rounded-3xl overflow-hidden border border-gray-100 touch-pan-y"
+                className="flex-1 relative w-full aspect-square md:aspect-auto md:h-[600px] bg-[#F5F5F5] rounded-3xl overflow-hidden border border-gray-100 touch-pan-y"
                 ref={galleryRef}
                 onTouchStart={(e) => handleTouchStart(e.touches[0].clientX)}
                 onTouchMove={(e) => handleTouchMove(e.touches[0].clientX)}
@@ -123,7 +123,7 @@ export default function ProductGallery({ images, productTitle, badges }: Product
 
                 {/* 图片容器 */}
                 <div
-                    className="flex h-full ease-out"
+                    className="flex h-full ease-out mix-blend-multiply"
                     style={{
                         transform: `translateX(${currentTranslate}%)`,
                         transition: isDragging ? 'none' : 'transform 300ms ease-out'
