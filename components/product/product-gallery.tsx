@@ -145,7 +145,7 @@ export default function ProductGallery({ images, productTitle, badges }: Product
                                         alt={image.alt || ''}
                                         width={800} // 稍微给大一点，保证清晰度
                                         height={800}
-                                        className="object-contain p-4 md:p-12 mix-blend-multiply max-h-[600px] w-auto h-auto"
+                                        className="object-contain p-8 md:p-12 mix-blend-multiply max-h-[600px] w-auto h-auto"
                                         priority={index === 0}
                                         draggable={false}
                                         placeholder="blur"
