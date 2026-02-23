@@ -142,15 +142,15 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
 
     return (
         <div className="group flex flex-col bg-white rounded-2xl overflow-hidden border border-gray-100 hover:border-gray-200 hover:shadow-xl transition-all duration-300 relative h-full">
-            <Link href={productDetailPath} className="block relative aspect-[4/5] overflow-hidden bg-[#F5F5F5]">
+            <Link href={productDetailPath} className="block relative aspect-[4/5] overflow-hidden bg-gray-100">
 
-                <div className="absolute inset-0 p-6 sm:p-8 flex items-center justify-center">
+                <div className="absolute inset-0 flex items-center justify-center">
                     <Image
                         src={mainImage}
                         alt={product.title}
                         width={400}
                         height={400}
-                        className="object-contain w-full h-full group-hover:scale-105 transition-transform duration-500 mix-blend-multiply"
+                        className="p-6 object-contain w-full h-full group-hover:scale-105 transition-transform duration-500 mix-blend-multiply"
                         placeholder="blur"
                         blurDataURL={BLUR_DATA_URL}
                     />

@@ -176,7 +176,7 @@ export default function Footer() {
 
                                 {/* X (Twitter) */}
                                 <a
-                                    href="https://x.com/mythtoy_co"
+                                    href="https://x.com/mythtoyofficial"
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     aria-label="Follow us on X"
