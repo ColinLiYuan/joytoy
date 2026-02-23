@@ -31,8 +31,8 @@ export const metadata: Metadata = {
     },
     description: 'Discover premium body-safe devices for wellness and intimacy. MythToy blends elegance with technology. Discreet shipping and secure checkout.',
     icons: {
-        icon: '/icon.svg?v=2',
-        shortcut: '/icon.svg?v=2',
+        icon: '/icon_v2.png?v=3',
+        shortcut: '/icon_v2.png?v=3',
         apple: '/apple-icon.png?v=2',
     },
     openGraph: {
