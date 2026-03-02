@@ -30,10 +30,15 @@ export default function ProductGallery({ images, productTitle, badges }: Product
     const galleryRef = useRef<HTMLDivElement>(null);
 
     const processedImages = useMemo(() => {
-        return images.map((image, index) => ({
-            ...image,
-            alt: image.alt || `${productTitle} - Image ${index + 1}`
-        }));
+        return images.map((image, index) => {
+            // 自动识别：如果 URL 包含 '-full'，则判定为全填充模式
+            const isFull = image.url.toLowerCase().includes('-full');
+            return {
+                ...image,
+                isFull,
+                alt: image.alt || `${productTitle} - Image ${index + 1}`
+            };
+        });
     }, [images, productTitle]);
 
     // --- 触摸逻辑 (保持不变) ---
@@ -138,19 +143,27 @@ export default function ProductGallery({ images, productTitle, badges }: Product
                                 zoomMargin={40} // 放大后的边距
                             >
                                 <div className="relative w-full h-full flex items-center justify-center">
-                                    {/* 注意：为了让 Zoom 正常工作，这里的 Image 不能用 fill，或者需要包在一个明确大小的 div 里 */}
-                                    {/* 这里的技巧是：在 Zoom 内部渲染一个看起来和原来一样的 Image */}
                                     <Image
                                         src={image.url}
                                         alt={image.alt || ''}
-                                        width={800} // 稍微给大一点，保证清晰度
-                                        height={800}
-                                        className="object-contain p-8 md:p-12 mix-blend-multiply max-h-[600px] w-auto h-auto"
+                                        // 全填充图（场景图）通常需要更高清
+                                        width={image.isFull ? 1200 : 800}
+                                        height={image.isFull ? 1200 : 800}
+                                        className={`
+                        transition-all duration-300
+                        ${image.isFull
+                                            ? 'object-cover w-full h-full p-0' // ✅ 识别到 -full：全填充，无边距，不使用正片叠底
+                                            : 'object-contain p-8 md:p-12 mix-blend-multiply w-auto h-auto' // ❌ 默认：去背图模式
+                                        }
+                    `}
                                         priority={index === 0}
                                         draggable={false}
                                         placeholder="blur"
                                         blurDataURL={BLUR_DATA_URL}
-                                        style={{ width: 'auto', height: '100%', maxHeight: '100%' }} // 强制 CSS 约束
+                                        style={image.isFull
+                                            ? { width: '100%', height: '100%' }
+                                            : { width: 'auto', height: '100%', maxHeight: '100%' }
+                                        }
                                     />
                                 </div>
                             </Zoom>
