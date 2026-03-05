@@ -81,6 +81,7 @@ export default function Footer() {
                         <h3 className="text-lg font-bold text-white mb-6 font-['Playfair_Display']">About</h3>
                         <ul className="space-y-3 font-['Inter']">
                             <li><Link href="/pages/about" className="text-sm text-gray-400 hover:text-white transition-colors duration-200">Our Story</Link></li>
+                            <li><Link href="/pages/affiliate" className="text-sm text-gray-400 hover:text-white transition-colors duration-200">Affiliate Program</Link></li>
                             <li><Link href="/blog" className="text-sm text-gray-400 hover:text-white transition-colors duration-200">Blog</Link></li>
                             <li><Link href="/pages/wholesale" className="text-sm text-gray-400 hover:text-white transition-colors duration-200">Wholesale</Link></li>
                         </ul>
