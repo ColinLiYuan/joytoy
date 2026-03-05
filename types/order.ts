@@ -14,15 +14,8 @@ export interface OrderCreateRequest {
     customerNote?: string;
     shippingFee: number;   // BigDecimal 对应 number
     discountAmount: number; // BigDecimal 对应 number
-
-    // ✅ 新增：联盟字段
     affiliateCode?: string;
-    affiliateId?: string;
-
-    // ✅ 新增：折扣码信息字段
     couponCode?: string;
-    couponType?: 'PERCENTAGE' | 'FIXED';
-    couponValue?: number;
 }
 
 export interface OrderResponse {

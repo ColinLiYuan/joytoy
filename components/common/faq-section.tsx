@@ -22,9 +22,7 @@ const RichText = ({ text, images = [] }: { text: string; images?: { url: string;
         <div className="text-gray-600 font-light leading-relaxed text-sm md:text-base space-y-4">
             {parts.map((part, index) => {
                 if (part.startsWith('[IMAGE:')) {
-                    const imageKey = part.slice(7, -1); // 移除 [IMAGE: 和 ]
                     const image = images[imageIndex];
-                    console.log('3343')
                     imageIndex++;
 
                     if (!image) return null;

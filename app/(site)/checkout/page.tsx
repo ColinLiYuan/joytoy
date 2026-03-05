@@ -101,45 +101,12 @@ export default function CheckoutPage() {
 
     // ✅ 应用折扣码逻辑（增加产品适用性检查）
     const handleApplyCoupon = async () => {
-        const affiliateData = affiliateService.getAffiliateFromCookie();
-        console.log('联盟信息:', affiliateData);
-
         if (!couponCode.trim()) return;
         setIsApplyingCoupon(true);
 
         setTimeout(() => {
-            // 先验证优惠券是否存在
+            // 后端校验优惠券
             const validCoupon = validateCoupon(couponCode);
-
-            if (!validCoupon) {
-                setAppliedCoupon(null);
-                showToast('error', 'Invalid Code', 'This coupon code is invalid or expired.');
-                setIsApplyingCoupon(false);
-                return;
-            }
-
-            // ✅ 如果优惠券有产品限制
-            if (validCoupon.applicableProduct && validCoupon.applicableProduct.length > 0) {
-                // 检查购物车中所有产品是否都适用
-                const allItemsApplicable = orderItems.every(item => {
-                    // 注意：这里用的是 productTitle，根据你的数据结构调整
-                    const itemName = item.productName; // 如果实际是 productName，改为 item.productName
-
-                    return validCoupon.applicableProduct.some(applicableName => {
-                        const currentItemName = itemName?.toLowerCase() || '';
-                        return applicableName.toLowerCase() === currentItemName;
-                    });
-                });
-
-                if (!allItemsApplicable) {
-                    setAppliedCoupon(null);
-                    showToast('error', 'Not Applicable',
-                        'This coupon is only valid for specific products. ' +
-                        'Please remove other items from your cart to use this coupon.');
-                    setIsApplyingCoupon(false);
-                    return;
-                }
-            }
 
             // ✅ 所有检查通过，应用优惠券
             setAppliedCoupon(validCoupon);
@@ -166,8 +133,8 @@ export default function CheckoutPage() {
             return;
         }
 
-        const affiliateData = affiliateService.getAffiliateFromCookie();
-        console.log('联盟信息:', affiliateData);
+        // const affiliateData = affiliateService.getAffiliateFromCookie();
+        // console.log('联盟信息:', affiliateData);
 
         if (total === 0) {
             setIsCreatingOrder(true);
@@ -199,11 +166,8 @@ export default function CheckoutPage() {
                     shippingFee: shippingFee,
                     discountAmount: discountAmount,
                     guestEmail: !userId ? addressData.email : undefined,
-                    couponCode: appliedCoupon?.code,
-                    couponType: appliedCoupon?.type,
-                    couponValue: appliedCoupon?.value,
-                    affiliateCode: affiliateData.affiliateCode,
-                    affiliateId: affiliateData.affiliateId
+                    couponCode: couponCode,
+                    affiliateCode: affiliateService.getAffiliateCode()
                 };
 
                 const result = await orderService.createOrder(orderData);
@@ -257,11 +221,8 @@ export default function CheckoutPage() {
             shippingFee: shippingFee,
             discountAmount: discountAmount,
             guestEmail: !userId ? addressData.email : undefined,
-            couponCode: appliedCoupon?.code,
-            couponType: appliedCoupon?.type,
-            couponValue: appliedCoupon?.value,
-            affiliateCode: affiliateData.affiliateCode,
-            affiliateId: affiliateData.affiliateId
+            couponCode: couponCode,
+            affiliateCode: affiliateService.getAffiliateCode()
         };
 
         try {
@@ -275,11 +236,8 @@ export default function CheckoutPage() {
                 items: orderItems,
                 guestEmail: addressData.email,
                 shippingAddress: addressData,
-                couponCode: appliedCoupon?.code,
-                couponType: appliedCoupon?.type,
-                couponValue: appliedCoupon?.value,
-                affiliateCode: affiliateData.affiliateCode,
-                affiliateId: affiliateData.affiliateId
+                couponCode: couponCode,
+                affiliateCode: affiliateService.getAffiliateCode()
             }));
             useCartStore.getState().clearCart();
             const cleanOrderNumber = result.orderNumber.replace(/^#/, '');
