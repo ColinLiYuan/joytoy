@@ -34,9 +34,9 @@ export const AVAILABLE_COUPONS: Coupon[] = [
         applicableProduct: []
     },
     {
-        code: 'FREEPROD100',
+        code: 'AFF99',
         type: 'PERCENTAGE',
-        value: 1.00,
+        value: 9.99,
         description: '🎁 Exclusive Pioneer Reward: Your Onyx is on us!',
         applicableProduct: ['the-onyx']
     }

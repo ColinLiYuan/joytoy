@@ -6,6 +6,7 @@ import Footer from '@/components/footer';
 import GARouteTracker from '@/components/analytics/ga-route-tracker';
 import Script from 'next/script';
 import { Suspense } from 'react';
+import AffiliateTracker from '@/components/common/AffiliateTracker';
 // ❌ 不需要再在这里引入 next/font 了
 
 export default async function SiteLayout({
@@ -81,6 +82,7 @@ export default async function SiteLayout({
             <div className="relative flex flex-col min-h-screen w-full">
                 <Suspense fallback={null}>
                     <GARouteTracker />
+                    <AffiliateTracker />
                 </Suspense>
 
                 <div className="w-full relative z-50">
