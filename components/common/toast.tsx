@@ -14,15 +14,15 @@ export interface ToastMessage {
 interface ToastProps {
     toasts: ToastMessage[];
     onRemoveToast: (id: number) => void;
-    maxTitleLength?: number; // 标题最大长度
-    maxMessageLength?: number; // 消息最大长度
+    maxTitleLength?: number;
+    maxMessageLength?: number;
 }
 
 export default function Toast({
                                   toasts,
                                   onRemoveToast,
-                                  maxTitleLength = 20, // 默认标题最多20字符
-                                  maxMessageLength = 40 // 默认消息最多40字符
+                                  maxTitleLength = 20,
+                                  maxMessageLength = 40
                               }: ToastProps) {
 
     // 截断文本函数
@@ -31,10 +31,9 @@ export default function Toast({
         return text.substring(0, maxLength) + '...';
     };
 
-    // 只需要极简图标，不需要大色块
     const getIcon = (type: string) => {
         switch (type) {
-            case 'success': return <CheckCircle2 className="w-5 h-5 text-emerald-400" />; // 绿色荧光
+            case 'success': return <CheckCircle2 className="w-5 h-5 text-emerald-400" />;
             case 'error': return <AlertCircle className="w-5 h-5 text-rose-500" />;
             case 'warning': return <AlertCircle className="w-5 h-5 text-amber-400" />;
             default: return <Info className="w-5 h-5 text-blue-400" />;
@@ -43,14 +42,14 @@ export default function Toast({
 
     return (
         <div
-            className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[9999] flex flex-col gap-2 items-center pointer-events-none"
+            className="fixed bottom-8 left-1/2 -translate-x-1/2 flex flex-col gap-3 items-center pointer-events-none w-full px-4"
             style={{ zIndex: Z_INDEX.TOAST }}
         >
-            {toasts.map(toast => {
-                const truncatedTitle = truncateText(toast.title, maxTitleLength);
-                const truncatedMessage = truncateText(toast.message, maxMessageLength);
-                const isTitleTruncated = toast.title.length > maxTitleLength;
-                const isMessageTruncated = toast.message.length > maxMessageLength;
+            {toasts.map((toast) => {
+                const isError = toast.type === 'error';
+                // 错误类型完全不截断，其他类型按设定的长度截断
+                const displayTitle = isError ? toast.title : truncateText(toast.title, maxTitleLength);
+                const displayMessage = isError ? toast.message : truncateText(toast.message, maxMessageLength);
 
                 return (
                     <div
@@ -58,45 +57,39 @@ export default function Toast({
                         onClick={() => onRemoveToast(toast.id)}
                         className={`
                             pointer-events-auto cursor-pointer
-                            flex items-center gap-3 px-6 py-3.5
+                            flex items-start md:items-center gap-3 p-4 md:px-6 md:py-3.5
                             bg-[#1A1A1A] text-white
-                            rounded-full shadow-2xl shadow-black/20
+                            /* 关键：取消 rounded-full 改为 rounded-2xl 以适应换行 */
+                            rounded-2xl shadow-2xl shadow-black/40
                             border border-white/10
                             animate-in slide-in-from-bottom-5 fade-in duration-300
-                            hover:scale-105 transition-transform
-                            max-w-sm // 添加最大宽度限制
+                            hover:scale-[1.02] transition-transform
+                            /* 宽度优化：移动端占满，桌面端自适应 */
+                            w-full md:w-fit max-w-md
                         `}
-                        title={isTitleTruncated || isMessageTruncated ?
-                            `${toast.title}: ${toast.message}` :
-                            undefined
-                        }
                     >
-                        {/* Icon */}
-                        <div className="flex-shrink-0">
+                        {/* Icon - 保持在顶部或居中 */}
+                        <div className="flex-shrink-0 mt-0.5 md:mt-0">
                             {getIcon(toast.type)}
                         </div>
 
-                        {/* Text - 单行显示，极简 */}
-                        <div className="flex items-center gap-2 text-sm font-medium whitespace-nowrap overflow-hidden">
-                            <span
-                                className="font-bold tracking-wide truncate"
-                                title={isTitleTruncated ? toast.title : undefined}
-                            >
-                                {truncatedTitle}
+                        {/* Text Content - 移动端堆叠，桌面端并排 */}
+                        <div className="flex-1 flex flex-col md:flex-row md:items-center gap-0.5 md:gap-2 text-sm font-medium leading-relaxed md:leading-none">
+                            <span className="font-bold tracking-wide text-white">
+                                {displayTitle}
                             </span>
-                            <span className="w-1 h-1 bg-gray-500 rounded-full flex-shrink-0"></span>
-                            <span
-                                className="text-gray-300 font-normal truncate"
-                                title={isMessageTruncated ? toast.message : undefined}
-                            >
-                                {truncatedMessage}
+                            {/* 桌面端显示小圆点 */}
+                            <span className="hidden md:block w-1 h-1 bg-gray-500 rounded-full flex-shrink-0"></span>
+                            <span className="text-gray-400 font-normal break-words">
+                                {displayMessage}
                             </span>
                         </div>
 
-                        {/* Undo / Close (隐形按钮) */}
-                        <div className="pl-4 border-l border-white/10 ml-1 flex-shrink-0">
-                            <span className="text-xs font-bold text-gray-400 hover:text-white transition-colors uppercase tracking-wider">
-                                Dismiss
+                        {/* Dismiss Button - 移动端精简处理 */}
+                        <div className="pl-3 border-l border-white/10 flex-shrink-0 self-stretch flex items-center">
+                            <span className="text-[10px] font-bold text-gray-500 hover:text-white transition-colors uppercase tracking-widest">
+                                <X className="w-4 h-4 md:hidden" />
+                                <span className="hidden md:inline">Dismiss</span>
                             </span>
                         </div>
                     </div>
