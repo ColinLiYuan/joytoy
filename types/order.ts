@@ -1,7 +1,5 @@
 // types/order.ts
 
-import {ProductResponse} from "./product";
-
 export interface OrderCreateRequest {
     userId?: number;        // 后端新增
     cartId?: number;        // 后端新增

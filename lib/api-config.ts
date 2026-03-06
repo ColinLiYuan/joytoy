@@ -23,6 +23,7 @@ export const SERVER_CONFIG = {
         wishlist: '/api/site/wishlist',
         cart: '/api/site/cart',
         blog: '/api/site/blog',
+        checkout: '/api/site/checkout',
     }
 };
 

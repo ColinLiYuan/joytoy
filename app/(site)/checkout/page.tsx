@@ -13,8 +13,9 @@ import { getUserFullName, getUserEmail, getUserId, getCartId } from '@/lib/user-
 import { useCartStore } from '@/stores/useCartStore';
 import { useAuth } from '@/contexts/authContext';
 import { useToast } from '@/contexts/toastContext';
-import { validateCoupon, Coupon } from '@/lib/constants/coupons';
+import { CheckoutValidateRequest, CouponResponse } from '@/lib/types/checkout';
 import { affiliateService } from '@/services/affiliateService';
+import { checkoutService } from '@/services/checkoutService';
 
 
 export default function CheckoutPage() {
@@ -24,7 +25,7 @@ export default function CheckoutPage() {
     const [orderItems, setOrderItems] = useState<OrderItemRequest[]>([]);
 
     const [couponCode, setCouponCode] = useState('');
-    const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
+    const [appliedCoupon, setAppliedCoupon] = useState<CouponResponse | null>(null);
     const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
 
     const [guestEmail, setGuestEmail] = useState('');
@@ -99,20 +100,44 @@ export default function CheckoutPage() {
         };
     }, [orderItems, appliedCoupon]);
 
-    // ✅ 应用折扣码逻辑（增加产品适用性检查）
+    // ✅ 应用折扣码逻辑：构建 CheckoutValidateRequest 对象并调用接口
     const handleApplyCoupon = async () => {
-        if (!couponCode.trim()) return;
+        const trimmedCode = couponCode.trim().toUpperCase();
+        if (!trimmedCode) return;
+
+        // 1. 获取当前表单中的邮箱（用于校验每人限用一次的逻辑）
+        const formData = getShippingFormData();
+        const emailToValidate = isLoggedIn ? getUserEmail() : formData.shippingAddress.email;
+
+        // 如果没登录也没填邮箱，提示用户先填邮箱
+        if (!emailToValidate) {
+            showToast('error', 'Email Required', 'Please enter your email in shipping address first.');
+            return;
+        }
+
         setIsApplyingCoupon(true);
 
-        setTimeout(() => {
-            // 后端校验优惠券
-            const validCoupon = validateCoupon(couponCode);
+        try {
+            // 2. 构建校验对象 (符合 CheckoutValidateRequest 定义)
+            const validateRequest: CheckoutValidateRequest = {
+                code: trimmedCode,
+                email: emailToValidate
+            };
 
-            // ✅ 所有检查通过，应用优惠券
-            setAppliedCoupon(validCoupon);
-            showToast('success', 'Success', validCoupon.description);
+            // 3. 调用 Service (传入构建好的对象)
+            const couponResponse: CouponResponse = await checkoutService.validateCoupon(validateRequest);
+
+            // 4. 校验通过：保存返回的 Coupon 详情
+            setAppliedCoupon(couponResponse);
+            showToast('success', 'Coupon Applied', couponResponse.description);
+
+        } catch (error: any) {
+            // 5. 错误处理：优先显示后端返回的 message (例如你定义的 S30104 英文描述)
+            showToast('error', 'Invalid Coupon', error.message || 'The coupon code is invalid.');
+            setCouponCode('');
+        } finally {
             setIsApplyingCoupon(false);
-        }, 600);
+        }
     };
 
     const handleProceedToPayment = async () => {
