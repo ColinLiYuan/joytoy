@@ -4,8 +4,7 @@ import { OrderItemRequest } from '@/types/order';
 import Image from 'next/image';
 import { getProductImageUrl } from '@/lib/image-utils';
 import { colorMap } from '@/lib/constants/color-map';
-// ✅ 1. 引入 Coupon 类型
-import { Coupon } from '@/lib/constants/coupons';
+import { CouponResponse } from '@/types/checkout';
 
 interface OrderSummaryProps {
     orderItems: OrderItemRequest[];
@@ -14,7 +13,7 @@ interface OrderSummaryProps {
     shipping: number;
     total: number;
     // ✅ 2. 接收当前应用的折扣码对象
-    appliedCoupon?: Coupon | null;
+    appliedCoupon?: CouponResponse | null;
 }
 
 export default function OrderSummary({

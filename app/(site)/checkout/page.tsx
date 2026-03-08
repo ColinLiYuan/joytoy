@@ -13,7 +13,7 @@ import { getUserFullName, getUserEmail, getUserId, getCartId } from '@/lib/user-
 import { useCartStore } from '@/stores/useCartStore';
 import { useAuth } from '@/contexts/authContext';
 import { useToast } from '@/contexts/toastContext';
-import { CheckoutValidateRequest, CouponResponse } from '@/lib/types/checkout';
+import { CheckoutValidateRequest, CouponResponse } from '@/types/checkout';
 import { affiliateService } from '@/services/affiliateService';
 import { checkoutService } from '@/services/checkoutService';
 
@@ -81,7 +81,7 @@ export default function CheckoutPage() {
             // ✅ 这里直接计算，因为已经验证过购物车中所有产品都适用
             if (appliedCoupon.type === 'PERCENTAGE') {
                 discount = sub * appliedCoupon.value;
-            } else if (appliedCoupon.type === 'FIXED') {
+            } else if (appliedCoupon.type === 'FIXED_AMOUNT') {
                 discount = Math.min(appliedCoupon.value, sub);
             }
 
