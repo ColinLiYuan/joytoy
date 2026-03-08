@@ -1,7 +1,5 @@
 // types/order.ts
 
-import {ProductResponse} from "./product";
-
 export interface OrderCreateRequest {
     userId?: number;        // 后端新增
     cartId?: number;        // 后端新增
@@ -14,15 +12,8 @@ export interface OrderCreateRequest {
     customerNote?: string;
     shippingFee: number;   // BigDecimal 对应 number
     discountAmount: number; // BigDecimal 对应 number
-
-    // ✅ 新增：联盟字段
     affiliateCode?: string;
-    affiliateId?: string;
-
-    // ✅ 新增：折扣码信息字段
     couponCode?: string;
-    couponType?: 'PERCENTAGE' | 'FIXED';
-    couponValue?: number;
 }
 
 export interface OrderResponse {

@@ -13,8 +13,9 @@ import { getUserFullName, getUserEmail, getUserId, getCartId } from '@/lib/user-
 import { useCartStore } from '@/stores/useCartStore';
 import { useAuth } from '@/contexts/authContext';
 import { useToast } from '@/contexts/toastContext';
-import { validateCoupon, Coupon } from '@/lib/constants/coupons';
+import { CheckoutValidateRequest, CouponResponse } from '@/types/checkout';
 import { affiliateService } from '@/services/affiliateService';
+import { checkoutService } from '@/services/checkoutService';
 
 
 export default function CheckoutPage() {
@@ -24,7 +25,7 @@ export default function CheckoutPage() {
     const [orderItems, setOrderItems] = useState<OrderItemRequest[]>([]);
 
     const [couponCode, setCouponCode] = useState('');
-    const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
+    const [appliedCoupon, setAppliedCoupon] = useState<CouponResponse | null>(null);
     const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
 
     const [guestEmail, setGuestEmail] = useState('');
@@ -80,7 +81,7 @@ export default function CheckoutPage() {
             // ✅ 这里直接计算，因为已经验证过购物车中所有产品都适用
             if (appliedCoupon.type === 'PERCENTAGE') {
                 discount = sub * appliedCoupon.value;
-            } else if (appliedCoupon.type === 'FIXED') {
+            } else if (appliedCoupon.type === 'FIXED_AMOUNT') {
                 discount = Math.min(appliedCoupon.value, sub);
             }
 
@@ -99,53 +100,44 @@ export default function CheckoutPage() {
         };
     }, [orderItems, appliedCoupon]);
 
-    // ✅ 应用折扣码逻辑（增加产品适用性检查）
+    // ✅ 应用折扣码逻辑：构建 CheckoutValidateRequest 对象并调用接口
     const handleApplyCoupon = async () => {
-        const affiliateData = affiliateService.getAffiliateFromCookie();
-        console.log('联盟信息:', affiliateData);
+        const trimmedCode = couponCode.trim().toUpperCase();
+        if (!trimmedCode) return;
 
-        if (!couponCode.trim()) return;
+        // 1. 获取当前表单中的邮箱（用于校验每人限用一次的逻辑）
+        const formData = getShippingFormData();
+        const emailToValidate = isLoggedIn ? getUserEmail() : formData.shippingAddress.email;
+
+        // 如果没登录也没填邮箱，提示用户先填邮箱
+        if (!emailToValidate) {
+            showToast('error', 'Email Required', 'Please enter your email in shipping address first.');
+            return;
+        }
+
         setIsApplyingCoupon(true);
 
-        setTimeout(() => {
-            // 先验证优惠券是否存在
-            const validCoupon = validateCoupon(couponCode);
+        try {
+            // 2. 构建校验对象 (符合 CheckoutValidateRequest 定义)
+            const validateRequest: CheckoutValidateRequest = {
+                code: trimmedCode,
+                email: emailToValidate
+            };
 
-            if (!validCoupon) {
-                setAppliedCoupon(null);
-                showToast('error', 'Invalid Code', 'This coupon code is invalid or expired.');
-                setIsApplyingCoupon(false);
-                return;
-            }
+            // 3. 调用 Service (传入构建好的对象)
+            const couponResponse: CouponResponse = await checkoutService.validateCoupon(validateRequest);
 
-            // ✅ 如果优惠券有产品限制
-            if (validCoupon.applicableProduct && validCoupon.applicableProduct.length > 0) {
-                // 检查购物车中所有产品是否都适用
-                const allItemsApplicable = orderItems.every(item => {
-                    // 注意：这里用的是 productTitle，根据你的数据结构调整
-                    const itemName = item.productName; // 如果实际是 productName，改为 item.productName
+            // 4. 校验通过：保存返回的 Coupon 详情
+            setAppliedCoupon(couponResponse);
+            showToast('success', 'Coupon Applied', couponResponse.description);
 
-                    return validCoupon.applicableProduct.some(applicableName => {
-                        const currentItemName = itemName?.toLowerCase() || '';
-                        return applicableName.toLowerCase() === currentItemName;
-                    });
-                });
-
-                if (!allItemsApplicable) {
-                    setAppliedCoupon(null);
-                    showToast('error', 'Not Applicable',
-                        'This coupon is only valid for specific products. ' +
-                        'Please remove other items from your cart to use this coupon.');
-                    setIsApplyingCoupon(false);
-                    return;
-                }
-            }
-
-            // ✅ 所有检查通过，应用优惠券
-            setAppliedCoupon(validCoupon);
-            showToast('success', 'Success', validCoupon.description);
+        } catch (error: any) {
+            // 5. 错误处理：优先显示后端返回的 message (例如你定义的 S30104 英文描述)
+            showToast('error', 'Invalid Coupon', error.message || 'The coupon code is invalid.');
+            setCouponCode('');
+        } finally {
             setIsApplyingCoupon(false);
-        }, 600);
+        }
     };
 
     const handleProceedToPayment = async () => {
@@ -166,8 +158,8 @@ export default function CheckoutPage() {
             return;
         }
 
-        const affiliateData = affiliateService.getAffiliateFromCookie();
-        console.log('联盟信息:', affiliateData);
+        // const affiliateData = affiliateService.getAffiliateFromCookie();
+        // console.log('联盟信息:', affiliateData);
 
         if (total === 0) {
             setIsCreatingOrder(true);
@@ -199,11 +191,8 @@ export default function CheckoutPage() {
                     shippingFee: shippingFee,
                     discountAmount: discountAmount,
                     guestEmail: !userId ? addressData.email : undefined,
-                    couponCode: appliedCoupon?.code,
-                    couponType: appliedCoupon?.type,
-                    couponValue: appliedCoupon?.value,
-                    affiliateCode: affiliateData.affiliateCode,
-                    affiliateId: affiliateData.affiliateId
+                    couponCode: couponCode,
+                    affiliateCode: affiliateService.getAffiliateCode()
                 };
 
                 const result = await orderService.createOrder(orderData);
@@ -257,11 +246,8 @@ export default function CheckoutPage() {
             shippingFee: shippingFee,
             discountAmount: discountAmount,
             guestEmail: !userId ? addressData.email : undefined,
-            couponCode: appliedCoupon?.code,
-            couponType: appliedCoupon?.type,
-            couponValue: appliedCoupon?.value,
-            affiliateCode: affiliateData.affiliateCode,
-            affiliateId: affiliateData.affiliateId
+            couponCode: couponCode,
+            affiliateCode: affiliateService.getAffiliateCode()
         };
 
         try {
@@ -275,11 +261,8 @@ export default function CheckoutPage() {
                 items: orderItems,
                 guestEmail: addressData.email,
                 shippingAddress: addressData,
-                couponCode: appliedCoupon?.code,
-                couponType: appliedCoupon?.type,
-                couponValue: appliedCoupon?.value,
-                affiliateCode: affiliateData.affiliateCode,
-                affiliateId: affiliateData.affiliateId
+                couponCode: couponCode,
+                affiliateCode: affiliateService.getAffiliateCode()
             }));
             useCartStore.getState().clearCart();
             const cleanOrderNumber = result.orderNumber.replace(/^#/, '');

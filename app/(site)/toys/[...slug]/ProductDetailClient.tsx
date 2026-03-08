@@ -267,45 +267,7 @@ export default function ProductDetailClient({
     }, [product]);
 
     useEffect(() => {
-        const trackAffiliateFromUrl = async () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            const affiliateCode = urlParams.get('aff');
-            const campaignId = urlParams.get('campaign');
-
-            if (affiliateCode) {
-                // 验证签名（如果有）
-                const timestamp = urlParams.get('t');
-                const signature = urlParams.get('sig');
-
-                if (timestamp && signature) {
-                    // 验证签名逻辑
-                    const expectedSig = affiliateService.generateSignature(affiliateCode, parseInt(timestamp));
-                    if (signature !== expectedSig) {
-                        console.warn('Invalid affiliate signature');
-                        return;
-                    }
-                }
-
-                let affiliateData = await affiliateService.getAffiliateByCode(affiliateCode)
-
-                if (affiliateData) {
-                    // 记录点击
-                    await affiliateService.trackAffiliateClick({
-                        affiliateId: affiliateData.affiliateId, // 这里可能需要根据code查询ID
-                        affiliateCode,
-                        campaignId: campaignId || undefined,
-                        landingPage: window.location.pathname,
-                        referrer: document.referrer,
-                        userAgent: navigator.userAgent
-                    });
-                } else {
-                    console.warn(`未找到推广码 ${affiliateCode} 对应的推广员信息`);
-                    // 或者可以选择记录日志但不抛出错误
-                }
-            }
-        };
-
-        trackAffiliateFromUrl();
+        affiliateService.initFromUrl();
     }, []);
 
     const getMappedColor = (color: string) => colorMap[color.toLowerCase().trim()] || color;
