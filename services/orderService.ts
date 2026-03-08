@@ -96,41 +96,38 @@ class OrderService {
         return json.data;
     }
 
-    async adminList(
-        page: number = 0,
-        size: number = 12,
-        keyword: string = '',
-        status: string = '',
-        orderNumber: string = '',
-        guestEmail: string = ''
-    ): Promise<OrderListResponse> {
+    // services/orderService.ts
+
+    async adminList(params: {
+        page?: number;
+        size?: number;
+        keyword?: string;
+        status?: string;
+        orderNumber?: string;
+        guestEmail?: string;
+    } = {}): Promise<OrderListResponse> {
         try {
-            // 构建查询参数
+            const {
+                page = 0,
+                size = 12,
+                keyword = '',
+                status = '',
+                orderNumber = '',
+                guestEmail = ''
+            } = params;
+
             const queryParams = new URLSearchParams();
 
-            // 添加所有参数，包括 category
-            if (page !== undefined) {
-                queryParams.append('page', page.toString());
-            }
-            if (size !== undefined) {
-                queryParams.append('size', size.toString());
-            }
-            if (keyword) {
-                queryParams.append('keyword', keyword);
-            }
-            if (status) {
-                queryParams.append('status', status);
-            }
-            if (guestEmail) {
-                queryParams.append('guestEmail', guestEmail);
-            }
-            if (orderNumber) {
-                queryParams.append('orderNumber', orderNumber);
-            }
+            // 统一使用 toString() 确保拼接到 URL 的是纯字符串
+            queryParams.append('page', page.toString());
+            queryParams.append('size', size.toString());
 
-            // 构建完整 URL
+            if (keyword) queryParams.append('keyword', keyword);
+            if (status) queryParams.append('status', status);
+            if (orderNumber) queryParams.append('orderNumber', orderNumber);
+            if (guestEmail) queryParams.append('guestEmail', guestEmail);
+
             const url = `${ADMIN_CONFIG.apiRoutes.order}/list?${queryParams.toString()}`;
-
             console.log('Fetching orders from URL:', url);
 
             const response = await fetch(url, {
@@ -140,25 +137,14 @@ class OrderService {
                 },
             });
 
-            if (!response.ok) {
-                throw new Error('Failed to fetch orders');
-            }
+            if (!response.ok) throw new Error('Failed to fetch orders');
 
             const apiResponse = await response.json();
-
             if (!apiResponse.success) {
                 throw new Error(apiResponse.error || 'Failed to fetch orders');
             }
 
-            return apiResponse.data || {
-                content: [],
-                currentPage: page,
-                pageSize: size,
-                totalElements: 0,
-                totalPages: 0,
-                hasNext: false,
-                hasPrevious: false
-            };
+            return apiResponse.data;
         } catch (error) {
             console.error('Error fetching orders:', error);
             throw error;
