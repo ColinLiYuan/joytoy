@@ -116,7 +116,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         try {
             // authService.login 现在会返回 LoginResponse (用户数据)，或者抛出 Error
             const loginResponse = await authService.login(loginRequest);
-            // console.log('login callback result: ', loginResponse)
+            console.log('login callback result: ', loginResponse)
 
             setTokens(loginResponse.accessToken, loginResponse.refreshToken);
             setIsLoggedIn(true);
@@ -132,7 +132,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 onSuccessCallbackRef.current = null;
             }
 
-            closeAuthModal();
+            // --- 核心逻辑：判断身份并跳转 ---
+            // 假设后端在 LoginResponse 中返回了 affiliateId
+            if (loginResponse.affiliateId) {
+                // 如果有联盟ID，直接跳转到联盟专用看板
+                window.location.href = '/affiliate';
+            } else {
+                // 普通用户流程
+                if (onSuccessCallbackRef.current) {
+                    onSuccessCallbackRef.current();
+                    onSuccessCallbackRef.current = null;
+                }
+                closeAuthModal();
+            }
 
             return loginResponse;
         } catch (error: any) {
