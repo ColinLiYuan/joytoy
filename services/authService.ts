@@ -41,6 +41,33 @@ class AuthService {
 
         return apiResponse.data!;
     }
+
+    async forgotPassword(email: string): Promise<void> {
+        const response = await fetch(`${SERVER_CONFIG.apiRoutes.auth}/forgot-password`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email }),
+        });
+
+        const apiResponse = await response.json();
+        if (!apiResponse.success) {
+            throw new Error(apiResponse.message || 'Failed to send reset email');
+        }
+    }
+
+    async resetPassword(token: string, password: string): Promise<void> {
+        const response = await fetch(`${SERVER_CONFIG.apiRoutes.auth}/reset-password`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token, password }),
+        });
+
+        const apiResponse = await response.json();
+
+        if (!apiResponse.success) {
+            throw new Error(apiResponse.message || 'Failed to update password.');
+        }
+    }
 }
 
 export default new AuthService();

@@ -154,6 +154,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
     }, [showToast]);
 
+    const forgotPassword = useCallback(async (email: string) => {
+        try {
+            await authService.forgotPassword(email);
+            showToast('success', 'Email Sent', 'Password reset instructions have been sent to your inbox.');
+        } catch (error: any) {
+            console.error('Forgot password failed:', error);
+            throw error;
+        }
+    }, [showToast]);
+
     const value = useMemo(() => ({
         isAuthModalOpen,
         openAuthModal,
@@ -165,6 +175,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         register,
         authModalMode,
         isClient,
+        forgotPassword,
     }), [
         isAuthModalOpen,
         openAuthModal,

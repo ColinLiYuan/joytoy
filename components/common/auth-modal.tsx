@@ -3,15 +3,19 @@
 import { useState } from 'react';
 import { useAuth } from '@/contexts/authContext';
 import { Z_INDEX } from '@/lib/constants/z-index';
-import { X, Mail, Lock, Eye, EyeOff, Loader2, Check } from 'lucide-react';
+import { X, Mail, Lock, Eye, EyeOff, Loader2, Check, ArrowLeft } from 'lucide-react';
+import { useToast } from '@/contexts/toastContext';
 
 interface AuthModalProps {
     isOpen: boolean;
     onClose: () => void;
 }
 
+// 定义视图状态
+type AuthView = 'login' | 'register' | 'forgot-password';
+
 export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
-    const [isLogin, setIsLogin] = useState(true);
+    const [view, setView] = useState<AuthView>('login');
     const [formData, setFormData] = useState({
         email: '',
         password: '',
@@ -22,7 +26,8 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
     const [isLoading, setIsLoading] = useState(false);
     const [errors, setErrors] = useState<Record<string, string>>({});
 
-    const { login, register } = useAuth();
+    const { login, register, forgotPassword } = useAuth();
+    const { showToast } = useToast();
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -30,49 +35,53 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
         if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
     };
 
-    const validateForm = () => {
-        const newErrors: Record<string, string> = {};
-        if (!formData.email) newErrors.email = 'Email is required';
-        else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Email is invalid';
-
-        if (!formData.password) newErrors.password = 'Password is required';
-        else if (formData.password.length < 6) newErrors.password = 'Password must be at least 6 characters';
-
-        if (!isLogin) {
-            if (!formData.confirmPassword) newErrors.confirmPassword = 'Confirm your password';
-            else if (formData.password !== formData.confirmPassword) newErrors.confirmPassword = 'Passwords do not match';
-        }
-        setErrors(newErrors);
-        return Object.keys(newErrors).length === 0;
+    const toggleMode = () => {
+        setView(view === 'login' ? 'register' : 'login');
+        setErrors({});
     };
+
+    // components/common/auth-modal.tsx
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!validateForm()) return;
         setIsLoading(true);
+        setErrors({});
 
         try {
-            if (isLogin) {
-                await login({ email: formData.email, password: formData.password });
-            } else {
-                await register({ email: formData.email, password: formData.password });
-                setIsLogin(true);
-                setErrors({});
-                setFormData(prev => ({ ...prev, confirmPassword: '' }));
+            if (view === 'forgot-password') {
+                // 模式1：忘记密码 - 只需要传 email 字符串
+                await forgotPassword(formData.email);
+                showToast('success', 'Email Sent', 'If an account exists, you will receive a reset link.');
+                setView('login'); // 成功后跳回登录
+            } else if (view === 'login') {
+                // 模式2：登录 - 必须传对象 { email, password }
+                await login({
+                    email: formData.email,
+                    password: formData.password
+                });
+                showToast('success', 'Welcome back', 'Logged in successfully.');
+                onClose();
+            } else if (view === 'register') {
+                // 模式3：注册 - 验证两次密码一致性并传对象
+                if (formData.password !== formData.confirmPassword) {
+                    setErrors({ confirmPassword: 'Passwords do not match' });
+                    setIsLoading(false);
+                    return;
+                }
+                await register({
+                    email: formData.email,
+                    password: formData.password
+                });
+                showToast('success', 'Account created', 'Please sign in with your new credentials.');
+                setView('login');
             }
         } catch (error: any) {
-            setErrors({
-                submit: error.message || 'Authentication failed. Please try again.'
-            });
+            console.error('Auth action failed:', error);
+            setErrors({ submit: error.message || 'Action failed, please try again.' });
+            showToast('error', 'Action Failed', error.message || 'Something went wrong.');
         } finally {
             setIsLoading(false);
         }
-    };
-
-    const toggleMode = () => {
-        setIsLogin(!isLogin);
-        setErrors({});
-        setFormData({ email: '', password: '', confirmPassword: '' });
     };
 
     if (!isOpen) return null;
@@ -80,141 +89,166 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
     return (
         <>
             <div
-                className={`fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-300 ${
-                    isOpen ? 'opacity-100 visible' : 'opacity-0 invisible'
-                }`}
-                style={{ zIndex: Z_INDEX.OVERLAY }}
+                className="fixed inset-0 bg-black/40 backdrop-blur-sm transition-opacity"
+                style={{ zIndex: Z_INDEX.MODAL - 1 }}
                 onClick={onClose}
             />
 
             <div
-                className={`fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[calc(100%-32px)] max-w-[450px] bg-white rounded-2xl shadow-2xl flex flex-col transition-all duration-300 ${
-                    isOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95 invisible'
-                }`}
+                className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md p-4"
                 style={{ zIndex: Z_INDEX.MODAL }}
             >
-                {/* Header */}
-                <div className="flex justify-between items-center p-6 border-b border-gray-100">
-                    <h2 className="text-2xl font-bold text-gray-900 font-['Playfair_Display']">
-                        {isLogin ? 'Welcome Back' : 'Join MythToy'}
-                    </h2>
+                <div className="bg-white rounded-3xl shadow-2xl overflow-hidden relative p-8">
+                    {/* 关闭按钮 */}
                     <button
-                        className="p-2 text-gray-400 hover:text-black rounded-full hover:bg-gray-50 transition-colors"
                         onClick={onClose}
+                        className="absolute right-6 top-6 p-2 hover:bg-gray-100 rounded-full transition-colors"
                     >
-                        <X size={24} />
+                        <X size={20} />
                     </button>
-                </div>
 
-                {/* Form */}
-                <div className="p-8">
-                    <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+                    {/* 标题区 */}
+                    <div className="text-center mb-8">
+                        <h2 className="text-2xl font-black tracking-tight text-gray-900">
+                            {view === 'login' && 'Welcome Back'}
+                            {view === 'register' && 'Create Account'}
+                            {view === 'forgot-password' && 'Reset Password'}
+                        </h2>
+                        <p className="text-gray-500 text-sm mt-2">
+                            {view === 'login' && 'Sign in to manage your orders'}
+                            {view === 'register' && 'Join us for a better shopping experience'}
+                            {view === 'forgot-password' && "Enter your email to receive a reset link"}
+                        </p>
+                    </div>
+
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                        {/* Email Input */}
                         <div className="space-y-1">
-                            <div className="relative flex items-center">
-                                <Mail className="absolute left-4 text-gray-400 w-5 h-5" />
+                            <div className="relative">
+                                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                                 <input
-                                    type="email"
                                     name="email"
+                                    type="email"
                                     placeholder="Email Address"
+                                    className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:border-black focus:bg-white transition-all"
                                     value={formData.email}
                                     onChange={handleInputChange}
-                                    className={`w-full pl-12 pr-4 py-3.5 border rounded-xl text-base bg-gray-50 focus:bg-white focus:ring-1 transition-all ${
-                                        errors.email ? 'border-red-500 focus:ring-red-500' : 'border-gray-200 focus:border-black focus:ring-black'
-                                    }`}
+                                    required
                                 />
                             </div>
-                            {errors.email && <span className="text-red-500 text-xs ml-1">{errors.email}</span>}
                         </div>
 
-                        <div className="space-y-1">
-                            <div className="relative flex items-center">
-                                <Lock className="absolute left-4 text-gray-400 w-5 h-5" />
-                                <input
-                                    type={showPassword ? 'text' : 'password'}
-                                    name="password"
-                                    placeholder="Password"
-                                    value={formData.password}
-                                    onChange={handleInputChange}
-                                    className={`w-full pl-12 pr-12 py-3.5 border rounded-xl text-base bg-gray-50 focus:bg-white focus:ring-1 transition-all ${
-                                        errors.password ? 'border-red-500 focus:ring-red-500' : 'border-gray-200 focus:border-black focus:ring-black'
-                                    }`}
-                                />
-                                <button
-                                    type="button"
-                                    className="absolute right-4 text-gray-400 hover:text-black transition-colors"
-                                    onClick={() => setShowPassword(!showPassword)}
-                                >
-                                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                                </button>
-                            </div>
-                            {errors.password && <span className="text-red-500 text-xs ml-1">{errors.password}</span>}
-                        </div>
-
-                        {!isLogin && (
-                            <div className="space-y-1">
-                                <div className="relative flex items-center">
-                                    <Lock className="absolute left-4 text-gray-400 w-5 h-5" />
-                                    <input
-                                        type={showConfirmPassword ? 'text' : 'password'}
-                                        name="confirmPassword"
-                                        placeholder="Confirm Password"
-                                        value={formData.confirmPassword}
-                                        onChange={handleInputChange}
-                                        className={`w-full pl-12 pr-12 py-3.5 border rounded-xl text-base bg-gray-50 focus:bg-white focus:ring-1 transition-all ${
-                                            errors.confirmPassword ? 'border-red-500 focus:ring-red-500' : 'border-gray-200 focus:border-black focus:ring-black'
-                                        }`}
-                                    />
-                                    <button
-                                        type="button"
-                                        className="absolute right-4 text-gray-400 hover:text-black transition-colors"
-                                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                    >
-                                        {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                                    </button>
+                        {/* Password Inputs - 仅在非找回密码视图显示 */}
+                        {view !== 'forgot-password' && (
+                            <>
+                                <div className="space-y-1">
+                                    <div className="relative">
+                                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                                        <input
+                                            name="password"
+                                            type={showPassword ? "text" : "password"}
+                                            placeholder="Password"
+                                            className="w-full pl-12 pr-12 py-4 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:border-black focus:bg-white transition-all"
+                                            value={formData.password}
+                                            onChange={handleInputChange}
+                                            required
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowPassword(!showPassword)}
+                                            className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                        >
+                                            {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                        </button>
+                                    </div>
                                 </div>
-                                {errors.confirmPassword && <span className="text-red-500 text-xs ml-1">{errors.confirmPassword}</span>}
-                            </div>
+
+                                {view === 'register' && (
+                                    <div className="space-y-1">
+                                        <div className="relative">
+                                            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                                            <input
+                                                name="confirmPassword"
+                                                type={showConfirmPassword ? "text" : "password"}
+                                                placeholder="Confirm Password"
+                                                className="w-full pl-12 pr-12 py-4 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:border-black focus:bg-white transition-all"
+                                                value={formData.confirmPassword}
+                                                onChange={handleInputChange}
+                                                required
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                            >
+                                                {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                            </button>
+                                        </div>
+                                        {errors.confirmPassword && <p className="text-red-500 text-xs pl-1">{errors.confirmPassword}</p>}
+                                    </div>
+                                )}
+
+                                {view === 'login' && (
+                                    <div className="flex justify-end">
+                                        <button
+                                            type="button"
+                                            className="text-sm font-semibold text-gray-400 hover:text-black transition-colors"
+                                            onClick={() => setView('forgot-password')}
+                                        >
+                                            Forgot password?
+                                        </button>
+                                    </div>
+                                )}
+                            </>
                         )}
 
-                        {isLogin && (
-                            <div className="flex justify-between items-center text-sm">
-                                <label className="flex items-center gap-2 cursor-pointer text-gray-600 select-none">
-                                    <input type="checkbox" className="peer hidden" />
-                                    <span className="w-4 h-4 border border-gray-300 rounded flex items-center justify-center peer-checked:bg-black peer-checked:border-black transition-all">
-                                        <Check size={12} className="text-white hidden peer-checked:block" />
-                                    </span>
-                                    Remember me
-                                </label>
-                                <button type="button" className="text-gray-500 hover:text-black transition-colors">
-                                    Forgot password?
-                                </button>
-                            </div>
-                        )}
-
+                        {/* 错误显示 */}
                         {errors.submit && (
                             <div className="bg-red-50 border border-red-100 text-red-600 text-sm p-3 rounded-lg text-center">
                                 {errors.submit}
                             </div>
                         )}
 
+                        {/* 主提交按钮 */}
                         <button
                             type="submit"
                             className="w-full bg-black text-white py-4 rounded-xl font-bold text-base hover:bg-gray-800 transition-all disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-gray-200"
                             disabled={isLoading}
                         >
-                            {isLoading ? <Loader2 className="animate-spin" /> : (isLogin ? 'Sign In' : 'Create Account')}
+                            {isLoading ? (
+                                <Loader2 className="animate-spin" />
+                            ) : (
+                                <>
+                                    {view === 'login' && 'Sign In'}
+                                    {view === 'register' && 'Create Account'}
+                                    {view === 'forgot-password' && 'Send Reset Link'}
+                                </>
+                            )}
                         </button>
                     </form>
 
+                    {/* 底部切换按钮 */}
                     <div className="text-center mt-6 text-sm text-gray-500">
-                        {isLogin ? "Don't have an account? " : "Already have an account? "}
-                        <button
-                            type="button"
-                            className="text-pink-600 font-semibold hover:text-pink-700 hover:underline transition-colors"
-                            onClick={toggleMode}
-                        >
-                            {isLogin ? 'Sign Up' : 'Sign In'}
-                        </button>
+                        {view === 'forgot-password' ? (
+                            <button
+                                type="button"
+                                className="flex items-center justify-center gap-2 mx-auto text-black font-semibold hover:underline"
+                                onClick={() => setView('login')}
+                            >
+                                <ArrowLeft size={16} /> Back to Sign In
+                            </button>
+                        ) : (
+                            <>
+                                {view === 'login' ? "Don't have an account? " : "Already have an account? "}
+                                <button
+                                    type="button"
+                                    className="text-indigo-600 font-semibold hover:text-indigo-700 hover:underline transition-colors"
+                                    onClick={toggleMode}
+                                >
+                                    {view === 'login' ? 'Sign Up' : 'Sign In'}
+                                </button>
+                            </>
+                        )}
                     </div>
                 </div>
             </div>
