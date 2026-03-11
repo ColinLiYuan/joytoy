@@ -4,7 +4,7 @@ import { LayoutDashboard, ShoppingCart, Wallet, Settings, LogOut } from 'lucide-
 
 export default function AffiliateLayout({ children }: { children: React.ReactNode }) {
     const navItems = [
-        { label: 'Dashboard', href: '/affiliate', icon: LayoutDashboard },
+        // { label: 'Dashboard', href: '/affiliate', icon: LayoutDashboard },
         { label: 'Orders', href: '/affiliate/order', icon: ShoppingCart },
         // { label: 'Payouts', href: '/affiliate/payout', icon: Wallet },
         // { label: 'Settings', href: '/affiliate/settings', icon: Settings },
@@ -29,11 +29,11 @@ export default function AffiliateLayout({ children }: { children: React.ReactNod
                         </Link>
                     ))}
                 </nav>
-                <div className="p-4 border-t border-gray-200">
-                    <button className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-red-600 w-full hover:bg-red-50 rounded-lg">
-                        <LogOut className="h-4 w-4" /> Sign Out
-                    </button>
-                </div>
+                {/*<div className="p-4 border-t border-gray-200">*/}
+                {/*    <button className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-red-600 w-full hover:bg-red-50 rounded-lg">*/}
+                {/*        <LogOut className="h-4 w-4" /> Sign Out*/}
+                {/*    </button>*/}
+                {/*</div>*/}
             </aside>
 
             {/* Main Content */}

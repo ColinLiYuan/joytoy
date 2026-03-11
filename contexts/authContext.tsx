@@ -17,6 +17,7 @@ interface AuthContextType {
     login: (loginRequest: LoginRequest) => Promise<LoginResponse>;
     logout: () => void;
     register: (registerRequest: RegisterRequest) => Promise<RegisterResponse>;
+    forgotPassword: (email: string) => Promise<void>;
     authModalMode: 'login' | 'register';
     isClient: boolean; // 添加客户端状态
 }
@@ -127,18 +128,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
             showToast('success', 'Welcome Back', 'Successfully logged in');
 
-            if (onSuccessCallbackRef.current) {
-                onSuccessCallbackRef.current();
-                onSuccessCallbackRef.current = null;
-            }
-
-            // --- 核心逻辑：判断身份并跳转 ---
-            // 假设后端在 LoginResponse 中返回了 affiliateId
             if (loginResponse.affiliateId) {
                 // 如果有联盟ID，直接跳转到联盟专用看板
                 window.location.href = '/affiliate';
             } else {
-                // 普通用户流程
+                // 普通用户流程 - 先执行成功回调，然后关闭模态框
                 if (onSuccessCallbackRef.current) {
                     onSuccessCallbackRef.current();
                     onSuccessCallbackRef.current = null;

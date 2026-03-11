@@ -48,10 +48,9 @@ export default function AffiliateOrdersPage() {
                 page,
                 size: 10,
                 orderNumber: searchOrderNumber,
-                status: statusFilter === 'ALL' ? '' : statusFilter,
-                affiliateId: 'auto-filled-by-backend'
+                status: statusFilter === 'ALL' ? '' : statusFilter
             })
-            setOrders(data.content)
+            setOrders(data.content as unknown as OrderResponse[])
             setTotalPages(data.totalPages)
             setTotalElements(data.totalElements)
         } catch (error) {
@@ -82,8 +81,8 @@ export default function AffiliateOrdersPage() {
 
     const tabs = [
         { key: 'ALL', label: 'All Orders' },
-        { key: 'PAID', label: 'Settling' },
-        { key: 'COMPLETED', label: 'Completed' },
+        // { key: 'PAID', label: 'Settling' },
+        // { key: 'COMPLETED', label: 'Completed' },
     ]
 
     return (
@@ -127,9 +126,9 @@ export default function AffiliateOrdersPage() {
                             onKeyDown={(e) => e.key === 'Enter' && fetchOrders()}
                         />
                     </div>
-                    <button onClick={fetchOrders} className="bg-black text-white px-6 py-2 rounded-lg text-sm font-bold flex items-center gap-2">
-                        <Filter className="w-4 h-4" /> Filter
-                    </button>
+                    {/*<button onClick={fetchOrders} className="bg-black text-white px-6 py-2 rounded-lg text-sm font-bold flex items-center gap-2">*/}
+                    {/*    <Filter className="w-4 h-4" /> Filter*/}
+                    {/*</button>*/}
                 </div>
 
                 {/* Table */}
