@@ -7,6 +7,7 @@ export interface LoginRequest {
 
 export interface LoginResponse {
     id: number;
+    affiliateId: string;
     uuid: string;
     email: string;
     firstName: string;

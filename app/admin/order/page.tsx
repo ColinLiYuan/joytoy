@@ -1,3 +1,4 @@
+// app/admin/order/page.tsx
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
@@ -93,14 +94,14 @@ export default function OrderManagementPage() {
     const fetchOrders = useCallback(async () => {
         try {
             setLoading(true)
-            const data = await orderService.adminList(
+            const data = await orderService.adminList({
                 page,
                 size,
-                searchKeyword, // keyword: 其他通用搜索
-                statusFilter === 'ALL' ? '' : statusFilter, // status
-                searchOrderNumber, // orderNumber: 独立参数
-                searchEmail        // guestEmail: 独立参数
-            )
+                keyword: searchKeyword,
+                status: statusFilter === 'ALL' ? '' : statusFilter, // status
+                orderNumber: searchOrderNumber, // orderNumber: 独立参数
+                guestEmail: searchEmail        // guestEmail: 独立参数
+            })
 
             // 强制类型转换
             setOrders(data.content as unknown as OrderResponse[])

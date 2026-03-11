@@ -8,6 +8,8 @@ export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
 
+        console.log('--- NEXTJS PROXY CHECK ---', typeof body, body);
+
         // 获取或创建 sessionId
         const { sessionId } = SessionManager.getOrCreateSessionId(request);
 
@@ -33,6 +35,7 @@ export async function POST(request: NextRequest) {
             // 存储用户基本信息（非敏感信息）
             response.cookies.set('userInfo', JSON.stringify({
                 id: userInfo.id,
+                affiliateId: userInfo.affiliateId,
                 name: userInfo.firstName + (userInfo.lastName ? ' ' + userInfo.lastName : ''),
                 email: userInfo.email,
                 cartId: userInfo.cartId,

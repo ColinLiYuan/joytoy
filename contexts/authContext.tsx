@@ -17,6 +17,7 @@ interface AuthContextType {
     login: (loginRequest: LoginRequest) => Promise<LoginResponse>;
     logout: () => void;
     register: (registerRequest: RegisterRequest) => Promise<RegisterResponse>;
+    forgotPassword: (email: string) => Promise<void>;
     authModalMode: 'login' | 'register';
     isClient: boolean; // 添加客户端状态
 }
@@ -116,7 +117,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         try {
             // authService.login 现在会返回 LoginResponse (用户数据)，或者抛出 Error
             const loginResponse = await authService.login(loginRequest);
-            // console.log('login callback result: ', loginResponse)
+            console.log('login callback result: ', loginResponse)
 
             setTokens(loginResponse.accessToken, loginResponse.refreshToken);
             setIsLoggedIn(true);
@@ -127,12 +128,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
             showToast('success', 'Welcome Back', 'Successfully logged in');
 
-            if (onSuccessCallbackRef.current) {
-                onSuccessCallbackRef.current();
-                onSuccessCallbackRef.current = null;
+            if (loginResponse.affiliateId) {
+                // 如果有联盟ID，直接跳转到联盟专用看板
+                window.location.href = '/affiliate';
+            } else {
+                // 普通用户流程 - 先执行成功回调，然后关闭模态框
+                if (onSuccessCallbackRef.current) {
+                    onSuccessCallbackRef.current();
+                    onSuccessCallbackRef.current = null;
+                }
+                closeAuthModal();
             }
-
-            closeAuthModal();
 
             return loginResponse;
         } catch (error: any) {
@@ -154,6 +160,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
     }, [showToast]);
 
+    const forgotPassword = useCallback(async (email: string) => {
+        try {
+            await authService.forgotPassword(email);
+            showToast('success', 'Email Sent', 'Password reset instructions have been sent to your inbox.');
+        } catch (error: any) {
+            console.error('Forgot password failed:', error);
+            throw error;
+        }
+    }, [showToast]);
+
     const value = useMemo(() => ({
         isAuthModalOpen,
         openAuthModal,
@@ -165,6 +181,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         register,
         authModalMode,
         isClient,
+        forgotPassword,
     }), [
         isAuthModalOpen,
         openAuthModal,
