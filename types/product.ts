@@ -17,6 +17,7 @@ export interface ProductResponse {
     galleries?: Array<{
         url: string;
         alt?: string;
+        type?: string;
     }>;
     // 更新规格类型
     specifications?: Array<{

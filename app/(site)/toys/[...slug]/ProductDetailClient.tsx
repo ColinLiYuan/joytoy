@@ -73,7 +73,7 @@ const getSpecIcon = (key: string) => {
 interface ProductDetailClientProps {
     product: ProductResponse;
     breadcrumbs: any[];
-    galleryImages: any[];
+    galleryItems: any[];
     specifications: any[];
     features: string[];
     description: string;
@@ -185,7 +185,7 @@ const WaitlistForm = ({ skuColor, productTitle }: { skuColor: string | undefined
 export default function ProductDetailClient({
                                                 product,
                                                 breadcrumbs,
-                                                galleryImages,
+                                                galleryItems,
                                                 specifications,
                                                 features,
                                                 description,
@@ -366,7 +366,7 @@ export default function ProductDetailClient({
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20">
                     <div className="w-full">
                         <ProductGallery
-                            images={galleryImages}
+                            images={galleryItems}
                             productTitle={product.title}
                             // @ts-ignore
                             badges={galleryBadges}

@@ -133,19 +133,29 @@ export default async function ProductDetail({ params }: PageProps) {
     );
 
     // ... 这一块处理 galleryImages 的逻辑保持不变 ...
-    const getGalleryImages = () => {
+    const getGalleryItems = () => {
         if (!product) return [];
         const hasGallery = !!(product.galleries && product.galleries.length > 0);
         return hasGallery ?
-            product.galleries!.map(gallery => ({ url: getProductImageUrl('', gallery.url), alt: gallery.alt || product.title })) :
-            [{ url: getProductImageUrl('', product.image), alt: product.title }];
+            product.galleries!.map(gallery => ({
+                url: getProductImageUrl('', gallery.url),
+                alt: gallery.alt || product.title,
+                type: gallery.type
+            })) :
+            [{
+                url: getProductImageUrl('', product.image),
+                alt: product.title,
+                type: gallery.type
+            }];
     };
 
-    const galleryImages = getGalleryImages();
+    const galleryItems = getGalleryItems();
     const specifications = Array.isArray(product.specifications) ? product.specifications : [];
     const features = Array.isArray(product.features) ? product.features : [];
     const description = product.description || '';
     const defaultColor = product.colors?.[0] || null;
+
+    console.log('galleryItems', galleryItems)
 
     return (
         <div className="min-h-screen bg-white">
@@ -159,7 +169,7 @@ export default async function ProductDetail({ params }: PageProps) {
                 <ProductDetailClient
                     product={product}
                     breadcrumbs={breadcrumbs}
-                    galleryImages={galleryImages}
+                    galleryItems={galleryItems}
                     specifications={specifications}
                     features={features}
                     description={description}

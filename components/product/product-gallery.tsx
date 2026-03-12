@@ -6,13 +6,15 @@ import Image from 'next/image';
 import Zoom from 'react-medium-image-zoom';
 import 'react-medium-image-zoom/dist/styles.css';
 
-interface GalleryImage {
+interface GalleryItem {
     url: string;
     alt?: string;
+    type?: 'image' | 'video'; // 增加类型区分
+    poster?: string;         // 视频封面图
 }
 
 interface ProductGalleryProps {
-    images: GalleryImage[];
+    images: GalleryItem[];
     productTitle: string;
     badges?: React.ReactNode;
 }
@@ -30,7 +32,7 @@ export default function ProductGallery({ images, productTitle, badges }: Product
     const galleryRef = useRef<HTMLDivElement>(null);
 
     // 1. 自动识别：文件名包含 -full
-    const processedImages = useMemo(() => {
+    const processedItems = useMemo(() => {
         return images.map((image, index) => ({
             ...image,
             isFull: image.url.toLowerCase().includes('-full'),
@@ -77,7 +79,7 @@ export default function ProductGallery({ images, productTitle, badges }: Product
         <div className="flex flex-col md:flex-row gap-4">
             {/* 左侧缩略图 */}
             <div className="hidden md:flex flex-col gap-4 w-20">
-                {processedImages.map((image, index) => (
+                {processedItems.map((image, index) => (
                     <button
                         key={index}
                         onClick={() => setActiveImageIndex(index)}
@@ -118,39 +120,54 @@ export default function ProductGallery({ images, productTitle, badges }: Product
                         transition: isDragging ? 'none' : 'transform 300ms ease-out'
                     }}
                 >
-                    {processedImages.map((image, index) => (
+                    {processedItems.map((item, index) => (
                         <div key={index} className="w-full h-full flex-shrink-0 relative flex items-center justify-center">
-                            <Zoom
-                                onZoomChange={(isZoomed) => setIsZoomed(isZoomed)}
-                                zoomMargin={40}
-                            >
-                                {/* 这里的 background 是 mix-blend-multiply 生效的关键 */}
-                                <div className={`relative w-full h-full flex items-center justify-center ${image.isFull ? '' : 'bg-gray-100'}`}>
-                                    <Image
-                                        src={image.url}
-                                        alt={image.alt || ''}
-                                        width={1200}
-                                        height={1200}
-                                        priority={index === 0}
-                                        className={`transition-all duration-300 ${
-                                            image.isFull
-                                                ? 'object-cover w-full h-full p-0'
-                                                : 'object-contain p-8 md:p-12 mix-blend-multiply'
-                                        }`}
-                                        style={image.isFull
-                                            ? { width: '100%', height: '100%', objectFit: 'cover' }
-                                            : { width: 'auto', height: '100%', maxWidth: '100%' }
-                                        }
+                            {item.type === 'video' ? (
+                                <div className="w-full h-full bg-black flex items-center justify-center">
+                                    <video
+                                        src={item.url}
+                                        poster={item.poster}
+                                        controls
+                                        playsInline
+                                        className="max-w-full max-h-full"
+                                        // 如果是当前活动的索引，可以考虑自动播放
+                                        autoPlay={activeImageIndex === index}
+                                        muted
                                     />
                                 </div>
-                            </Zoom>
+                            ) : (
+                                    <Zoom
+                                        onZoomChange={(isZoomed) => setIsZoomed(isZoomed)}
+                                        zoomMargin={40}
+                                    >
+                                        {/* 这里的 background 是 mix-blend-multiply 生效的关键 */}
+                                        <div className={`relative w-full h-full flex items-center justify-center ${item.isFull ? '' : 'bg-gray-100'}`}>
+                                            <Image
+                                                src={item.url}
+                                                alt={item.alt || ''}
+                                                width={1200}
+                                                height={1200}
+                                                priority={index === 0}
+                                                className={`transition-all duration-300 ${
+                                                    item.isFull
+                                                        ? 'object-cover w-full h-full p-0'
+                                                        : 'object-contain p-8 md:p-12 mix-blend-multiply'
+                                                }`}
+                                                style={item.isFull
+                                                    ? { width: '100%', height: '100%', objectFit: 'cover' }
+                                                    : { width: 'auto', height: '100%', maxWidth: '100%' }
+                                                }
+                                            />
+                                        </div>
+                                    </Zoom>
+                            )}
                         </div>
                     ))}
                 </div>
 
                 {/* 指示器 */}
                 <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 md:hidden">
-                    {processedImages.map((_, idx) => (
+                    {processedItems.map((_, idx) => (
                         <div key={idx} className={`w-2 h-2 rounded-full ${idx === activeImageIndex ? 'bg-black w-4' : 'bg-black/20'}`} />
                     ))}
                 </div>
