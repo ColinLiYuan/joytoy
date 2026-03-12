@@ -140,12 +140,14 @@ export default async function ProductDetail({ params }: PageProps) {
             product.galleries!.map(gallery => ({
                 url: getProductImageUrl('', gallery.url),
                 alt: gallery.alt || product.title,
-                type: gallery.type
+                type: gallery.type,
+                poster: getProductImageUrl('', gallery.poster)
             })) :
             [{
                 url: getProductImageUrl('', product.image),
                 alt: product.title,
-                type: gallery.type
+                type: gallery.type,
+                poster: getProductImageUrl('', gallery.poster)
             }];
     };
 

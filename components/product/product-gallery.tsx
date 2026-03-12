@@ -56,7 +56,7 @@ export default function ProductGallery({ images, productTitle, badges }: Product
         const deltaX = clientX - dragStartX.current;
         const movePercent = (deltaX / (galleryRef.current?.offsetWidth || 1)) * 100;
         const nextTranslate = prevTranslate.current + movePercent;
-        if (nextTranslate <= 0 && nextTranslate >= -(processedImages.length - 1) * 100) {
+        if (nextTranslate <= 0 && nextTranslate >= -(processedItems.length - 1) * 100) {
             setCurrentTranslate(nextTranslate);
         }
     };
@@ -65,7 +65,7 @@ export default function ProductGallery({ images, productTitle, badges }: Product
         if (!isDragging) return;
         setIsDragging(false);
         const movedBy = currentTranslate - prevTranslate.current;
-        if (movedBy < -15 && activeImageIndex < processedImages.length - 1) {
+        if (movedBy < -15 && activeImageIndex < processedItems.length - 1) {
             setActiveImageIndex(prev => prev + 1);
         } else if (movedBy > 15 && activeImageIndex > 0) {
             setActiveImageIndex(prev => prev - 1);
@@ -79,7 +79,7 @@ export default function ProductGallery({ images, productTitle, badges }: Product
         <div className="flex flex-col md:flex-row gap-4">
             {/* 左侧缩略图 */}
             <div className="hidden md:flex flex-col gap-4 w-20">
-                {processedItems.map((image, index) => (
+                {processedItems.map((item, index) => (
                     <button
                         key={index}
                         onClick={() => setActiveImageIndex(index)}
@@ -87,14 +87,28 @@ export default function ProductGallery({ images, productTitle, badges }: Product
                             activeImageIndex === index ? 'border-black' : 'border-transparent'
                         } bg-gray-50`}
                     >
+                        {/* 缩略图显示：如果是视频，显示封面图 poster，没有封面则显示视频本身（部分浏览器支持） */}
                         <Image
-                            src={image.url}
-                            alt={image.alt || ''}
+                            src={item.type === 'video' ? (item.poster || item.url) : item.url}
+                            alt={item.alt || ''}
                             fill
                             className={`transition-all ${
-                                image.isFull ? 'object-cover' : 'object-contain p-1 mix-blend-multiply'
+                                item.isFull ? 'object-cover' : 'object-contain p-1 mix-blend-multiply'
                             }`}
                         />
+
+                        {/* 如果是视频类型，叠加一个播放图标 */}
+                        {item.type === 'video' && (
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                                <svg
+                                    className="w-8 h-8 text-white opacity-80"
+                                    fill="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path d="M8 5v14l11-7z" />
+                                </svg>
+                            </div>
+                        )}
                     </button>
                 ))}
             </div>
