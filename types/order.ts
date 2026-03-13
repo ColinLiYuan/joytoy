@@ -1,5 +1,16 @@
 // types/order.ts
 
+export type OrderStatus =
+    | 'PENDING'
+    | 'PAID'
+    | 'PROCESSING'
+    | 'SHIPPED'
+    | 'DELIVERED'
+    | 'COMPLETED'
+    | 'CANCELLED'
+    | 'REFUNDED'
+    | 'EXPIRED';
+
 export interface OrderCreateRequest {
     userId?: number;        // 后端新增
     cartId?: number;        // 后端新增
@@ -20,7 +31,7 @@ export interface OrderResponse {
     id: number;
     orderNumber: string;
     trackingNumber: string;
-    status: string;
+    status: OrderStatus;
     totalAmount: number;
     shippingFee: number;
     discountAmount: number;
@@ -28,20 +39,29 @@ export interface OrderResponse {
     createdAt: string;
     paymentMethod: string;
     shippingMethod: string;
-    items: any[];
     shippingAddress: AddressRequest;
-
-    // ✅ 新增：联盟字段
     affiliateCode?: string;
     affiliateId?: string;
     commissionAmount?: number;
     commissionRate?: number;
     affiliatePayoutStatus?: string;
-
-    // ✅ 新增：折扣码信息字段
     couponCode?: string;
     couponType?: 'PERCENTAGE' | 'FIXED';
     couponValue?: number;
+    guestEmail?: string;
+    items: OrderItemResponse[];
+}
+
+export interface OrderItemResponse {
+    id: number;
+    productName: string;
+    productTitle: string;
+    productImage?: string;
+    color: string;
+    unitPrice: number;
+    quantity: number;
+    price: number;
+    productSku?: string;
 }
 
 export interface OrderListResponse {
@@ -72,12 +92,11 @@ export interface AddressRequest {
 export interface OrderItemRequest {
     productId: number;
     productTitle: string;
+    productName: string;
     productSku: string;
     productImage?: string;
     quantity: number;
     unitPrice: number;
     color: string;
     skuId?: number;
-    // ✅ 新增：产品名称字段（用于联盟和折扣验证）
-    productName?: string;
 }
