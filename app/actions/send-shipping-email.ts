@@ -18,6 +18,7 @@ interface ShippingEmailData {
     };
     items: {
         title: string;
+        color: string;
         quantity: number;
         image?: string; // 可选：展示发货商品的图片
     }[];
@@ -53,6 +54,7 @@ function generateShippingEmailHtml(data: ShippingEmailData) {
                 ${item.image ? `<img src="${item.image}" width="50" height="50" style="border-radius: 4px; object-fit: cover;" />` : ''}
                 <div style="font-weight: bold; font-size: 14px;">${item.title}</div>
             </td>
+            <td style="padding: 10px 0; text-align: center;">${item.color}</td>
             <td style="padding: 10px 0; text-align: center;">x${item.quantity}</td>
         </tr>
     `).join('');

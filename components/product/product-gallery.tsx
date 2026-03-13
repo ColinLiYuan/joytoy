@@ -31,7 +31,9 @@ export default function ProductGallery({ images, productTitle, badges }: Product
     const prevTranslate = useRef(0);
     const galleryRef = useRef<HTMLDivElement>(null);
 
-    // 1. 自动识别：文件名包含 -full
+    // --- 核心修改：增加视频引用管理 ---
+    const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
+
     const processedItems = useMemo(() => {
         return images.map((image, index) => ({
             ...image,
@@ -39,6 +41,26 @@ export default function ProductGallery({ images, productTitle, badges }: Product
             alt: image.alt || `${productTitle} - Image ${index + 1}`
         }));
     }, [images, productTitle]);
+
+    // --- 核心修改：监听索引变化，强制触发播放 ---
+    useEffect(() => {
+        const currentItem = processedItems[activeImageIndex];
+        if (currentItem?.type === 'video') {
+            const videoEl = videoRefs.current[activeImageIndex];
+            if (videoEl) {
+                videoEl.muted = true; // 浏览器自动播放必须静音
+                videoEl.play().catch(err => console.log("Autoplay blocked:", err));
+            }
+        }
+
+        // 停止其他页面的视频，释放性能
+        videoRefs.current.forEach((video, idx) => {
+            if (idx !== activeImageIndex && video) {
+                video.pause();
+                video.currentTime = 0;
+            }
+        });
+    }, [activeImageIndex, processedItems]);
 
     useEffect(() => {
         setCurrentTranslate(-activeImageIndex * 100);
@@ -87,7 +109,6 @@ export default function ProductGallery({ images, productTitle, badges }: Product
                             activeImageIndex === index ? 'border-black' : 'border-transparent'
                         } bg-gray-50`}
                     >
-                        {/* 缩略图显示：如果是视频，显示封面图 poster，没有封面则显示视频本身（部分浏览器支持） */}
                         <Image
                             src={item.type === 'video' ? (item.poster || item.url) : item.url}
                             alt={item.alt || ''}
@@ -97,14 +118,9 @@ export default function ProductGallery({ images, productTitle, badges }: Product
                             }`}
                         />
 
-                        {/* 如果是视频类型，叠加一个播放图标 */}
                         {item.type === 'video' && (
                             <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-                                <svg
-                                    className="w-8 h-8 text-white opacity-80"
-                                    fill="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
+                                <svg className="w-8 h-8 text-white opacity-80" fill="currentColor" viewBox="0 0 24 24">
                                     <path d="M8 5v14l11-7z" />
                                 </svg>
                             </div>
@@ -139,41 +155,40 @@ export default function ProductGallery({ images, productTitle, badges }: Product
                             {item.type === 'video' ? (
                                 <div className="w-full h-full bg-black flex items-center justify-center">
                                     <video
+                                        ref={(el) => (videoRefs.current[index] = el)} // 绑定引用
                                         src={item.url}
                                         poster={item.poster}
                                         controls
                                         playsInline
-                                        className="max-w-full max-h-full"
-                                        // 如果是当前活动的索引，可以考虑自动播放
-                                        autoPlay={activeImageIndex === index}
                                         muted
+                                        loop
+                                        className="w-full h-full object-contain"
                                     />
                                 </div>
                             ) : (
-                                    <Zoom
-                                        onZoomChange={(isZoomed) => setIsZoomed(isZoomed)}
-                                        zoomMargin={40}
-                                    >
-                                        {/* 这里的 background 是 mix-blend-multiply 生效的关键 */}
-                                        <div className={`relative w-full h-full flex items-center justify-center ${item.isFull ? '' : 'bg-gray-100'}`}>
-                                            <Image
-                                                src={item.url}
-                                                alt={item.alt || ''}
-                                                width={1200}
-                                                height={1200}
-                                                priority={index === 0}
-                                                className={`transition-all duration-300 ${
-                                                    item.isFull
-                                                        ? 'object-cover w-full h-full p-0'
-                                                        : 'object-contain p-8 md:p-12 mix-blend-multiply'
-                                                }`}
-                                                style={item.isFull
-                                                    ? { width: '100%', height: '100%', objectFit: 'cover' }
-                                                    : { width: 'auto', height: '100%', maxWidth: '100%' }
-                                                }
-                                            />
-                                        </div>
-                                    </Zoom>
+                                <Zoom
+                                    onZoomChange={(isZoomed) => setIsZoomed(isZoomed)}
+                                    zoomMargin={40}
+                                >
+                                    <div className={`relative w-full h-full flex items-center justify-center ${item.isFull ? '' : 'bg-gray-100'}`}>
+                                        <Image
+                                            src={item.url}
+                                            alt={item.alt || ''}
+                                            width={1200}
+                                            height={1200}
+                                            priority={index === 0}
+                                            className={`transition-all duration-300 ${
+                                                item.isFull
+                                                    ? 'object-cover w-full h-full p-0'
+                                                    : 'object-contain p-8 md:p-12 mix-blend-multiply'
+                                            }`}
+                                            style={item.isFull
+                                                ? { width: '100%', height: '100%', objectFit: 'cover' }
+                                                : { width: 'auto', height: '100%', maxWidth: '100%' }
+                                            }
+                                        />
+                                    </div>
+                                </Zoom>
                             )}
                         </div>
                     ))}

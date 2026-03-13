@@ -3,6 +3,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { orderService } from '@/services/orderService'
+import { OrderResponse, OrderItemResponse } from '@/types/order'
 import {
     Search,
     Filter,
@@ -38,34 +39,36 @@ interface AddressSnapshot {
     addressLine1?: string;
     email?: string;
 }
-
-interface OrderItemResponse {
-    id: number;
-    productName: string;
-    quantity: number;
-    price: number;
-    sku?: string;
-}
-
-interface OrderResponse {
-    id: number;
-    orderNumber: string;
-    status: OrderStatus;
-    totalAmount: number;
-    shippingFee: number;
-    discountAmount: number;
-    finalAmount: number;
-    createdAt: string;
-    paymentMethod: string;
-    shippingMethod: string;
-    trackingNumber?: string;
-    items: OrderItemResponse[];
-    shippingAddress: AddressSnapshot;
-    recipientName: string;
-    recipientPhone: string;
-    paymentStatus: string;
-    guestEmail?: string;
-}
+//
+// interface OrderItemResponse {
+//     id: number;
+//     productName: string;
+//     productTitle: string;
+//     color: string;
+//     quantity: number;
+//     price: number;
+//     sku?: string;
+// }
+//
+// interface OrderResponse {
+//     id: number;
+//     orderNumber: string;
+//     status: OrderStatus;
+//     totalAmount: number;
+//     shippingFee: number;
+//     discountAmount: number;
+//     finalAmount: number;
+//     createdAt: string;
+//     paymentMethod: string;
+//     shippingMethod: string;
+//     trackingNumber?: string;
+//     items: OrderItemResponse[];
+//     shippingAddress: AddressSnapshot;
+//     recipientName: string;
+//     recipientPhone: string;
+//     paymentStatus: string;
+//     guestEmail?: string;
+// }
 
 export default function OrderManagementPage() {
     const [orders, setOrders] = useState<OrderResponse[]>([])
@@ -167,6 +170,8 @@ export default function OrderManagementPage() {
             await orderService.shipOrder(selectedOrderId, trackingNumberInput)
             setIsShipModalOpen(false)
 
+            console.log('order: ', order)
+
             await sendShippingConfirmationEmail({
                 orderNumber: order.orderNumber,
                 email: order.guestEmail || order.shippingAddress.email || "",
@@ -179,8 +184,9 @@ export default function OrderManagementPage() {
                     country: order.shippingAddress.country || ""
                 },
                 items: order.items.map(item => ({
-                    title: item.productName,
+                    title: item.productTitle,
                     quantity: item.quantity,
+                    color: item.color,
                     image: ""
                 }))
             });

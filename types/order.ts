@@ -72,6 +72,7 @@ export interface AddressRequest {
 export interface OrderItemRequest {
     productId: number;
     productTitle: string;
+    productName: string;
     productSku: string;
     productImage?: string;
     quantity: number;
