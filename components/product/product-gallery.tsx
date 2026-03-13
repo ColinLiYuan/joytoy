@@ -155,7 +155,9 @@ export default function ProductGallery({ images, productTitle, badges }: Product
                             {item.type === 'video' ? (
                                 <div className="w-full h-full bg-black flex items-center justify-center">
                                     <video
-                                        ref={(el) => (videoRefs.current[index] = el)} // 绑定引用
+                                        ref={(e1) => {
+                                            videoRefs.current[index] = e1; // 只赋值，不返回
+                                        }}
                                         src={item.url}
                                         poster={item.poster}
                                         controls

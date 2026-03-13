@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { orderService } from '@/services/orderService'
-import { OrderResponse, OrderItemResponse } from '@/types/order'
+import { OrderResponse, OrderItemResponse, OrderStatus } from '@/types/order'
 import {
     Search,
     Filter,
@@ -19,16 +19,16 @@ import {
 import { sendShippingConfirmationEmail } from '@/app/actions/send-shipping-email';
 
 // ... (Type definitions 保持不变: OrderStatus, AddressSnapshot, OrderItemResponse, OrderResponse) ...
-type OrderStatus =
-    | 'PENDING'
-    | 'PAID'
-    | 'PROCESSING'
-    | 'SHIPPED'
-    | 'DELIVERED'
-    | 'COMPLETED'
-    | 'CANCELLED'
-    | 'REFUNDED'
-    | 'EXPIRED';
+// type OrderStatus =
+//     | 'PENDING'
+//     | 'PAID'
+//     | 'PROCESSING'
+//     | 'SHIPPED'
+//     | 'DELIVERED'
+//     | 'COMPLETED'
+//     | 'CANCELLED'
+//     | 'REFUNDED'
+//     | 'EXPIRED';
 
 interface AddressSnapshot {
     firstName?: string;
@@ -365,7 +365,7 @@ export default function OrderManagementPage() {
                                         </td>
 
                                         <td className="px-6 py-4">
-                                            <div className="text-sm font-medium text-gray-900">{order.recipientName}</div>
+                                            {/*<div className="text-sm font-medium text-gray-900">{order.recipientName}</div>*/}
                                             <div className="text-xs text-gray-500 mt-1 flex items-center">
                                                 <MapPin className="h-3 w-3 mr-1" />
                                                 <span className="truncate max-w-[140px]" title={`${order.shippingAddress?.city}, ${order.shippingAddress?.country}`}>

@@ -146,8 +146,8 @@ export default async function ProductDetail({ params }: PageProps) {
             [{
                 url: getProductImageUrl('', product.image),
                 alt: product.title,
-                type: gallery.type,
-                poster: getProductImageUrl('', gallery.poster)
+                type: 'image',
+                poster: getProductImageUrl('', '')
             }];
     };
 
