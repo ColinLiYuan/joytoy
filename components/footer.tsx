@@ -1,9 +1,10 @@
 // components/footer.tsx
 'use client';
 
+// components/footer.tsx
+import { Instagram, Mail, Loader2, CreditCard, CheckCircle2, Copy, Facebook } from 'lucide-react'; // 增加 Facebook
 import Link from 'next/link';
 import { useState } from 'react';
-import { Instagram, Mail, Loader2, CreditCard, CheckCircle2, Copy } from 'lucide-react';
 import { useToast } from '@/contexts/toastContext';
 import { subscribeToNewsletter } from '@/app/actions/subscribe';
 
@@ -184,6 +185,15 @@ export default function Footer() {
                                     className="w-10 h-10 bg-white/5 text-gray-400 rounded-full flex items-center justify-center transition-all hover:bg-black hover:text-white hover:border hover:border-white/20 hover:-translate-y-1"
                                 >
                                     <XIcon className="w-4 h-4" />
+                                </a>
+                                <a
+                                    href="https://www.facebook.com/mythtoy.official"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    aria-label="Follow us on Facebook"
+                                    className="w-10 h-10 bg-white/5 text-gray-400 rounded-full flex items-center justify-center transition-all hover:bg-[#1877F2] hover:text-white hover:-translate-y-1"
+                                >
+                                    <Facebook size={18} />
                                 </a>
                             </div>
                             <div className="mt-4 text-xs text-gray-500 font-['Inter']">

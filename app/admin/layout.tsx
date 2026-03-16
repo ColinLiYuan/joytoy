@@ -27,14 +27,21 @@ export default function AdminLayout({
     const router = useRouter()
 
     // 从鉴权上下文获取状态
-    const { isLoggedIn, isClient } = useAuth()
+    const { isLoggedIn, isClient, userInfo } = useAuth()
 
     // --- 鉴权守卫：未登录则重定向 ---
     useEffect(() => {
-        if (isClient && !isLoggedIn) {
-            router.push('/login?redirect=/admin')
+        if (isClient && isLoggedIn) {
+            // 假设 LoginResponse 中包含 roles 数组
+            const isAdmin = userInfo?.id === 2;
+
+            if (!isAdmin) {
+                router.push('/403'); // 无权访问页面
+            }
+        } else if (isClient && !isLoggedIn) {
+            router.push('/login?redirect=/admin');
         }
-    }, [isLoggedIn, isClient, router])
+    }, [isLoggedIn, isClient, userInfo, router]);
 
     // 导航配置
     const navigation = [
