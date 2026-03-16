@@ -33,7 +33,7 @@ export default function AdminLayout({
     useEffect(() => {
         if (isClient && isLoggedIn) {
             // 假设 LoginResponse 中包含 roles 数组
-            const isAdmin = userInfo?.roles?.includes('ADMIN') || userInfo?.id === 2;
+            const isAdmin = userInfo?.id === 2;
 
             if (!isAdmin) {
                 router.push('/403'); // 无权访问页面
