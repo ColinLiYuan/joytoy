@@ -89,7 +89,7 @@ export default function CheckoutPage() {
             discount = Math.min(discount, sub);
         }
 
-        const shipping = sub >= 49 ? 0 : 7.99;
+        const shipping = sub >= 49 ? 0 : 4.99;
         const finalTotal = Math.max(0, sub - discount + shipping);
 
         return {

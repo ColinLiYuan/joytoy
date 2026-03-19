@@ -58,12 +58,12 @@ export default function ShippingPolicy() {
                                     <tr>
                                         <td className="px-4 py-3 font-medium">United States</td>
                                         <td className="px-4 py-3">7 - 12 Business Days</td>
-                                        <td className="px-4 py-3">$5.99 (Free over $49)</td>
+                                        <td className="px-4 py-3">$4.99 (Free over $49)</td>
                                     </tr>
                                     <tr>
                                         <td className="px-4 py-3 font-medium">UK & Europe</td>
-                                        <td className="px-4 py-3">8 - 14 Business Days</td>
-                                        <td className="px-4 py-3">$6.99 (Free over $59)</td>
+                                        <td className="px-4 py-3">6 - 14 Business Days</td>
+                                        <td className="px-4 py-3">$4.99 (Free over $49)</td>
                                     </tr>
                                     <tr>
                                         <td className="px-4 py-3 font-medium">Rest of World</td>

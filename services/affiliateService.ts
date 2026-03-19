@@ -1,10 +1,12 @@
 // services/affiliateService.ts
 import Cookies from 'js-cookie';
+import { AffiliateClickLog } from '@/types/affiliate';
 
 export interface AffiliateCookieData {
     affiliateCode?: string;
     clickTime?: string;
 }
+
 
 export class AffiliateService {
     private static COOKIE_NAME = 'affiliate_tracking';
@@ -21,8 +23,18 @@ export class AffiliateService {
         const affCode = urlParams.get('aff');
 
         if (affCode) {
-            // TODO 发送点击次数给后端做统计
             this.saveToCookie(affCode.trim());
+
+            const clickData: AffiliateClickLog = {
+                affiliateCode: affCode,
+                source: urlParams.get('source') || 'direct',
+                campaign: urlParams.get('campaign') || 'none',
+                content: urlParams.get('content') || '',
+                landingPage: window.location.pathname,
+                referrer: document.referrer
+            };
+
+            this.logClick(clickData);
         }
     }
 
@@ -39,6 +51,28 @@ export class AffiliateService {
             expires: AffiliateService.COOKIE_EXPIRY_DAYS,
             path: '/' // 确保全站可用
         });
+    }
+
+    private async logClick(data: AffiliateClickLog): Promise<void> {
+        // console.log('233333333333')
+        try {
+            // 这里的 API 路径根据你的后端配置调整
+            const url = `/api/site/affiliate/click`;
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data),
+            });
+
+            if (!response.ok) {
+                console.warn('Failed to log affiliate click');
+            }
+        } catch (error) {
+            // 仅仅是记录点击，即使报错也不要干扰用户正常访问
+            console.error('Affiliate click logging error:', error);
+        }
     }
 
     /**
