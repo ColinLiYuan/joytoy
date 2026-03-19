@@ -176,7 +176,7 @@ export default function OrderManagementPage() {
                 orderNumber: order.orderNumber,
                 email: order.guestEmail || order.shippingAddress.email || "",
                 firstName: order.shippingAddress.firstName || "Customer",
-                lastName: order.shippingAddress.lastName || order.shippingAddress.lastName.email || "",
+                lastName: order.shippingAddress.lastName || order.shippingAddress.lastName || "",
                 carrier: 'Standard Shipping',
                 trackingNumber: trackingNumberInput,
                 shippingAddress: {
