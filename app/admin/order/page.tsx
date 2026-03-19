@@ -170,12 +170,13 @@ export default function OrderManagementPage() {
             await orderService.shipOrder(selectedOrderId, trackingNumberInput)
             setIsShipModalOpen(false)
 
-            console.log('order: ', order)
+            // console.log('order: ', order)
 
             await sendShippingConfirmationEmail({
                 orderNumber: order.orderNumber,
                 email: order.guestEmail || order.shippingAddress.email || "",
                 firstName: order.shippingAddress.firstName || "Customer",
+                lastName: order.shippingAddress.lastName || order.shippingAddress.lastName.email || "",
                 carrier: 'Standard Shipping',
                 trackingNumber: trackingNumberInput,
                 shippingAddress: {

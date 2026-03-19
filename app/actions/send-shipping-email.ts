@@ -8,6 +8,7 @@ interface ShippingEmailData {
     orderNumber: string;
     email: string;
     firstName: string;
+    lastName: string;
     carrier: string;       // e.g. "YunExpress", "DHL"
     trackingNumber: string; // e.g. "YT12345678"
     trackingUrl?: string;   // 可选，如果没有，前端生成通用的
@@ -91,7 +92,7 @@ function generateShippingEmailHtml(data: ShippingEmailData) {
                 <div style="margin-bottom: 30px;">
                     <h3 style="font-size: 16px; margin-bottom: 5px;">Shipping To:</h3>
                     <p style="color: #555; margin: 0;">
-                        ${data.firstName}<br>
+                        ${data.firstName} ${data.lastName} <br>
                         ${data.shippingAddress.addressLine1}<br>
                         ${data.shippingAddress.city}, ${data.shippingAddress.country}
                     </p>
