@@ -7,7 +7,7 @@ export async function POST(
     try {
         const body = await request.json();
 
-        const url = `/api/admin/V1/order/ship`;
+        const url = `/api/admin/V1/order/updateStatus`;
         const result = await apiPost(url, body);
 
         return NextResponse.json(result);
