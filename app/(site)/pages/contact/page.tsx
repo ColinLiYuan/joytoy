@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Mail, Clock, MapPin, Send, Instagram, Loader2, ArrowRight } from 'lucide-react';
-import { sendContactEmail } from '@/app/actions/send-email';
+import { sendContactEmail } from '@/app/actions/contact-email';
 import { useToast } from '@/contexts/toastContext';
 import FAQSection from '@/components/common/faq-section';
 

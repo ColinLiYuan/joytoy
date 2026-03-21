@@ -152,10 +152,10 @@ class OrderService {
     }
 
     // ✅ 新增：管理员发货
-    async shipOrder(orderId: number, trackingNumber: string): Promise<OrderResponse> {
+    async updateStatus(orderId: number, trackingNumber: string): Promise<OrderResponse> {
         // 假设后端接口为 PUT /api/admin/order/{id}/ship
         // 你需要在后端 AdminOrderController 实现这个接口
-        const url = `${ADMIN_CONFIG.apiRoutes.order}/ship`;
+        const url = `${ADMIN_CONFIG.apiRoutes.order}/updateStatus`;
 
         const response = await fetch(url, {
             method: 'POST', // 或 POST，取决于后端定义
