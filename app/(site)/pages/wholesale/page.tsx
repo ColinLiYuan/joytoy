@@ -275,7 +275,6 @@ export default function Wholesale() {
                                     <div className="w-full h-px bg-white/10"></div>
                                     <div className="space-y-2 text-sm text-gray-300">
                                         <p>📧 wholesale@mythtoy.com</p>
-                                        <p>📱 +86 176 2018 9025 (WhatsApp)</p>
                                     </div>
                                 </div>
                             </div>

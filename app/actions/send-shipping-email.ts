@@ -32,7 +32,7 @@ export async function sendShippingConfirmationEmail(data: ShippingEmailData) {
 
     try {
         await resend.emails.send({
-            from: 'MythToy Shipping <support@mythtoy.com>',
+            from: 'MythToy | Shipping Desk <no-reply@mythtoy.com>',
             to: data.email,
             subject: `Your Order #${data.orderNumber} is on the way! 🚚`,
             html: generateShippingEmailHtml(data),

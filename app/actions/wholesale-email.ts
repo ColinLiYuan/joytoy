@@ -1,4 +1,4 @@
-// app/actions/submit-wholesale.ts
+// app/actions/wholesale-email.ts
 'use server';
 
 import { Resend } from 'resend';
@@ -80,7 +80,6 @@ export async function submitWholesaleForm(formData: FormData) {
                     <br>
                     <p>Best Regards,</p>
                     <p><strong>Colin Li</strong><br>Sales Manager | MythToy</p>
-                    <p style="font-size: 12px; color: #888;">WhatsApp: +86 176 2018 9025</p>
                 </div>
             `
         });

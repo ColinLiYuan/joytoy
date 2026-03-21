@@ -39,7 +39,7 @@ export async function sendOrderConfirmationEmail(order: OrderEmailData) {
 
     try {
         await resend.emails.send({
-            from: 'MythToy Concierge <support@mythtoy.com>',
+            from: 'MythToy | Order Concierge <no-reply@mythtoy.com>',
             to: order.email,
             subject: `Order Confirmation #${order.orderNumber}`,
             html: generateUserEmailHtml(order),

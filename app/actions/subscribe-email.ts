@@ -1,4 +1,4 @@
-// app/actions/subscribe.ts
+// app/actions/subscribe-email.ts
 
 'use server';
 
@@ -16,19 +16,15 @@ export async function subscribeToNewsletter(formData: FormData) {
     try {
         await resend.emails.send({
             from: 'MythToy System <system@mythtoy.com>',
-
             to: 'support@mythtoy.com',
-
             subject: '[New Subscriber]',
             text: `New sub: ${email}`,
         });
 
         try {
             await resend.emails.send({
-                from: 'MythToy <support@mythtoy.com>',
-
+                from: 'MythToy System <no-reply@mythtoy.com>',
                 to: email,
-
                 subject: 'Welcome! Here is your 10% OFF Code',
                 html: `
                     <h1>Welcome to the Club!</h1>

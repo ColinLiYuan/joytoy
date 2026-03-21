@@ -4,7 +4,7 @@
 import { useState } from 'react';
 import { Zap, Loader2, Send } from 'lucide-react';
 import { useToast } from '@/contexts/toastContext';
-import { submitWholesaleForm } from '@/app/actions/submit-wholesale';
+import { submitWholesaleForm } from '@/app/actions/wholesale-email';
 
 export default function WholesaleForm() {
     const [isSubmitting, setIsSubmitting] = useState(false);
