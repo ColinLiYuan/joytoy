@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { submitPioneerApplication } from '@/app/actions/pioneer';
+import { submitPioneerApplication } from '@/app/actions/pioneer-email';
 import { getProductImageUrl } from '@/lib/image-utils';
 import { COUNTRIES_FOR_SELECT } from '@/lib/constants/country-data';
 import { useToast } from '@/contexts/toastContext';
