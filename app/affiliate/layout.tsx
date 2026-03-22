@@ -1,11 +1,12 @@
 // app/affiliate/layout.tsx
 import Link from 'next/link'
-import { LayoutDashboard, ShoppingCart, Wallet, Settings, LogOut } from 'lucide-react'
+import { LayoutDashboard, ShoppingCart, Wallet, Settings, LogOut, LinkIcon } from 'lucide-react'
 
 export default function AffiliateLayout({ children }: { children: React.ReactNode }) {
     const navItems = [
         // { label: 'Dashboard', href: '/affiliate', icon: LayoutDashboard },
         { label: 'Orders', href: '/affiliate/order', icon: ShoppingCart },
+        { label: 'Promote Links', href: '/affiliate/links', icon: LinkIcon },
         // { label: 'Payouts', href: '/affiliate/payout', icon: Wallet },
         // { label: 'Settings', href: '/affiliate/settings', icon: Settings },
     ]
