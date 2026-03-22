@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { orderService } from '@/services/orderService' // ✅ 共用 orderService
+import { affiliateService } from '@/services/affiliateService'
 import {
     Search,
     Calendar,
@@ -44,12 +44,13 @@ export default function AffiliateOrdersPage() {
         try {
             setLoading(true)
             // ✅ 共用订单查询接口，但后端会根据当前登录的 Affiliate 角色自动过滤
-            const data = await orderService.adminList({
+            const data = await affiliateService.orderList({
                 page,
                 size: 10,
                 orderNumber: searchOrderNumber,
                 status: statusFilter === 'ALL' ? '' : statusFilter
             })
+            console.log('orders: ', data)
             setOrders(data.content as unknown as OrderResponse[])
             setTotalPages(data.totalPages)
             setTotalElements(data.totalElements)

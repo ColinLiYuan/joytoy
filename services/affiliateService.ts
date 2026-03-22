@@ -1,6 +1,8 @@
 // services/affiliateService.ts
 import Cookies from 'js-cookie';
 import { AffiliateClickLog } from '@/types/affiliate';
+import { SERVER_CONFIG } from '@/lib/api-config';
+import { OrderListResponse } from '@/types/order';
 
 export interface AffiliateCookieData {
     affiliateCode?: string;
@@ -57,7 +59,7 @@ export class AffiliateService {
         // console.log('233333333333')
         try {
             // 这里的 API 路径根据你的后端配置调整
-            const url = `/api/site/affiliate/click`;
+            const url = `${SERVER_CONFIG.apiRoutes.affiliate}/click`;
             const response = await fetch(url, {
                 method: 'POST',
                 headers: {
@@ -91,6 +93,59 @@ export class AffiliateService {
 
     clearAffiliateData(): void {
         Cookies.remove(AffiliateService.COOKIE_NAME);
+    }
+
+    async orderList(params: {
+        page?: number;
+        size?: number;
+        keyword?: string;
+        status?: string;
+        orderNumber?: string;
+        guestEmail?: string;
+    } = {}): Promise<OrderListResponse> {
+        try {
+            const {
+                page = 0,
+                size = 12,
+                keyword = '',
+                status = '',
+                orderNumber = '',
+                guestEmail = ''
+            } = params;
+
+            const queryParams = new URLSearchParams();
+
+            // 统一使用 toString() 确保拼接到 URL 的是纯字符串
+            queryParams.append('page', page.toString());
+            queryParams.append('size', size.toString());
+
+            if (keyword) queryParams.append('keyword', keyword);
+            if (status) queryParams.append('status', status);
+            if (orderNumber) queryParams.append('orderNumber', orderNumber);
+            if (guestEmail) queryParams.append('guestEmail', guestEmail);
+
+            const url = `${SERVER_CONFIG.apiRoutes.affiliate}/orderList?${queryParams.toString()}`;
+            // console.log('Fetching orders from URL:', url);
+
+            const response = await fetch(url, {
+                cache: 'no-store',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (!response.ok) throw new Error('Failed to fetch orders');
+
+            const apiResponse = await response.json();
+            if (!apiResponse.success) {
+                throw new Error(apiResponse.error || 'Failed to fetch orders');
+            }
+
+            return apiResponse.data;
+        } catch (error) {
+            console.error('Error fetching orders:', error);
+            throw error;
+        }
     }
 }
 
