@@ -24,6 +24,7 @@ export const SERVER_CONFIG = {
         cart: '/api/site/cart',
         blog: '/api/site/blog',
         checkout: '/api/site/checkout',
+        affiliate: '/api/site/affiliate',
     }
 };
 

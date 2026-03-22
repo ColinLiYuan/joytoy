@@ -96,8 +96,6 @@ class OrderService {
         return json.data;
     }
 
-    // services/orderService.ts
-
     async adminList(params: {
         page?: number;
         size?: number;
