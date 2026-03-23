@@ -30,7 +30,7 @@ export interface ProductResponse {
     features?: string[];
     favorited?: boolean;
     color?: string;
-    // 新增 SKU 相关字段
+    // 新增 SKU 相关字
     productSkus?: ProductSku[];
     sku?: string;
     badge?: string;
