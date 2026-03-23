@@ -184,7 +184,12 @@ export default function OrderPage() {
                         <tr className="bg-gray-50 border-b border-gray-200">
                             <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">订单编号</th>
                             <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">客户邮箱</th>
+                            <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">联盟码</th>
+                            <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">折扣码</th>
+                            <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">折扣金额</th>
                             <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">实付金额</th>
+                            <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">佣金率</th>
+                            <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">佣金</th>
                             <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">当前状态</th>
                             <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-right">管理操作</th>
                         </tr>
@@ -207,7 +212,12 @@ export default function OrderPage() {
                                     </div>
                                 </td>
                                 <td className="px-6 py-4 text-sm text-gray-600">{order.guestEmail}</td>
-                                <td className="px-6 py-4 text-sm font-bold text-gray-900">${order.totalAmount}</td>
+                                <td className="px-6 py-4 text-sm text-gray-600">{order.affiliateCode}</td>
+                                <td className="px-6 py-4 text-sm text-gray-600">{order.couponCode}</td>
+                                <td className="px-6 py-4 text-sm font-bold text-gray-900">${order.discountAmount}</td>
+                                <td className="px-6 py-4 text-sm font-bold text-gray-900">${order.finalAmount}</td>
+                                <td className="px-6 py-4 text-sm font-bold text-gray-900">${order.commissionRate}</td>
+                                <td className="px-6 py-4 text-sm font-bold text-gray-900">${order.commissionAmount}</td>
                                 <td className="px-6 py-4">
                                         <span className={`px-3 py-1 rounded-full text-xs font-bold border ${getStatusColor(order.status)}`}>
                                             {statusMap[order.status] || order.status}
