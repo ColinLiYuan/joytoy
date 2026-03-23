@@ -191,8 +191,8 @@ export default function CheckoutPage() {
                     shippingFee: shippingFee,
                     discountAmount: discountAmount,
                     guestEmail: !userId ? addressData.email : undefined,
-                    couponCode: couponCode,
-                    affiliateCode: affiliateService.getAffiliateCode()
+                    couponCode: couponCode?.toUpperCase().trim(),
+                    affiliateCode: affiliateService.getAffiliateCode()?.toUpperCase().trim(),
                 };
 
                 const result = await orderService.createOrder(orderData);
@@ -246,8 +246,8 @@ export default function CheckoutPage() {
             shippingFee: shippingFee,
             discountAmount: discountAmount,
             guestEmail: !userId ? addressData.email : undefined,
-            couponCode: couponCode,
-            affiliateCode: affiliateService.getAffiliateCode()
+            couponCode: couponCode?.toUpperCase().trim(),
+            affiliateCode: affiliateService.getAffiliateCode()?.toUpperCase().trim(),
         };
 
         try {
@@ -261,8 +261,8 @@ export default function CheckoutPage() {
                 items: orderItems,
                 guestEmail: addressData.email,
                 shippingAddress: addressData,
-                couponCode: couponCode,
-                affiliateCode: affiliateService.getAffiliateCode()
+                couponCode: couponCode?.toUpperCase().trim(),
+                affiliateCode: affiliateService.getAffiliateCode()?.toUpperCase().trim(),
             }));
             useCartStore.getState().clearCart();
             const cleanOrderNumber = result.orderNumber.replace(/^#/, '');
