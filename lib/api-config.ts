@@ -19,7 +19,7 @@ export const SERVER_CONFIG = {
         category: '/api/site/category',
         filter: '/api/site/filter',
         order: '/api/site/order',
-        auth: '/api/site/user',
+        auth: '/api/site/auth',
         wishlist: '/api/site/wishlist',
         cart: '/api/site/cart',
         blog: '/api/site/blog',
@@ -36,5 +36,6 @@ export const ADMIN_CONFIG = {
         filter: '/api/admin/filter',
         blog: '/api/admin/blog',
         review: '/api/admin/review',
+        user: '/api/admin/user',
     }
 };

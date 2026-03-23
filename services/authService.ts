@@ -3,8 +3,9 @@ import {
     RegisterRequest,
     LoginRequest,
     LoginResponse,
-    RegisterResponse } from '@/types/auth';
-import { SERVER_CONFIG } from '@/lib/api-config';
+    RegisterResponse,
+    UserListResponse} from '@/types/auth';
+import { SERVER_CONFIG, ADMIN_CONFIG } from '@/lib/api-config';
 
 class AuthService {
 
@@ -66,6 +67,56 @@ class AuthService {
 
         if (!apiResponse.success) {
             throw new Error(apiResponse.message || 'Failed to update password.');
+        }
+    }
+
+    async adminList(params: {
+        page?: number;
+        size?: number;
+        keyword?: string;
+        status?: string;
+        sortBy?: string;
+    } = {}): Promise<UserListResponse> {
+        try {
+            const {
+                page = 0,
+                size = 12,
+                keyword = '',
+                status = '',
+                sortBy = 'createdAt'
+            } = params;
+
+            const queryParams = new URLSearchParams();
+            queryParams.append('page', page.toString());
+            queryParams.append('size', size.toString());
+            queryParams.append('sortBy', sortBy);
+
+            if (keyword) queryParams.append('keyword', keyword);
+            if (status) queryParams.append('status', status);
+
+            // 使用后端 AdminUserInterface 定义的路径
+            const url = `${ADMIN_CONFIG.apiRoutes.user}/list?${queryParams.toString()}`;
+
+            const response = await fetch(url, {
+                cache: 'no-store',
+                headers: {
+                    'Content-Type': 'application/json',
+                    // 如果你的拦截器没处理 Token，这里需要手动加 Authorization
+                },
+            });
+
+            if (!response.ok) throw new Error('Failed to fetch user list');
+
+            const apiResponse = await response.json();
+
+            if (!apiResponse.success) {
+                throw new Error(apiResponse.message || 'Failed to fetch users');
+            }
+
+            return apiResponse.data; // 返回 PageResponse 结构
+        } catch (error) {
+            console.error('Error in Admin User List Service:', error);
+            throw error;
         }
     }
 }

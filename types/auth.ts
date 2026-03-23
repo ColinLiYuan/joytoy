@@ -1,5 +1,7 @@
 // types/auth.ts
 
+import {OrderResponse} from "./order";
+
 export interface LoginRequest {
     email: string;
     password: string;
@@ -42,4 +44,30 @@ export interface RegisterResponse {
     lastName: string;
     status: string;
     emailVerified: boolean;
+}
+
+export interface UserListResponse {
+    content: UserResponse[];
+    currentPage: number;
+    pageSize: number;
+    totalElements: number;
+    totalPages: number;
+    hasNext: boolean;
+    hasPrevious: boolean;
+}
+
+export interface UserResponse {
+    id: number;
+    uuid: string;
+    email: string;
+    affiliateId: string; // 联盟 ID
+    firstName: string;
+    lastName: string;
+    displayName: string;
+    phone?: string;
+    status: 'PENDING' | 'ACTIVE' | 'BANNED' | 'DELETED'; // 用户状态枚举
+    gender: 'MALE' | 'FEMALE' | 'OTHER';
+    lastLoginAt?: string;
+    createdAt: string;
+    updatedAt: string;
 }
