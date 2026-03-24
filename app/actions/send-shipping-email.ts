@@ -52,7 +52,7 @@ function generateShippingEmailHtml(data: ShippingEmailData) {
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.mythtoy.com';
 
     // 拼接带有查询参数的专属追踪链接
-    const trackLink = `${baseUrl}/order-tracking?orderNumber=${encodeURIComponent(data.orderNumber)}&email=${encodeURIComponent(data.email)}`;
+    const trackLink = `${baseUrl}/pages/order-tracking?orderNumber=${encodeURIComponent(data.orderNumber)}&email=${encodeURIComponent(data.email)}`;
 
     const itemsHtml = data.items.map(item => `
         <tr style="border-bottom: 1px solid #eee;">
