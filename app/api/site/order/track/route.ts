@@ -1,6 +1,6 @@
 // app/api/order/track/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { apiGet, handleApiError } from '@/lib/api-utils';
+import { apiPost, handleApiError } from '@/lib/api-utils';  // 确保引入 apiPost
 
 export async function POST(request: NextRequest) {
     try {
@@ -18,20 +18,18 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // 2. ✅ 核心优化：自动去除订单号开头的 '#' 号
-        // 逻辑：如果是 "#MYTH-123"，变成 "MYTH-123"；如果是 "MYTH-123"，保持不变
-        // trim() 去除首尾空格，replace(/^#/, '') 去除开头的井号
+        // 2. 去除订单号开头的 '#'
         orderNumber = orderNumber.toString().trim().replace(/^#/, '');
+        email = email.trim();  // 也去除邮箱首尾空格
 
-        // 3. 构造查询参数 (后端是 @RequestParam，所以是 Query String)
-        const queryParams = new URLSearchParams({
-            orderNumber: orderNumber,
-            email: email.trim() // 邮箱也顺手去个空格
-        });
+        // 3. 构造请求体（POST 请求，需要把参数放在 body 里）
+        const requestBody = {
+            orderNumber,
+            email,
+        };
 
-        // 4. 调用后端 Java 接口 (GET /api/V1/order/track?orderNumber=...&email=...)
-        // 不需要 Token，这是公开接口
-        const result = await apiGet(`/api/V1/order/track?${queryParams.toString()}`);
+        // 4. 调用后端 Java 接口 (POST /api/V1/order/track)
+        const result = await apiPost('/api/V1/order/track', requestBody);
 
         return NextResponse.json(result);
 

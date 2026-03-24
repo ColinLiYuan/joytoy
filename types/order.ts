@@ -50,6 +50,7 @@ export interface OrderResponse {
     couponValue?: number;
     guestEmail?: string;
     items: OrderItemResponse[];
+    logistics?: LogisticsInfo;
 }
 
 export interface OrderItemResponse {
@@ -99,4 +100,19 @@ export interface OrderItemRequest {
     unitPrice: number;
     color: string;
     skuId?: number;
+}
+
+export interface LogisticsCheckpoint {
+    timestamp: string;
+    message: string;
+    location?: string;
+    trackingStatus?: string;
+}
+
+export interface LogisticsInfo {
+    trackingNumber: string;
+    statusLevel: number; // 1-9 (对应燕文的 level1)
+    originCountry?: string;
+    destinationCountry?: string;
+    checkpoints: LogisticsCheckpoint[];
 }

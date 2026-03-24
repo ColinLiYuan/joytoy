@@ -76,10 +76,11 @@ class OrderService {
         return apiResponse.data;
     }
 
-    async trackGuestOrder(orderNumber: string, email: string) {
+    async trackOrder(orderNumber: string, email: string) {
         // 调用我们刚刚写的 Next.js 中间层
         const url = `${SERVER_CONFIG.apiRoutes.order}/track`;
 
+        console.log('trackOrder url: ', url)
         const response = await fetch(url, {
             method: 'POST', // 前端用 POST 提交表单数据，比较规范
             headers: { 'Content-Type': 'application/json' },
