@@ -304,8 +304,9 @@ function TrackingContent() {
 
                                         {/* 顶部右侧物流状态角标 */}
                                         <div className="flex items-center gap-2">
-                                            {orderData.carrier && <span className="text-xs text-gray-400 font-medium border border-gray-200 px-3 py-1 rounded-full">{orderData.carrier}</span>}
+                                            {/*{orderData.carrier && <span className="text-xs text-gray-400 font-medium border border-gray-200 px-3 py-1 rounded-full">{orderData.carrier}</span>}*/}
                                             {orderData.logistics?.statusLevel === 3 && <span className="text-xs bg-blue-100 text-blue-700 px-3 py-1 rounded-full font-bold">In Transit</span>}
+                                            "
                                             {orderData.logistics?.statusLevel === 4 && <span className="text-xs bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full font-bold">Out for Delivery</span>}
                                             {orderData.logistics?.statusLevel === 6 && <span className="text-xs bg-green-100 text-green-700 px-3 py-1 rounded-full font-bold">Delivered</span>}
                                         </div>

@@ -117,10 +117,10 @@ export default function AdminUserListPage() {
                                 {user.affiliateId || '-'}
                             </td>
                             <td className="px-6 py-4 text-sm text-gray-500">
-                                {new Date(user.createdAt).toLocaleDateString()}
+                                {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : '-'}
                             </td>
                             <td className="px-6 py-4 text-sm text-gray-500">
-                                {new Date(user.lastLoginAt).toLocaleDateString()}
+                                {user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleDateString() : '-'}
                             </td>
                             <td className="px-6 py-4 text-right">
                                 <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
