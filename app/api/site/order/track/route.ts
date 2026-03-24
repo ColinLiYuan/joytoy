@@ -1,6 +1,6 @@
 // app/api/order/track/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { apiPost, handleApiError } from '@/lib/api-utils';  // 确保引入 apiPost
+import { apiPost, handleApiError } from '@/lib/api-utils';
 
 export async function POST(request: NextRequest) {
     try {
@@ -10,26 +10,23 @@ export async function POST(request: NextRequest) {
         // 1. 基础校验
         if (!orderNumber || !email) {
             return NextResponse.json(
-                {
-                    success: false,
-                    error: 'Order Number and Email are required'
-                },
+                { success: false, error: 'Order Number and Email are required' },
                 { status: 400 }
             );
         }
 
-        // 2. 去除订单号开头的 '#'
+        // 2. 自动去除订单号开头的 '#' 号
         orderNumber = orderNumber.toString().trim().replace(/^#/, '');
-        email = email.trim();  // 也去除邮箱首尾空格
 
-        // 3. 构造请求体（POST 请求，需要把参数放在 body 里）
-        const requestBody = {
-            orderNumber,
-            email,
+        // 3. 构造要发送给 Java 后端的 JSON (因为后端之前我们改成 @RequestBody 接收 POST 了)
+        const payload = {
+            orderNumber: orderNumber,
+            email: email.trim()
         };
 
-        // 4. 调用后端 Java 接口 (POST /api/V1/order/track)
-        const result = await apiPost('/api/V1/order/track', requestBody);
+        // 4. 调用后端 Java 接口
+        const url = `/api/V1/order/track`;
+        const result = await apiPost(url, payload);
 
         return NextResponse.json(result);
 

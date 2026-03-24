@@ -3,20 +3,70 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import {
-    Search, Loader2, Package, Truck, CheckCircle2, Clock,
-    AlertCircle, ExternalLink, Hourglass, MapPin
-} from 'lucide-react';
+import { Search, Loader2, Package, Truck, CheckCircle2, Clock, AlertCircle, Hourglass, MapPin } from 'lucide-react';
 import { orderService } from '@/services/orderService';
-import { OrderResponse } from '@/types/order';
+import { OrderResponse, LogisticsCheckpoint } from '@/types/order';
 
-// 订单主流程状态枚举
 const STATUS_STEPS = [
     { key: 'PENDING', label: 'Order Placed', icon: Clock },
     { key: 'PROCESSING', label: 'Processing', icon: Package },
     { key: 'SHIPPED', label: 'Shipped', icon: Truck },
     { key: 'DELIVERED', label: 'Delivered', icon: CheckCircle2 },
 ];
+
+/**
+ * ✅ 核心优化：物流数据清洗与定制
+ * 过滤掉繁琐的燕文内部扫描节点，替换老外不懂的词汇，让时间轴看起来更专业、简洁
+ */
+const curateCheckpoints = (rawCheckpoints: LogisticsCheckpoint[]): LogisticsCheckpoint[] => {
+    if (!rawCheckpoints || rawCheckpoints.length === 0) return [];
+
+    let curated: LogisticsCheckpoint[] = [];
+    let lastMessage = "";
+
+    for (const cp of rawCheckpoints) {
+        let msg = cp.message || "";
+
+        // 1. 屏蔽一些对消费者毫无意义的内部流转黑话
+        const hiddenKeywords = ["Consolidated package data collection", "waybill", "Finished goods", "weighing"];
+        if (hiddenKeywords.some(keyword => msg.toLowerCase().includes(keyword.toLowerCase()))) {
+            continue;
+        }
+
+        // 2. 话术润色转换 (让语气听起来像国际大厂 FedEx/DHL)
+        if (msg.includes("Yanwen facility - Outbound") || msg.includes("Batch delivery")) {
+            msg = "Processed at transit facility";
+        } else if (msg.includes("Yanwen facility - Inbound")) {
+            msg = "Arrived at transit facility";
+        } else if (msg.includes("Pick up by local carrier")) {
+            msg = "Handed over to local delivery partner";
+        } else if (msg.includes("International shipment release - Export")) {
+            msg = "Customs cleared - Exported";
+        } else if (msg.includes("International shipment release - Import")) {
+            msg = "Customs cleared - Arrived in destination country";
+        }
+
+        // 3. 去重逻辑：如果经过转化后，上一条信息和这一条一样，说明是同一个节点的不同扫描，丢弃旧的
+        if (msg === lastMessage) {
+            continue;
+        }
+
+        lastMessage = msg;
+        curated.push({ ...cp, message: msg });
+    }
+
+    return curated;
+};
+
+// 时间格式化辅助
+const formatDateTime = (dateString: string) => {
+    if (!dateString) return { date: '', time: '' };
+    const d = new Date(dateString);
+    return {
+        date: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+        time: d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+    };
+};
 
 function TrackingContent() {
     const searchParams = useSearchParams();
@@ -35,7 +85,6 @@ function TrackingContent() {
 
         try {
             const data = await orderService.trackOrder(orderNum, emailStr);
-            console.log('order: ', data)
             setOrderData(data);
         } catch (err: any) {
             setError(err.message || 'Order not found. Please check your details.');
@@ -62,30 +111,20 @@ function TrackingContent() {
     };
 
     const getCurrentStepIndex = (status: string) => {
-        const index = STATUS_STEPS.findIndex(s => s.key === status);
-        // 如果是 COMPLETED，也视为 DELIVERED 的最后一步
         if (status === 'COMPLETED') return 3;
+        const index = STATUS_STEPS.findIndex(s => s.key === status);
         return index === -1 ? 0 : index;
     };
 
     const displayOrderNumber = orderData?.orderNumber?.replace(/^#/, '') || '';
 
-    // 燕文官方查询前台链接
-    const trackingUrl = orderData?.trackingNumber
-        ? `https://t.17track.net/en#nums=${orderData.trackingNumber}`
-        : '#';
-
-    // 格式化时间的辅助函数
-    const formatDate = (dateString: string) => {
-        const date = new Date(dateString);
-        return {
-            date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-            time: date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-        };
-    };
+    // 获取清洗后的轨迹数据
+    const cleanCheckpoints = orderData?.logistics?.checkpoints
+        ? curateCheckpoints(orderData.logistics.checkpoints)
+        : [];
 
     return (
-        <div className="min-h-screen bg-gray-50 py-16 md:py-24">
+        <div className="min-h-screen bg-[#FDFDFD] py-16 md:py-24">
             <div className="container mx-auto px-4 max-w-4xl">
 
                 <div className="text-center mb-12">
@@ -94,7 +133,7 @@ function TrackingContent() {
                 </div>
 
                 {/* 搜索表单 */}
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 mb-8 max-w-2xl mx-auto">
+                <div className="bg-white rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border border-gray-100 p-8 mb-8 max-w-2xl mx-auto">
                     <form onSubmit={handleSubmit} className="space-y-6">
                         <div className="grid md:grid-cols-2 gap-6">
                             <div>
@@ -123,16 +162,15 @@ function TrackingContent() {
                         <button
                             type="submit"
                             disabled={isLoading}
-                            className="w-full bg-black text-white py-4 rounded-xl font-bold hover:bg-[#E11D48] transition-all flex items-center justify-center gap-2 disabled:opacity-70"
+                            className="w-full bg-black text-white py-4 rounded-xl font-bold hover:bg-gray-800 transition-all flex items-center justify-center gap-2 disabled:opacity-70"
                         >
                             {isLoading ? <Loader2 className="animate-spin" /> : <><Search size={18} /> Track Order</>}
                         </button>
                     </form>
                 </div>
 
-                {/* 错误提示 */}
                 {error && (
-                    <div className="max-w-2xl mx-auto bg-red-50 text-red-600 p-4 rounded-xl flex items-center gap-3 mb-8 animate-in fade-in border border-red-100">
+                    <div className="max-w-2xl mx-auto bg-red-50 text-red-600 p-4 rounded-xl flex items-center gap-3 mb-8 border border-red-100">
                         <AlertCircle size={20} />
                         <span className="font-medium">{error}</span>
                     </div>
@@ -140,10 +178,9 @@ function TrackingContent() {
 
                 {/* 结果展示区 */}
                 {orderData && (
-                    <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden animate-in slide-in-from-bottom-8 duration-500">
+                    <div className="bg-white rounded-2xl shadow-[0_8px_30px_-4px_rgba(0,0,0,0.05)] border border-gray-100 overflow-hidden animate-in slide-in-from-bottom-8 duration-500">
 
-                        {/* 头部摘要 */}
-                        <div className="bg-gray-900 text-white p-6 md:p-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                        <div className="bg-black text-white p-6 md:p-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                             <div>
                                 <h2 className="text-2xl font-bold font-['Playfair_Display']">Order #{displayOrderNumber}</h2>
                                 <p className="text-gray-400 text-sm mt-1">Placed on {new Date(orderData.createdAt).toLocaleDateString()}</p>
@@ -154,7 +191,7 @@ function TrackingContent() {
                         </div>
 
                         <div className="p-8 border-b border-gray-100">
-                            {/* 顶部总体进度 */}
+                            {/* 总体进度条 */}
                             <div className="flex items-center justify-between mb-10 overflow-x-auto pb-4">
                                 {STATUS_STEPS.map((step, index) => {
                                     const currentIdx = getCurrentStepIndex(orderData.status);
@@ -164,7 +201,6 @@ function TrackingContent() {
 
                                     return (
                                         <div key={step.key} className="flex-1 flex flex-col items-center min-w-[100px] relative">
-                                            {/* 连接线 */}
                                             {index < STATUS_STEPS.length - 1 && (
                                                 <div className={`absolute top-6 left-1/2 w-full h-1 -mt-0.5 z-0 ${index < currentIdx ? 'bg-black' : 'bg-gray-100'}`} />
                                             )}
@@ -184,51 +220,61 @@ function TrackingContent() {
                                 })}
                             </div>
 
-                            {/* 👇 实时物流轨迹详情 (仅在后端返回 logistics 对象且有 checkpoints 时显示) */}
-                            {orderData.logistics && orderData.logistics.checkpoints && orderData.logistics.checkpoints.length > 0 && (
-                                <div className="mt-12 bg-gray-50 rounded-2xl p-6 md:p-8 border border-gray-100">
-                                    <div className="flex justify-between items-center mb-8">
+                            {/* ✅ 重新设计的垂直实时物流时间轴 */}
+                            {cleanCheckpoints.length > 0 && (
+                                <div className="mt-12 bg-gray-50/50 rounded-2xl p-6 md:p-8 border border-gray-100">
+                                    <div className="flex justify-between items-center mb-10">
                                         <h3 className="text-sm font-bold uppercase tracking-widest text-gray-900">Live Tracking Updates</h3>
-                                        {/* 燕文状态级别，1: 查询不到, 2: 揽收, 3: 运输, 4: 派送, 6: 签收 */}
-                                        {orderData.logistics.statusLevel === 3 && <span className="text-xs bg-blue-100 text-blue-700 px-3 py-1 rounded-full font-bold animate-pulse">In Transit</span>}
-                                        {orderData.logistics.statusLevel === 4 && <span className="text-xs bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full font-bold">Out for Delivery</span>}
-                                        {orderData.logistics.statusLevel === 6 && <span className="text-xs bg-green-100 text-green-700 px-3 py-1 rounded-full font-bold">Delivered</span>}
+                                        {orderData.logistics?.statusLevel === 3 && <span className="text-xs bg-blue-100 text-blue-700 px-3 py-1 rounded-full font-bold">In Transit</span>}
+                                        {orderData.logistics?.statusLevel === 4 && <span className="text-xs bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full font-bold">Out for Delivery</span>}
+                                        {orderData.logistics?.statusLevel === 6 && <span className="text-xs bg-green-100 text-green-700 px-3 py-1 rounded-full font-bold">Delivered</span>}
                                     </div>
 
-                                    <div className="space-y-6 relative pl-4 md:pl-32">
-                                        {/* 垂直时间轴线 */}
-                                        <div className="absolute left-[21px] md:left-[118px] top-2 bottom-4 w-0.5 bg-gray-200"></div>
-
-                                        {orderData.logistics.checkpoints.map((cp, idx) => {
-                                            const isLatest = idx === 0; // 假设后端已经按照倒序(最新在前)排列
-                                            const { date, time } = formatDate(cp.timestamp);
+                                    {/* 时间轴容器 */}
+                                    <div className="relative">
+                                        {cleanCheckpoints.map((cp, idx) => {
+                                            const isLatest = idx === 0;
+                                            const isLast = idx === cleanCheckpoints.length - 1;
+                                            const { date, time } = formatDateTime(cp.timestamp);
 
                                             return (
-                                                <div key={idx} className={`relative flex flex-col md:flex-row gap-4 md:gap-8 ${isLatest ? 'opacity-100' : 'opacity-60 hover:opacity-100 transition-opacity'}`}>
+                                                <div key={idx} className="flex gap-4 md:gap-8">
 
-                                                    {/* 时间 (桌面端居左排版) */}
-                                                    <div className="md:w-24 shrink-0 pt-1 text-left md:text-right flex flex-row md:flex-col items-center md:items-end gap-2 md:gap-0">
-                                                        <span className="text-sm font-bold text-gray-900">{date}</span>
-                                                        <span className="text-xs text-gray-500 font-mono">{time}</span>
+                                                    {/* 1. 左侧日期区域 (固定宽度，确保对齐) */}
+                                                    <div className="w-20 md:w-32 shrink-0 pt-0.5 text-right flex flex-col">
+                                                        <span className={`text-sm md:text-base ${isLatest ? 'font-bold text-gray-900' : 'font-medium text-gray-500'}`}>
+                                                            {date}
+                                                        </span>
+                                                        <span className={`text-xs mt-0.5 font-mono ${isLatest ? 'text-gray-500' : 'text-gray-400'}`}>
+                                                            {time}
+                                                        </span>
                                                     </div>
 
-                                                    {/* 圆点指示器 */}
-                                                    <div className="absolute left-0 md:left-[96px] top-1.5 z-10">
-                                                        <div className={`w-3 h-3 rounded-full ring-4 ring-gray-50 ${isLatest ? 'bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)]' : 'bg-gray-300'}`} />
+                                                    {/* 2. 中间时间轴图标区域 (通过 Flexbox 严格居中线) */}
+                                                    <div className="relative flex flex-col items-center">
+                                                        {/* 状态圆点 */}
+                                                        <div className={`relative z-10 w-3.5 h-3.5 rounded-full ring-4 ring-[#FDFDFD] mt-1.5 
+                                                            ${isLatest ? 'bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.4)]' : 'bg-gray-300'}`}
+                                                        />
+                                                        {/* 连接竖线 (最后一条不显示尾部的线) */}
+                                                        {!isLast && (
+                                                            <div className="w-0.5 bg-gray-200 flex-1 my-1"></div>
+                                                        )}
                                                     </div>
 
-                                                    {/* 内容卡片 */}
-                                                    <div className={`flex-1 pb-6 ${idx !== orderData.logistics!.checkpoints.length - 1 ? 'border-b border-gray-100/50' : ''}`}>
-                                                        <p className={`text-sm ${isLatest ? 'font-bold text-gray-900' : 'font-medium text-gray-600'}`}>
+                                                    {/* 3. 右侧信息详情区域 */}
+                                                    <div className={`flex-1 pb-10 pt-0.5 ${!isLatest && 'opacity-70'}`}>
+                                                        <p className={`text-sm md:text-base leading-snug ${isLatest ? 'font-bold text-gray-900' : 'font-medium text-gray-600'}`}>
                                                             {cp.message}
                                                         </p>
                                                         {cp.location && (
-                                                            <div className="flex items-center gap-1.5 mt-2 text-xs text-gray-500">
-                                                                <MapPin size={12} />
-                                                                <span>{cp.location}</span>
+                                                            <div className="flex items-start gap-1 mt-2 text-xs text-gray-400">
+                                                                <MapPin size={14} className="shrink-0 mt-0.5" />
+                                                                <span className="leading-tight">{cp.location}</span>
                                                             </div>
                                                         )}
                                                     </div>
+
                                                 </div>
                                             );
                                         })}
@@ -236,72 +282,32 @@ function TrackingContent() {
                                 </div>
                             )}
 
-                            {/* 当已发货，但燕文还没扫件(或查不到轨迹)时 */}
-                            {orderData.status === 'SHIPPED' && (!orderData.logistics || orderData.logistics.checkpoints.length === 0) && (
-                                <div className="mt-8 bg-blue-50/50 border border-blue-100 rounded-xl p-6 flex flex-col items-center justify-center text-center">
-                                    <Truck size={32} className="text-blue-400 mb-3" />
-                                    <h4 className="font-bold text-blue-900 mb-1">Package is on the way</h4>
-                                    <p className="text-sm text-blue-600/80 max-w-sm">
-                                        Your package has been dispatched. Carrier scans may take 24-48 hours to appear here.
+                            {/* 等待揽收状态 */}
+                            {orderData.status === 'SHIPPED' && cleanCheckpoints.length === 0 && (
+                                <div className="mt-8 bg-blue-50/50 border border-blue-100 rounded-xl p-8 flex flex-col items-center justify-center text-center">
+                                    <Truck size={36} className="text-blue-400 mb-4" />
+                                    <h4 className="font-bold text-blue-900 mb-2">Package is on the way</h4>
+                                    <p className="text-sm text-blue-600/80 max-w-sm leading-relaxed">
+                                        Your package has been dispatched. The tracking timeline will update here automatically within 24-48 hours once scanned by the carrier.
                                     </p>
                                 </div>
                             )}
                         </div>
 
-                        {/* 详情与地址区块 */}
-                        <div className="p-8 bg-gray-50/50 grid md:grid-cols-2 gap-8">
-                            {/* 收货地址 */}
-                            <div>
-                                <h3 className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-4">Shipping To</h3>
-                                <div className="bg-white p-6 rounded-xl border border-gray-200 text-sm text-gray-600 leading-relaxed shadow-sm h-full">
-                                    <p className="font-bold text-gray-900 mb-2 text-base">
-                                        {orderData.shippingAddress.firstName} {orderData.shippingAddress.lastName}
-                                    </p>
-                                    <p>{orderData.shippingAddress.addressLine1}</p>
-                                    {orderData.shippingAddress.addressLine2 && <p>{orderData.shippingAddress.addressLine2}</p>}
-                                    <p>{orderData.shippingAddress.city}, {orderData.shippingAddress.province}</p>
-                                    <p>{orderData.shippingAddress.country} {orderData.shippingAddress.zipCode}</p>
-                                </div>
-                            </div>
-
-                            {/* 物流详情 */}
-                            <div>
-                                <h3 className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-4">Carrier Details</h3>
-                                <div className="bg-white p-6 rounded-xl border border-gray-200 text-sm text-gray-600 leading-relaxed shadow-sm h-full flex flex-col justify-center">
-                                    {orderData.trackingNumber ? (
-                                        <div className="space-y-4">
-                                            <div>
-                                                <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">Tracking Number</p>
-                                                <p className="font-mono text-lg font-bold text-gray-900 tracking-wide select-all">
-                                                    {orderData.trackingNumber}
-                                                </p>
-                                            </div>
-
-                                            <a
-                                                href={trackingUrl}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="inline-flex items-center gap-2 bg-black text-white px-5 py-3 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-[#E11D48] transition-colors shadow-lg hover:-translate-y-0.5"
-                                            >
-                                                Track on 17Track <ExternalLink size={14} />
-                                            </a>
-                                        </div>
-                                    ) : (
-                                        <div className="space-y-3">
-                                            <div className="flex items-center gap-3 text-gray-900">
-                                                <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
-                                                    <Hourglass size={16} className="text-gray-500" />
-                                                </div>
-                                                <span className="font-bold text-sm">Preparing Shipment</span>
-                                            </div>
-                                            <p className="text-xs text-gray-400 pl-11 leading-relaxed">
-                                                Tracking info will update soon. Usually within 24 hours.
-                                            </p>
-                                        </div>
-                                    )}
-                                </div>
+                        {/* 底部地址栏 (去掉了 Carrier 卡片和 17Track 链接) */}
+                        <div className="p-8 bg-white">
+                            <h3 className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-6">Shipping Details</h3>
+                            <div className="bg-gray-50 p-6 rounded-xl border border-gray-100 text-sm text-gray-600 leading-relaxed max-w-xl">
+                                <p className="font-bold text-gray-900 mb-2 text-base">
+                                    {orderData.shippingAddress.firstName} {orderData.shippingAddress.lastName}
+                                </p>
+                                <p>{orderData.shippingAddress.addressLine1}</p>
+                                {orderData.shippingAddress.addressLine2 && <p>{orderData.shippingAddress.addressLine2}</p>}
+                                <p>{orderData.shippingAddress.city}, {orderData.shippingAddress.province}</p>
+                                <p>{orderData.shippingAddress.country} {orderData.shippingAddress.zipCode}</p>
                             </div>
                         </div>
+
                     </div>
                 )}
             </div>

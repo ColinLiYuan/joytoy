@@ -1,3 +1,4 @@
+// app/actions/send-shipping-email.ts
 'use server';
 
 import { Resend } from 'resend';
@@ -9,9 +10,8 @@ interface ShippingEmailData {
     email: string;
     firstName: string;
     lastName: string;
-    carrier: string;       // e.g. "YunExpress", "DHL"
-    trackingNumber: string; // e.g. "YT12345678"
-    trackingUrl?: string;   // 可选，如果没有，前端生成通用的
+    carrier: string;
+    trackingNumber: string;
     shippingAddress: {
         addressLine1: string;
         city: string;
@@ -21,7 +21,7 @@ interface ShippingEmailData {
         title: string;
         color: string;
         quantity: number;
-        image?: string; // 可选：展示发货商品的图片
+        image?: string;
     }[];
 }
 
@@ -46,8 +46,13 @@ export async function sendShippingConfirmationEmail(data: ShippingEmailData) {
 }
 
 function generateShippingEmailHtml(data: ShippingEmailData) {
-    // 默认使用 17Track 如果没有提供 URL
-    const trackLink = data.trackingUrl || `https://t.17track.net/en#nums=${data.trackingNumber}`;
+    // ✅ 核心修改：将链接指向你自己的网站，并带上查询参数
+    // 如果本地测试，可以在 .env 中配置 NEXT_PUBLIC_SITE_URL=http://localhost:3000
+    // 线上环境配置为 https://www.mythtoy.com
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.mythtoy.com';
+
+    // 拼接带有查询参数的专属追踪链接
+    const trackLink = `${baseUrl}/order-tracking?orderNumber=${encodeURIComponent(data.orderNumber)}&email=${encodeURIComponent(data.email)}`;
 
     const itemsHtml = data.items.map(item => `
         <tr style="border-bottom: 1px solid #eee;">
@@ -55,7 +60,7 @@ function generateShippingEmailHtml(data: ShippingEmailData) {
                 ${item.image ? `<img src="${item.image}" width="50" height="50" style="border-radius: 4px; object-fit: cover;" />` : ''}
                 <div style="font-weight: bold; font-size: 14px;">${item.title}</div>
             </td>
-            <td style="padding: 10px 0; text-align: center;">${item.color}</td>
+            <td style="padding: 10px 0; text-align: center;">${item.color || '-'}</td>
             <td style="padding: 10px 0; text-align: center;">x${item.quantity}</td>
         </tr>
     `).join('');
@@ -75,9 +80,10 @@ function generateShippingEmailHtml(data: ShippingEmailData) {
                     <p style="margin: 0 0 10px; font-size: 14px; color: #888; text-transform: uppercase; letter-spacing: 1px;">Tracking Number</p>
                     <p style="margin: 0 0 20px; font-size: 20px; font-weight: bold; letter-spacing: 2px; color: #000;">${data.trackingNumber}</p>
                     
-                    <a href="${trackLink}" target="_blank" style="display: inline-block; background-color: #000; color: #fff; text-decoration: none; padding: 12px 30px; border-radius: 50px; font-weight: bold; font-size: 14px;">Track Your Package</a>
+                    <!-- ✅ 更新后的独立站追踪按钮 -->
+                    <a href="${trackLink}" target="_blank" style="display: inline-block; background-color: #000; color: #fff; text-decoration: none; padding: 14px 32px; border-radius: 50px; font-weight: bold; font-size: 14px;">Track Package Live</a>
                     
-                    <p style="margin-top: 15px; font-size: 12px; color: #999;">Carrier: ${data.carrier}</p>
+                    <p style="margin-top: 15px; font-size: 12px; color: #999;">Carrier: ${data.carrier || 'Standard Shipping'}</p>
                 </div>
 
                 <div style="margin-bottom: 30px;">
@@ -99,8 +105,8 @@ function generateShippingEmailHtml(data: ShippingEmailData) {
                 </div>
 
                 <div style="text-align: center; font-size: 12px; color: #999; border-top: 1px solid #eee; padding-top: 20px;">
-                    <p>Please note: Tracking updates may take 24-48 hours to appear.</p>
-                    <p>© 2025 MythToy. All rights reserved.</p>
+                    <p>Please note: Tracking updates may take 24-48 hours to appear on the system.</p>
+                    <p>© ${new Date().getFullYear()} MythToy. All rights reserved.</p>
                 </div>
             </div>
         </body>

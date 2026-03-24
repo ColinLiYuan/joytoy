@@ -77,12 +77,11 @@ class OrderService {
     }
 
     async trackOrder(orderNumber: string, email: string) {
-        // 调用我们刚刚写的 Next.js 中间层
+        // 请求我们自己项目里的 Next.js API 路由
         const url = `${SERVER_CONFIG.apiRoutes.order}/track`;
 
-        console.log('trackOrder url: ', url)
         const response = await fetch(url, {
-            method: 'POST', // 前端用 POST 提交表单数据，比较规范
+            method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ orderNumber, email })
         });
@@ -90,8 +89,7 @@ class OrderService {
         const json = await response.json();
 
         if (!json.success) {
-            // 这里的 json.message 可能是 "Order not found" 或者 "Email mismatch"
-            throw new Error(json.error || json.message || 'Tracking failed');
+            throw new Error(json.error || json.errorMessage || 'Tracking failed, please check your info.');
         }
 
         return json.data;
