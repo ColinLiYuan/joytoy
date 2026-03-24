@@ -80,10 +80,11 @@ export default function AdminUserListPage() {
                 <table className="w-full text-left">
                     <thead className="bg-gray-50 text-xs uppercase text-gray-500 font-bold">
                     <tr>
-                        <th className="px-6 py-4">User</th>
-                        <th className="px-6 py-4">Status</th>
-                        <th className="px-6 py-4">Affiliate ID</th>
-                        <th className="px-6 py-4">Joined Date</th>
+                        <th className="px-6 py-4">用户</th>
+                        <th className="px-6 py-4">国家</th>
+                        <th className="px-6 py-4">联盟ID</th>
+                        <th className="px-6 py-4">创建时间</th>
+                        <th className="px-6 py-4">上次登录时间</th>
                         <th className="px-6 py-4 text-right">Actions</th>
                     </tr>
                     </thead>
@@ -96,24 +97,30 @@ export default function AdminUserListPage() {
                                         {user.firstName?.[0] || 'U'}
                                     </div>
                                     <div>
-                                        <div className="font-medium text-gray-900">{user.displayName || `${user.firstName} ${user.lastName}`}</div>
+                                        <div className="font-medium text-gray-900">{`${user.firstName} ${user.lastName}`}</div>
                                         <div className="text-xs text-gray-500">{user.email}</div>
                                     </div>
                                 </div>
                             </td>
-                            <td className="px-6 py-4">
+                            {/*<td className="px-6 py-4">
                                     <span className={`px-2 py-1 rounded-full text-[10px] font-bold ${
                                         user.status === 'ACTIVE' ? 'bg-emerald-100 text-emerald-700' :
                                             user.status === 'BANNED' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'
                                     }`}>
                                         {user.status}
                                     </span>
+                            </td>*/}
+                            <td className="px-6 py-4 text-sm text-gray-500">
+                                {user.displayName}
                             </td>
                             <td className="px-6 py-4 font-mono text-sm text-indigo-600 font-bold">
                                 {user.affiliateId || '-'}
                             </td>
                             <td className="px-6 py-4 text-sm text-gray-500">
-                                {new Date(user.createdAt).toLocaleDateString()}
+                                {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : '-'}
+                            </td>
+                            <td className="px-6 py-4 text-sm text-gray-500">
+                                {user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleDateString() : '-'}
                             </td>
                             <td className="px-6 py-4 text-right">
                                 <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
