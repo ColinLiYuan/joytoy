@@ -1,7 +1,7 @@
-// app/admin/order/page.tsx
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import { orderService } from '@/services/orderService'
 import { OrderResponse, OrderStatus } from '@/types/order'
 import {
@@ -10,18 +10,20 @@ import {
     Eye,
     Calendar,
     CreditCard,
-    Package, // 新增：用于表示打包/处理中的图标
+    Package,
     PackageCheck,
-    Loader2
+    Loader2,
+    ChevronLeft,
+    ChevronRight
 } from 'lucide-react'
 import { sendShippingConfirmationEmail } from '@/app/actions/send-shipping-email';
 
-// 定义所有状态，包含已签收
+// 定义所有状态
 const statuses: (OrderStatus | 'ALL')[] = [
     'ALL', 'PENDING', 'PAID', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'COMPLETED', 'CANCELLED'
 ];
 
-// 状态中文映射字典
+// 状态中文映射
 const statusMap: Record<string, string> = {
     'ALL': '全部订单',
     'PENDING': '待支付',
@@ -36,13 +38,15 @@ const statusMap: Record<string, string> = {
 };
 
 export default function OrderPage() {
+    const router = useRouter();
     const [orders, setOrders] = useState<OrderResponse[]>([])
     const [loading, setLoading] = useState(true)
-    const [activeStatus, setActiveStatus] = useState<OrderStatus | 'ALL'>('ALL')
+
+    // 初始化默认过滤“已支付”状态
+    const [activeStatus, setActiveStatus] = useState<OrderStatus | 'ALL'>('PAID')
     const [searchQuery, setSearchQuery] = useState('')
     const [page, setPage] = useState(0)
     const [totalPages, setTotalPages] = useState(0)
-    const [selectedOrder, setSelectedOrder] = useState<OrderResponse | null>(null)
 
     // 发货弹窗状态
     const [isShipModalOpen, setIsShipModalOpen] = useState(false)
@@ -56,7 +60,7 @@ export default function OrderPage() {
         try {
             const data = await orderService.adminList({
                 page,
-                size: 10,
+                size: 7,
                 status: activeStatus === 'ALL' ? undefined : activeStatus,
                 orderNumber: searchQuery
             })
@@ -73,12 +77,14 @@ export default function OrderPage() {
         fetchOrders()
     }, [fetchOrders])
 
-    // 通用的状态更新方法（用于支付确认、开始处理、签收确认等操作）
-    const handleUpdateStatus = async (orderId: number, newStatus: OrderStatus) => {
-        if (!window.confirm(`确定要将订单状态手动更新为【${statusMap[newStatus] || newStatus}】吗？`)) return;
+    // 更新状态逻辑
+    const handleUpdateStatus = async (orderId: number, newStatus: string) => {
+        const statusLabel = statusMap[newStatus] || newStatus;
+        if (!window.confirm(`确定要将订单状态手动更新为【${statusLabel}】吗？`)) return;
 
         try {
-            // 直接调用 orderService 的封装方法
+            // 这里调用 updateStatus，第二个参数传 status 字符串（如果后端支持）
+            // 或者你需要专门的 updateStatus 接口，这里暂用你 service 定义的 updateStatus
             await orderService.updateStatus(orderId, newStatus);
             fetchOrders();
         } catch (error: any) {
@@ -86,12 +92,11 @@ export default function OrderPage() {
         }
     };
 
-    // 发货提交逻辑（复用通用的 updateStatus 接口，同时附带物流单号）
+    // 发货提交
     const handleShipSubmit = async () => {
         if (!trackingNumber || !shipOrder) return
         setShipLoading(true)
         try {
-            // 直接调用 orderService 的封装方法，传入 trackingNumber
             await orderService.updateStatus(shipOrder.id, trackingNumber);
 
             await sendShippingConfirmationEmail({
@@ -132,10 +137,6 @@ export default function OrderPage() {
             case 'PROCESSING': return 'bg-indigo-100 text-indigo-800 border-indigo-200';
             case 'SHIPPED': return 'bg-purple-100 text-purple-800 border-purple-200';
             case 'DELIVERED': return 'bg-green-100 text-green-800 border-green-200';
-            case 'COMPLETED': return 'bg-teal-100 text-teal-800 border-teal-200';
-            case 'CANCELLED':
-            case 'REFUNDED':
-            case 'EXPIRED': return 'bg-red-100 text-red-800 border-red-200';
             default: return 'bg-gray-100 text-gray-800 border-gray-200';
         }
     }
@@ -172,7 +173,7 @@ export default function OrderPage() {
                             placeholder="输入订单号搜索..."
                             className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-900 focus:bg-white outline-none transition-all"
                             value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
+                            onChange={(e) => { setSearchQuery(e.target.value); setPage(0); }}
                         />
                     </div>
                 </div>
@@ -184,12 +185,7 @@ export default function OrderPage() {
                         <tr className="bg-gray-50 border-b border-gray-200">
                             <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">订单编号</th>
                             <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">客户邮箱</th>
-                            <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">联盟码</th>
-                            <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">折扣码</th>
-                            <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">折扣金额</th>
                             <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">实付金额</th>
-                            <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">佣金率</th>
-                            <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">佣金</th>
                             <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">当前状态</th>
                             <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-right">管理操作</th>
                         </tr>
@@ -212,69 +208,34 @@ export default function OrderPage() {
                                     </div>
                                 </td>
                                 <td className="px-6 py-4 text-sm text-gray-600">{order.guestEmail}</td>
-                                <td className="px-6 py-4 text-sm text-gray-600">{order.affiliateCode}</td>
-                                <td className="px-6 py-4 text-sm text-gray-600">{order.couponCode}</td>
-                                <td className="px-6 py-4 text-sm font-bold text-gray-900">${order.discountAmount}</td>
-                                <td className="px-6 py-4 text-sm font-bold text-gray-900">${order.finalAmount}</td>
-                                <td className="px-6 py-4 text-sm font-bold text-gray-900">${order.commissionRate}</td>
-                                <td className="px-6 py-4 text-sm font-bold text-gray-900">${order.commissionAmount}</td>
+                                <td className="px-6 py-4 text-sm font-bold text-gray-900">${order.finalAmount.toFixed(2)}</td>
                                 <td className="px-6 py-4">
-                                        <span className={`px-3 py-1 rounded-full text-xs font-bold border ${getStatusColor(order.status)}`}>
+                                        <span className={`px-3 py-1 rounded-full text-[10px] font-bold border ${getStatusColor(order.status)}`}>
                                             {statusMap[order.status] || order.status}
                                         </span>
                                 </td>
                                 <td className="px-6 py-4 text-right">
                                     <div className="flex items-center justify-end space-x-2">
+                                        {/* 查看详情按钮 */}
                                         <button
-                                            onClick={() => setSelectedOrder(order)}
+                                            onClick={() => router.push(`/admin/order/detail/${order.orderNumber}`)}
                                             className="p-2 text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all"
                                             title="详情"
                                         >
                                             <Eye className="h-5 w-5" />
                                         </button>
 
-                                        {/* 待支付状态下展示 支付按钮 */}
                                         {order.status === 'PENDING' && (
-                                            <button
-                                                onClick={() => handleUpdateStatus(order.id, 'PAID')}
-                                                className="p-2 text-green-500 hover:bg-green-50 rounded-lg"
-                                                title="确认支付"
-                                            >
-                                                <CreditCard className="h-5 w-5" />
-                                            </button>
+                                            <button onClick={() => handleUpdateStatus(order.id, 'PAID')} className="p-2 text-green-500 hover:bg-green-50 rounded-lg" title="确认支付"><CreditCard className="h-5 w-5" /></button>
                                         )}
-
-                                        {/* 已支付状态下展示 开始处理按钮 (仅流转状态，不弹出发货框) */}
                                         {order.status === 'PAID' && (
-                                            <button
-                                                onClick={() => handleUpdateStatus(order.id, 'PROCESSING')}
-                                                className="p-2 text-indigo-500 hover:bg-indigo-50 rounded-lg"
-                                                title="开始处理"
-                                            >
-                                                <Package className="h-5 w-5" />
-                                            </button>
+                                            <button onClick={() => handleUpdateStatus(order.id, 'PROCESSING')} className="p-2 text-indigo-500 hover:bg-indigo-50 rounded-lg" title="开始处理"><Package className="h-5 w-5" /></button>
                                         )}
-
-                                        {/* 处理中状态下展示 发货按钮 (弹出发货框) */}
                                         {order.status === 'PROCESSING' && (
-                                            <button
-                                                onClick={() => { setShipOrder(order); setIsShipModalOpen(true); }}
-                                                className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg"
-                                                title="去发货"
-                                            >
-                                                <Truck className="h-5 w-5" />
-                                            </button>
+                                            <button onClick={() => { setShipOrder(order); setIsShipModalOpen(true); }} className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg" title="去发货"><Truck className="h-5 w-5" /></button>
                                         )}
-
-                                        {/* 已发货状态下展示 签收按钮 */}
                                         {order.status === 'SHIPPED' && (
-                                            <button
-                                                onClick={() => handleUpdateStatus(order.id, 'DELIVERED')}
-                                                className="p-2 text-orange-500 hover:bg-orange-50 rounded-lg"
-                                                title="确认签收"
-                                            >
-                                                <PackageCheck className="h-5 w-5" />
-                                            </button>
+                                            <button onClick={() => handleUpdateStatus(order.id, 'DELIVERED')} className="p-2 text-orange-500 hover:bg-orange-50 rounded-lg" title="确认签收"><PackageCheck className="h-5 w-5" /></button>
                                         )}
                                     </div>
                                 </td>
@@ -282,40 +243,59 @@ export default function OrderPage() {
                         ))}
                         </tbody>
                     </table>
+
+                    {/* 分页控制 */}
+                    {!loading && totalPages > 1 && (
+                        <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
+                            <p className="text-sm text-gray-500">
+                                第 <span className="font-medium">{page + 1}</span> 页 / 共 <span className="font-medium">{totalPages}</span> 页
+                            </p>
+                            <div className="flex space-x-2">
+                                <button
+                                    disabled={page === 0}
+                                    onClick={() => setPage(prev => prev - 1)}
+                                    className="p-2 rounded border bg-white hover:bg-gray-50 disabled:opacity-50 transition-colors"
+                                >
+                                    <ChevronLeft size={18} />
+                                </button>
+                                <button
+                                    disabled={page >= totalPages - 1}
+                                    onClick={() => setPage(prev => prev + 1)}
+                                    className="p-2 rounded border bg-white hover:bg-gray-50 disabled:opacity-50 transition-colors"
+                                >
+                                    <ChevronRight size={18} />
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
 
             {/* 发货模态框 */}
             {isShipModalOpen && (
-                <div className="fixed inset-0 z-50 overflow-y-auto">
-                    <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
-                        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onClick={() => setIsShipModalOpen(false)} />
-                        <div className="relative transform overflow-hidden rounded-xl bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
-                            <div className="bg-white px-6 py-6">
-                                <h3 className="text-lg font-bold text-gray-900 mb-4">订单发货</h3>
-                                <div className="space-y-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">物流单号</label>
-                                        <input
-                                            type="text"
-                                            value={trackingNumber}
-                                            onChange={(e) => setTrackingNumber(e.target.value)}
-                                            className="w-full border border-gray-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-gray-900"
-                                            placeholder="请输入物流单号"
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="bg-gray-50 px-6 py-4 flex justify-end space-x-3">
-                                <button onClick={() => setIsShipModalOpen(false)} className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900">取消</button>
-                                <button
-                                    onClick={handleShipSubmit}
-                                    disabled={shipLoading || !trackingNumber}
-                                    className="px-6 py-2 bg-gray-900 text-white text-sm font-bold rounded-lg disabled:opacity-50"
-                                >
-                                    {shipLoading ? '提交中...' : '确认发货'}
-                                </button>
-                            </div>
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div className="fixed inset-0 bg-black/50 transition-opacity" onClick={() => setIsShipModalOpen(false)} />
+                    <div className="relative bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
+                        <div className="p-6">
+                            <h3 className="text-lg font-bold text-gray-900 mb-4">订单发货</h3>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">物流单号</label>
+                            <input
+                                type="text"
+                                value={trackingNumber}
+                                onChange={(e) => setTrackingNumber(e.target.value)}
+                                className="w-full border border-gray-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-black"
+                                placeholder="请输入物流单号"
+                            />
+                        </div>
+                        <div className="bg-gray-50 px-6 py-4 flex justify-end space-x-3">
+                            <button onClick={() => setIsShipModalOpen(false)} className="px-4 py-2 text-sm text-gray-600">取消</button>
+                            <button
+                                onClick={handleShipSubmit}
+                                disabled={shipLoading || !trackingNumber}
+                                className="px-6 py-2 bg-black text-white text-sm font-bold rounded-lg disabled:opacity-50"
+                            >
+                                {shipLoading ? '提交中...' : '确认发货'}
+                            </button>
                         </div>
                     </div>
                 </div>

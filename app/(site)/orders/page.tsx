@@ -64,6 +64,7 @@ export default function OrdersPage() {
             const userId = getUserId();
             if (!userId) { setOrders([]); return; }
             const data = await orderService.getUserOrders(userId, 20);
+            console.log('user orders: ', data)
             setOrders(Array.isArray(data) ? data : []);
         } catch (error) {
             console.error(error);
@@ -86,8 +87,13 @@ export default function OrdersPage() {
     const handleAction = (e: React.MouseEvent, order: OrderResponse, action: string) => {
         e.preventDefault();
         e.stopPropagation();
-        if (action === 'pay') window.location.href = `/payment?orderNumber=${order.orderNumber}`;
-        else if (action === 'track') window.location.href = `/orders/${order.orderNumber}/tracking`;
+        if (action === 'pay') {
+            window.location.href = `/payment?orderNumber=${order.orderNumber}`;
+        } else if (action === 'track') {
+            // ✅ 跳转到订单追踪页面，自动带上订单号和邮箱
+            const email = order.guestEmail || order.user?.email || '';
+            window.location.href = `/pages/order-tracking?orderNumber=${order.orderNumber}&email=${encodeURIComponent(email)}`;
+        }
         // 其他状态保持默认跳转
     };
 
