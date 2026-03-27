@@ -23,7 +23,8 @@ export const FAQ_DATA: FAQCategory[] = [
             {
                 id: "shipping-time",
                 question: "How long will it take to receive my order?",
-                answer: "We ship worldwide via dedicated priority lines. \n\n🇺🇸 **USA:** 7-12 Business Days\n🇪🇺 **EU/UK:** 8-14 Business Days\n\n*Processing time: 1-3 days.*",
+                answer: "We ship worldwide via dedicated priority lines. \n\n🇺🇸 **USA:** 5-12 Business Days\n🇪🇺" +
+                    " **EU/UK:** 5-14 Business Days\n\n*Processing time: 1-3 days.*",
                 tags: ["general", "home"] // 首页展示：解决时效焦虑
             },
             {
