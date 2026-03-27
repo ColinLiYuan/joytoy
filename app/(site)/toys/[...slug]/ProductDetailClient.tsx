@@ -24,7 +24,7 @@ import { affiliateService } from '@/services/affiliateService';
 import {
     ShoppingBag, ShieldCheck, Package, Truck, ChevronDown, ChevronUp, Star, Heart,
     Loader2, BatteryCharging, Droplets, Box, Smartphone, Feather, Volume2, Check,
-    Ruler, Scale, Activity, EyeOff, Waves, Zap, Power, Hourglass, AlertCircle,
+    Ruler, Scale, Activity, EyeOff, Waves, Zap, Power, Hourglass,
     FileText, BellRing
 } from 'lucide-react';
 
@@ -209,11 +209,13 @@ export default function ProductDetailClient({
 
     const isProductActive = product.status === 'ACTIVE';
     const getAvailableStock = (sku: ProductSku | null | undefined) => sku ? (sku.stock || 0) - (sku.lockedStock || 0) : 0;
+    const currentStock = getAvailableStock(selectedSku); // 获取当前库存
 
-    // Logic: Product is active, we have a SKU, but stock is 0
-    const isOutOfStock = isProductActive && selectedSku && getAvailableStock(selectedSku) <= 0;
+    const isOutOfStock = isProductActive && selectedSku && currentStock <= 0;
+
+    const isLowStock = isProductActive && selectedSku && currentStock > 0 && currentStock < 5;
     // Logic: Can purchase only if active AND has stock
-    const canPurchase = isProductActive && selectedSku && getAvailableStock(selectedSku) > 0;
+    const canPurchase = isProductActive && selectedSku && currentStock > 0;
 
     const manualUrl = useMemo(() => {
         const baseTitle = product.title.split('|')[0].trim();
@@ -384,7 +386,6 @@ export default function ProductDetailClient({
 
                             {!isProductActive && (
                                 <div className="mt-4 mb-6 p-4 bg-gray-50 border border-gray-100 rounded-xl flex items-center gap-3 text-gray-500">
-                                    <AlertCircle size={20} className="text-gray-400" />
                                     <span className="text-sm font-bold uppercase tracking-wider">This item is currently unavailable</span>
                                 </div>
                             )}
@@ -403,10 +404,14 @@ export default function ProductDetailClient({
                                             <span className="text-3xl font-bold text-gray-300">Unavailable</span>
                                         )}
                                     </div>
-                                    {/* SOLD OUT BADGE */}
                                     {isOutOfStock && (
-                                        <p className="text-[#EA580C] font-bold text-sm mt-2 flex items-center gap-2 animate-pulse">
+                                        <p className="text-[#B22222] font-bold text-sm mt-2 flex items-center gap-2 animate-pulse">
                                             SOLD OUT - RESTOCKING SOON
+                                        </p>
+                                    )}
+                                    {isLowStock && (
+                                        <p className="text-[#B22222] font-bold text-sm mt-2 flex items-center gap-2">
+                                            Selling Fast - Low Stock
                                         </p>
                                     )}
                                 </div>
@@ -802,11 +807,11 @@ export default function ProductDetailClient({
                 */}
                 <button
                     className={`h-11 px-8 rounded-full font-bold text-sm transition-all shadow-md whitespace-nowrap flex-shrink-0 flex items-center justify-center ${
-                        isOutOfStock 
+                        isOutOfStock
                             ? 'bg-black text-white hover:bg-gray-800' // Notify button style
-                            : !canPurchase 
-                                ? 'bg-gray-200 text-gray-400 cursor-not-allowed' 
-                                : 'bg-black text-white hover:bg-gray-800'
+                            : !canPurchase
+                            ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                            : 'bg-black text-white hover:bg-gray-800'
                     }`}
                     onClick={() => {
                         if (isOutOfStock) {
@@ -821,8 +826,8 @@ export default function ProductDetailClient({
                         !isProductActive
                             ? 'Off-shelf'
                             : isOutOfStock
-                                ? 'Notify Me'
-                                : 'Add to Bag'
+                            ? 'Notify Me'
+                            : 'Add to Bag'
                     )}
                 </button>
             </div>
