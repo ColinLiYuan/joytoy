@@ -91,7 +91,7 @@ export default function OrdersPage() {
             window.location.href = `/payment?orderNumber=${order.orderNumber}`;
         } else if (action === 'track') {
             // ✅ 跳转到订单追踪页面，自动带上订单号和邮箱
-            const email = order.guestEmail || order.user?.email || '';
+            const email = order.guestEmail || '';
             window.location.href = `/pages/order-tracking?orderNumber=${order.orderNumber}&email=${encodeURIComponent(email)}`;
         }
         // 其他状态保持默认跳转
