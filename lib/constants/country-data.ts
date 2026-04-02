@@ -16,7 +16,6 @@ export const COUNTRY_DATA: Record<string, string> = {
     "Mexico": "MX",
     "Brazil": "BR",
     "India": "IN"
-    // 更多国家...
 };
 
 export const COUNTRIES_FOR_SELECT = Object.keys(COUNTRY_DATA).sort();

@@ -158,65 +158,6 @@ export default function CheckoutPage() {
             return;
         }
 
-        // const affiliateData = affiliateService.getAffiliateFromCookie();
-        // console.log('联盟信息:', affiliateData);
-
-        if (total === 0) {
-            setIsCreatingOrder(true);
-            try {
-                const addressData = {
-                    firstName: addr.firstName,
-                    lastName: addr.lastName,
-                    phone: addr.phone,
-                    email: emailToUse,
-                    country: addr.country,
-                    province: addr.province,
-                    city: addr.city,
-                    addressLine1: addr.addressLine1,
-                    addressLine2: addr.addressLine2 || '',
-                    zipCode: addr.zipCode,
-                    company: '',
-                    useAsBilling: true
-                };
-
-                const orderData: OrderCreateRequest = {
-                    userId: userId ?? undefined,
-                    cartId: cartId ?? undefined,
-                    items: orderItems,
-                    shippingAddress: addressData,
-                    billingAddress: addressData,
-                    paymentMethod: 'FREE', // 新增支付方式
-                    shippingMethod: 'STANDARD',
-                    customerNote: formData.orderNotes,
-                    shippingFee: shippingFee,
-                    discountAmount: discountAmount,
-                    guestEmail: !userId ? addressData.email : undefined,
-                    couponCode: couponCode?.toUpperCase().trim(),
-                    affiliateCode: affiliateService.getAffiliateCode()?.toUpperCase().trim(),
-                };
-
-                const result = await orderService.createOrder(orderData);
-
-                // 清空购物车
-                useCartStore.getState().clearCart();
-
-                const cleanOrderNumber = result.orderNumber.replace(/^#/, '');
-
-                // ✅ 根据你的 payment.tsx 逻辑跳转：
-                if (isLoggedIn) {
-                    router.push(`/orders/${cleanOrderNumber}?free_order=true`);
-                } else {
-                    router.push(`/order-confirmation?orderNumber=${cleanOrderNumber}&free_order=true`);
-                }
-
-            } catch (error: any) {
-                showToast('error', 'Order Failed', error.message || 'Could not create order');
-            } finally {
-                setIsCreatingOrder(false);
-            }
-            return; // 直接返回，不走正常支付流程
-        }
-
         setIsCreatingOrder(true);
 
         const addressData = {
