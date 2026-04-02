@@ -40,6 +40,7 @@ export interface OrderResponse {
     paymentMethod: string;
     shippingMethod: string;
     shippingAddress: AddressRequest;
+    billingAddress: AddressRequest;
     affiliateCode?: string;
     affiliateId?: string;
     commissionAmount?: number;

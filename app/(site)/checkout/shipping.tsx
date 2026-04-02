@@ -1,14 +1,17 @@
-// app/checkout/shipping.tsx
 'use client';
 
 import { useState } from 'react';
 import { AddressRequest } from '@/types/order';
 import { COUNTRY_DATA } from '@/lib/constants/country-data';
-import { Loader2, ArrowRight } from 'lucide-react';
+import { Loader2, ArrowRight, Check } from 'lucide-react';
 
 interface ShippingFormProps {
     shippingAddress: AddressRequest;
     updateShippingAddress: (field: keyof AddressRequest, value: string) => void;
+    billingAddress: Partial<AddressRequest>;
+    setBillingAddress: (addr: any) => void;
+    isBillingSameAsShipping: boolean;
+    setIsBillingSameAsShipping: (val: boolean) => void;
     onProceedToPayment: () => void;
     isCreatingOrder: boolean;
 }
@@ -16,14 +19,24 @@ interface ShippingFormProps {
 export default function ShippingForm({
                                          shippingAddress,
                                          updateShippingAddress,
+                                         billingAddress,
+                                         setBillingAddress,
+                                         isBillingSameAsShipping,
+                                         setIsBillingSameAsShipping,
                                          onProceedToPayment,
                                          isCreatingOrder
                                      }: ShippingFormProps) {
 
     const [errors, setErrors] = useState<Record<string, string>>({});
 
+    const updateBillingField = (field: string, value: string) => {
+        setBillingAddress((prev: any) => ({ ...prev, [field]: value }));
+        if (errors[`billing_${field}`]) setErrors(prev => ({ ...prev, [`billing_${field}`]: '' }));
+    };
+
     const validateForm = () => {
         const newErrors: Record<string, string> = {};
+        // Shipping Validation
         if (!shippingAddress.email?.trim()) newErrors.email = 'Email is required';
         if (!shippingAddress.firstName?.trim()) newErrors.firstName = 'First Name is required';
         if (!shippingAddress.lastName?.trim()) newErrors.lastName = 'Last Name is required';
@@ -34,10 +47,13 @@ export default function ShippingForm({
         if (!shippingAddress.country?.trim()) newErrors.country = 'Country is required';
         if (!shippingAddress.phone?.trim()) newErrors.phone = 'Phone is required';
 
-        // 验证存储的代码是否在有效的 ISO 代码列表中
-        const validCodes = Object.values(COUNTRY_DATA);
-        if (shippingAddress.country && !validCodes.includes(shippingAddress.country)) {
-            newErrors.country = 'Please select a valid country from the list';
+        // Billing Validation (only if not same)
+        if (!isBillingSameAsShipping) {
+            if (!billingAddress.firstName?.trim()) newErrors.billing_firstName = 'First Name is required';
+            if (!billingAddress.addressLine1?.trim()) newErrors.billing_addressLine1 = 'Address is required';
+            if (!billingAddress.city?.trim()) newErrors.billing_city = 'City is required';
+            if (!billingAddress.country?.trim()) newErrors.billing_country = 'Country is required';
+            if (!billingAddress.zipCode?.trim()) newErrors.billing_zipCode = 'Zip Code is required';
         }
 
         setErrors(newErrors);
@@ -46,173 +62,95 @@ export default function ShippingForm({
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (validateForm()) {
-            onProceedToPayment();
-        } else {
-            const firstError = document.querySelector('.border-red-500');
-            firstError?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-    };
-
-    const handleChange = (field: keyof AddressRequest, value: string) => {
-        updateShippingAddress(field, value);
-        if (errors[field]) setErrors(prev => ({ ...prev, [field]: '' }));
+        if (validateForm()) onProceedToPayment();
     };
 
     const inputClass = (error?: string) => `
-        w-full p-4 rounded-xl border transition-all outline-none
-        text-base md:text-sm 
-        ${error
-        ? 'border-red-500 bg-red-50 focus:border-red-500 placeholder:text-red-400'
-        : 'border-gray-200 bg-gray-50 focus:bg-white focus:border-black focus:ring-1 focus:ring-black'
-    }
+        w-full p-4 rounded-xl border transition-all outline-none text-base md:text-sm 
+        ${error ? 'border-red-500 bg-red-50' : 'border-gray-200 bg-gray-50 focus:bg-white focus:border-black'}
     `;
 
     return (
         <form onSubmit={handleSubmit} className="space-y-8">
-            {/* Contact */}
-            <div>
-                <h3 className="text-lg font-bold text-gray-900 mb-5 font-['Playfair_Display']">Contact Info</h3>
-                <div className="space-y-4">
-                    <div>
-                        <input
-                            type="email"
-                            placeholder="Email Address"
-                            value={shippingAddress.email || ''}
-                            onChange={(e) => handleChange('email', e.target.value)}
-                            className={inputClass(errors.email)}
-                        />
-                        {errors.email && <p className="text-red-500 text-xs mt-1 ml-1">{errors.email}</p>}
+            {/* Contact Info */}
+            <div className="space-y-5">
+                <h3 className="text-lg font-bold text-gray-900 font-['Playfair_Display']">Contact Info</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="md:col-span-2">
+                        <input type="email" placeholder="Email Address" value={shippingAddress.email || ''} onChange={(e) => updateShippingAddress('email', e.target.value)} className={inputClass(errors.email)} />
+                        {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
                     </div>
-                    <div>
-                        <input
-                            type="tel"
-                            placeholder="Phone Number"
-                            value={shippingAddress.phone || ''}
-                            onChange={(e) => handleChange('phone', e.target.value)}
-                            className={inputClass(errors.phone)}
-                        />
-                        {errors.phone && <p className="text-red-500 text-xs mt-1 ml-1">{errors.phone}</p>}
+                    <div className="md:col-span-2">
+                        <input type="tel" placeholder="Phone Number" value={shippingAddress.phone || ''} onChange={(e) => updateShippingAddress('phone', e.target.value)} className={inputClass(errors.phone)} />
+                        {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
                     </div>
                 </div>
             </div>
 
-            {/* Address */}
-            <div>
-                <h3 className="text-lg font-bold text-gray-900 mb-5 font-['Playfair_Display']">Shipping Address</h3>
-                <div className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <input
-                                type="text"
-                                placeholder="First Name"
-                                value={shippingAddress.firstName || ''}
-                                onChange={(e) => handleChange('firstName', e.target.value)}
-                                className={inputClass(errors.firstName)}
-                            />
-                            {errors.firstName && <p className="text-red-500 text-xs mt-1 ml-1">{errors.firstName}</p>}
-                        </div>
-                        <div>
-                            <input
-                                type="text"
-                                placeholder="Last Name"
-                                value={shippingAddress.lastName || ''}
-                                onChange={(e) => handleChange('lastName', e.target.value)}
-                                className={inputClass(errors.lastName)}
-                            />
-                            {errors.lastName && <p className="text-red-500 text-xs mt-1 ml-1">{errors.lastName}</p>}
-                        </div>
-                    </div>
+            {/* Shipping Address */}
+            <div className="space-y-5">
+                <h3 className="text-lg font-bold text-gray-900 font-['Playfair_Display']">Shipping Address</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <input type="text" placeholder="First Name" value={shippingAddress.firstName || ''} onChange={(e) => updateShippingAddress('firstName', e.target.value)} className={inputClass(errors.firstName)} />
+                    <input type="text" placeholder="Last Name" value={shippingAddress.lastName || ''} onChange={(e) => updateShippingAddress('lastName', e.target.value)} className={inputClass(errors.lastName)} />
 
-                    <div>
-                        <select
-                            value={shippingAddress.country || ''}
-                            onChange={(e) => handleChange('country', e.target.value)}
-                            className={`${inputClass(errors.country)} appearance-none cursor-pointer`}
-                        >
+                    <div className="md:col-span-2">
+                        <select value={shippingAddress.country || ''} onChange={(e) => updateShippingAddress('country', e.target.value)} className={`${inputClass(errors.country)} appearance-none`}>
                             <option value="">Select Country</option>
-                            {/* 遍历键值对：显示 Name (Code)，存储 Code */}
-                            {Object.entries(COUNTRY_DATA)
-                                .sort(([a], [b]) => a.localeCompare(b))
-                                .map(([name, code]) => (
-                                    <option key={code} value={code}>
-                                        {name} ({code})
-                                    </option>
-                                ))}
+                            {Object.entries(COUNTRY_DATA).map(([name, code]) => <option key={code} value={code}>{name} ({code})</option>)}
                         </select>
-                        {errors.country && <p className="text-red-500 text-xs mt-1 ml-1">{errors.country}</p>}
                     </div>
 
-                    <div>
-                        <input
-                            type="text"
-                            placeholder="Address Line 1"
-                            value={shippingAddress.addressLine1 || ''}
-                            onChange={(e) => handleChange('addressLine1', e.target.value)}
-                            className={inputClass(errors.addressLine1)}
-                        />
-                        {errors.addressLine1 && <p className="text-red-500 text-xs mt-1 ml-1">{errors.addressLine1}</p>}
+                    <div className="md:col-span-2">
+                        <input type="text" placeholder="Address Line 1" value={shippingAddress.addressLine1 || ''} onChange={(e) => updateShippingAddress('addressLine1', e.target.value)} className={inputClass(errors.addressLine1)} />
                     </div>
 
-                    <input
-                        type="text"
-                        placeholder="Apartment, suite, etc. (optional)"
-                        value={shippingAddress.addressLine2 || ''}
-                        onChange={(e) => handleChange('addressLine2', e.target.value)}
-                        className={inputClass()}
-                    />
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div>
-                            <input
-                                type="text"
-                                placeholder="City"
-                                value={shippingAddress.city || ''}
-                                onChange={(e) => handleChange('city', e.target.value)}
-                                className={inputClass(errors.city)}
-                            />
-                            {errors.city && <p className="text-red-500 text-xs mt-1 ml-1">{errors.city}</p>}
-                        </div>
-                        <div>
-                            <input
-                                type="text"
-                                placeholder="State / Province"
-                                value={shippingAddress.province || ''}
-                                onChange={(e) => handleChange('province', e.target.value)}
-                                className={inputClass(errors.province)}
-                            />
-                            {errors.province && <p className="text-red-500 text-xs mt-1 ml-1">{errors.province}</p>}
-                        </div>
-                        <div>
-                            <input
-                                type="text"
-                                placeholder="ZIP / Postal Code"
-                                value={shippingAddress.zipCode || ''}
-                                onChange={(e) => handleChange('zipCode', e.target.value)}
-                                className={inputClass(errors.zipCode)}
-                            />
-                            {errors.zipCode && <p className="text-red-500 text-xs mt-1 ml-1">{errors.zipCode}</p>}
-                        </div>
+                    <div className="md:col-span-2">
+                        <input type="text" placeholder="Apartment, suite, etc. (optional)" value={shippingAddress.addressLine2 || ''} onChange={(e) => updateShippingAddress('addressLine2', e.target.value)} className={inputClass()} />
                     </div>
+
+                    <input type="text" placeholder="City" value={shippingAddress.city || ''} onChange={(e) => updateShippingAddress('city', e.target.value)} className={inputClass(errors.city)} />
+                    <input type="text" placeholder="State / Province" value={shippingAddress.province || ''} onChange={(e) => updateShippingAddress('province', e.target.value)} className={inputClass(errors.province)} />
+                    <input type="text" placeholder="ZIP Code" value={shippingAddress.zipCode || ''} onChange={(e) => updateShippingAddress('zipCode', e.target.value)} className={inputClass(errors.zipCode)} />
                 </div>
             </div>
 
-            <button
-                type="submit"
-                disabled={isCreatingOrder}
-                className="w-full bg-black text-white py-4 rounded-xl font-bold text-lg hover:bg-gray-800 transition-all shadow-lg hover:shadow-xl disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-8"
-            >
-                {isCreatingOrder ? (
-                    <>
-                        <Loader2 className="animate-spin" />
-                        Processing...
-                    </>
-                ) : (
-                    <>
-                        Continue to Payment
-                        <ArrowRight size={20} />
-                    </>
+            {/* ✅ Billing Address Section */}
+            <div className="pt-8 border-t border-gray-100 space-y-6">
+                <h3 className="text-lg font-bold text-gray-900 font-['Playfair_Display']">Billing Address</h3>
+
+                <div
+                    onClick={() => setIsBillingSameAsShipping(!isBillingSameAsShipping)}
+                    className="flex items-center gap-4 p-4 rounded-xl border border-gray-200 bg-gray-50 cursor-pointer hover:border-black transition-all group"
+                >
+                    <div className={`w-6 h-6 rounded-md border flex items-center justify-center transition-all ${isBillingSameAsShipping ? 'bg-black border-black' : 'bg-white border-gray-300 group-hover:border-black'}`}>
+                        {isBillingSameAsShipping && <Check size={14} className="text-white" />}
+                    </div>
+                    <span className="text-sm font-bold text-gray-700">Same as shipping address</span>
+                </div>
+
+                {!isBillingSameAsShipping && (
+                    <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <input type="text" placeholder="First Name" value={billingAddress.firstName || ''} onChange={(e) => updateBillingField('firstName', e.target.value)} className={inputClass(errors.billing_firstName)} />
+                            <input type="text" placeholder="Last Name" value={billingAddress.lastName || ''} onChange={(e) => updateBillingField('lastName', e.target.value)} className={inputClass()} />
+                        </div>
+                        <select value={billingAddress.country || ''} onChange={(e) => updateBillingField('country', e.target.value)} className={inputClass(errors.billing_country)}>
+                            <option value="">Select Country</option>
+                            {Object.entries(COUNTRY_DATA).map(([name, code]) => <option key={code} value={code}>{name}</option>)}
+                        </select>
+                        <input type="text" placeholder="Address Line 1" value={billingAddress.addressLine1 || ''} onChange={(e) => updateBillingField('addressLine1', e.target.value)} className={inputClass(errors.billing_addressLine1)} />
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <input type="text" placeholder="City" value={billingAddress.city || ''} onChange={(e) => updateBillingField('city', e.target.value)} className={inputClass(errors.billing_city)} />
+                            <input type="text" placeholder="State" value={billingAddress.province || ''} onChange={(e) => updateBillingField('province', e.target.value)} className={inputClass()} />
+                            <input type="text" placeholder="ZIP Code" value={billingAddress.zipCode || ''} onChange={(e) => updateBillingField('zipCode', e.target.value)} className={inputClass(errors.billing_zipCode)} />
+                        </div>
+                    </div>
                 )}
+            </div>
+
+            <button type="submit" disabled={isCreatingOrder} className="w-full bg-black text-white py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-2 mt-8 disabled:opacity-50">
+                {isCreatingOrder ? <Loader2 className="animate-spin" /> : <>Continue to Payment <ArrowRight size={20} /></>}
             </button>
         </form>
     );
