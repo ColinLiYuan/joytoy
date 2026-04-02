@@ -118,7 +118,7 @@ export default function CheckoutPage() {
         const formData = getShippingFormData();
         const addr = formData.shippingAddress;
 
-        console.log('addr: ', addr)
+        // console.log('addr: ', addr)
 
         // 校验收货地址
         if (!addr.firstName || !addr.addressLine1 || !addr.city || !addr.zipCode || !addr.country) {
@@ -186,21 +186,21 @@ export default function CheckoutPage() {
             affiliateCode: affiliateService.getAffiliateCode()?.toUpperCase().trim(),
         };
 
-        // try {
-        //     const result = await orderService.createOrder(orderData);
-        //     localStorage.setItem('currentOrder', JSON.stringify({
-        //         ...result,
-        //         items: orderItems,
-        //         shippingAddress: shippingAddressData,
-        //         billingAddress: billingAddressData,
-        //     }));
-        //     useCartStore.getState().clearCart();
-        //     router.push(`/payment?orderNumber=${result.orderNumber.replace(/^#/, '')}`);
-        // } catch (error: any) {
-        //     showToast('error', 'Order Failed', error.message || 'Could not create order');
-        // } finally {
-        //     setIsCreatingOrder(false);
-        // }
+        try {
+            const result = await orderService.createOrder(orderData);
+            localStorage.setItem('currentOrder', JSON.stringify({
+                ...result,
+                items: orderItems,
+                shippingAddress: shippingAddressData,
+                billingAddress: billingAddressData,
+            }));
+            useCartStore.getState().clearCart();
+            router.push(`/payment?orderNumber=${result.orderNumber.replace(/^#/, '')}`);
+        } catch (error: any) {
+            showToast('error', 'Order Failed', error.message || 'Could not create order');
+        } finally {
+            setIsCreatingOrder(false);
+        }
     };
 
     if (!isClient || isLoading || cartLoading) {

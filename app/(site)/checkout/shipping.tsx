@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { AddressRequest } from '@/types/order';
-import { COUNTRY_DATA, US_STATES } from '@/lib/constants/country-data';
+import { COUNTRY_DATA, PROVINCE_DATA } from '@/lib/constants/country-data';
 import { Loader2, ArrowRight, Check } from 'lucide-react';
 
 interface ShippingFormProps {
@@ -36,7 +36,6 @@ export default function ShippingForm({
 
     const validateForm = () => {
         const newErrors: Record<string, string> = {};
-        // Shipping Validation
         if (!shippingAddress.email?.trim()) newErrors.email = 'Email is required';
         if (!shippingAddress.firstName?.trim()) newErrors.firstName = 'First Name is required';
         if (!shippingAddress.lastName?.trim()) newErrors.lastName = 'Last Name is required';
@@ -47,12 +46,12 @@ export default function ShippingForm({
         if (!shippingAddress.country?.trim()) newErrors.country = 'Country is required';
         if (!shippingAddress.phone?.trim()) newErrors.phone = 'Phone is required';
 
-        // Billing Validation (only if not same)
         if (!isBillingSameAsShipping) {
             if (!billingAddress.firstName?.trim()) newErrors.billing_firstName = 'First Name is required';
             if (!billingAddress.addressLine1?.trim()) newErrors.billing_addressLine1 = 'Address is required';
             if (!billingAddress.city?.trim()) newErrors.billing_city = 'City is required';
             if (!billingAddress.country?.trim()) newErrors.billing_country = 'Country is required';
+            if (!billingAddress.province?.trim()) newErrors.billing_province = 'State is required';
             if (!billingAddress.zipCode?.trim()) newErrors.billing_zipCode = 'Zip Code is required';
         }
 
@@ -70,9 +69,42 @@ export default function ShippingForm({
         ${error ? 'border-red-500 bg-red-50' : 'border-gray-200 bg-gray-50 focus:bg-white focus:border-black'}
     `;
 
+    // ✅ 核心修复：根据 PROVINCE_DATA 自动判断渲染下拉还是输入框
+    const renderProvinceInput = (isBilling: boolean = false) => {
+        const currentAddr = isBilling ? billingAddress : shippingAddress;
+        const country = currentAddr.country || 'US';
+        const provinces = PROVINCE_DATA[country]; // 自动匹配所有在 data 里的国家
+        const updateFn = isBilling ? updateBillingField : updateShippingAddress;
+        const errorKey = isBilling ? `billing_province` : `province`;
+
+        if (provinces) {
+            return (
+                <select
+                    value={currentAddr.province || ''}
+                    onChange={(e) => updateFn('province', e.target.value)}
+                    className={inputClass(errors[errorKey])}
+                >
+                    <option value="">Select State/Province</option>
+                    {Object.entries(provinces).map(([code, name]) => (
+                        <option key={code} value={code}>{name} ({code})</option>
+                    ))}
+                </select>
+            );
+        }
+
+        return (
+            <input
+                type="text"
+                placeholder="State / Province"
+                value={currentAddr.province || ''}
+                onChange={(e) => updateFn('province', e.target.value)}
+                className={inputClass(errors[errorKey])}
+            />
+        );
+    };
+
     return (
         <form onSubmit={handleSubmit} className="space-y-8">
-            {/* Contact Info */}
             <div className="space-y-5">
                 <h3 className="text-lg font-bold text-gray-900 font-['Playfair_Display']">Contact Info</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -82,12 +114,10 @@ export default function ShippingForm({
                     </div>
                     <div className="md:col-span-2">
                         <input type="tel" placeholder="Phone Number" value={shippingAddress.phone || ''} onChange={(e) => updateShippingAddress('phone', e.target.value)} className={inputClass(errors.phone)} />
-                        {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
                     </div>
                 </div>
             </div>
 
-            {/* Shipping Address */}
             <div className="space-y-5">
                 <h3 className="text-lg font-bold text-gray-900 font-['Playfair_Display']">Shipping Address</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -95,7 +125,10 @@ export default function ShippingForm({
                     <input type="text" placeholder="Last Name" value={shippingAddress.lastName || ''} onChange={(e) => updateShippingAddress('lastName', e.target.value)} className={inputClass(errors.lastName)} />
 
                     <div className="md:col-span-2">
-                        <select value={shippingAddress.country || ''} onChange={(e) => updateShippingAddress('country', e.target.value)} className={`${inputClass(errors.country)} appearance-none`}>
+                        <select value={shippingAddress.country || ''} onChange={(e) => {
+                            updateShippingAddress('country', e.target.value);
+                            updateShippingAddress('province', ''); // 国家改变，清空旧省份代码
+                        }} className={`${inputClass(errors.country)} appearance-none`}>
                             <option value="">Select Country</option>
                             {Object.entries(COUNTRY_DATA).map(([name, code]) => <option key={code} value={code}>{name} ({code})</option>)}
                         </select>
@@ -105,40 +138,17 @@ export default function ShippingForm({
                         <input type="text" placeholder="Address Line 1" value={shippingAddress.addressLine1 || ''} onChange={(e) => updateShippingAddress('addressLine1', e.target.value)} className={inputClass(errors.addressLine1)} />
                     </div>
 
-                    <div className="md:col-span-2">
-                        <input type="text" placeholder="Apartment, suite, etc. (optional)" value={shippingAddress.addressLine2 || ''} onChange={(e) => updateShippingAddress('addressLine2', e.target.value)} className={inputClass()} />
-                    </div>
-
                     <input type="text" placeholder="City" value={shippingAddress.city || ''} onChange={(e) => updateShippingAddress('city', e.target.value)} className={inputClass(errors.city)} />
-                    {shippingAddress.country === 'US' ? (
-                        <select
-                            value={shippingAddress.province || ''}
-                            onChange={(e) => updateShippingAddress('province', e.target.value)}
-                            className={inputClass(errors.province)}
-                        >
-                            <option value="">Select State</option>
-                            {Object.entries(US_STATES).map(([code, name]) => (
-                                <option key={code} value={code}>{name} ({code})</option>
-                            ))}
-                        </select>
-                    ) : (
-                        <input
-                            type="text"
-                            placeholder="State / Province"
-                            value={shippingAddress.province || ''}
-                            onChange={(e) => updateShippingAddress('province', e.target.value)}
-                            className={inputClass(errors.province)}
-                        />
-                    )}
-                    <input type="text" placeholder="State / Province" value={shippingAddress.province || ''} onChange={(e) => updateShippingAddress('province', e.target.value)} className={inputClass(errors.province)} />
+
+                    {/* ✅ 应用收货地址省份逻辑 */}
+                    {renderProvinceInput(false)}
+
                     <input type="text" placeholder="ZIP Code" value={shippingAddress.zipCode || ''} onChange={(e) => updateShippingAddress('zipCode', e.target.value)} className={inputClass(errors.zipCode)} />
                 </div>
             </div>
 
-            {/* ✅ Billing Address Section */}
             <div className="pt-8 border-t border-gray-100 space-y-6">
                 <h3 className="text-lg font-bold text-gray-900 font-['Playfair_Display']">Billing Address</h3>
-
                 <div
                     onClick={() => setIsBillingSameAsShipping(!isBillingSameAsShipping)}
                     className="flex items-center gap-4 p-4 rounded-xl border border-gray-200 bg-gray-50 cursor-pointer hover:border-black transition-all group"
@@ -155,14 +165,20 @@ export default function ShippingForm({
                             <input type="text" placeholder="First Name" value={billingAddress.firstName || ''} onChange={(e) => updateBillingField('firstName', e.target.value)} className={inputClass(errors.billing_firstName)} />
                             <input type="text" placeholder="Last Name" value={billingAddress.lastName || ''} onChange={(e) => updateBillingField('lastName', e.target.value)} className={inputClass()} />
                         </div>
-                        <select value={billingAddress.country || ''} onChange={(e) => updateBillingField('country', e.target.value)} className={inputClass(errors.billing_country)}>
+                        <select value={billingAddress.country || ''} onChange={(e) => {
+                            updateBillingField('country', e.target.value);
+                            updateBillingField('province', ''); // 同步清空
+                        }} className={inputClass(errors.billing_country)}>
                             <option value="">Select Country</option>
                             {Object.entries(COUNTRY_DATA).map(([name, code]) => <option key={code} value={code}>{name}</option>)}
                         </select>
                         <input type="text" placeholder="Address Line 1" value={billingAddress.addressLine1 || ''} onChange={(e) => updateBillingField('addressLine1', e.target.value)} className={inputClass(errors.billing_addressLine1)} />
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <input type="text" placeholder="City" value={billingAddress.city || ''} onChange={(e) => updateBillingField('city', e.target.value)} className={inputClass(errors.billing_city)} />
-                            <input type="text" placeholder="State" value={billingAddress.province || ''} onChange={(e) => updateBillingField('province', e.target.value)} className={inputClass()} />
+
+                            {/* ✅ 应用账单地址省份逻辑（不再是单纯的 input） */}
+                            {renderProvinceInput(true)}
+
                             <input type="text" placeholder="ZIP Code" value={billingAddress.zipCode || ''} onChange={(e) => updateBillingField('zipCode', e.target.value)} className={inputClass(errors.billing_zipCode)} />
                         </div>
                     </div>
