@@ -3,82 +3,24 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
-import { loadStripe } from '@stripe/stripe-js';
-import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
-import { Loader2, AlertCircle, ShieldCheck, Lock, CreditCard } from 'lucide-react';
+import { Loader2, AlertCircle, ShieldCheck, Lock, ChevronLeft, CheckCircle2 } from 'lucide-react';
 import { orderService } from '@/services/orderService';
 import { useAuth } from '@/contexts/authContext';
-import { COUNTRY_DATA } from '@/lib/constants/country-data';
 import { useCartStore } from '@/stores/useCartStore';
 import { sendOrderConfirmationEmail } from '@/app/actions/send-order-email';
-// ⚠️ 确保你创建了这个 Server Action 文件
-import { createStripePaymentIntent } from '@/app/actions/stripe';
 
 // --- 配置区域 ---
-// 针对高风险行业，这里做开关。如果 PayPal 被封，改为 false 即可。
 const PAYMENT_CONFIG = {
     ENABLE_PAYPAL: true,
-    ENABLE_STRIPE: false,
 };
 
-// 初始化 Stripe (放在组件外)
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
-
-// --- 子组件: Stripe 支付表单 ---
-function StripeCheckoutForm({ orderData, onSuccess, onError }: { orderData: any, onSuccess: () => void, onError: (msg: string) => void }) {
-    const stripe = useStripe();
-    const elements = useElements();
-    const [isProcessing, setIsProcessing] = useState(false);
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!stripe || !elements) return;
-
-        setIsProcessing(true);
-
-        try {
-            // 1. 向 Stripe 提交支付
-            const { error, paymentIntent } = await stripe.confirmPayment({
-                elements,
-                confirmParams: { return_url: window.location.href },
-                redirect: "if_required",
-            });
-
-            if (error) throw new Error(error.message);
-
-            if (paymentIntent && paymentIntent.status === "succeeded") {
-                // 2. 支付成功，通知后端记录
-                await orderService.payOrder(orderData.orderNumber, {
-                    transactionId: paymentIntent.id,
-                    paymentMethod: 'STRIPE',
-                    currency: 'USD'
-                });
-                // 3. 触发通用成功回调
-                onSuccess();
-            }
-        } catch (err: any) {
-            onError(err.message || "Payment verification failed");
-        } finally {
-            setIsProcessing(false);
-        }
-    };
-
-    return (
-        <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="p-4 bg-white border border-gray-200 rounded-xl">
-                <PaymentElement />
-            </div>
-            <button
-                type="submit"
-                disabled={!stripe || isProcessing}
-                className="w-full bg-black text-white py-3 rounded-xl font-bold hover:bg-gray-800 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-            >
-                {isProcessing ? <Loader2 className="animate-spin w-5 h-5" /> : <Lock className="w-4 h-4" />}
-                {isProcessing ? 'Processing...' : `Pay $${Number(orderData.finalAmount).toFixed(2)}`}
-            </button>
-        </form>
-    );
-}
+// 高清彩色卡种图标 CDN
+const CARD_ICONS = {
+    visa: "https://raw.githubusercontent.com/aaronfagan/svg-credit-card-payment-icons/master/flat/visa.svg",
+    mastercard: "https://raw.githubusercontent.com/aaronfagan/svg-credit-card-payment-icons/master/flat/mastercard.svg",
+    amex: "https://raw.githubusercontent.com/aaronfagan/svg-credit-card-payment-icons/master/flat/amex.svg",
+    discover: "https://raw.githubusercontent.com/aaronfagan/svg-credit-card-payment-icons/master/flat/discover.svg",
+};
 
 // --- 主组件 ---
 function PaymentContent() {
@@ -96,24 +38,11 @@ function PaymentContent() {
     const [orderData, setOrderData] = useState<any>(null);
     const [errorMessage, setErrorMessage] = useState('');
     const [isMounted, setIsMounted] = useState(false);
-
-    // Payment State
-    const [activeMethod, setActiveMethod] = useState<'PAYPAL' | 'STRIPE'>('PAYPAL');
-    const [stripeClientSecret, setStripeClientSecret] = useState('');
     const [paymentStatus, setPaymentStatus] = useState<'processing' | 'success' | 'error'>('processing');
 
     useEffect(() => { setIsMounted(true); }, []);
 
-    // 1. 智能设置默认支付方式
-    useEffect(() => {
-        if (!PAYMENT_CONFIG.ENABLE_PAYPAL && PAYMENT_CONFIG.ENABLE_STRIPE) {
-            setActiveMethod('STRIPE');
-        } else if (PAYMENT_CONFIG.ENABLE_PAYPAL) {
-            setActiveMethod('PAYPAL');
-        }
-    }, []);
-
-    // 2. 加载订单数据
+    // 加载订单数据
     useEffect(() => {
         if (!isMounted) return;
         const fetchOrder = async () => {
@@ -123,21 +52,7 @@ function PaymentContent() {
                 return;
             }
             try {
-                // 优先从 LocalStorage 拿 (防止 API 延迟)
-                // const storedOrder = localStorage.getItem('currentOrder');
-                // console.log('get order from local: ', storedOrder);
-                // if (storedOrder) {
-                //     const parsed = JSON.parse(storedOrder);
-                //     if (String(parsed.orderNumber).replace(/^#/, '') === orderNumber) {
-                //         setOrderData(parsed);
-                //         setIsLoading(false);
-                //         return;
-                //     }
-                // }
-                // API fallback
                 const data = await orderService.getOrder(orderNumber);
-                // console.log('order from api: ', data);
-
                 if (data) setOrderData(data);
                 else throw new Error('Order not found');
             } catch (error) {
@@ -149,25 +64,12 @@ function PaymentContent() {
         fetchOrder();
     }, [orderNumber, isMounted]);
 
-    // 3. 当切换到 Stripe 时，初始化 ClientSecret
-    useEffect(() => {
-        if (orderData && activeMethod === 'STRIPE' && !stripeClientSecret && PAYMENT_CONFIG.ENABLE_STRIPE) {
-            createStripePaymentIntent(Number(orderData.finalAmount))
-                .then(res => setStripeClientSecret(res.clientSecret!))
-                .catch(err => {
-                    console.error(err);
-                    setErrorMessage("Unable to initialize secure credit card payment.");
-                });
-        }
-    }, [orderData, activeMethod, stripeClientSecret]);
-
-    // --- 核心：通用成功处理逻辑 (PayPal 和 Stripe 共用) ---
+    // --- 核心：成功处理逻辑 ---
     const handlePaymentSuccess = async () => {
         try {
             setPaymentStatus('success');
             clearCart();
 
-            // 准备邮件数据
             const emailData = {
                 orderNumber: orderData.orderNumber,
                 email: orderData.shippingAddress?.email || orderData.guestEmail || '',
@@ -190,10 +92,8 @@ function PaymentContent() {
                 }
             };
 
-            // 发送邮件 (不阻塞跳转)
             sendOrderConfirmationEmail(emailData).catch(err => console.error('Email failed', err));
 
-            // 跳转
             if (isLoggedIn) {
                 localStorage.removeItem('currentOrder');
                 router.push(`/orders/${orderNumber}?payment_success=1`);
@@ -202,33 +102,62 @@ function PaymentContent() {
             }
         } catch (error) {
             console.error("Post-payment error:", error);
-            // 即使这里出错，支付其实已经成功了，所以还是算成功
             setPaymentStatus('success');
         }
     };
 
     // --- PayPal 专用逻辑 ---
     const createPayPalOrder = (data: any, actions: any) => {
+        // console.log('createPayPalOrder.... ', orderData)
         const shippingAddr = orderData.shippingAddress;
-
-        let isoCountryCode = shippingAddr.country;
-        if (shippingAddr.country && shippingAddr.country.length > 2) {
-            isoCountryCode = COUNTRY_DATA[shippingAddr.country] || 'US';
-        }
-
-        // 动态计算总价，确保金额匹配
+        const billingAddr = orderData.billingAddress || orderData.shippingAddress;
         const calculatedItemTotal = (orderData.items || []).reduce((acc: number, item: any) => {
             return acc + (Number(item.unitPrice || 0) * Number(item.quantity || 1));
         }, 0);
-
         const shippingValue = Number(orderData.shippingFee || 0);
         const discountValue = Number(orderData.discountAmount || 0);
         const calculatedTotal = calculatedItemTotal + shippingValue - discountValue;
+        const cleanPhone = (shippingAddr.phone || "").replace(/\D/g, '');
 
         return actions.order.create({
+            payer: {
+                name: {
+                    given_name: billingAddr.firstName,
+                    surname: billingAddr.lastName
+                },
+                email_address: billingAddr.email || orderData.guestEmail,
+                phone: {
+                    phone_type: "MOBILE",
+                    phone_number: {
+                        national_number: cleanPhone
+                    }
+                },
+                address: {
+                    address_line_1: billingAddr.addressLine1,
+                    address_line_2: billingAddr.addressLine2 || "",
+                    admin_area_2: billingAddr.city,
+                    admin_area_1: billingAddr.province,
+                    postal_code: billingAddr.zipCode,
+                    country_code: billingAddr.country
+                }
+            },
             purchase_units: [{
                 reference_id: orderNumber,
                 description: `Order #${orderData.orderNumber}`,
+                items: (orderData.items || []).map((item: any) => {
+                    const rawName = item.productTitle || 'Item';
+                    const cleanName = rawName.split('|')[0].trim().substring(0, 127);
+
+                    return {
+                        name: cleanName,
+                        sku: item.productSku ? item.productSku.substring(0, 127) : 'SKU',
+                        quantity: String(item.quantity || 1),
+                        unit_amount: {
+                            currency_code: "USD",
+                            value: Number(item.unitPrice || 0).toFixed(2)
+                        },
+                    };
+                }),
                 amount: {
                     currency_code: "USD",
                     value: calculatedTotal.toFixed(2),
@@ -247,24 +176,6 @@ function PaymentContent() {
                         }
                     }
                 },
-                items: (orderData.items || []).map((item: any) => {
-                    // 👇 核心修改在这里：获取 | 之前的名称
-                    const rawName = item.productTitle || 'Item';
-                    // 1. split('|')[0]: 取竖线前部分
-                    // 2. trim(): 去除前后空格
-                    // 3. substring(0, 127): 防止超长报错
-                    const cleanName = rawName.split('|')[0].trim().substring(0, 127);
-
-                    return {
-                        name: cleanName,
-                        sku: item.productSku ? item.productSku.substring(0, 127) : 'SKU',
-                        quantity: String(item.quantity || 1),
-                        unit_amount: {
-                            currency_code: "USD",
-                            value: Number(item.unitPrice || 0).toFixed(2)
-                        },
-                    };
-                }),
                 shipping: {
                     name: { full_name: `${shippingAddr.firstName} ${shippingAddr.lastName}`.trim() },
                     address: {
@@ -273,12 +184,12 @@ function PaymentContent() {
                         admin_area_2: shippingAddr.city,
                         admin_area_1: shippingAddr.province,
                         postal_code: shippingAddr.zipCode,
-                        country_code: isoCountryCode
+                        country_code: shippingAddr.country
                     }
                 }
             }],
             application_context: {
-                brand_name: "MYTH STORE",
+                brand_name: "MYTH TOY",
                 user_action: "PAY_NOW",
                 shipping_preference: "SET_PROVIDED_ADDRESS"
             }
@@ -298,15 +209,13 @@ function PaymentContent() {
         }
     };
 
-    // --- Render ---
-
     if (!isMounted) return null;
 
     if (isLoading) {
         return (
             <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center">
                 <Loader2 className="w-10 h-10 animate-spin text-gray-400 mb-4" />
-                <p className="text-gray-500">Loading secure checkout...</p>
+                <p className="text-gray-500 font-medium">Initializing Secure Checkout...</p>
             </div>
         );
     }
@@ -325,116 +234,99 @@ function PaymentContent() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 py-8 md:py-12 w-full max-w-[100vw] overflow-x-hidden flex flex-col items-center">
+        <div className="min-h-screen bg-[#F8F9FA] py-8 md:py-16 w-full max-w-[100vw] overflow-x-hidden flex flex-col items-center">
             <div className="container mx-auto px-4 max-w-md w-full">
-                <div className="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden">
 
+                {/* 安全提示条 */}
+                <div className="mb-6 bg-white border border-gray-100 rounded-2xl py-3 px-4 shadow-sm flex items-center justify-center gap-3">
+                    <Lock size={14} className="text-green-600" />
+                    <span className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">
+                        256-bit SSL Encrypted & Discreet Billing
+                    </span>
+                </div>
+
+                <div className="bg-white rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.04)] border border-gray-50 overflow-hidden">
                     {/* Header */}
-                    <div className="bg-black p-8 text-white text-center">
-                        <p className="text-xs opacity-80 uppercase tracking-widest mb-2">Total Amount</p>
-                        <h1 className="text-4xl md:text-5xl font-bold font-['Playfair_Display'] break-all">
+                    <div className="bg-black p-10 text-white text-center">
+                        <p className="text-[11px] opacity-60 uppercase tracking-[0.2em] mb-2 font-bold">Total Amount to Pay</p>
+                        <h1 className="text-5xl md:text-6xl font-black tracking-tighter">
                             ${Number(orderData.finalAmount).toFixed(2)}
                         </h1>
-                        <p className="text-xs mt-3 opacity-60">Ref: {orderData.orderNumber}</p>
+                        <p className="text-[10px] mt-4 opacity-40 font-mono">Ref: {orderData.orderNumber}</p>
                     </div>
 
-                    <div className="p-6 md:p-8">
-                        {/* 支付方式切换 Tab */}
-                        {PAYMENT_CONFIG.ENABLE_PAYPAL && PAYMENT_CONFIG.ENABLE_STRIPE && (
-                            <div className="flex bg-gray-100 p-1 rounded-xl mb-6">
-                                <button
-                                    onClick={() => setActiveMethod('PAYPAL')}
-                                    className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all ${
-                                        activeMethod === 'PAYPAL' ? 'bg-white shadow-sm text-black' : 'text-gray-500 hover:text-gray-700'
-                                    }`}
-                                >
-                                    PayPal
-                                </button>
-                                <button
-                                    onClick={() => setActiveMethod('STRIPE')}
-                                    className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all flex items-center justify-center gap-2 ${
-                                        activeMethod === 'STRIPE' ? 'bg-white shadow-sm text-black' : 'text-gray-500 hover:text-gray-700'
-                                    }`}
-                                >
-                                    <CreditCard size={16}/> Credit Card
-                                </button>
-                            </div>
-                        )}
-
-                        {/* 安全提示 */}
-                        <div className="flex items-center justify-center gap-2 text-[10px] md:text-xs text-gray-500 bg-gray-50 p-3 rounded-xl border border-gray-100 mb-6">
-                            <Lock size={14} />
-                            <span>256-bit SSL Encrypted & Discreet Billing</span>
-                        </div>
-
+                    <div className="p-8 md:p-10">
                         {/* Error Display */}
                         {errorMessage && (
-                            <div className="mb-6 p-4 bg-red-50 text-red-600 text-sm rounded-xl flex items-center gap-2">
+                            <div className="mb-6 p-4 bg-red-50 text-red-600 text-xs rounded-2xl flex items-center gap-2 border border-red-100">
                                 <AlertCircle size={16} />
                                 {errorMessage}
                             </div>
                         )}
 
                         {/* --- PayPal Section --- */}
-                        {PAYMENT_CONFIG.ENABLE_PAYPAL && activeMethod === 'PAYPAL' && (
-                            <div className="relative z-0 min-h-[150px] w-full overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-300">
-                                {paypalClientId ? (
-                                    <PayPalScriptProvider options={{
-                                                clientId: paypalClientId,
-                                                currency: "USD",
-                                                intent: "capture"
-                                                // "disable-funding": "card"
-                                            }}>
-                                        <PayPalButtons
-                                            style={{ layout: "vertical", shape: "rect", borderRadius: 12, height: 48 }}
-                                            className="w-full"
-                                            createOrder={createPayPalOrder}
-                                            onApprove={onPayPalApprove}
-                                        />
-                                    </PayPalScriptProvider>
-                                ) : (
-                                    <div className="text-red-500 text-center text-sm">PayPal Configuration Missing</div>
-                                )}
-                            </div>
-                        )}
+                        {PAYMENT_CONFIG.ENABLE_PAYPAL ? (
+                            <div className="space-y-8">
+                                <div className="relative z-0 min-h-[150px] w-full animate-in fade-in slide-in-from-bottom-2 duration-300">
+                                    {paypalClientId ? (
+                                        <PayPalScriptProvider options={{
+                                            clientId: paypalClientId,
+                                            currency: "USD",
+                                            intent: "capture",
+                                            components: "buttons",
+                                            "disable-funding": "paylater,credit"
+                                        }}>
+                                            <PayPalButtons
+                                                style={{ layout: "vertical", shape: "rect", borderRadius: 12, height: 48 }}
+                                                className="w-full"
+                                                createOrder={createPayPalOrder}
+                                                onApprove={onPayPalApprove}
+                                            />
+                                        </PayPalScriptProvider>
+                                    ) : (
+                                        <div className="text-red-500 text-center text-sm">PayPal Configuration Missing</div>
+                                    )}
+                                </div>
 
-                        {/* --- Stripe Section --- */}
-                        {PAYMENT_CONFIG.ENABLE_STRIPE && activeMethod === 'STRIPE' && (
-                            <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-                                {stripeClientSecret ? (
-                                    <Elements stripe={stripePromise} options={{ clientSecret: stripeClientSecret }}>
-                                        <StripeCheckoutForm
-                                            orderData={orderData}
-                                            onSuccess={handlePaymentSuccess}
-                                            onError={setErrorMessage}
-                                        />
-                                    </Elements>
-                                ) : (
-                                    <div className="flex justify-center py-10">
-                                        <Loader2 className="animate-spin text-gray-300 w-8 h-8"/>
+                                {/* --- 彩色卡种图标区 --- */}
+                                <div className="pt-6 border-t border-gray-50 flex flex-col items-center">
+                                    <p className="text-[10px] text-gray-400 uppercase font-bold tracking-widest mb-4">Secure Payment with</p>
+                                    <div className="flex items-center justify-center gap-5">
+                                        <img src={CARD_ICONS.visa} className="h-5 w-auto object-contain" alt="Visa" />
+                                        <img src={CARD_ICONS.mastercard} className="h-7 w-auto object-contain" alt="Mastercard" />
+                                        <img src={CARD_ICONS.amex} className="h-6 w-auto object-contain" alt="Amex" />
+                                        <img src={CARD_ICONS.discover} className="h-5 w-auto object-contain" alt="Discover" />
                                     </div>
-                                )}
+                                </div>
                             </div>
-                        )}
-
-                        {/* --- All Disabled --- */}
-                        {!PAYMENT_CONFIG.ENABLE_PAYPAL && !PAYMENT_CONFIG.ENABLE_STRIPE && (
+                        ) : (
                             <div className="text-center p-6 bg-gray-50 rounded-xl">
                                 <p className="text-gray-500">Payment system is currently under maintenance.</p>
                             </div>
                         )}
 
-                        <div className="text-center mt-6">
-                            <button onClick={() => router.back()} className="text-sm text-gray-400 hover:text-gray-600 transition-colors">
-                                Cancel Payment
+                        {/* 游客支付提示 */}
+                        <div className="mt-8 flex items-start gap-3 bg-blue-50/50 p-4 rounded-2xl border border-blue-50">
+                            <CheckCircle2 size={16} className="text-blue-500 mt-0.5 flex-shrink-0" />
+                            <p className="text-[11px] text-blue-800 leading-relaxed">
+                                <strong>No PayPal account?</strong> No problem. You can pay with your Debit or Credit card as a guest by clicking the button above.
+                            </p>
+                        </div>
+
+                        <div className="text-center mt-8">
+                            <button
+                                onClick={() => router.back()}
+                                className="inline-flex items-center gap-1 text-sm text-gray-400 hover:text-gray-900 transition-all font-medium"
+                            >
+                                <ChevronLeft size={14} /> Back to order details
                             </button>
                         </div>
                     </div>
                 </div>
 
-                <div className="mt-8 text-center opacity-60">
-                    <div className="inline-flex items-center gap-2 text-xs text-gray-500">
-                        <ShieldCheck size={14} />
+                <div className="mt-10 text-center opacity-60">
+                    <div className="inline-flex items-center gap-2 text-[11px] text-gray-500 font-bold uppercase tracking-widest">
+                        <ShieldCheck size={16} className="text-green-600" />
                         <span>Guaranteed Safe & Discreet Checkout</span>
                     </div>
                 </div>

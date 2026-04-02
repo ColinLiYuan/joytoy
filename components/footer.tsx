@@ -224,6 +224,9 @@ export default function Footer() {
                         <CreditCard size={24} className="text-white" />
                         <span className="text-xs font-bold text-gray-400 tracking-widest border border-white/20 px-2 py-1 rounded">VISA</span>
                         <span className="text-xs font-bold text-gray-400 tracking-widest border border-white/20 px-2 py-1 rounded">MASTERCARD</span>
+                        <span className="text-[10px] font-bold text-gray-400 tracking-widest border border-white/20 px-2 py-1 rounded">AMEX</span>
+                        <span className="text-[10px] font-bold text-gray-400 tracking-widest border border-white/20 px-2 py-1 rounded">DISCOVER</span>
+                        <span className="text-[10px] font-bold text-gray-400 tracking-widest border border-white/20 px-2 py-1 rounded">JCB</span>
                         {/* PayPal text needs to be light in dark mode */}
                         <span className="border border-white/20 px-2 py-1 rounded font-bold italic text-white/80">PayPal</span>
                     </div>
