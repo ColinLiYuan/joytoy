@@ -118,6 +118,8 @@ export default function CheckoutPage() {
         const formData = getShippingFormData();
         const addr = formData.shippingAddress;
 
+        console.log('addr: ', addr)
+
         // 校验收货地址
         if (!addr.firstName || !addr.addressLine1 || !addr.city || !addr.zipCode || !addr.country) {
             showToast('error', 'Incomplete Address', 'Please fill in all required shipping fields.');

@@ -6,7 +6,6 @@ import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 import { Loader2, AlertCircle, ShieldCheck, Lock, ChevronLeft, CheckCircle2 } from 'lucide-react';
 import { orderService } from '@/services/orderService';
 import { useAuth } from '@/contexts/authContext';
-import { COUNTRY_DATA } from '@/lib/constants/country-data';
 import { useCartStore } from '@/stores/useCartStore';
 import { sendOrderConfirmationEmail } from '@/app/actions/send-order-email';
 
@@ -109,8 +108,9 @@ function PaymentContent() {
 
     // --- PayPal 专用逻辑 ---
     const createPayPalOrder = (data: any, actions: any) => {
-        console.log('createPayPalOrder....')
+        console.log('createPayPalOrder.... ', orderData)
         const shippingAddr = orderData.shippingAddress;
+        const billingAddr = orderData.billingAddress || orderData.shippingAddress;
         const calculatedItemTotal = (orderData.items || []).reduce((acc: number, item: any) => {
             return acc + (Number(item.unitPrice || 0) * Number(item.quantity || 1));
         }, 0);
@@ -122,10 +122,10 @@ function PaymentContent() {
         return actions.order.create({
             payer: {
                 name: {
-                    given_name: shippingAddr.firstName,
-                    surname: shippingAddr.lastName
+                    given_name: billingAddr.firstName,
+                    surname: billingAddr.lastName
                 },
-                email_address: shippingAddr.email || orderData.guestEmail,
+                email_address: billingAddr.email || orderData.guestEmail,
                 phone: {
                     phone_type: "MOBILE",
                     phone_number: {
@@ -133,12 +133,12 @@ function PaymentContent() {
                     }
                 },
                 address: {
-                    address_line_1: shippingAddr.addressLine1,
-                    address_line_2: shippingAddr.addressLine2 || "",
-                    admin_area_2: shippingAddr.city,
-                    admin_area_1: shippingAddr.province,
-                    postal_code: shippingAddr.zipCode,
-                    country_code: shippingAddr.country
+                    address_line_1: billingAddr.addressLine1,
+                    address_line_2: billingAddr.addressLine2 || "",
+                    admin_area_2: billingAddr.city,
+                    admin_area_1: billingAddr.province,
+                    postal_code: billingAddr.zipCode,
+                    country_code: billingAddr.country
                 }
             },
             purchase_units: [{
