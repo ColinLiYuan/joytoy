@@ -110,7 +110,7 @@ function PaymentContent() {
         const shippingValue = Number(orderData.shippingFee || 0);
         const discountValue = Number(orderData.discountAmount || 0);
         const calculatedTotal = calculatedItemTotal + shippingValue - discountValue;
-
+        const cleanPhone = (shippingAddr.phone || "").replace(/\D/g, '');
 
         return actions.order.create({
             // 1. 添加 payer 对象来预填账单地址信息
@@ -120,6 +120,12 @@ function PaymentContent() {
                     surname: shippingAddr.lastName
                 },
                 email_address: shippingAddr.email || orderData.guestEmail,
+                phone: {
+                    phone_type: "MOBILE",
+                    phone_number: {
+                        national_number: cleanPhone
+                    }
+                },
                 address: {
                     address_line_1: shippingAddr.addressLine1,
                     address_line_2: shippingAddr.addressLine2 || "",
