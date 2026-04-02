@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
-import { Loader2, AlertCircle, ShieldCheck, Lock } from 'lucide-react';
+import { Loader2, AlertCircle, ShieldCheck, Lock, ChevronLeft, CheckCircle2 } from 'lucide-react';
 import { orderService } from '@/services/orderService';
 import { useAuth } from '@/contexts/authContext';
 import { COUNTRY_DATA } from '@/lib/constants/country-data';
@@ -13,6 +13,14 @@ import { sendOrderConfirmationEmail } from '@/app/actions/send-order-email';
 // --- 配置区域 ---
 const PAYMENT_CONFIG = {
     ENABLE_PAYPAL: true,
+};
+
+// 高清彩色卡种图标 CDN
+const CARD_ICONS = {
+    visa: "https://raw.githubusercontent.com/aaronfagan/svg-credit-card-payment-icons/master/flat/visa.svg",
+    mastercard: "https://raw.githubusercontent.com/aaronfagan/svg-credit-card-payment-icons/master/flat/mastercard.svg",
+    amex: "https://raw.githubusercontent.com/aaronfagan/svg-credit-card-payment-icons/master/flat/amex.svg",
+    discover: "https://raw.githubusercontent.com/aaronfagan/svg-credit-card-payment-icons/master/flat/discover.svg",
 };
 
 // --- 主组件 ---
@@ -56,8 +64,6 @@ function PaymentContent() {
         };
         fetchOrder();
     }, [orderNumber, isMounted]);
-
-    console.log('orderData: ', orderData)
 
     // --- 核心：成功处理逻辑 ---
     const handlePaymentSuccess = async () => {
@@ -113,7 +119,6 @@ function PaymentContent() {
         const cleanPhone = (shippingAddr.phone || "").replace(/\D/g, '');
 
         return actions.order.create({
-            // 1. 添加 payer 对象来预填账单地址信息
             payer: {
                 name: {
                     given_name: shippingAddr.firstName,
@@ -170,7 +175,6 @@ function PaymentContent() {
                         }
                     }
                 },
-                // 2. 确保 shipping 里的地址也传了，通常 PayPal 会默认账单地址同收货地址
                 shipping: {
                     name: { full_name: `${shippingAddr.firstName} ${shippingAddr.lastName}`.trim() },
                     address: {
@@ -186,7 +190,6 @@ function PaymentContent() {
             application_context: {
                 brand_name: "MYTH TOY",
                 user_action: "PAY_NOW",
-                // 强制使用提供的地址，减少用户修改机会
                 shipping_preference: "SET_PROVIDED_ADDRESS"
             }
         });
@@ -211,7 +214,7 @@ function PaymentContent() {
         return (
             <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center">
                 <Loader2 className="w-10 h-10 animate-spin text-gray-400 mb-4" />
-                <p className="text-gray-500">Loading secure checkout...</p>
+                <p className="text-gray-500 font-medium">Initializing Secure Checkout...</p>
             </div>
         );
     }
@@ -230,28 +233,31 @@ function PaymentContent() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 py-8 md:py-12 w-full max-w-[100vw] overflow-x-hidden flex flex-col items-center">
+        <div className="min-h-screen bg-[#F8F9FA] py-8 md:py-16 w-full max-w-[100vw] overflow-x-hidden flex flex-col items-center">
             <div className="container mx-auto px-4 max-w-md w-full">
-                <div className="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden">
+
+                {/* 安全提示条 */}
+                <div className="mb-6 bg-white border border-gray-100 rounded-2xl py-3 px-4 shadow-sm flex items-center justify-center gap-3">
+                    <Lock size={14} className="text-green-600" />
+                    <span className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">
+                        256-bit SSL Encrypted & Discreet Billing
+                    </span>
+                </div>
+
+                <div className="bg-white rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.04)] border border-gray-50 overflow-hidden">
                     {/* Header */}
-                    <div className="bg-black p-8 text-white text-center">
-                        <p className="text-xs opacity-80 uppercase tracking-widest mb-2">Total Amount</p>
-                        <h1 className="text-4xl md:text-5xl font-bold font-['Playfair_Display'] break-all">
+                    <div className="bg-black p-10 text-white text-center">
+                        <p className="text-[11px] opacity-60 uppercase tracking-[0.2em] mb-2 font-bold">Total Amount to Pay</p>
+                        <h1 className="text-5xl md:text-6xl font-black tracking-tighter">
                             ${Number(orderData.finalAmount).toFixed(2)}
                         </h1>
-                        <p className="text-xs mt-3 opacity-60">Ref: {orderData.orderNumber}</p>
+                        <p className="text-[10px] mt-4 opacity-40 font-mono">Ref: {orderData.orderNumber}</p>
                     </div>
 
-                    <div className="p-6 md:p-8">
-                        {/* 安全提示 */}
-                        <div className="flex items-center justify-center gap-2 text-[10px] md:text-xs text-gray-500 bg-gray-50 p-3 rounded-xl border border-gray-100 mb-6">
-                            <Lock size={14} />
-                            <span>256-bit SSL Encrypted & Discreet Billing</span>
-                        </div>
-
+                    <div className="p-8 md:p-10">
                         {/* Error Display */}
                         {errorMessage && (
-                            <div className="mb-6 p-4 bg-red-50 text-red-600 text-sm rounded-xl flex items-center gap-2">
+                            <div className="mb-6 p-4 bg-red-50 text-red-600 text-xs rounded-2xl flex items-center gap-2 border border-red-100">
                                 <AlertCircle size={16} />
                                 {errorMessage}
                             </div>
@@ -259,26 +265,38 @@ function PaymentContent() {
 
                         {/* --- PayPal Section --- */}
                         {PAYMENT_CONFIG.ENABLE_PAYPAL ? (
-                            <div className="relative z-0 min-h-[150px] w-full overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-300">
-                                {paypalClientId ? (
-                                    <PayPalScriptProvider options={{
-                                        clientId: paypalClientId,
-                                        currency: "USD",
-                                        intent: "capture",
-                                        // 💡 去掉 Pay Later 选项的核心配置
-                                        components: "buttons",
-                                        "disable-funding": "paylater,credit"
-                                    }}>
-                                        <PayPalButtons
-                                            style={{ layout: "vertical", shape: "rect", borderRadius: 12, height: 48 }}
-                                            className="w-full"
-                                            createOrder={createPayPalOrder}
-                                            onApprove={onPayPalApprove}
-                                        />
-                                    </PayPalScriptProvider>
-                                ) : (
-                                    <div className="text-red-500 text-center text-sm">PayPal Configuration Missing</div>
-                                )}
+                            <div className="space-y-8">
+                                <div className="relative z-0 min-h-[150px] w-full animate-in fade-in slide-in-from-bottom-2 duration-300">
+                                    {paypalClientId ? (
+                                        <PayPalScriptProvider options={{
+                                            clientId: paypalClientId,
+                                            currency: "USD",
+                                            intent: "capture",
+                                            components: "buttons",
+                                            "disable-funding": "paylater,credit"
+                                        }}>
+                                            <PayPalButtons
+                                                style={{ layout: "vertical", shape: "rect", borderRadius: 12, height: 48 }}
+                                                className="w-full"
+                                                createOrder={createPayPalOrder}
+                                                onApprove={onPayPalApprove}
+                                            />
+                                        </PayPalScriptProvider>
+                                    ) : (
+                                        <div className="text-red-500 text-center text-sm">PayPal Configuration Missing</div>
+                                    )}
+                                </div>
+
+                                {/* --- 彩色卡种图标区 --- */}
+                                <div className="pt-6 border-t border-gray-50 flex flex-col items-center">
+                                    <p className="text-[10px] text-gray-400 uppercase font-bold tracking-widest mb-4">Secure Payment with</p>
+                                    <div className="flex items-center justify-center gap-5">
+                                        <img src={CARD_ICONS.visa} className="h-5 w-auto object-contain" alt="Visa" />
+                                        <img src={CARD_ICONS.mastercard} className="h-7 w-auto object-contain" alt="Mastercard" />
+                                        <img src={CARD_ICONS.amex} className="h-6 w-auto object-contain" alt="Amex" />
+                                        <img src={CARD_ICONS.discover} className="h-5 w-auto object-contain" alt="Discover" />
+                                    </div>
+                                </div>
                             </div>
                         ) : (
                             <div className="text-center p-6 bg-gray-50 rounded-xl">
@@ -286,17 +304,28 @@ function PaymentContent() {
                             </div>
                         )}
 
-                        <div className="text-center mt-6">
-                            <button onClick={() => router.back()} className="text-sm text-gray-400 hover:text-gray-600 transition-colors">
-                                Cancel Payment
+                        {/* 游客支付提示 */}
+                        <div className="mt-8 flex items-start gap-3 bg-blue-50/50 p-4 rounded-2xl border border-blue-50">
+                            <CheckCircle2 size={16} className="text-blue-500 mt-0.5 flex-shrink-0" />
+                            <p className="text-[11px] text-blue-800 leading-relaxed">
+                                <strong>No PayPal account?</strong> No problem. You can pay with your Debit or Credit card as a guest by clicking the button above.
+                            </p>
+                        </div>
+
+                        <div className="text-center mt-8">
+                            <button
+                                onClick={() => router.back()}
+                                className="inline-flex items-center gap-1 text-sm text-gray-400 hover:text-gray-900 transition-all font-medium"
+                            >
+                                <ChevronLeft size={14} /> Back to order details
                             </button>
                         </div>
                     </div>
                 </div>
 
-                <div className="mt-8 text-center opacity-60">
-                    <div className="inline-flex items-center gap-2 text-xs text-gray-500">
-                        <ShieldCheck size={14} />
+                <div className="mt-10 text-center opacity-60">
+                    <div className="inline-flex items-center gap-2 text-[11px] text-gray-500 font-bold uppercase tracking-widest">
+                        <ShieldCheck size={16} className="text-green-600" />
                         <span>Guaranteed Safe & Discreet Checkout</span>
                     </div>
                 </div>
