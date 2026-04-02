@@ -108,7 +108,7 @@ function PaymentContent() {
 
     // --- PayPal 专用逻辑 ---
     const createPayPalOrder = (data: any, actions: any) => {
-        console.log('createPayPalOrder.... ', orderData)
+        // console.log('createPayPalOrder.... ', orderData)
         const shippingAddr = orderData.shippingAddress;
         const billingAddr = orderData.billingAddress || orderData.shippingAddress;
         const calculatedItemTotal = (orderData.items || []).reduce((acc: number, item: any) => {

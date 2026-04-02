@@ -17,25 +17,33 @@ export const COUNTRY_DATA: Record<string, string> = {
 };
 
 export const PROVINCE_DATA: Record<string, Record<string, string>> = {
+    // 美国 50 州 (PayPal 核心要求)
     "US": {
-        "AL": "Alabama", "AK": "Alaska", "AZ": "Arizona", "AR": "Arkansas", "CA": "California",
-        "CO": "Colorado", "CT": "Connecticut", "DE": "Delaware", "FL": "Florida", "GA": "Georgia",
-        "HI": "Hawaii", "ID": "Idaho", "IL": "Illinois", "IN": "Indiana", "IA": "Iowa",
-        "KS": "Kansas", "KY": "Kentucky", "LA": "Louisiana", "ME": "Maine", "MD": "Maryland",
-        "MA": "Massachusetts", "MI": "Michigan", "MN": "Minnesota", "MS": "Mississippi", "MO": "Missouri",
-        "MT": "Montana", "NE": "Nebraska", "NV": "Nevada", "NH": "New Hampshire", "NJ": "New Jersey",
-        "NM": "New Mexico", "NY": "New York", "NC": "North Carolina", "ND": "North Dakota", "OH": "Ohio",
-        "OK": "Oklahoma", "OR": "Oregon", "PA": "Pennsylvania", "RI": "Rhode Island", "SC": "South Carolina",
-        "SD": "South Dakota", "TN": "Tennessee", "TX": "Texas", "UT": "Utah", "VT": "Vermont",
-        "VA": "Virginia", "WA": "Washington", "WV": "West Virginia", "WI": "Wisconsin", "WY": "Wyoming"
+        "AL": "Alabama", "AK": "Alaska", "AZ": "Arizona", "AR": "Arkansas", "CA": "California", "CO": "Colorado", "CT": "Connecticut", "DE": "Delaware", "FL": "Florida", "GA": "Georgia", "HI": "Hawaii", "ID": "Idaho", "IL": "Illinois", "IN": "Indiana", "IA": "Iowa", "KS": "Kansas", "KY": "Kentucky", "LA": "Louisiana", "ME": "Maine", "MD": "Maryland", "MA": "Massachusetts", "MI": "Michigan", "MN": "Minnesota", "MS": "Mississippi", "MO": "Missouri", "MT": "Montana", "NE": "Nebraska", "NV": "Nevada", "NH": "New Hampshire", "NJ": "New Jersey", "NM": "New Mexico", "NY": "New York", "NC": "North Carolina", "ND": "North Dakota", "OH": "Ohio", "OK": "Oklahoma", "OR": "Oregon", "PA": "Pennsylvania", "RI": "Rhode Island", "SC": "South Carolina", "SD": "South Dakota", "TN": "Tennessee", "TX": "Texas", "UT": "Utah", "VT": "Vermont", "VA": "Virginia", "WA": "Washington", "WV": "West Virginia", "WI": "Wisconsin", "WY": "Wyoming"
     },
+    // 加拿大 13 个省/地区 (PayPal 核心要求)
     "CA": {
-        "AB": "Alberta", "BC": "British Columbia", "MB": "Manitoba", "NB": "New Brunswick",
-        "NL": "Newfoundland and Labrador", "NS": "Nova Scotia", "ON": "Ontario", "PE": "Prince Edward Island",
-        "QC": "Quebec", "SK": "Saskatchewan", "NT": "Northwest Territories", "NU": "Nunavut", "YT": "Yukon"
+        "AB": "Alberta", "BC": "British Columbia", "MB": "Manitoba", "NB": "New Brunswick", "NL": "Newfoundland and Labrador", "NS": "Nova Scotia", "ON": "Ontario", "PE": "Prince Edward Island", "QC": "Quebec", "SK": "Saskatchewan", "NT": "Northwest Territories", "NU": "Nunavut", "YT": "Yukon"
     },
+    // 澳大利亚 (简写必须)
+    "AU": {
+        "NSW": "New South Wales", "VIC": "Victoria", "QLD": "Queensland", "WA": "Western Australia", "SA": "South Australia", "TAS": "Tasmania", "ACT": "Australian Capital Territory", "NT": "Northern Territory"
+    },
+    // 意大利 (前 10 大省份代码，IT 对信用卡校验极严)
+    "IT": {
+        "RM": "Roma", "MI": "Milano", "NA": "Napoli", "TO": "Torino", "PA": "Palermo", "GE": "Genova", "FI": "Firenze", "BO": "Bologna", "BA": "Bari", "CT": "Catania"
+    },
+    // 日本 (主要行政区数字代码)
     "JP": {
-        "01": "Hokkaido", "02": "Aomori", "13": "Tokyo", "27": "Osaka", "47": "Okinawa" // 篇幅有限，仅列举部分，完整版需47个
+        "01": "Hokkaido", "13": "Tokyo", "27": "Osaka", "23": "Aichi", "14": "Kanagawa", "12": "Chiba", "11": "Saitama", "40": "Fukuoka", "47": "Okinawa"
+    },
+    // 巴西 (必须 2 位简写)
+    "BR": {
+        "SP": "São Paulo", "RJ": "Rio de Janeiro", "MG": "Minas Gerais", "RS": "Rio Grande do Sul", "PR": "Paraná", "SC": "Santa Catarina", "BA": "Bahia"
+    },
+    // 中国 (主要收货省份简写)
+    "CN": {
+        "BJ": "Beijing", "SH": "Shanghai", "GD": "Guangdong", "JS": "Jiangsu", "ZE": "Zhejiang", "SC": "Sichuan"
     }
 };
 
