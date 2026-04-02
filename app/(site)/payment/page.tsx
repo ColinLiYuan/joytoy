@@ -104,10 +104,12 @@ function PaymentContent() {
     // --- PayPal 专用逻辑 ---
     const createPayPalOrder = (data: any, actions: any) => {
         const shippingAddr = orderData.shippingAddress;
-        const finalAmount = Number(orderData.finalAmount).toFixed(2);
-        const shippingValue = Number(orderData.shippingFee).toFixed(2);
-        const discountValue = Number(orderData.discountAmount).toFixed(2);
-        const itemTotal = (Number(orderData.finalAmount) - Number(orderData.shippingFee) + Number(orderData.discountAmount)).toFixed(2);
+        const calculatedItemTotal = (orderData.items || []).reduce((acc: number, item: any) => {
+            return acc + (Number(item.unitPrice || 0) * Number(item.quantity || 1));
+        }, 0);
+        const shippingValue = Number(orderData.shippingFee || 0);
+        const discountValue = Number(orderData.discountAmount || 0);
+        const calculatedTotal = calculatedItemTotal + shippingValue - discountValue;
 
 
         return actions.order.create({
@@ -129,13 +131,37 @@ function PaymentContent() {
             },
             purchase_units: [{
                 reference_id: orderNumber,
+                description: `Order #${orderData.orderNumber}`,
+                items: (orderData.items || []).map((item: any) => {
+                    const rawName = item.productTitle || 'Item';
+                    const cleanName = rawName.split('|')[0].trim().substring(0, 127);
+
+                    return {
+                        name: cleanName,
+                        sku: item.productSku ? item.productSku.substring(0, 127) : 'SKU',
+                        quantity: String(item.quantity || 1),
+                        unit_amount: {
+                            currency_code: "USD",
+                            value: Number(item.unitPrice || 0).toFixed(2)
+                        },
+                    };
+                }),
                 amount: {
                     currency_code: "USD",
-                    value: finalAmount,
+                    value: calculatedTotal.toFixed(2),
                     breakdown: {
-                        item_total: { currency_code: "USD", value: itemTotal },
-                        shipping: { currency_code: "USD", value: shippingValue },
-                        discount: { currency_code: "USD", value: discountValue }
+                        item_total: {
+                            value: calculatedItemTotal.toFixed(2),
+                            currency_code: "USD"
+                        },
+                        shipping: {
+                            value: shippingValue.toFixed(2),
+                            currency_code: "USD"
+                        },
+                        discount: {
+                            value: discountValue.toFixed(2),
+                            currency_code: "USD"
+                        }
                     }
                 },
                 // 2. 确保 shipping 里的地址也传了，通常 PayPal 会默认账单地址同收货地址
@@ -152,66 +178,13 @@ function PaymentContent() {
                 }
             }],
             application_context: {
-                brand_name: "MYTH STORE",
+                brand_name: "MYTH TOY",
                 user_action: "PAY_NOW",
                 // 强制使用提供的地址，减少用户修改机会
                 shipping_preference: "SET_PROVIDED_ADDRESS"
             }
         });
     };
-
-    // const createPayPalOrder = (data: any, actions: any) => {
-    //     const addr = orderData.shippingAddress;
-    //     const finalAmount = Number(orderData.finalAmount).toFixed(2);
-    //     const shippingValue = Number(orderData.shippingFee).toFixed(2);
-    //     const discountValue = Number(orderData.discountAmount).toFixed(2);
-    //     const itemTotal = (Number(orderData.finalAmount) - Number(orderData.shippingFee) + Number(orderData.discountAmount)).toFixed(2);
-    //
-    //     return actions.order.create({
-    //         // 💡 这里的 payer 对象负责把地址带入信用卡表单
-    //         payer: {
-    //             name: {
-    //                 given_name: addr.firstName,
-    //                 surname: addr.lastName
-    //             },
-    //             email_address: orderData.guestEmail || addr.email,
-    //             address: {
-    //                 address_line_1: addr.addressLine1,
-    //                 address_line_2: addr.addressLine2 || "",
-    //                 admin_area_2: addr.city,           // 城市
-    //                 admin_area_1: addr.province,       // 州/省
-    //                 postal_code: addr.zipCode,
-    //                 country_code: isoCountryCode      // 必须是 2 位代码
-    //             }
-    //         },
-    //         purchase_units: [{
-    //             amount: {
-    //                 currency_code: "USD",
-    //                 value: finalAmount,
-    //                 breakdown: {
-    //                     item_total: { currency_code: "USD", value: itemTotal },
-    //                     shipping: { currency_code: "USD", value: shippingValue },
-    //                     discount: { currency_code: "USD", value: discountValue }
-    //                 }
-    //             },
-    //             shipping: {
-    //                 name: { full_name: `${addr.firstName} ${addr.lastName}` },
-    //                 address: {
-    //                     address_line_1: addr.addressLine1,
-    //                     address_line_2: addr.addressLine2 || "",
-    //                     admin_area_2: addr.city,
-    //                     admin_area_1: addr.province,
-    //                     postal_code: addr.zipCode,
-    //                     country_code: isoCountryCode
-    //                 }
-    //             }
-    //         }],
-    //         application_context: {
-    //             shipping_preference: "SET_PROVIDED_ADDRESS", // 强制使用提供的地址
-    //             user_action: "PAY_NOW"
-    //         }
-    //     });
-    // };
 
     const onPayPalApprove = async (data: any) => {
         try {
