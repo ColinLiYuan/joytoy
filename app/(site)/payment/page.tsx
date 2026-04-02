@@ -109,6 +109,7 @@ function PaymentContent() {
 
     // --- PayPal 专用逻辑 ---
     const createPayPalOrder = (data: any, actions: any) => {
+        console.log('createPayPalOrder....')
         const shippingAddr = orderData.shippingAddress;
         const calculatedItemTotal = (orderData.items || []).reduce((acc: number, item: any) => {
             return acc + (Number(item.unitPrice || 0) * Number(item.quantity || 1));
