@@ -186,21 +186,21 @@ export default function CheckoutPage() {
             affiliateCode: affiliateService.getAffiliateCode()?.toUpperCase().trim(),
         };
 
-        try {
-            const result = await orderService.createOrder(orderData);
-            localStorage.setItem('currentOrder', JSON.stringify({
-                ...result,
-                items: orderItems,
-                shippingAddress: shippingAddressData,
-                billingAddress: billingAddressData,
-            }));
-            useCartStore.getState().clearCart();
-            router.push(`/payment?orderNumber=${result.orderNumber.replace(/^#/, '')}`);
-        } catch (error: any) {
-            showToast('error', 'Order Failed', error.message || 'Could not create order');
-        } finally {
-            setIsCreatingOrder(false);
-        }
+        // try {
+        //     const result = await orderService.createOrder(orderData);
+        //     localStorage.setItem('currentOrder', JSON.stringify({
+        //         ...result,
+        //         items: orderItems,
+        //         shippingAddress: shippingAddressData,
+        //         billingAddress: billingAddressData,
+        //     }));
+        //     useCartStore.getState().clearCart();
+        //     router.push(`/payment?orderNumber=${result.orderNumber.replace(/^#/, '')}`);
+        // } catch (error: any) {
+        //     showToast('error', 'Order Failed', error.message || 'Could not create order');
+        // } finally {
+        //     setIsCreatingOrder(false);
+        // }
     };
 
     if (!isClient || isLoading || cartLoading) {

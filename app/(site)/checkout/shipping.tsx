@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { AddressRequest } from '@/types/order';
-import { COUNTRY_DATA } from '@/lib/constants/country-data';
+import { COUNTRY_DATA, US_STATES } from '@/lib/constants/country-data';
 import { Loader2, ArrowRight, Check } from 'lucide-react';
 
 interface ShippingFormProps {
@@ -110,6 +110,26 @@ export default function ShippingForm({
                     </div>
 
                     <input type="text" placeholder="City" value={shippingAddress.city || ''} onChange={(e) => updateShippingAddress('city', e.target.value)} className={inputClass(errors.city)} />
+                    {shippingAddress.country === 'US' ? (
+                        <select
+                            value={shippingAddress.province || ''}
+                            onChange={(e) => updateShippingAddress('province', e.target.value)}
+                            className={inputClass(errors.province)}
+                        >
+                            <option value="">Select State</option>
+                            {Object.entries(US_STATES).map(([code, name]) => (
+                                <option key={code} value={code}>{name} ({code})</option>
+                            ))}
+                        </select>
+                    ) : (
+                        <input
+                            type="text"
+                            placeholder="State / Province"
+                            value={shippingAddress.province || ''}
+                            onChange={(e) => updateShippingAddress('province', e.target.value)}
+                            className={inputClass(errors.province)}
+                        />
+                    )}
                     <input type="text" placeholder="State / Province" value={shippingAddress.province || ''} onChange={(e) => updateShippingAddress('province', e.target.value)} className={inputClass(errors.province)} />
                     <input type="text" placeholder="ZIP Code" value={shippingAddress.zipCode || ''} onChange={(e) => updateShippingAddress('zipCode', e.target.value)} className={inputClass(errors.zipCode)} />
                 </div>
