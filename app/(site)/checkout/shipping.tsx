@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { AddressRequest } from '@/types/order';
-import { COUNTRY_DATA, PROVINCE_DATA } from '@/lib/constants/country-data';
+import { COUNTRY_DATA, PROVINCE_DATA, POSTAL_CODE_REGEX } from '@/lib/constants/country-data';
 import { Loader2, ArrowRight, Check } from 'lucide-react';
 
 interface ShippingFormProps {
@@ -53,6 +53,30 @@ export default function ShippingForm({
             if (!billingAddress.country?.trim()) newErrors.billing_country = 'Country is required';
             if (!billingAddress.province?.trim()) newErrors.billing_province = 'State is required';
             if (!billingAddress.zipCode?.trim()) newErrors.billing_zipCode = 'Zip Code is required';
+        }
+
+        // --- 邮编格式校验逻辑 ---
+        const validateZip = (zip: string, country: string, errorKey: string) => {
+            if (!zip?.trim()) {
+                newErrors[errorKey] = 'Zip Code is required';
+                return;
+            }
+
+            const regex = POSTAL_CODE_REGEX[country];
+            if (regex && !regex.test(zip.trim())) {
+                // 根据国家给出具体的格式提示
+                if (country === 'US') newErrors[errorKey] = 'Invalid US ZIP (12345)';
+                else if (country === 'CA') newErrors[errorKey] = 'Invalid Postal Code (A1B 2C3)';
+                else newErrors[errorKey] = 'Invalid format for this country';
+            }
+        };
+
+        // 执行收货地址邮编校验
+        validateZip(shippingAddress.zipCode, shippingAddress.country, 'zipCode');
+
+        // 如果账单地址不同，执行账单邮编校验
+        if (!isBillingSameAsShipping) {
+            validateZip(billingAddress.zipCode || '', billingAddress.country || 'US', 'billing_zipCode');
         }
 
         setErrors(newErrors);

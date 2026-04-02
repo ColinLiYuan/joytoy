@@ -47,4 +47,15 @@ export const PROVINCE_DATA: Record<string, Record<string, string>> = {
     }
 };
 
+export const POSTAL_CODE_REGEX: Record<string, RegExp> = {
+    "US": /^\d{5}(-\d{4})?$/,             // 美国: 12345 或 12345-6789
+    "CA": /^[A-Z]\d[A-Z]\s?\d[A-Z]\d$/i,  // 加拿大: A1B 2C3 (忽略大小写)
+    "GB": /^[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2}$/i, // 英国
+    "AU": /^\d{4}$/,                      // 澳大利亚: 4位数字
+    "DE": /^\d{5}$/,                      // 德国: 5位数字
+    "IT": /^\d{5}$/,                      // 意大利: 5位数字
+    "CN": /^\d{6}$/,                      // 中国: 6位数字
+    "JP": /^\d{3}-\d{4}$|^\d{7}$/         // 日本: 123-4567 或 1234567
+};
+
 export const COUNTRIES_FOR_SELECT = Object.keys(COUNTRY_DATA).sort();
