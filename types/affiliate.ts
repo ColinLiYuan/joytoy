@@ -5,6 +5,9 @@ export interface AffiliateTracking {
     affiliateId?: string;
     commissionAmount?: number;
     commissionRate?: number;
+    source?: string;
+    campaign?: string;
+    content?: string;
     affiliatePayoutStatus?: 'pending' | 'paid';
 }
 

@@ -25,6 +25,9 @@ export interface OrderCreateRequest {
     discountAmount: number; // BigDecimal 对应 number
     affiliateCode?: string;
     couponCode?: string;
+    source?: string;
+    campaign?: string;
+    content?: string;
 }
 
 export interface OrderResponse {

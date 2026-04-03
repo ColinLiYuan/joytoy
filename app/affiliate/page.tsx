@@ -59,9 +59,9 @@ export default function AffiliateDashboard() {
                     <h1 className="text-2xl font-bold text-gray-900">Dashboard Overview</h1>
                     <p className="text-sm text-gray-500 font-medium">Real-time tracking of your referral performance.</p>
                 </div>
-                <div className="px-3 py-1 bg-gray-100 rounded-full text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                    Last 30 Days
-                </div>
+                {/*<div className="px-3 py-1 bg-gray-100 rounded-full text-[10px] font-black text-gray-400 uppercase tracking-widest">*/}
+                {/*    Last 30 Days*/}
+                {/*</div>*/}
             </div>
 
             {/* 1. Summary Grid */}
