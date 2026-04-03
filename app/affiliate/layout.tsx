@@ -48,12 +48,6 @@ export default function AffiliateLayout({ children }: { children: React.ReactNod
             <main className="flex-1 flex flex-col">
                 <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-8">
                     <div className="text-sm font-medium text-gray-500">Welcome back, <span className="text-black">{affiliateId}</span></div>
-                    <div className="flex items-center gap-4">
-                        <div className="text-right">
-                            <div className="text-xs text-gray-400 uppercase font-bold">Balance</div>
-                            <div className="text-sm font-black text-green-600">$0</div>
-                        </div>
-                    </div>
                 </header>
                 <div className="p-8 overflow-y-auto">
                     {children}
