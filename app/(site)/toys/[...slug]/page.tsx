@@ -1,4 +1,4 @@
-// app/toys/[...slug]/page.tsx
+// app/toys/[...slug]/route.ts
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { productServiceServer } from '@/services/servers/product-service-server';

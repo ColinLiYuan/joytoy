@@ -1,4 +1,4 @@
-// app/(site)/collections/page.tsx
+// app/(site)/collections/route.ts
 import Link from 'next/link';
 import Image from 'next/image'; // ✅ 恢复引用
 import { RootResponse } from '@/types/category';

@@ -1,4 +1,4 @@
-// app/admin/blog/edit/[id]/page.tsx
+// app/admin/blog/edit/[id]/route.ts
 'use client';
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';

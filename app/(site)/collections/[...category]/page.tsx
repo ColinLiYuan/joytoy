@@ -1,4 +1,4 @@
-// app/collections/[category]/page.tsx
+// app/collections/[category]/route.ts
 import { productServiceServer } from '@/services/servers/product-service-server';
 import { categoryService } from '@/services/category-service';
 import { filterServiceServer } from '@/services/servers/product-filter-service-server';

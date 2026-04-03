@@ -1,4 +1,4 @@
-// app/pages/shipping-policy/page.tsx
+// app/pages/shipping-policy/route.ts
 
 import { Metadata } from 'next';
 import PolicyNav from '@/components/policy-nav';

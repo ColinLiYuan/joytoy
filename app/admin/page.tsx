@@ -1,4 +1,4 @@
-// /app/admin/page.tsx
+// /app/admin/route.ts
 'use client'
 
 import {

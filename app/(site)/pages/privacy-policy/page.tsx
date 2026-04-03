@@ -1,4 +1,4 @@
-// app/pages/privacy-policy/page.tsx
+// app/pages/privacy-policy/route.ts
 import { Metadata } from 'next';
 import PolicyNav from '@/components/policy-nav';
 

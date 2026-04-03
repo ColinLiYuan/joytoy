@@ -1,4 +1,4 @@
-// app/affiliate/links/page.tsx
+// app/affiliate/links/route.ts
 'use client'
 
 import { useState } from 'react'

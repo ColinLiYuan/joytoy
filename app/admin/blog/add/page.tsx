@@ -1,4 +1,4 @@
-// app/admin/blog/add/page.tsx
+// app/admin/blog/add/route.ts
 'use client';
 
 import { useState } from 'react';

@@ -3,6 +3,7 @@ import Cookies from 'js-cookie';
 import { AffiliateClickLog } from '@/types/affiliate';
 import { SERVER_CONFIG } from '@/lib/api-config';
 import { OrderListResponse } from '@/types/order';
+import { AffDashboardResponse } from '@/types/affiliate';
 
 export interface AffiliateCookieData {
     affiliateCode?: string;
@@ -144,6 +145,25 @@ export class AffiliateService {
             return apiResponse.data;
         } catch (error) {
             console.error('Error fetching orders:', error);
+            throw error;
+        }
+    }
+
+    async getDashboardData(): Promise<AffDashboardResponse> {
+        try {
+            // 调用 Next.js 的 API 路由 (app/api/affiliate/dashboard/route.ts)
+            const response = await fetch('/api/affiliate/dashboard', {
+                cache: 'no-store'
+            });
+
+            if (!response.ok) throw new Error('Failed to fetch dashboard');
+
+            const result = await response.json();
+            if (!result.success) throw new Error(result.error);
+
+            return result.data;
+        } catch (error) {
+            console.error('Dashboard Fetch Error:', error);
             throw error;
         }
     }

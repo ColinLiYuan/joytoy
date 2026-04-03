@@ -1,4 +1,4 @@
-// app/blog/page.tsx
+// app/blog/route.ts
 import { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image'; // ✅ 使用 Next.js Image 组件优化性能

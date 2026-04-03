@@ -1,4 +1,4 @@
-// app/pages/about/page.tsx
+// app/pages/about/route.ts
 import { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';

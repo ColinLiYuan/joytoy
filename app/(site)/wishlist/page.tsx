@@ -1,4 +1,4 @@
-// app/wishlist/page.tsx
+// app/wishlist/route.ts
 'use client';
 
 import { useState, useEffect } from 'react';

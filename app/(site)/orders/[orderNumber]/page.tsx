@@ -1,4 +1,4 @@
-// app/(site)/orders/[orderNumber]/page.tsx
+// app/(site)/orders/[orderNumber]/route.ts
 'use client';
 
 import { useState, useEffect, use } from 'react';

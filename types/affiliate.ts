@@ -17,6 +17,13 @@ export interface AffiliateClickLog {
     referrer: string;
 }
 
+export interface AffDashboardResponse {
+    summary: DashboardSummary;
+    sourceStats: PathStat[];
+    campaignStats: PathStat[];
+    dailyTrends: DailyTrend[];
+}
+
 /**
  * 单条路径统计数据（如 source=tiktok 或 campaign=summer_sale）
  */
