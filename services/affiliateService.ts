@@ -151,17 +151,19 @@ export class AffiliateService {
 
     async getDashboardData(): Promise<AffDashboardResponse> {
         try {
-            // 调用 Next.js 的 API 路由 (app/api/affiliate/dashboard/route.ts)
-            const response = await fetch('/api/affiliate/dashboard', {
+            const url = `${SERVER_CONFIG.apiRoutes.affiliate}/dashboard`;
+            const response = await fetch(url, {
                 cache: 'no-store'
             });
 
             if (!response.ok) throw new Error('Failed to fetch dashboard');
 
-            const result = await response.json();
-            if (!result.success) throw new Error(result.error);
+            const apiResponse = await response.json();
+            if (!apiResponse.success) {
+                throw new Error(apiResponse.error || 'Failed to fetch orders');
+            }
 
-            return result.data;
+            return apiResponse.data;
         } catch (error) {
             console.error('Dashboard Fetch Error:', error);
             throw error;
