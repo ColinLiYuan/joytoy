@@ -40,6 +40,7 @@ export class AffiliateService {
                 referrer: document.referrer
             };
 
+            console.log('initFromUrl...', clickData)
             this.logClick(clickData);
         }
     }
