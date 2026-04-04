@@ -1,6 +1,7 @@
 // services/affiliateService.ts
 import Cookies from 'js-cookie';
 import { AffiliateClickLog, AffDashboardResponse, AffiliateTracking } from '@/types/affiliate';
+import { OrderListResponse } from '@/types/order';
 import { SERVER_CONFIG } from '@/lib/api-config';
 
 export class AffiliateService {
