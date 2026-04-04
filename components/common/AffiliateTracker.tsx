@@ -7,6 +7,7 @@ export default function AffiliateTracker() {
     useEffect(() => {
         // 只要用户进入网站任何页面，这个组件都会触发一次
         // 内部会自动检查 URL 是否有 ?ref=xxx 并存入 Cookie
+        console.log('AffiliateTracker...')
         affiliateService.initFromUrl();
     }, []);
 
