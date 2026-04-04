@@ -1,15 +1,22 @@
 // app/affiliate/layout.tsx
+'use client'
+
 import Link from 'next/link'
 import { LayoutDashboard, ShoppingCart, Wallet, Settings, LogOut, LinkIcon } from 'lucide-react'
+import { useAuth } from '@/contexts/authContext'
 
 export default function AffiliateLayout({ children }: { children: React.ReactNode }) {
+    const { userInfo } = useAuth();
+
     const navItems = [
-        // { label: 'Dashboard', href: '/affiliate', icon: LayoutDashboard },
+        { label: 'Dashboard', href: '/affiliate', icon: LayoutDashboard },
         { label: 'Orders', href: '/affiliate/order', icon: ShoppingCart },
         { label: 'Promote Links', href: '/affiliate/links', icon: LinkIcon },
         // { label: 'Payouts', href: '/affiliate/payout', icon: Wallet },
         // { label: 'Settings', href: '/affiliate/settings', icon: Settings },
     ]
+
+    const affiliateId = (userInfo?.affiliateId || "PENDING").toUpperCase();
 
     return (
         <div className="flex min-h-screen bg-gray-50">
@@ -40,13 +47,7 @@ export default function AffiliateLayout({ children }: { children: React.ReactNod
             {/* Main Content */}
             <main className="flex-1 flex flex-col">
                 <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-8">
-                    <div className="text-sm font-medium text-gray-500">Welcome back, <span className="text-black">XX</span></div>
-                    <div className="flex items-center gap-4">
-                        <div className="text-right">
-                            <div className="text-xs text-gray-400 uppercase font-bold">Balance</div>
-                            <div className="text-sm font-black text-green-600">$0</div>
-                        </div>
-                    </div>
+                    <div className="text-sm font-medium text-gray-500">Welcome back, <span className="text-black">{affiliateId}</span></div>
                 </header>
                 <div className="p-8 overflow-y-auto">
                     {children}

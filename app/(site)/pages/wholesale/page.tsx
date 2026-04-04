@@ -1,4 +1,4 @@
-// app/pages/wholesale/page.tsx
+// app/pages/wholesale/route.ts
 import { Metadata } from 'next';
 import {
     Factory,

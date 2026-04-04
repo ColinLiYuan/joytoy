@@ -1,4 +1,4 @@
-// app/edits/[slug]/page.tsx
+// app/edits/[slug]/route.ts
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import ProductList from '@/components/product/product-list';

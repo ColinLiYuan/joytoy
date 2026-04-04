@@ -1,4 +1,4 @@
-// app/pages/affiliate/page.tsx
+// app/pages/affiliate/route.ts
 import { Metadata } from 'next';
 import PolicyNav from '@/components/policy-nav';
 

@@ -1,22 +1,16 @@
 // services/affiliateService.ts
 import Cookies from 'js-cookie';
-import { AffiliateClickLog } from '@/types/affiliate';
-import { SERVER_CONFIG } from '@/lib/api-config';
+import { AffiliateClickLog, AffDashboardResponse, AffiliateTracking } from '@/types/affiliate';
 import { OrderListResponse } from '@/types/order';
-
-export interface AffiliateCookieData {
-    affiliateCode?: string;
-    clickTime?: string;
-}
-
+import { SERVER_CONFIG } from '@/lib/api-config';
 
 export class AffiliateService {
     private static COOKIE_NAME = 'affiliate_tracking';
     private static COOKIE_EXPIRY_DAYS = 30;
 
     /**
-     * 初始化：从URL获取ref参数并存入Cookie
-     * 建议在根布局 (Layout) 或 关键页面调用
+     * 初始化：从 URL 获取参数并存入 Cookie
+     * 逻辑：访问 ?aff=xxx&source=tiktok&campaign=sale 时触发
      */
     initFromUrl(): void {
         if (typeof window === 'undefined') return;
@@ -25,13 +19,23 @@ export class AffiliateService {
         const affCode = urlParams.get('aff');
 
         if (affCode) {
-            this.saveToCookie(affCode.trim());
-
-            const clickData: AffiliateClickLog = {
-                affiliateCode: affCode,
+            // 1. 提取所有追踪参数
+            const trackingData: AffiliateTracking = {
+                affiliateCode: affCode.trim().toUpperCase(),
                 source: urlParams.get('source') || 'direct',
-                campaign: urlParams.get('campaign') || 'none',
-                content: urlParams.get('content') || '',
+                campaign: urlParams.get('campaign') || 'default',
+                content: urlParams.get('content') || 'default'
+            };
+
+            // 2. 持久化到 Cookie（30天有效期）
+            this.saveToCookie(trackingData);
+
+            // 3. 构造上报数据记录点击 (Clicks 统计)
+            const clickData: AffiliateClickLog = {
+                affiliateCode: trackingData.affiliateCode!,
+                source: trackingData.source,
+                campaign: trackingData.campaign,
+                content: trackingData.content,
                 landingPage: window.location.pathname,
                 referrer: document.referrer
             };
@@ -41,18 +45,29 @@ export class AffiliateService {
     }
 
     /**
-     * 存入 Cookie
+     * 将追踪对象序列化为 JSON 存入 Cookie
      */
-    private saveToCookie(code: string): void {
-        const data: AffiliateCookieData = {
-            affiliateCode: code,
-            clickTime: new Date().toISOString()
-        };
-
+    private saveToCookie(data: AffiliateTracking): void {
         Cookies.set(AffiliateService.COOKIE_NAME, JSON.stringify(data), {
             expires: AffiliateService.COOKIE_EXPIRY_DAYS,
-            path: '/' // 确保全站可用
+            path: '/',
+            sameSite: 'lax'
         });
+    }
+
+    /**
+     * 获取存储的联盟追踪数据
+     * 用于：下单时读取并发送给后端，确保订单记录 source/campaign
+     */
+    getTrackingData(): AffiliateTracking | null {
+        const data = Cookies.get(AffiliateService.COOKIE_NAME);
+        if (!data) return null;
+        try {
+            return JSON.parse(data) as AffiliateTracking;
+        } catch (e) {
+            console.error('Failed to parse affiliate cookie', e);
+            return null;
+        }
     }
 
     private async logClick(data: AffiliateClickLog): Promise<void> {
@@ -78,21 +93,29 @@ export class AffiliateService {
     }
 
     /**
-     * 获取存储的推广码（供结算时读取）
+     * 获取 Dashboard 统计数据 (Java API: /api/V1/affiliate/dashboard)
      */
-    getAffiliateCode(): string | undefined {
-        const cookie = Cookies.get(AffiliateService.COOKIE_NAME);
-        if (!cookie) return undefined;
+    async getDashboardData(): Promise<AffDashboardResponse> {
         try {
-            const data: AffiliateCookieData = JSON.parse(cookie);
-            return data.affiliateCode;
-        } catch (e) {
-            return undefined;
+            const url = `${SERVER_CONFIG.apiRoutes.affiliate}/dashboard`;
+            const response = await fetch(url, { cache: 'no-store' });
+
+            if (!response.ok) throw new Error('Failed to fetch dashboard');
+            const apiResponse = await response.json();
+            if (!apiResponse.success) throw new Error(apiResponse.error);
+
+            return apiResponse.data;
+        } catch (error) {
+            console.error('Dashboard Fetch Error:', error);
+            throw error;
         }
     }
 
-    clearAffiliateData(): void {
-        Cookies.remove(AffiliateService.COOKIE_NAME);
+    /**
+     * 清除追踪信息 (通常在订单成交后调用)
+     */
+    clearTrackingData(): void {
+        Cookies.remove(AffiliateService.COOKIE_NAME, { path: '/' });
     }
 
     async orderList(params: {

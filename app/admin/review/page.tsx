@@ -1,4 +1,4 @@
-// app/admin/review/page.tsx
+// app/admin/review/route.ts
 'use client'
 
 import { useEffect, useState } from 'react'

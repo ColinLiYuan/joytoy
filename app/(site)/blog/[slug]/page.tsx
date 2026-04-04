@@ -1,4 +1,4 @@
-// app/blog/[slug]/page.tsx
+// app/blog/[slug]/route.ts
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { blogServiceServer } from '@/services/servers/blog-service-server';

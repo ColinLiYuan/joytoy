@@ -146,7 +146,13 @@ function PaymentContent() {
                 description: `Order #${orderData.orderNumber}`,
                 items: (orderData.items || []).map((item: any) => {
                     const rawName = item.productTitle || 'Item';
-                    const cleanName = rawName.split('|')[0].trim().substring(0, 127);
+                    const cleanName = rawName
+                        .split('|')[0]             // 取竖线前的内容
+                        .replace(/\s+/g, '')       // 去掉所有空格
+                        .replace(/the/gi, '')      // 去掉 "the" (g表示全局，i表示不区分大小写)
+                        .trim()                    // 保险起见再次去除首尾（虽然空格已删）
+                        .substring(0, 127);        // 截取长度
+                    console.log('cleanName......', cleanName)
 
                     return {
                         name: cleanName,

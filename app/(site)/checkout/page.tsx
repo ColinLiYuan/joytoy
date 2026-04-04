@@ -152,7 +152,6 @@ export default function CheckoutPage() {
             useAsBilling: isBillingSameAsShipping
         };
 
-        // ✅ 构建最终账单地址
         const billingAddressData = isBillingSameAsShipping
             ? shippingAddressData
             : {
@@ -170,6 +169,7 @@ export default function CheckoutPage() {
                 useAsBilling: true
             };
 
+        const affTrack = affiliateService.getTrackingData();
         const orderData: OrderCreateRequest = {
             userId: userId ?? undefined,
             cartId: cartId ?? undefined,
@@ -183,7 +183,10 @@ export default function CheckoutPage() {
             discountAmount: discountAmount,
             guestEmail: !userId ? shippingAddressData.email : undefined,
             couponCode: couponCode?.toUpperCase().trim(),
-            affiliateCode: affiliateService.getAffiliateCode()?.toUpperCase().trim(),
+            affiliateCode: affTrack?.affiliateCode,
+            source: affTrack?.source,
+            campaign: affTrack?.campaign,
+            content: affTrack?.content,
         };
 
         try {

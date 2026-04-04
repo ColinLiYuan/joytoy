@@ -96,17 +96,26 @@ export default function AffiliateLinksPage() {
                                 <tr>
                                     <td className="py-4 font-mono font-bold text-gray-700">source</td>
                                     <td className="py-4 text-gray-400 text-xs">Optional</td>
-                                    <td className="py-4 text-gray-500 text-xs italic">Traffic source (e.g., <code className="bg-gray-100 px-1">tiktok</code>, <code className="bg-gray-100 px-1">instagram</code>)</td>
+                                    <td className="py-4 text-gray-500 text-xs italic">
+                                        Traffic source (e.g., <code className="bg-gray-100 px-1">tiktok</code>, <code className="bg-gray-100 px-1">instagram</code>)
+                                        <span className="block text-emerald-600 text-[10px] mt-1">⚠️ If not filled, will default to "direct"</span>
+                                    </td>
                                 </tr>
                                 <tr>
                                     <td className="py-4 font-mono font-bold text-gray-700">campaign</td>
                                     <td className="py-4 text-gray-400 text-xs">Optional</td>
-                                    <td className="py-4 text-gray-500 text-xs italic">Marketing event (e.g., <code className="bg-gray-100 px-1">summer_sale</code>)</td>
+                                    <td className="py-4 text-gray-500 text-xs italic">
+                                        Marketing event (e.g., <code className="bg-gray-100 px-1">summer_sale</code>)
+                                        <span className="block text-emerald-600 text-[10px] mt-1">⚠️ If not filled, will default to "default"</span>
+                                    </td>
                                 </tr>
                                 <tr>
                                     <td className="py-4 font-mono font-bold text-gray-700">content</td>
                                     <td className="py-4 text-gray-400 text-xs">Optional</td>
-                                    <td className="py-4 text-gray-500 text-xs italic">Specific post identifier (e.g., <code className="bg-gray-100 px-1">video_01</code>)</td>
+                                    <td className="py-4 text-gray-500 text-xs italic">
+                                        Specific post identifier (e.g., <code className="bg-gray-100 px-1">video_01</code>)
+                                        <span className="block text-emerald-600 text-[10px] mt-1">⚠️ If not filled, will default to "default"</span>
+                                    </td>
                                 </tr>
                                 </tbody>
                             </table>

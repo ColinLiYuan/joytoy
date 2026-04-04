@@ -1,4 +1,4 @@
-// app/pages/return-refund/page.tsx
+// app/pages/return-refund/route.ts
 
 import { Metadata } from 'next';
 import PolicyNav from '@/components/policy-nav';

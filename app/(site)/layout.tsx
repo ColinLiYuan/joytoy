@@ -7,7 +7,6 @@ import GARouteTracker from '@/components/analytics/ga-route-tracker';
 import Script from 'next/script';
 import { Suspense } from 'react';
 import AffiliateTracker from '@/components/common/AffiliateTracker';
-// ❌ 不需要再在这里引入 next/font 了
 
 export default async function SiteLayout({
                                              children,

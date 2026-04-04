@@ -20,10 +20,14 @@ const promotions: Promotion[] = [
         text: "Free discreet shipping on orders over $49",
         link: "/collections/best-sellers"
     },
+    // {
+    //     text: "New Collection Dropped: Curated for Your Pleasure",
+    //     link: "/collections/new-arrivals"
+    // },
     {
-        text: "New Collection Dropped: Curated for Your Pleasure",
-        link: "/collections/new-arrivals"
-    }
+        text: "Earn 20% Commission, join us!",
+        link: "/pages/affiliate"
+    },
 ];
 
 export default function Notice({ onCloseMenu }: PromotionBarProps) {

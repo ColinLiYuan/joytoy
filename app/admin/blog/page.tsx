@@ -1,4 +1,4 @@
-// app/admin/blog/page.tsx
+// app/admin/blog/route.ts
 'use client';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';

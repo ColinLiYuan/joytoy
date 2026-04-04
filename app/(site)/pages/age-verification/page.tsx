@@ -1,4 +1,4 @@
-// app/age-verification/page.tsx
+// app/age-verification/route.ts
 export default function AgeVerification() {
     return (
         <div className="min-h-screen bg-gray-50 py-12">
