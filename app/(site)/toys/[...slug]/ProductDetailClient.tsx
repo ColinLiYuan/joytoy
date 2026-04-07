@@ -19,7 +19,6 @@ import Breadcrumb from '@/components/common/breadcrumb';
 import ProductBadge from '@/components/product/product-badge';
 import ProductReviews from '@/components/product/reviews/product-reviews';
 import FAQSection from '@/components/common/faq-section';
-import { affiliateService } from '@/services/affiliateService';
 
 import {
     ShoppingBag, ShieldCheck, Package, Truck, ChevronDown, ChevronUp, Star, Heart,
@@ -267,10 +266,6 @@ export default function ProductDetailClient({
             setRecentlyViewed(otherViewed.slice(0, 4));
         } catch (e) { console.error(e); }
     }, [product]);
-
-    useEffect(() => {
-        affiliateService.initFromUrl();
-    }, []);
 
     const getMappedColor = (color: string) => colorMap[color.toLowerCase().trim()] || color;
     const isOnSale = product.originalPrice > product.currentPrice;
