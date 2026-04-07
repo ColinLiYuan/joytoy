@@ -13,7 +13,6 @@ export class AffiliateService {
      * 逻辑：访问 ?aff=xxx&source=tiktok&campaign=sale 时触发
      */
     initFromUrl(): void {
-        console.log('initFromUrl start...')
         if (typeof window === 'undefined') return;
 
         const urlParams = new URLSearchParams(window.location.search);
@@ -41,7 +40,6 @@ export class AffiliateService {
                 referrer: document.referrer
             };
 
-            console.log('initFromUrl...', clickData)
             this.logClick(clickData);
         }
     }
