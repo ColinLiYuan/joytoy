@@ -88,7 +88,7 @@ export default function PrivacyPolicy() {
                             <h2 className="text-xl font-bold text-gray-900 mt-8 mb-4">5. Data Sharing and Disclosure</h2>
                             <p>We may share your information with:</p>
                             <ul className="list-disc pl-6 mt-2 space-y-1">
-                                <li><strong>Service Providers:</strong> Payment processors (Stripe/PayPal), shipping carriers, IT services</li>
+                                <li><strong>Service Providers:</strong> Payment processors (PayPal), shipping carriers, IT services</li>
                                 <li><strong>Business Partners:</strong> Wholesale distributors (for B2B orders)</li>
                                 <li><strong>Legal Authorities:</strong> When required by law or to protect our rights</li>
                             </ul>
