@@ -1,6 +1,6 @@
 // services/servers/blog-service-server.ts
 
-import { SERVER_CONFIG } from '@/lib/api-config';
+import { callBackendGet } from '@/lib/backend-utils';
 import { BlogListResponse, BlogResponse } from '@/types/site/blog';
 
 
@@ -11,7 +11,6 @@ class BlogServiceServer {
         status?: string
     ): Promise<BlogListResponse> {
         try {
-            // console.log('BlogServiceServer list')
             const queryParams = new URLSearchParams({
                 page: page.toString(),
                 size: size.toString()
@@ -21,24 +20,13 @@ class BlogServiceServer {
                 queryParams.append('status', status);
             }
 
-            const url = `${SERVER_CONFIG.apiRoutes.blog}/list?${queryParams}`;
-            // console.log('BlogServiceServer list url: ', url)
-            const response = await fetch(url, {
-                cache: 'no-store',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+            const url = `/api/V1/blog/list?${queryParams}`;
+
+            const result = await callBackendGet<BlogListResponse>(url, {
+                requiresAuth: false
             });
 
-            if (!response.ok) {
-                throw new Error('Failed to fetch blogs');
-            }
-
-            const apiResponse = await response.json();
-
-            // console.log('BlogServiceServer list apiResponse.data: ', apiResponse.data)
-
-            return apiResponse.data || {
+            return result.data || {
                 content: [],
                 currentPage: page,
                 pageSize: size,
@@ -55,22 +43,13 @@ class BlogServiceServer {
 
     async getBySlug(slug: string): Promise<BlogResponse> {
         try {
-            const url = `${SERVER_CONFIG.apiRoutes.blog}/detail?slug=${slug}`;
-            // console.log('BlogServiceServer getBySlug url:', url);
-            const response = await fetch(url, {
-                cache: 'no-store',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+            const url = `/api/V1/blog?slug=${encodeURIComponent(slug)}`;
+
+            const result = await callBackendGet<BlogResponse>(url, {
+                requiresAuth: false
             });
 
-            if (!response.ok) {
-                throw new Error('Failed to fetch blog');
-            }
-
-            const apiResponse = await response.json();
-
-            return apiResponse.data!;
+            return result.data!;
         } catch (error) {
             console.error('Get blog failed:', error);
             throw error;
