@@ -21,7 +21,7 @@ class BlogServiceServer {
                 queryParams.append('status', status);
             }
 
-            const url = `${SERVER_CONFIG.baseURL}${SERVER_CONFIG.apiRoutes.blog}/list?${queryParams}`;
+            const url = `${SERVER_CONFIG.apiRoutes.blog}/list?${queryParams}`;
             // console.log('BlogServiceServer list url: ', url)
             const response = await fetch(url, {
                 cache: 'no-store',
@@ -55,7 +55,7 @@ class BlogServiceServer {
 
     async getBySlug(slug: string): Promise<BlogResponse> {
         try {
-            const url = `${SERVER_CONFIG.baseURL}${SERVER_CONFIG.apiRoutes.blog}/detail?slug=${slug}`;
+            const url = `${SERVER_CONFIG.apiRoutes.blog}/detail?slug=${slug}`;
             // console.log('BlogServiceServer getBySlug url:', url);
             const response = await fetch(url, {
                 cache: 'no-store',
