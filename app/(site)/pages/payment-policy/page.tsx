@@ -51,7 +51,7 @@ export default function PaymentPolicy() {
                                 <p className="text-blue-800 font-medium">
                                     Your privacy matters. Your bank statement will NOT show "MythToy" or any adult-related terms.
                                 </p>
-                                <p className="text-sm text-blue-700 mt-2">The charge will appear as a generic descriptor such as <strong>"MT HOLDINGS"</strong> or <strong>"SP * RETAIL"</strong>.</p>
+                                <p className="text-sm text-blue-700 mt-2">The charge will appear as <strong>"MT TECH"</strong> on your statement.</p>
                             </div>
                         </section>
 

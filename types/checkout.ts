@@ -15,4 +15,7 @@ export interface CouponResponse {
 
     // 可选：如果该券关联了联盟成员，前端可以据此显示“推客推荐”等标识
     affiliateId?: string;   // 关联的联盟 ID
+    
+    // ✅ 新增：适用的产品名称（逗号分隔）
+    applicableProductNames?: string;  // 例如："The Jade Rabbit,The Rouge"
 }

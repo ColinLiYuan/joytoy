@@ -38,7 +38,7 @@ function PaymentContent() {
     const [orderData, setOrderData] = useState<any>(null);
     const [errorMessage, setErrorMessage] = useState('');
     const [isMounted, setIsMounted] = useState(false);
-    const [paymentStatus, setPaymentStatus] = useState<'processing' | 'success' | 'error'>('processing');
+    const [paymentStatus, setPaymentStatus] = useState<'idle' | 'processing' | 'success' | 'error'>('idle'); // ✅ 初始状态改为 'idle'
 
     useEffect(() => { setIsMounted(true); }, []);
 
@@ -104,43 +104,6 @@ function PaymentContent() {
             console.error("Post-payment error:", error);
             setPaymentStatus('success');
         }
-    };
-
-    // --- 新增：订单状态轮询确认 ---
-    const waitForPaymentConfirmation = async (): Promise<boolean> => {
-        const maxRetries = 15; // 最多轮询15次
-        const retryInterval = 2000; // 每2秒查询一次
-        let retries = 0;
-
-        while (retries < maxRetries) {
-            try {
-                const currentOrder = await orderService.getOrder(orderNumber!);
-                
-                // 检查订单状态是否为已支付
-                if (currentOrder.status === 'PAID') {
-                    console.log('✅ Payment confirmed by backend');
-                    return true;
-                }
-                
-                // 如果订单状态是失败或取消，直接返回
-                if (['CANCELLED', 'REFUNDED', 'EXPIRED'].includes(currentOrder.status)) {
-                    console.error('❌ Order status:', currentOrder.status);
-                    return false;
-                }
-                
-                // 继续等待
-                console.log(`⏳ Waiting for payment confirmation... (${retries + 1}/${maxRetries})`);
-                await new Promise(resolve => setTimeout(resolve, retryInterval));
-                retries++;
-            } catch (error) {
-                console.error('Error checking order status:', error);
-                retries++;
-            }
-        }
-        
-        // 超时仍未确认
-        console.warn('⚠️ Payment confirmation timeout');
-        return false;
     };
 
     // --- PayPal 专用逻辑 ---
@@ -232,7 +195,7 @@ function PaymentContent() {
                 }
             }],
             application_context: {
-                brand_name: "MYTH TOY",
+                brand_name: "MT TECH",  // ✅ 信用卡账单上显示的名称
                 user_action: "PAY_NOW",
                 shipping_preference: "SET_PROVIDED_ADDRESS"
             }
@@ -244,22 +207,21 @@ function PaymentContent() {
             setPaymentStatus('processing');
             setErrorMessage('');
             
-            // 1. 调用后端支付接口
-            await orderService.payOrder(orderNumber!, {
+            // 1. 调用后端支付接口（后端会同步验证并更新状态）
+            const paymentResult = await orderService.payOrder(orderNumber!, {
                 transactionId: data.orderID,
                 paymentMethod: 'PAYPAL',
                 currency: 'USD'
             });
             
-            // 2. 轮询确认订单状态
-            const isConfirmed = await waitForPaymentConfirmation();
-            
-            if (isConfirmed) {
-                // 3. 支付成功，执行后续处理
+            // 2. 检查支付结果（OrderPaymentResult 返回的是 { success, message, orderNumber }）
+            // 注意：后端返回的不是 Order 对象，而是 OrderPaymentResult
+            if (paymentResult?.success === true) {
+                console.log('✅ Payment confirmed:', paymentResult.message);
                 await handlePaymentSuccess();
             } else {
-                // 4. 支付未确认或失败
-                setErrorMessage('Payment processing timeout. Please check your order status or contact support.');
+                console.warn('⚠️ Payment failed:', paymentResult?.message);
+                setErrorMessage(paymentResult?.message || 'Payment processing failed. Please contact support.');
                 setPaymentStatus('error');
             }
         } catch (error: any) {
