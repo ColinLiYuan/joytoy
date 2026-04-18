@@ -36,6 +36,7 @@ export async function GET() {
   ${categoryPaths.map(category => `
   <url>
     <loc>${baseUrl}${category.loc}</loc>
+    <lastmod>${new Date().toISOString()}</lastmod>
     <changefreq>${category.changefreq || 'weekly'}</changefreq>
     <priority>${category.priority || 0.8}</priority>
   </url>

@@ -140,47 +140,15 @@ class ProductService {
         index?: number
     ): Promise<UploadResult> {
         try {
-            // console.log('service uploadImage')
-
-            // 提取slug的最后部分
-            const finalSlug = this.extractFinalSlug(slug);
-            if (!finalSlug) {
-                throw new Error('slug格式不正确');
-            }
-
-            // 生成文件名
-            const fileExtension = this.getFileExtension(file.name);
-            let fileName: string;
-
-            if (type === 'main') {
-                fileName = `${finalSlug}${fileExtension}`;
-            } else if (type === 'gallery') {
-                if (index === undefined) {
-                    throw new Error('相册图片需要指定index参数');
-                }
-                fileName = `${finalSlug}-${index}${fileExtension}`;
-            } else {
-                throw new Error('type参数必须是main或gallery');
-            }
-
             const formData = new FormData();
             formData.append('file', file);
-            formData.append('type', type);
-            formData.append('slug', finalSlug);
-            formData.append('fileName', fileName); // 传递生成好的文件名
+            formData.append('slug', slug);
             if (index !== undefined) {
                 formData.append('index', index.toString());
             }
 
-            // console.log('上传参数:', {
-            //     type,
-            //     finalSlug,
-            //     fileName,
-            //     index,
-            //     originalName: file.name
-            // });
-
-            const url = `${ADMIN_CONFIG.apiRoutes.product}/upload`;
+            // ✅ 使用新的统一上传接口
+            const url = `${ADMIN_CONFIG.baseURL}/api/admin/V1/upload/myth/product/image`;
             const response = await fetch(url, {
                 method: 'POST',
                 body: formData,
@@ -201,32 +169,11 @@ class ProductService {
     }
 
     async uploadMainImage(file: File, slug: string): Promise<UploadResult> {
-        console.log('uploadMainImage:', slug)
         return this.uploadImage(file, 'main', slug);
     }
 
     async uploadGalleryImage(file: File, slug: string, index: number): Promise<UploadResult> {
         return this.uploadImage(file, 'gallery', slug, index);
-    }
-
-    // 提取slug的最后部分
-    private extractFinalSlug(slug: string): string {
-        if (!slug) return '';
-
-        // 移除开头和结尾的斜杠
-        const cleanedSlug = slug.trim().replace(/^\/+|\/+$/g, '');
-
-        // 按斜杠分割并取最后一部分
-        const parts = cleanedSlug.split('/');
-        return parts[parts.length - 1] || cleanedSlug;
-    }
-
-    // 获取文件扩展名
-    private getFileExtension(filename: string): string {
-        if (!filename || filename.lastIndexOf('.') === -1) {
-            return '.jpg';
-        }
-        return filename.slice(filename.lastIndexOf('.'));
     }
 
     async getRelatedProducts(slug: string): Promise<ProductResponse[]> {

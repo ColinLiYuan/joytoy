@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { AddressRequest } from '@/types/order';
-import { COUNTRY_DATA, PROVINCE_DATA, POSTAL_CODE_REGEX } from '@/lib/constants/country-data';
+import { COUNTRY_DATA, PROVINCE_DATA, POSTAL_CODE_REGEX, PHONE_FORMAT_HINTS } from '@/lib/constants/country-data';
 import { Loader2, ArrowRight, Check } from 'lucide-react';
 
 interface ShippingFormProps {
@@ -146,7 +146,20 @@ export default function ShippingForm({
                         <ErrorMsg name="email" />
                     </div>
                     <div className="md:col-span-2">
-                        <input type="tel" placeholder="Phone Number" value={shippingAddress.phone || ''} onChange={(e) => updateShippingAddress('phone', e.target.value)} className={inputClass(errors.phone)} />
+                        <div className="relative">
+                            <input 
+                                type="tel" 
+                                placeholder={PHONE_FORMAT_HINTS[shippingAddress.country] || "Phone Number"} 
+                                value={shippingAddress.phone || ''} 
+                                onChange={(e) => updateShippingAddress('phone', e.target.value)} 
+                                className={inputClass(errors.phone)} 
+                            />
+                            {shippingAddress.country && PHONE_FORMAT_HINTS[shippingAddress.country] && (
+                                <p className="text-[10px] text-gray-400 mt-1 ml-1">
+                                    Format: {PHONE_FORMAT_HINTS[shippingAddress.country]}
+                                </p>
+                            )}
+                        </div>
                         <ErrorMsg name="phone" />
                     </div>
                 </div>

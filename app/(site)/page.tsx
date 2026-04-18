@@ -64,15 +64,58 @@ export async function generateMetadata() {
 // 结构化数据
 const structuredData = {
   "@context": "https://schema.org",
-  "@type": "WebSite",
-  "name": "MythToy",
-  "url": "https://mythtoy.com",
-  "description": "Premium adult lifestyle products for exploration, pleasure, and wellness.",
-  "potentialAction": {
-    "@type": "SearchAction",
-    "target": "https://mythtoy.com/search?q={search_term_string}",
-    "query-input": "required name=search_term_string"
-  }
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": "https://mythtoy.com/#organization",
+      "name": "MythToy",
+      "url": "https://mythtoy.com",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://mythtoy.com/icon_v2.png"
+      },
+      "sameAs": [
+        "https://twitter.com/mythtoy",
+        "https://instagram.com/mythtoy",
+        "https://facebook.com/mythtoy"
+      ],
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "contactType": "customer service",
+        "email": "support@mythtoy.com",
+        "availableLanguage": ["English"]
+      }
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://mythtoy.com/#website",
+      "name": "MythToy",
+      "url": "https://mythtoy.com",
+      "description": "Premium adult lifestyle products for exploration, pleasure, and wellness.",
+      "publisher": {
+        "@id": "https://mythtoy.com/#organization"
+      },
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": {
+          "@type": "EntryPoint",
+          "urlTemplate": "https://mythtoy.com/search?q={search_term_string}"
+        },
+        "query-input": "required name=search_term_string"
+      }
+    },
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://mythtoy.com"
+        }
+      ]
+    }
+  ]
 };
 
 export default async function HomePage() {

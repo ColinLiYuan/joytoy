@@ -54,16 +54,51 @@ export default async function BlogDetailPage({ params }: PageProps) {
             { name: blog.title, path: null } // Current page
         ];
 
-        return (
-            <div className="min-h-screen bg-white w-full overflow-x-hidden">
-                {/* Breadcrumb Container */}
-                <div className="container mx-auto px-4 max-w-4xl py-6">
-                    <Breadcrumb items={breadcrumbs} showLastItem={false} />
-                </div>
+        // ✅ Structured Data for Article
+        const articleStructuredData = {
+            "@context": "https://schema.org",
+            "@type": "Article",
+            "headline": blog.title,
+            "description": blog.summary || blog.content.substring(0, 155),
+            "image": blog.coverImage ? [blog.coverImage] : [],
+            "datePublished": blog.createdAt,
+            "dateModified": blog.updatedAt,
+            "author": {
+                "@type": "Person",
+                "name": blog.author || "MythToy Team"
+            },
+            "publisher": {
+                "@type": "Organization",
+                "name": "MythToy",
+                "logo": {
+                    "@type": "ImageObject",
+                    "url": "https://mythtoy.com/icon_v2.png"
+                }
+            },
+            "mainEntityOfPage": {
+                "@type": "WebPage",
+                "@id": `https://mythtoy.com/blog/${blog.slug}`
+            }
+        };
 
-                {/* Content Component */}
-                <BlogContent blog={blog} />
-            </div>
+        return (
+            <>
+                {/* Structured Data */}
+                <script
+                    type="application/ld+json"
+                    dangerouslySetInnerHTML={{ __html: JSON.stringify(articleStructuredData) }}
+                />
+                
+                <div className="min-h-screen bg-white w-full overflow-x-hidden">
+                    {/* Breadcrumb Container */}
+                    <div className="container mx-auto px-4 max-w-4xl py-6">
+                        <Breadcrumb items={breadcrumbs} showLastItem={false} />
+                    </div>
+
+                    {/* Content Component */}
+                    <BlogContent blog={blog} />
+                </div>
+            </>
         );
     } catch (error) {
         console.error('Error fetching blog:', error);

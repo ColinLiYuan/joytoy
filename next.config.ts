@@ -13,6 +13,15 @@ const nextConfig = {
         removeConsole: process.env.NODE_ENV === 'production',
     },
 
+    // ✅ SEO 优化：生成静态页面时预渲染关键路径
+    experimental: {
+        // 启用 ISR (Incremental Static Regeneration) 优化
+        staleTimes: {
+            dynamic: 30, // 动态内容缓存 30 秒
+            static: 300, // 静态内容缓存 5 分钟
+        },
+    },
+
     // ✅ 核心修改区域：图片优化策略
     images: {
         // 1. 强制缓存时间：设置为 1 年 (秒)。

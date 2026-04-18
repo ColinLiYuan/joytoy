@@ -113,12 +113,11 @@ class BlogService {
         file: File
     ): Promise<UploadResult> {
         try {
-            // console.log('blog service uploadImage')
-
             const formData = new FormData();
             formData.append('file', file);
 
-            const url = `${ADMIN_CONFIG.apiRoutes.blog}/upload`;
+            // ✅ 使用新的统一上传接口
+            const url = `${ADMIN_CONFIG.baseURL}/api/admin/V1/upload/myth/blog/image`;
             const response = await fetch(url, {
                 method: 'POST',
                 body: formData,
@@ -136,13 +135,6 @@ class BlogService {
             console.error('Upload image failed:', error);
             throw error;
         }
-    }
-
-    private getFileExtension(filename: string): string {
-        if (!filename || filename.lastIndexOf('.') === -1) {
-            return '.jpg';
-        }
-        return filename.slice(filename.lastIndexOf('.'));
     }
 
 }

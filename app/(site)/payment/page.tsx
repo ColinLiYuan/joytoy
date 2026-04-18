@@ -106,6 +106,43 @@ function PaymentContent() {
         }
     };
 
+    // --- 新增：订单状态轮询确认 ---
+    const waitForPaymentConfirmation = async (): Promise<boolean> => {
+        const maxRetries = 15; // 最多轮询15次
+        const retryInterval = 2000; // 每2秒查询一次
+        let retries = 0;
+
+        while (retries < maxRetries) {
+            try {
+                const currentOrder = await orderService.getOrder(orderNumber!);
+                
+                // 检查订单状态是否为已支付
+                if (currentOrder.status === 'PAID') {
+                    console.log('✅ Payment confirmed by backend');
+                    return true;
+                }
+                
+                // 如果订单状态是失败或取消，直接返回
+                if (['CANCELLED', 'REFUNDED', 'EXPIRED'].includes(currentOrder.status)) {
+                    console.error('❌ Order status:', currentOrder.status);
+                    return false;
+                }
+                
+                // 继续等待
+                console.log(`⏳ Waiting for payment confirmation... (${retries + 1}/${maxRetries})`);
+                await new Promise(resolve => setTimeout(resolve, retryInterval));
+                retries++;
+            } catch (error) {
+                console.error('Error checking order status:', error);
+                retries++;
+            }
+        }
+        
+        // 超时仍未确认
+        console.warn('⚠️ Payment confirmation timeout');
+        return false;
+    };
+
     // --- PayPal 专用逻辑 ---
     const createPayPalOrder = (data: any, actions: any) => {
         // console.log('createPayPalOrder.... ', orderData)
@@ -204,14 +241,31 @@ function PaymentContent() {
 
     const onPayPalApprove = async (data: any) => {
         try {
+            setPaymentStatus('processing');
+            setErrorMessage('');
+            
+            // 1. 调用后端支付接口
             await orderService.payOrder(orderNumber!, {
                 transactionId: data.orderID,
                 paymentMethod: 'PAYPAL',
                 currency: 'USD'
             });
-            await handlePaymentSuccess();
+            
+            // 2. 轮询确认订单状态
+            const isConfirmed = await waitForPaymentConfirmation();
+            
+            if (isConfirmed) {
+                // 3. 支付成功，执行后续处理
+                await handlePaymentSuccess();
+            } else {
+                // 4. 支付未确认或失败
+                setErrorMessage('Payment processing timeout. Please check your order status or contact support.');
+                setPaymentStatus('error');
+            }
         } catch (error: any) {
-            setErrorMessage(error.message || "PayPal verification failed");
+            console.error('PayPal payment error:', error);
+            setErrorMessage(error.message || "PayPal verification failed. Please try again or contact support.");
+            setPaymentStatus('error');
         }
     };
 
@@ -274,7 +328,13 @@ function PaymentContent() {
                         {PAYMENT_CONFIG.ENABLE_PAYPAL ? (
                             <div className="space-y-8">
                                 <div className="relative z-0 min-h-[150px] w-full animate-in fade-in slide-in-from-bottom-2 duration-300">
-                                    {paypalClientId ? (
+                                    {paymentStatus === 'processing' ? (
+                                        <div className="flex flex-col items-center justify-center py-12">
+                                            <Loader2 className="w-10 h-10 animate-spin text-indigo-600 mb-4" />
+                                            <p className="text-sm font-bold text-gray-900 mb-1">Confirming Payment...</p>
+                                            <p className="text-xs text-gray-500">Please wait while we verify your transaction</p>
+                                        </div>
+                                    ) : paypalClientId ? (
                                         <PayPalScriptProvider options={{
                                             clientId: paypalClientId,
                                             currency: "USD",

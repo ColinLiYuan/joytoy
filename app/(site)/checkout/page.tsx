@@ -25,6 +25,8 @@ export default function CheckoutPage() {
     const [couponCode, setCouponCode] = useState('');
     const [appliedCoupon, setAppliedCoupon] = useState<CouponResponse | null>(null);
     const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
+    const [isPaid, setIsPaid] = useState(false); // 新增:跟踪支付状态
+    const [hasSubmitted, setHasSubmitted] = useState(false); // 新增:防止重复提交
 
     // ✅ 账单地址相关状态
     const [isBillingSameAsShipping, setIsBillingSameAsShipping] = useState(true);
@@ -94,10 +96,13 @@ export default function CheckoutPage() {
         if (!trimmedCode) return;
         const formData = getShippingFormData();
         const emailToValidate = isLoggedIn ? getUserEmail() : formData.shippingAddress.email;
-        if (!emailToValidate) {
-            showToast('error', 'Email Required', 'Please enter your email first.');
+        
+        // 优化:邮箱格式验证
+        if (!emailToValidate || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailToValidate)) {
+            showToast('error', 'Invalid Email', 'Please enter a valid email address.');
             return;
         }
+        
         setIsApplyingCoupon(true);
         try {
             const validateRequest: CheckoutValidateRequest = { code: trimmedCode, email: emailToValidate };
@@ -113,29 +118,40 @@ export default function CheckoutPage() {
     };
 
     const handleProceedToPayment = async () => {
+        // 优化:防止重复提交
+        if (isCreatingOrder || hasSubmitted) {
+            console.warn('⚠️ Order creation already in progress');
+            return;
+        }
+        
         const userId = getUserId();
         const cartId = getCartId();
         const formData = getShippingFormData();
         const addr = formData.shippingAddress;
-
-        // console.log('addr: ', addr)
-
-        // 校验收货地址
+    
+        // 优化:邮箱格式验证
+        const emailToUse = isLoggedIn ? (addr.email || getUserEmail()) : addr.email;
+        if (!emailToUse || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailToUse)) {
+            showToast('error', 'Invalid Email', 'Please enter a valid email address.');
+            return;
+        }
+    
+        // 优化:统一在 shipping.tsx 中验证,这里只检查返回结果
         if (!addr.firstName || !addr.addressLine1 || !addr.city || !addr.zipCode || !addr.country) {
             showToast('error', 'Incomplete Address', 'Please fill in all required shipping fields.');
             return;
         }
-
-        // 校验账单地址（如果取消勾选相同）
+    
+        // 校验账单地址(如果取消勾选相同)
         if (!isBillingSameAsShipping) {
             if (!billingAddress.firstName || !billingAddress.addressLine1 || !billingAddress.city || !billingAddress.country) {
                 showToast('error', 'Incomplete Billing', 'Please fill in required billing fields.');
                 return;
             }
         }
-
-        const emailToUse = isLoggedIn ? (addr.email || getUserEmail()) : addr.email;
+    
         setIsCreatingOrder(true);
+        setHasSubmitted(true); // 标记已提交
 
         const shippingAddressData = {
             firstName: addr.firstName,
@@ -191,16 +207,32 @@ export default function CheckoutPage() {
 
         try {
             const result = await orderService.createOrder(orderData);
+            
+            // 优化:保存订单信息,但不立即清空购物车
             localStorage.setItem('currentOrder', JSON.stringify({
                 ...result,
                 items: orderItems,
                 shippingAddress: shippingAddressData,
                 billingAddress: billingAddressData,
             }));
-            useCartStore.getState().clearCart();
+            
+            // 跳转到支付页面
             router.push(`/payment?orderNumber=${result.orderNumber.replace(/^#/, '')}`);
         } catch (error: any) {
-            showToast('error', 'Order Failed', error.message || 'Could not create order');
+            console.error('❌ Order creation failed:', error);
+            
+            // 优化:详细的错误处理
+            let errorMessage = 'Could not create order';
+            if (error.message?.includes('inventory') || error.message?.includes('stock')) {
+                errorMessage = 'Some items are out of stock. Please update your cart.';
+            } else if (error.message?.includes('coupon') || error.message?.includes('discount')) {
+                errorMessage = 'Coupon is invalid or expired. Please remove it and try again.';
+            } else if (error.message?.includes('email')) {
+                errorMessage = 'Please check your email address.';
+            }
+            
+            showToast('error', 'Order Failed', errorMessage);
+            setHasSubmitted(false); // 允许重试
         } finally {
             setIsCreatingOrder(false);
         }

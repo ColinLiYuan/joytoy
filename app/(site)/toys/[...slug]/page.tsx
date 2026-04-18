@@ -94,36 +94,46 @@ export default async function ProductDetail({ params }: PageProps) {
 
     const jsonLd = {
         '@context': 'https://schema.org',
-        '@type': 'Product',
-        name: product.title,
-        image: allImages,
-        description: schemaDescription,
-        sku: product.sku || 'DEFAULT_SKU',
-        brand: {
-            '@type': 'Brand',
-            name: product.brand || 'MythToy', // 如果数据库没填品牌，默认 MythToy
-        },
-        offers: {
-            '@type': 'Offer',
-            url: `https://mythtoy.com/toys${slug}`,
-            priceCurrency: 'USD',
-            price: product.currentPrice,
-            priceValidUntil: '2026-12-31', // 给一个未来的日期，防止警告
-            itemCondition: 'https://schema.org/NewCondition',
-            availability: (product.status === 'ACTIVE' && product.stock > 0)
-                ? 'https://schema.org/InStock'
-                : 'https://schema.org/OutOfStock',
-        },
-        // 只有当有评分时才添加 aggregateRating
-        ...(product.rating ? {
-            aggregateRating: {
-                '@type': 'AggregateRating',
-                ratingValue: product.rating,
-                // ⚠️ 注意：如果你的 API 还没返回 reviewCount，这里临时写死 5 或者 10 用于测试星星效果
-                // 长期必须让后端返回真实数量
-                reviewCount: product.reviewCount || 5
+        '@graph': [
+            {
+                '@type': 'Product',
+                name: product.title,
+                image: allImages,
+                description: schemaDescription,
+                sku: product.sku || 'DEFAULT_SKU',
+                brand: {
+                    '@type': 'Brand',
+                    name: product.brand || 'MythToy',
+                },
+                offers: {
+                    '@type': 'Offer',
+                    url: `https://mythtoy.com/toys${slug}`,
+                    priceCurrency: 'USD',
+                    price: product.currentPrice,
+                    priceValidUntil: '2026-12-31',
+                    itemCondition: 'https://schema.org/NewCondition',
+                    availability: (product.status === 'ACTIVE' && product.stock > 0)
+                        ? 'https://schema.org/InStock'
+                        : 'https://schema.org/OutOfStock',
+                },
+                ...(product.rating ? {
+                    aggregateRating: {
+                        '@type': 'AggregateRating',
+                        ratingValue: product.rating,
+                        reviewCount: product.reviewCount || 5
+                    }
+                } : {})
+            },
+            {
+                '@type': 'BreadcrumbList',
+                itemListElement: breadcrumbs.map((crumb, index) => ({
+                    '@type': 'ListItem',
+                    position: index + 1,
+                    name: crumb.name,
+                    item: crumb.path ? `https://mythtoy.com${crumb.path}` : undefined
+                }))
             }
-        } : {})
+        ]
     };
     // ------------------------------------------------
 
