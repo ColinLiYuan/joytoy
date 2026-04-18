@@ -108,7 +108,15 @@ export default function CheckoutPage() {
             const validateRequest: CheckoutValidateRequest = { code: trimmedCode, email: emailToValidate };
             const couponResponse: CouponResponse = await checkoutService.validateCoupon(validateRequest);
             setAppliedCoupon(couponResponse);
-            showToast('success', 'Coupon Applied', couponResponse.description);
+            
+            // ✅ 显示优惠券适用范围提示
+            let successMessage = couponResponse.description;
+            if (couponResponse.applicableProductNames) {
+                const products = couponResponse.applicableProductNames.split(',').map(p => p.trim());
+                successMessage += ` (仅适用于: ${products.join(', ')})`;
+            }
+            
+            showToast('success', 'Coupon Applied', successMessage);
         } catch (error: any) {
             showToast('error', 'Invalid Coupon', error.message || 'The coupon code is invalid.');
             setCouponCode('');

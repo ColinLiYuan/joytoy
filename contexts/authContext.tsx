@@ -128,9 +128,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
             showToast('success', 'Welcome Back', 'Successfully logged in');
 
+            // ✅ 优先检查 URL 中的 redirect 参数
+            if (typeof window !== 'undefined') {
+                const urlParams = new URLSearchParams(window.location.search);
+                const redirect = urlParams.get('redirect');
+                
+                if (redirect) {
+                    // 有 redirect 参数，等待 Cookie 写入后跳转到目标页面
+                    setTimeout(() => {
+                        window.location.href = redirect;
+                    }, 100); // 等待 100ms 确保 Cookie 写入
+                    return loginResponse;
+                }
+            }
+
             if (loginResponse.affiliateId) {
                 // 如果有联盟ID，直接跳转到联盟专用看板
-                window.location.href = '/affiliate';
+                setTimeout(() => {
+                    window.location.href = '/affiliate';
+                }, 100);
             } else {
                 // 普通用户流程 - 先执行成功回调，然后关闭模态框
                 if (onSuccessCallbackRef.current) {

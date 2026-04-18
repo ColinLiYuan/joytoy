@@ -5,7 +5,7 @@ import { SERVER_CONFIG } from '@/lib/api-config';
 class WishlistService {
 
     async getWishlist(): Promise<WishlistResponse[]> {
-        const url = `${SERVER_CONFIG.apiRoutes.wishlist}/list`;
+        const url = `${SERVER_CONFIG.apiRoutes.wishlist}`; // ✅ 移除 /list
         const response = await fetch(url, {
             credentials: 'include',
         });
@@ -20,24 +20,24 @@ class WishlistService {
      */
     async addItemToWishlist(request: WishlistRequest): Promise<void> {
         try {
-            const url = `${SERVER_CONFIG.apiRoutes.wishlist}/add`;
-            // console.log('addItemToWishlist service request:', request)
+            const url = `${SERVER_CONFIG.apiRoutes.wishlist}`; // ✅ 移除 /add
             const response = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(request),
+                credentials: 'include',
             });
 
-            // if (!response.ok) {
-            //     const errorData = await response.json().catch(() => null);
-            //     throw new Error(errorData?.error || `Failed to add item to wishlist: ${response.status}`);
-            // }
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => null);
+                throw new Error(errorData?.error || `Failed to add item to wishlist: ${response.status}`);
+            }
 
-            // const apiResponse = await response.json();
-            //
-            // if (!apiResponse.success) {
-            //     throw new Error(apiResponse.message || 'Failed to add item to wishlist');
-            // }
+            const apiResponse = await response.json();
+
+            if (!apiResponse.success) {
+                throw new Error(apiResponse.message || 'Failed to add item to wishlist');
+            }
 
         } catch (error) {
             console.error('❌ Add item to wishlist failed:', error);

@@ -116,6 +116,14 @@ export async function proxyRequest(
         if (response.status === 401 && !_isRetry) {
             console.warn('401 Unauthorized, attempting refresh...');
 
+            // ✅ 临时禁用刷新，直接清除 Token
+            console.error('Token expired, please login again.');
+            clearTokens();
+            if (typeof window !== 'undefined') {
+                window.location.href = '/';
+            }
+            
+            /*
             // 尝试刷新
             const newToken = await refreshAccessToken();
 
@@ -139,6 +147,7 @@ export async function proxyRequest(
                     window.location.href = '/';
                 }
             }
+            */
         }
 
         return response;

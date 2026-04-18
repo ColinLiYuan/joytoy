@@ -54,7 +54,7 @@ class OrderService {
         return apiResponse.data;
     }
 
-    async payOrder(orderNumber: string, paymentRequest: PaymentRequest): Promise<OrderResponse> {
+    async payOrder(orderNumber: string, paymentRequest: PaymentRequest, signal?: AbortSignal): Promise<OrderResponse> {
         const url = `${SERVER_CONFIG.apiRoutes.order}/${orderNumber}/pay`;
         // console.log('🟢 Paying order, URL:', url);
 
@@ -65,6 +65,7 @@ class OrderService {
             },
             body: JSON.stringify(paymentRequest),
             credentials: 'include',
+            signal, // ✅ 支持超时中断
         });
 
         const apiResponse = await response.json();

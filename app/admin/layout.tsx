@@ -1,9 +1,8 @@
 'use client' // 👈 必须放在第一行，解决你截图中的报错
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
-import { usePathname, useRouter } from 'next/navigation'
-import { useAuth } from '@/contexts/authContext' // 确保路径正确
+import { usePathname } from 'next/navigation'
 import {
     ShoppingCart,
     Users,
@@ -13,8 +12,7 @@ import {
     BookOpen,
     Menu,
     X,
-    MessageSquare,
-    Loader2
+    MessageSquare
 } from 'lucide-react'
 
 export default function AdminLayout({
@@ -24,24 +22,9 @@ export default function AdminLayout({
 }) {
     const [sidebarOpen, setSidebarOpen] = useState(false)
     const pathname = usePathname()
-    const router = useRouter()
 
-    // 从鉴权上下文获取状态
-    const { isLoggedIn, isClient, userInfo } = useAuth()
-
-    // --- 鉴权守卫：未登录则重定向 ---
-    useEffect(() => {
-        if (isClient && isLoggedIn) {
-            // 假设 LoginResponse 中包含 roles 数组
-            const isAdmin = userInfo?.id === 5;
-
-            if (!isAdmin) {
-                router.push('/403'); // 无权访问页面
-            }
-        } else if (isClient && !isLoggedIn) {
-            router.push('/login?redirect=/admin');
-        }
-    }, [isLoggedIn, isClient, userInfo, router]);
+    // ✅ 简化：不再需要鉴权逻辑，由中间件保护
+    // 如果用户能访问到这里，说明已经有管理员权限了
 
     // 导航配置
     const navigation = [
@@ -53,16 +36,6 @@ export default function AdminLayout({
         { name: '博客管理', href: '/admin/blog', icon: BookOpen },
         { name: '系统设置', href: '/admin/settings', icon: Settings },
     ]
-
-    // 如果还在加载中或未登录，显示加载动画，防止后台内容闪现
-    if (!isClient || !isLoggedIn) {
-        return (
-            <div className="h-screen w-screen flex flex-col items-center justify-center bg-gray-50">
-                <Loader2 className="h-10 w-10 animate-spin text-gray-900" />
-                <p className="mt-4 text-gray-500 font-medium">loading...</p>
-            </div>
-        )
-    }
 
     const SidebarContent = () => (
         <div className="flex flex-col h-full bg-white border-r border-gray-200">

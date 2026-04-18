@@ -92,7 +92,61 @@ export function middleware(request: NextRequest) {
         }
     }
 
+    // ✅ 新增：管理员路由保护
+    if (pathname.startsWith('/admin')) {
+        // 注意：Cookie key 是 accessToken (驼峰)，不是 access_token
+        const token = request.cookies.get('accessToken') || request.cookies.get('access_token');
+        
+        if (!token) {
+            // 重定向到首页，带上 redirect 参数
+            return NextResponse.redirect(new URL('/?redirect=/admin', request.url));
+        }
+        
+        try {
+            const payload = parseJwt(token.value);
+            if (!payload.isAdmin) {
+                return NextResponse.redirect(new URL('/403', request.url));
+            }
+        } catch {
+            return NextResponse.redirect(new URL('/?redirect=/admin', request.url));
+        }
+    }
+
+    // ✅ 新增：联盟路由保护
+    if (pathname.startsWith('/affiliate')) {
+        // 注意：Cookie key 是 refreshToken (驼峰)，不是 refresh_token
+        const token = request.cookies.get('accessToken') || request.cookies.get('access_token');
+        
+        if (!token) {
+            // 重定向到首页，带上 redirect 参数
+            return NextResponse.redirect(new URL('/?redirect=/affiliate', request.url));
+        }
+        
+        try {
+            const payload = parseJwt(token.value);
+            if (!payload.isAffiliate) {
+                return NextResponse.redirect(new URL('/403', request.url));
+            }
+        } catch {
+            return NextResponse.redirect(new URL('/?redirect=/affiliate', request.url));
+        }
+    }
+
     return NextResponse.next();
+}
+
+// JWT 解析工具函数（简单实现，不验证签名）
+function parseJwt(token: string): any {
+    try {
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join(''));
+        return JSON.parse(jsonPayload);
+    } catch (e) {
+        throw new Error('Invalid token');
+    }
 }
 
 // Config 主要是为了性能，让 Middleware 只在特定路径触发
