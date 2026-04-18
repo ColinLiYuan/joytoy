@@ -7,6 +7,7 @@ import GARouteTracker from '@/components/analytics/ga-route-tracker';
 import Script from 'next/script';
 import { Suspense } from 'react';
 import AffiliateTracker from '@/components/common/AffiliateTracker';
+import DiscountPopup from '@/components/common/discount-popup';
 
 export default async function SiteLayout({
                                              children,
@@ -82,6 +83,7 @@ export default async function SiteLayout({
                 <Suspense fallback={null}>
                     <GARouteTracker />
                     <AffiliateTracker />
+                    <DiscountPopup />
                 </Suspense>
 
                 <div className="w-full relative z-50">

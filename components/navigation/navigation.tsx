@@ -30,7 +30,7 @@ export default function Navigation({ minimal = false, rootsData = [] }: Navigati
 
     const isCheckoutPage = pathname === '/checkout';
     const getCart = useCartStore(state => state.getCart);
-    const { isLoggedIn, openAuthModal, logout } = useAuth();
+    const { isLoggedIn, userInfo, openAuthModal, logout } = useAuth();
 
     useEffect(() => setIsMounted(true), []);
 
@@ -102,6 +102,7 @@ export default function Navigation({ minimal = false, rootsData = [] }: Navigati
                         <div className="flex items-center gap-1 sm:gap-2">
                             <UserActions
                                 isLoggedIn={isLoggedIn}
+                                userInfo={userInfo}
                                 onCartClick={toggleCart}
                                 onWishlistClick={(e) => {
                                     e.preventDefault();

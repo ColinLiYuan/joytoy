@@ -6,9 +6,11 @@ import { useCartStore } from '@/stores/useCartStore';
 import { useState, useEffect, useRef } from 'react';
 import { Z_INDEX } from '@/lib/constants/z-index';
 import SearchModal from '@/components/navigation/search-modal';
+import { LoginResponse } from '@/types/auth';
 
 interface UserActionsProps {
     isLoggedIn: boolean;
+    userInfo: LoginResponse | null;
     onCartClick: () => void;
     onWishlistClick: (e: React.MouseEvent) => void;
     onAuthModalOpen: () => void;
@@ -17,6 +19,7 @@ interface UserActionsProps {
 
 export default function UserActions({
                                         isLoggedIn,
+                                        userInfo,
                                         onCartClick,
                                         onWishlistClick,
                                         onAuthModalOpen,
@@ -28,6 +31,34 @@ export default function UserActions({
 
     const userMenuRef = useRef<HTMLDivElement>(null);
     const totalItems = useCartStore(state => state.totalItems);
+
+    // 获取用户首字母
+    const getUserInitials = () => {
+        if (!userInfo) return 'U';
+        
+        // 优先使用 displayName，其次使用 firstName + lastName
+        if (userInfo.displayName) {
+            return userInfo.displayName.charAt(0).toUpperCase();
+        }
+        
+        const firstInitial = userInfo.firstName?.charAt(0) || '';
+        const lastInitial = userInfo.lastName?.charAt(0) || '';
+        
+        return (firstInitial + lastInitial).toUpperCase() || 'U';
+    };
+
+    // 获取用户显示名称
+    const getUserDisplayName = () => {
+        if (!userInfo) return 'Account';
+        
+        if (userInfo.displayName) return userInfo.displayName;
+        if (userInfo.firstName && userInfo.lastName) return `${userInfo.firstName} ${userInfo.lastName}`;
+        if (userInfo.firstName) return userInfo.firstName;
+        if (userInfo.lastName) return userInfo.lastName;
+        
+        // 如果都没有，显示邮箱前缀
+        return userInfo.email?.split('@')[0] || 'Account';
+    };
 
     useEffect(() => setIsMounted(true), []);
 
@@ -87,11 +118,21 @@ export default function UserActions({
             <div className="relative" ref={userMenuRef}>
                 {/* Avatar Button */}
                 <button
-                    className={`w-10 h-10 flex items-center justify-center rounded-full transition-all duration-200 border ${isUserMenuOpen ? 'bg-black text-white border-black' : 'border-transparent text-gray-700 hover:text-black hover:bg-gray-100'}`}
+                    className={`w-10 h-10 flex items-center justify-center rounded-full transition-all duration-200 border ${
+                        isUserMenuOpen 
+                            ? 'bg-black text-white border-black' 
+                            : isLoggedIn 
+                                ? 'bg-gradient-to-br from-[#C5A059] to-[#A08245] text-white border-[#C5A059] shadow-md hover:shadow-lg' 
+                                : 'border-transparent text-gray-700 hover:text-black hover:bg-gray-100'
+                    }`}
                     onClick={() => isLoggedIn ? setIsUserMenuOpen(!isUserMenuOpen) : onAuthModalOpen()}
                     aria-label="Account"
                 >
-                    <User size={22} strokeWidth={1.5} />
+                    {isLoggedIn ? (
+                        <span className="text-sm font-bold">{getUserInitials()}</span>
+                    ) : (
+                        <User size={22} strokeWidth={1.5} />
+                    )}
                 </button>
 
                 {/* Dropdown Menu (Absolute Position) */}
@@ -114,8 +155,23 @@ export default function UserActions({
                         <div className="absolute -top-1.5 right-3.5 w-3 h-3 bg-white border-t border-l border-gray-100 transform rotate-45"></div>
 
                         <div className="relative bg-white rounded-xl overflow-hidden">
-                            <div className="px-5 py-3 border-b border-gray-50 bg-gray-50/50">
-                                <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Account</p>
+                            {/* 用户信息头部 */}
+                            <div className="px-5 py-4 border-b border-gray-50 bg-gray-50/50">
+                                <div className="flex items-center gap-3">
+                                    {/* 头像 */}
+                                    <div className="w-10 h-10 bg-gradient-to-br from-[#C5A059] to-[#A08245] rounded-full flex items-center justify-center flex-shrink-0 shadow-sm">
+                                        <span className="text-sm font-bold text-white">{getUserInitials()}</span>
+                                    </div>
+                                    {/* 用户名和邮箱 */}
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-sm font-semibold text-gray-900 truncate">
+                                            {getUserDisplayName()}
+                                        </p>
+                                        <p className="text-xs text-gray-500 truncate">
+                                            {userInfo?.email}
+                                        </p>
+                                    </div>
+                                </div>
                             </div>
 
                             <div className="py-1">
