@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Playfair_Display, Inter } from "next/font/google"; // ✅ 换成你实际用的字体
 import "./globals.css";
 import { Providers } from './providers';
+import AffiliateRedirectHandler from '@/components/common/affiliate-redirect-handler';
 
 // ✅ 1. 定义全局主字体 (Inter)
 const inter = Inter({
@@ -104,6 +105,7 @@ export default function RootLayout({
         {/* ✅ 将字体变量注入 Body，全局生效，无需在子 Layout 重复定义 */}
         <body className={`${inter.variable} ${playfair.variable} font-sans antialiased w-full max-w-[100vw] overflow-x-hidden bg-white text-[#1A1A1A]`} suppressHydrationWarning>
         <Providers>
+            <AffiliateRedirectHandler />
             {children}
         </Providers>
         </body>

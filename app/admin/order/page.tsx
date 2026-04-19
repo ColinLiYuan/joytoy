@@ -14,7 +14,8 @@ import {
     PackageCheck,
     Loader2,
     ChevronLeft,
-    ChevronRight
+    ChevronRight,
+    RotateCcw
 } from 'lucide-react'
 import { sendShippingConfirmationEmail } from '@/app/actions/send-shipping-email';
 
@@ -54,6 +55,12 @@ export default function OrderPage() {
     const [trackingNumber, setTrackingNumber] = useState('')
     const [shipLoading, setShipLoading] = useState(false)
 
+    // 退款弹窗状态
+    const [isRefundModalOpen, setIsRefundModalOpen] = useState(false)
+    const [refundOrder, setRefundOrder] = useState<OrderResponse | null>(null)
+    const [refundReason, setRefundReason] = useState('')
+    const [refundLoading, setRefundLoading] = useState(false)
+
     // 获取订单列表
     const fetchOrders = useCallback(async () => {
         setLoading(true)
@@ -91,6 +98,24 @@ export default function OrderPage() {
             alert('操作失败: ' + (error.message || '未知错误'));
         }
     };
+
+    // 退款提交
+    const handleRefundSubmit = async () => {
+        if (!refundOrder) return
+        setRefundLoading(true)
+        try {
+            await orderService.updateStatus(refundOrder.id, 'REFUNDED');
+            // TODO: 如果需要发送退款邮件，可以调用 sendRefundEmail
+            setIsRefundModalOpen(false)
+            setRefundReason('')
+            fetchOrders()
+        } catch (error: any) {
+            console.error('Refund error:', error)
+            alert('退款操作失败: ' + (error.message || '未知错误'));
+        } finally {
+            setRefundLoading(false)
+        }
+    }
 
     // 发货提交
     const handleShipSubmit = async () => {
@@ -228,6 +253,9 @@ export default function OrderPage() {
                                         {order.status === 'PENDING' && (
                                             <button onClick={() => handleUpdateStatus(order.id, 'PAID')} className="p-2 text-green-500 hover:bg-green-50 rounded-lg" title="确认支付"><CreditCard className="h-5 w-5" /></button>
                                         )}
+                                        {(order.status === 'PAID' || order.status === 'PROCESSING') && (
+                                            <button onClick={() => { setRefundOrder(order); setIsRefundModalOpen(true); }} className="p-2 text-red-500 hover:bg-red-50 rounded-lg" title="退款"><RotateCcw className="h-5 w-5" /></button>
+                                        )}
                                         {order.status === 'PAID' && (
                                             <button onClick={() => handleUpdateStatus(order.id, 'PROCESSING')} className="p-2 text-indigo-500 hover:bg-indigo-50 rounded-lg" title="开始处理"><Package className="h-5 w-5" /></button>
                                         )}
@@ -270,6 +298,40 @@ export default function OrderPage() {
                     )}
                 </div>
             </div>
+
+            {/* 退款模态框 */}
+            {isRefundModalOpen && refundOrder && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div className="fixed inset-0 bg-black/50 transition-opacity" onClick={() => setIsRefundModalOpen(false)} />
+                    <div className="relative bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
+                        <div className="p-6">
+                            <h3 className="text-lg font-bold text-gray-900 mb-4">订单退款</h3>
+                            <div className="mb-4">
+                                <p className="text-sm text-gray-600">订单号：<span className="font-mono font-bold">#{refundOrder.orderNumber}</span></p>
+                                <p className="text-sm text-gray-600">退款金额：<span className="font-bold text-red-600">${refundOrder.finalAmount.toFixed(2)}</span></p>
+                            </div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">退款原因</label>
+                            <textarea
+                                value={refundReason}
+                                onChange={(e) => setRefundReason(e.target.value)}
+                                className="w-full border border-gray-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-black resize-none"
+                                rows={3}
+                                placeholder="请输入退款原因（选填）"
+                            />
+                        </div>
+                        <div className="bg-gray-50 px-6 py-4 flex justify-end space-x-3">
+                            <button onClick={() => setIsRefundModalOpen(false)} className="px-4 py-2 text-sm text-gray-600">取消</button>
+                            <button
+                                onClick={handleRefundSubmit}
+                                disabled={refundLoading}
+                                className="px-6 py-2 bg-red-600 text-white text-sm font-bold rounded-lg hover:bg-red-700 disabled:opacity-50"
+                            >
+                                {refundLoading ? '处理中...' : '确认退款'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* 发货模态框 */}
             {isShipModalOpen && (

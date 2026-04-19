@@ -12,7 +12,8 @@ import {
     BookOpen,
     Menu,
     X,
-    MessageSquare
+    MessageSquare,
+    TrendingUp
 } from 'lucide-react'
 
 export default function AdminLayout({
@@ -31,6 +32,7 @@ export default function AdminLayout({
         { name: '仪表盘', href: '/admin', icon: BarChart3 },
         { name: '商品管理', href: '/admin/product', icon: Package },
         { name: '订单管理', href: '/admin/order', icon: ShoppingCart },
+        { name: '联盟管理', href: '/admin/affiliate', icon: TrendingUp },
         { name: '用户管理', href: '/admin/user', icon: Users },
         { name: '评论管理', href: '/admin/review', icon: MessageSquare },
         { name: '博客管理', href: '/admin/blog', icon: BookOpen },
