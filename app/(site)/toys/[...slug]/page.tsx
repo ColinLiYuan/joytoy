@@ -145,25 +145,26 @@ export default async function ProductDetail({ params }: PageProps) {
     };
 
     // ... 这一块处理 galleryImages 的逻辑保持不变 ...
-    const getGalleryItems = () => {
+    const getGalleryItems = (): Array<{ url: string; alt: string; type: 'image' | 'video'; poster: string }> => {
         if (!product) return [];
         
         // 始终将主图作为第一张图片
-        const items = [{
+        const items: Array<{ url: string; alt: string; type: 'image' | 'video'; poster: string }> = [{
             url: getProductImageUrl('', product.image),
             alt: product.title,
-            type: 'image' as const,
+            type: 'image',
             poster: ''
         }];
         
         // 如果有额外的 galleries，追加到后面
         if (product.galleries && product.galleries.length > 0) {
-            items.push(...product.galleries.map(gallery => ({
+            const galleryItems = product.galleries.map(gallery => ({
                 url: getProductImageUrl('', gallery.url),
                 alt: gallery.alt || product.title,
-                type: gallery.type || 'image',
+                type: (gallery.type as 'image' | 'video') || 'image',
                 poster: getProductImageUrl('', gallery.poster)
-            })));
+            }));
+            items.push(...galleryItems);
         }
         
         return items;

@@ -1,7 +1,7 @@
 // /app/admin/products/components/admin-product-form.tsx
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 
 // 组件引用
@@ -30,7 +30,7 @@ interface Category {
     categoryList?: Category[];
 }
 
-export default function AdminProductForm() {
+function AdminProductFormContent() {
     const router = useRouter();
     const params = useParams();
     const productId = params.id as string;
@@ -396,5 +396,20 @@ export default function AdminProductForm() {
                 </div>
             </form>
         </div>
+    );
+}
+
+export default function AdminProductForm() {
+    return (
+        <Suspense fallback={
+            <div className="container mx-auto px-4 py-8">
+                <div className="flex flex-col justify-center items-center h-64">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mb-4"></div>
+                    <span className="text-gray-600">正在加载表单...</span>
+                </div>
+            </div>
+        }>
+            <AdminProductFormContent />
+        </Suspense>
     );
 }

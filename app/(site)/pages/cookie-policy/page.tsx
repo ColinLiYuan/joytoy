@@ -50,4 +50,4 @@ export default function CookiePolicy() {
             </div>
         </div>
     );
-}
+}export const dynamic = 'force-dynamic'; 

@@ -195,4 +195,4 @@ export default function ManualsPage() {
             </div>
         </div>
     );
-}
+}export const dynamic = 'force-dynamic'; 

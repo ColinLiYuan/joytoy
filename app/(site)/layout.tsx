@@ -9,6 +9,8 @@ import { Suspense } from 'react';
 import AffiliateTracker from '@/components/common/AffiliateTracker';
 import DiscountPopup from '@/components/common/discount-popup';
 
+export const dynamic = 'force-dynamic';
+
 export default async function SiteLayout({
                                              children,
                                          }: {

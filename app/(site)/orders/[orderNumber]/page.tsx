@@ -1,7 +1,7 @@
 // app/(site)/orders/[orderNumber]/route.ts
 'use client';
 
-import { useState, useEffect, use } from 'react';
+import { Suspense, useState, useEffect, use } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { orderService } from '@/services/orderService';
@@ -20,7 +20,7 @@ import {
     Receipt
 } from 'lucide-react';
 
-export default function OrderDetailsPage({ params }: { params: Promise<{ orderNumber: string }> }) {
+function OrderDetailsContent({ params }: { params: Promise<{ orderNumber: string }> }) {
     const { orderNumber } = use(params);
     const searchParams = useSearchParams();
     const isJustPaid = searchParams.get('payment_success') === '1';
@@ -299,5 +299,17 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ orderNu
 
             </div>
         </div>
+    );
+}
+
+export default function OrderDetailsPage({ params }: { params: Promise<{ orderNumber: string }> }) {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center bg-gray-50 w-full max-w-full overflow-x-hidden">
+                <Loader2 className="animate-spin text-gray-400 w-8 h-8" />
+            </div>
+        }>
+            <OrderDetailsContent params={params} />
+        </Suspense>
     );
 }

@@ -47,4 +47,4 @@ export default function FAQPage() {
             </div>
         </>
     );
-}
+}export const dynamic = 'force-dynamic'; 

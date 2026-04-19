@@ -140,4 +140,4 @@ export default function About() {
             </section>
         </div>
     );
-}
+}export const dynamic = 'force-dynamic'; 

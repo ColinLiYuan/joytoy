@@ -119,3 +119,9 @@ export interface LogisticsInfo {
     destinationCountry?: string;
     checkpoints: LogisticsCheckpoint[];
 }
+
+export interface OrderPaymentResult {
+    success: boolean;
+    message: string;
+    orderNumber: string;
+}

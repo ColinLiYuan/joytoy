@@ -273,3 +273,4 @@ function StatCard({ title, value, subtitle, icon: Icon, color }: any) {
         </div>
     );
 }
+export const dynamic = 'force-dynamic'; 

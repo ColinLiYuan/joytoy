@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { getOrderDetail } from '@/app/actions/admin/order-detail';
 import { OrderResponse } from '@/types/order';
@@ -10,7 +10,7 @@ import {
     MapPin, Mail, Phone, Loader2, Calendar, Hash
 } from 'lucide-react';
 
-export default function OrderDetailPage() {
+function OrderDetailContent() {
     // 💡 因为你的文件夹叫 [orderNumber]，这里 params.orderNumber 才有值
     const params = useParams();
     const router = useRouter();
@@ -170,5 +170,20 @@ export default function OrderDetailPage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function OrderDetailPage() {
+    return (
+        <Suspense fallback={
+            <div className="flex h-screen items-center justify-center bg-gray-50">
+                <div className="text-center">
+                    <Loader2 className="animate-spin text-gray-400 mx-auto mb-2" size={32} />
+                    <p className="text-sm text-gray-500">正在加载订单详情...</p>
+                </div>
+            </div>
+        }>
+            <OrderDetailContent />
+        </Suspense>
     );
 }

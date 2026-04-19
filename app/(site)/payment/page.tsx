@@ -7,6 +7,7 @@ import { Loader2, AlertCircle, ShieldCheck, Lock, ChevronLeft, CheckCircle2 } fr
 import { orderService } from '@/services/orderService';
 import { useAuth } from '@/contexts/authContext';
 import { useCartStore } from '@/stores/useCartStore';
+import type { OrderPaymentResult } from '@/types/order';
 
 // --- 配置区域 ---
 const PAYMENT_CONFIG = {
@@ -241,7 +242,7 @@ function PaymentContent() {
             setRecentPaymentAttempt(false); // ✅ 支付开始后隐藏提示
             
             // 1. 调用后端支付接口（后端会同步验证并更新状态）
-            const paymentResult = await orderService.payOrder(orderNumber!, {
+            const paymentResult: OrderPaymentResult = await orderService.payOrder(orderNumber!, {
                 transactionId: data.orderID,
                 paymentMethod: 'PAYPAL',
                 currency: 'USD'
@@ -250,7 +251,6 @@ function PaymentContent() {
             clearTimeout(timeoutId);
             
             // 2. 检查支付结果（OrderPaymentResult 返回的是 { success, message, orderNumber }）
-            // 注意：后端返回的不是 Order 对象，而是 OrderPaymentResult
             if (paymentResult?.success === true) {
                 console.log('✅ Payment confirmed:', paymentResult.message);
                 await handlePaymentSuccess();

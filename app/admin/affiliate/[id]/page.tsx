@@ -1,6 +1,7 @@
 // app/admin/affiliate/[id]/page.tsx
 'use client'
 
+import { Suspense } from 'react'
 import React, { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { ArrowLeft, MousePointerClick, ShoppingCart, DollarSign, TrendingUp } from 'lucide-react'
@@ -22,7 +23,7 @@ interface AffiliateDetail {
     updatedAt: string | null;
 }
 
-export default function AffiliateDetailPage() {
+function AffiliateDetailContent() {
     const params = useParams();
     const router = useRouter();
     const affiliateId = params.id as string;
@@ -212,5 +213,17 @@ function InfoRow({ label, value }: { label: string; value: string }) {
             <p className="text-xs font-medium text-gray-500 uppercase">{label}</p>
             <p className="text-sm text-gray-900 mt-1">{value}</p>
         </div>
+    );
+}
+
+export default function AffiliateDetailPage() {
+    return (
+        <Suspense fallback={
+            <div className="flex items-center justify-center min-h-[400px]">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+            </div>
+        }>
+            <AffiliateDetailContent />
+        </Suspense>
     );
 }

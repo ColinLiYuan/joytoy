@@ -6,6 +6,8 @@ import { getAdminBlogs } from '@/app/actions/admin/blog';
 import { AdminBlogResponse, AdminBlogListResponse } from '@/types/admin/adminBlog'
 import { Eye, Edit, Plus, ExternalLink } from 'lucide-react';
 
+export const dynamic = 'force-dynamic';
+
 // 获取图片前缀环境变量
 const CDN_URL = process.env.NEXT_PUBLIC_IMAGE_UPLOAD_PATH || '';
 

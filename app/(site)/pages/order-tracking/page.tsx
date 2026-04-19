@@ -407,4 +407,4 @@ export default function OrderTrackingPage() {
             <TrackingContent />
         </Suspense>
     );
-}
+}export const dynamic = 'force-dynamic'; 

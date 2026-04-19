@@ -26,6 +26,8 @@ interface BlogListPageProps {
     searchParams?: Promise<BlogSearchParams>;
 }
 
+export const dynamic = 'force-dynamic';
+
 export async function generateMetadata(): Promise<Metadata> {
     return {
         title: 'The Journal - Pleasure & Wellness | MythToy',

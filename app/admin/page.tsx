@@ -11,6 +11,8 @@ import {
 import { useEffect, useState } from 'react'
 import { getDashboardStats, getRecentOrders, DashboardStats, RecentOrder } from '@/app/actions/admin/dashboard'
 
+export const dynamic = 'force-dynamic';
+
 export default function AdminDashboard() {
     const [stats, setStats] = useState<DashboardStats | null>(null)
     const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([])

@@ -4,6 +4,22 @@ const nextConfig = {
 
     // 禁用源映射以减少内存使用
     productionBrowserSourceMaps: false,
+    
+    // ✅ 强制所有页面动态渲染,避免 useSearchParams/useParams 的 Suspense 问题
+    // 这会禁用静态页面生成,所有页面都会在请求时动态渲染
+    async headers() {
+        return [
+            {
+                source: '/:path*',
+                headers: [
+                    {
+                        key: 'x-next-cache-tags',
+                        value: 'dynamic',
+                    },
+                ],
+            },
+        ];
+    },
 
     // 开启 React 严格模式（建议开启，有助于发现潜在 Bug）
     reactStrictMode: true,
@@ -15,6 +31,8 @@ const nextConfig = {
 
     // ✅ SEO 优化：生成静态页面时预渲染关键路径
     experimental: {
+        // ✅ 禁用部分预渲染，避免 useSearchParams/useParams 的 Suspense 问题
+        ppr: false,
         // 启用 ISR (Incremental Static Regeneration) 优化
         staleTimes: {
             dynamic: 30, // 动态内容缓存 30 秒

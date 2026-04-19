@@ -154,4 +154,4 @@ export default function AdminUserListPage() {
             </div>
         </div>
     );
-}
+}export const dynamic = 'force-dynamic'; 

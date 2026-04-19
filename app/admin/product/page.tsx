@@ -23,6 +23,8 @@ import {
 } from 'lucide-react'
 import { getProductImageUrl } from '@/lib/image-utils';
 
+export const dynamic = 'force-dynamic';
+
 // 模拟分类数据
 const categories = ['情趣内衣', '震动棒', '飞机杯', '润滑液', 'SM道具', '延时喷剂']
 
@@ -470,4 +472,4 @@ export default function ProductList() {
             </div>
         </div>
     )
-}
+} 

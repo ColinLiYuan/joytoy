@@ -1,13 +1,15 @@
 // app/admin/blog/add/route.ts
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { updateBlog } from '@/app/actions/admin/blog-detail';
 import BlogForm from '../components/admin-blog-form';
 
-export default function AddBlogPage() {
+export const dynamic = 'force-dynamic';
+
+function AddBlogContent() {
     const router = useRouter();
     const [saving, setSaving] = useState(false);
 
@@ -61,5 +63,17 @@ export default function AddBlogPage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function AddBlogPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+            </div>
+        }>
+            <AddBlogContent />
+        </Suspense>
     );
 }

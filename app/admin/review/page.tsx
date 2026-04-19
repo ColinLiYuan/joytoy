@@ -254,4 +254,4 @@ export default function AdminReviewPage() {
             </div>
         </div>
     )
-}
+}export const dynamic = 'force-dynamic'; 

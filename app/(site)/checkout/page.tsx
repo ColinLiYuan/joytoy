@@ -1,5 +1,6 @@
 'use client';
 
+import { Suspense } from 'react';
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { Loader2, ShoppingBag, Tag, User } from 'lucide-react';
@@ -16,7 +17,9 @@ import { CheckoutValidateRequest, CouponResponse } from '@/types/checkout';
 import { affiliateService } from '@/services/affiliateService';
 import { checkoutService } from '@/services/checkoutService';
 
-export default function CheckoutPage() {
+export const dynamic = 'force-dynamic';
+
+function CheckoutContent() {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(true);
     const [isCreatingOrder, setIsCreatingOrder] = useState(false);
@@ -309,5 +312,17 @@ export default function CheckoutPage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function CheckoutPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center">
+                <Loader2 className="w-10 h-10 animate-spin text-black" />
+            </div>
+        }>
+            <CheckoutContent />
+        </Suspense>
     );
 }

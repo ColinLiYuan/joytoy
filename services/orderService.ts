@@ -1,5 +1,5 @@
 // services/orderService.ts
-import { OrderCreateRequest, OrderResponse, OrderListResponse } from '@/types/order';
+import { OrderCreateRequest, OrderResponse, OrderListResponse, OrderPaymentResult } from '@/types/order';
 import { SERVER_CONFIG, ADMIN_CONFIG } from '@/lib/api-config';
 import { PaymentRequest } from '@/types/payment';
 import { getToken } from '@/lib/token-utils';
@@ -55,7 +55,7 @@ class OrderService {
         return apiResponse.data;
     }
 
-    async payOrder(orderNumber: string, paymentRequest: PaymentRequest, signal?: AbortSignal): Promise<OrderResponse> {
+    async payOrder(orderNumber: string, paymentRequest: PaymentRequest, signal?: AbortSignal): Promise<OrderPaymentResult> {
         const url = `${SERVER_CONFIG.apiRoutes.order}/${orderNumber}/pay`;
         // console.log('🟢 Paying order, URL:', url);
 
