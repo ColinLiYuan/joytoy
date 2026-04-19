@@ -98,12 +98,11 @@ export interface OrderItemRequest {
     productId: number;
     productTitle: string;
     productName: string;
-    productSku: string;
+    productSku: string;  // SKU Code,后端会通过它查询完整的SKU信息
     productImage?: string;
     quantity: number;
     unitPrice: number;
     color: string;
-    skuId?: number;
 }
 
 export interface LogisticsCheckpoint {

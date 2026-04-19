@@ -15,7 +15,7 @@ export interface AddToCartRequest {
 }
 
 export interface CartResponse {
-    cartId: number;
+    id: number;  // Cart的主键
     cartToken?: string;
     userId?: number | null;
     sessionId?: string | null;
@@ -37,6 +37,7 @@ export interface CartItem {
     productTitle: string;
     productName: string;
     productSku: string;
+    skuId?: number;  // SKU表ID,用于订单创建
     productImage: string;
     unitPrice: number;
     quantity: number;

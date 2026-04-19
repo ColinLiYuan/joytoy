@@ -67,10 +67,9 @@ export default function CheckoutPage() {
                 productName: item.productName,
                 quantity: item.quantity,
                 unitPrice: item.unitPrice,
-                productSku: item.productSku,
+                productSku: item.productSku,  // ✅ SKU Code,后端会通过它查询完整的SKU信息
                 productImage: item.productImage,
-                color: item.color || 'Default',
-                skuId: item.skuId  // ✅ 使用购物车项中的skuId，而不是itemId
+                color: item.color || 'Default'
             })));
         }
     }, [cart?.items]);
@@ -133,7 +132,7 @@ export default function CheckoutPage() {
         }
         
         const userId = getUserId();
-        const cartId = getCartId();
+        const cartId = cart?.id || getCartId();  // ✅ 优先从cart对象获取id，降级使用localStorage
         const formData = getShippingFormData();
         const addr = formData.shippingAddress;
     

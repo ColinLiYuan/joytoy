@@ -8,7 +8,6 @@ import {
     Users,
     Package,
     BarChart3,
-    Settings,
     BookOpen,
     Menu,
     X,
@@ -36,7 +35,6 @@ export default function AdminLayout({
         { name: '用户管理', href: '/admin/user', icon: Users },
         { name: '评论管理', href: '/admin/review', icon: MessageSquare },
         { name: '博客管理', href: '/admin/blog', icon: BookOpen },
-        { name: '系统设置', href: '/admin/settings', icon: Settings },
     ]
 
     const SidebarContent = () => (

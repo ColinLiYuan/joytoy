@@ -49,11 +49,12 @@ export default function Cart({ isOpen, onClose }: CartProps) {
     // 1. 初始化 & 挂载
     useEffect(() => {
         setIsMounted(true);
+        // ✅ 购物车组件挂载时不再主动获取，由 navigation.tsx 统一处理
+        // 这里只负责显示loading状态
         if (isOpen && isLoggedIn) {
-            setIsInitialLoading(true);
-            getCart().finally(() => setIsInitialLoading(false));
+            setIsInitialLoading(false);  // 数据应该已经从 navigation 获取了
         }
-    }, [isOpen, isLoggedIn, getCart]);
+    }, [isOpen, isLoggedIn]);
 
     // 2. 路由变化自动关闭
     useEffect(() => {
