@@ -10,6 +10,7 @@ import SimpleProductGrid from '@/components/product/simple-product-grid';
 import { useAuth } from '@/contexts/authContext';
 import { useRouter } from 'next/navigation';
 import { ProductResponse } from '@/types/product';
+import { SITE_CONFIG } from '@/lib/constants/site-config';
 
 // ✅ 修复：更精确的数据映射
 const convertToProductResponse = (wishlistItem: WishlistResponse): ProductResponse => {
@@ -108,7 +109,7 @@ export default function WishlistPage() {
                                     <Heart size={24} fill="currentColor" />
                                 </div>
                                 <h1 className="text-3xl md:text-4xl font-bold text-gray-900 font-['Playfair_Display']">
-                                    My Wishlist
+                                    {SITE_CONFIG.pages.wishlist.title.split('|')[0].trim()}
                                 </h1>
                             </div>
                             <p className="text-gray-500">
@@ -129,8 +130,8 @@ export default function WishlistPage() {
                         <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm">
                             <Heart className="w-10 h-10 text-gray-300" />
                         </div>
-                        <h2 className="text-2xl font-bold text-gray-900 mb-3">Your wishlist is empty</h2>
-                        <p className="text-gray-500 mb-8">Start adding products you love.</p>
+                        <h2 className="text-2xl font-bold text-gray-900 mb-3">{SITE_CONFIG.pages.wishlist.emptyTitle}</h2>
+                        <p className="text-gray-500 mb-8">{SITE_CONFIG.pages.wishlist.emptyDescription}</p>
                         <Link
                             href="/collections/all"
                             className="inline-flex items-center bg-black text-white px-8 py-3 rounded-full font-bold hover:bg-gray-900 transition-all hover:-translate-y-1 shadow-lg"

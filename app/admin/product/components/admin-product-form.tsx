@@ -40,6 +40,7 @@ export default function AdminProductForm() {
         id: undefined,
         slug: '',
         title: '',
+        name: '',
         originalPrice: 0,
         currentPrice: 0,
         minOrder: '1',
@@ -47,13 +48,20 @@ export default function AdminProductForm() {
         image: '',
         baseUrl: '',
         stock: 0,
+        lockedStock: 0,
         status: 'DRAFT',
         galleries: [],
         specifications: [],
         features: [],
         colors: [],
         categories: [],
-        productSkus: []
+        productSkus: [],
+        badge: '',
+        brand: '',
+        alt: '',
+        sourceTitle: '',
+        sourceVendor: '',
+        purchasePrice: 0
     });
 
     const [roots, setRoots] = useState<Category[]>([]);
@@ -124,8 +132,10 @@ export default function AdminProductForm() {
             sourceTitle: product.sourceTitle,
             sourceVendor: product.sourceVendor,
             title: product.title,
+            name: product.name,
             description: product.description,
             stock: product.stock || 0,
+            lockedStock: product.lockedStock || 0,
             purchasePrice: product.purchasePrice,
             currentPrice: product.currentPrice,
             originalPrice: product.originalPrice,

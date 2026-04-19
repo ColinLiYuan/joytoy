@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { productService } from '@/services/product-service';
+import { uploadProductImage } from '@/app/actions/admin/product-upload';
 import { getProductImageUrl } from '@/lib/image-utils';
 
 // --- dnd-kit 依赖 ---
@@ -170,8 +170,14 @@ export default function AdminProductGallery({ product, updateProduct }: ImageUpl
 
             try {
                 setUploading(true);
-                // 直接上传原文件
-                const result = await productService.uploadMainImage(file, product.slug);
+                
+                // 使用 Server Action 上传
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('type', 'main');
+                formData.append('slug', product.slug);
+                
+                const result = await uploadProductImage(formData);
                 updateProduct({ image: result.url });
 
                 // 本地预览
@@ -237,8 +243,14 @@ export default function AdminProductGallery({ product, updateProduct }: ImageUpl
                 for (let i = 0; i < validFiles.length; i++) {
                     const currentIndex = nextAvailableIndex + i;
 
-                    // 直接上传原文件
-                    const result = await productService.uploadGalleryImage(validFiles[i], product.slug, currentIndex);
+                    // 使用 Server Action 上传
+                    const formData = new FormData();
+                    formData.append('file', validFiles[i]);
+                    formData.append('type', 'gallery');
+                    formData.append('slug', product.slug);
+                    formData.append('index', currentIndex.toString());
+                    
+                    const result = await uploadProductImage(formData);
 
                     newGalleries.push({
                         url: result.url,

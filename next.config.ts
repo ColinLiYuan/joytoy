@@ -20,6 +20,10 @@ const nextConfig = {
             dynamic: 30, // 动态内容缓存 30 秒
             static: 300, // 静态内容缓存 5 分钟
         },
+        // ✅ Server Action 文件大小限制（10MB）
+        serverActions: {
+            bodySizeLimit: '10mb',
+        },
     },
 
     // ✅ 核心修改区域：图片优化策略

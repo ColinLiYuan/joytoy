@@ -118,6 +118,23 @@ export default function AdminProductBasicInfo({ product, updateProduct }: BasicI
                     </div>
                 </div>
 
+                {/* 第二行：产品名称 */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                            产品名称 (中文/自定义名称)
+                        </label>
+                        <input
+                            type="text"
+                            value={product.name || ''}
+                            onChange={(e) => handleInputChange('name', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="输入产品的中文名称或自定义名称..."
+                        />
+                        <p className="text-xs text-gray-500 mt-1">用于内部管理或显示在特定位置的产品名称</p>
+                    </div>
+                </div>
+
                 {/* 颜色选择区域 - 升级版 (使用 COLOR_SYSTEM) */}
                 <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
                     <div className="flex justify-between items-center mb-3">

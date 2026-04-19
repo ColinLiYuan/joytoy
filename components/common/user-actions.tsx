@@ -1,12 +1,14 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { User, ShoppingBag, Heart, Search, LogOut, Package, Settings } from 'lucide-react';
 import { useCartStore } from '@/stores/useCartStore';
 import { useState, useEffect, useRef } from 'react';
 import { Z_INDEX } from '@/lib/constants/z-index';
 import SearchModal from '@/components/navigation/search-modal';
 import { LoginResponse } from '@/types/auth';
+import { wishlistService } from '@/services/wishlistService';
 
 interface UserActionsProps {
     isLoggedIn: boolean;
@@ -31,6 +33,8 @@ export default function UserActions({
 
     const userMenuRef = useRef<HTMLDivElement>(null);
     const totalItems = useCartStore(state => state.totalItems);
+    const pathname = usePathname();
+    const isWishlistPage = pathname === '/wishlist';
 
     // 获取用户首字母
     const getUserInitials = () => {
@@ -87,13 +91,17 @@ export default function UserActions({
 
             {/* 2. Wishlist Button */}
             <button
-                className="w-10 h-10 flex items-center justify-center text-gray-700 hover:text-pink-600 rounded-full hover:bg-pink-50 transition-all duration-200"
+                className={`w-10 h-10 flex items-center justify-center rounded-full transition-all duration-300 ${
+                    isWishlistPage 
+                        ? 'text-pink-600 bg-pink-50' 
+                        : 'text-gray-700 hover:text-pink-600 hover:bg-pink-50/50'
+                }`}
                 onClick={isLoggedIn ? undefined : onWishlistClick}
                 aria-label="Wishlist"
             >
                 {isLoggedIn ? (
                     <Link href="/wishlist" className="flex items-center justify-center w-full h-full">
-                        <Heart size={22} strokeWidth={1.5} />
+                        <Heart size={22} strokeWidth={isWishlistPage ? 2.5 : 1.5} fill={isWishlistPage ? "currentColor" : "none"} />
                     </Link>
                 ) : (
                     <Heart size={22} strokeWidth={1.5} />
@@ -122,7 +130,7 @@ export default function UserActions({
                         isUserMenuOpen 
                             ? 'bg-black text-white border-black' 
                             : isLoggedIn 
-                                ? 'bg-gradient-to-br from-[#C5A059] to-[#A08245] text-white border-[#C5A059] shadow-md hover:shadow-lg' 
+                                ? 'bg-gray-900 text-white border-gray-900 shadow-md hover:shadow-lg' 
                                 : 'border-transparent text-gray-700 hover:text-black hover:bg-gray-100'
                     }`}
                     onClick={() => isLoggedIn ? setIsUserMenuOpen(!isUserMenuOpen) : onAuthModalOpen()}
@@ -159,7 +167,7 @@ export default function UserActions({
                             <div className="px-5 py-4 border-b border-gray-50 bg-gray-50/50">
                                 <div className="flex items-center gap-3">
                                     {/* 头像 */}
-                                    <div className="w-10 h-10 bg-gradient-to-br from-[#C5A059] to-[#A08245] rounded-full flex items-center justify-center flex-shrink-0 shadow-sm">
+                                    <div className="w-10 h-10 bg-gray-900 rounded-full flex items-center justify-center flex-shrink-0 shadow-sm">
                                         <span className="text-sm font-bold text-white">{getUserInitials()}</span>
                                     </div>
                                     {/* 用户名和邮箱 */}

@@ -11,6 +11,7 @@ import {
     Package, Truck, CheckCircle, Clock, Search,
     ArrowRight, AlertCircle, ShoppingBag, XCircle, CreditCard, ChevronRight, RefreshCw, Archive
 } from 'lucide-react';
+import { SITE_CONFIG } from '@/lib/constants/site-config';
 
 // ✅ 严格按照后端枚举映射状态
 const getStatusConfig = (status: string) => {
@@ -112,7 +113,7 @@ export default function OrdersPage() {
                 {/* Header */}
                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
                     <div>
-                        <h1 className="text-3xl font-bold text-gray-900 font-['Playfair_Display']">My Orders</h1>
+                        <h1 className="text-3xl font-bold text-gray-900 font-['Playfair_Display']">{SITE_CONFIG.pages.orders.title.split('|')[0].trim()}</h1>
                         <p className="text-gray-500 text-sm mt-1">Track past purchases and returns</p>
                     </div>
                     <div className="relative w-full md:w-72">
@@ -139,8 +140,8 @@ export default function OrdersPage() {
                         <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
                             <ShoppingBag className="w-8 h-8 text-gray-300" />
                         </div>
-                        <h3 className="text-lg font-bold text-gray-900 mb-1">No orders yet</h3>
-                        <p className="text-gray-500 text-sm mb-6">Discover something new today</p>
+                        <h3 className="text-lg font-bold text-gray-900 mb-1">{SITE_CONFIG.pages.orders.emptyTitle}</h3>
+                        <p className="text-gray-500 text-sm mb-6">{SITE_CONFIG.pages.orders.emptyDescription}</p>
                         <Link href="/collections/all" className="inline-block bg-black text-white px-8 py-3 rounded-lg text-sm font-bold shadow-lg hover:bg-gray-800 transition-all hover:-translate-y-0.5">
                             Start Shopping
                         </Link>

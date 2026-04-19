@@ -28,6 +28,7 @@ export interface ReleaseProductRequest {
     sourceTitle?: string;
     sourceVendor?: string;
     title?: string;
+    name?: string; // 商品名称
     description?: string;
     stock?: number;
     lockedStock?: number;
@@ -55,6 +56,7 @@ export interface AdminProductResponse {
     sourceTitle?: string;
     sourceVendor?: string;
     title?: string;
+    name?: string; // 商品名称
     description?: string;
     stock?: number;
     lockedStock?: number;
