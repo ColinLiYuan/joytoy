@@ -1,8 +1,8 @@
-// app/admin/blog/route.ts
+// app/admin/blog/page.tsx
 'use client';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { blogService } from '@/services/blogService';
+import { getAdminBlogs } from '@/app/actions/admin/blog';
 import { AdminBlogResponse, AdminBlogListResponse } from '@/types/admin/adminBlog'
 import { Eye, Edit, Plus, ExternalLink } from 'lucide-react';
 
@@ -43,11 +43,11 @@ export default function BlogManagementPage() {
     const fetchBlogs = async () => {
         try {
             setLoading(true);
-            const response: AdminBlogListResponse = await blogService.adminList(
-                pagination.currentPage,
-                pagination.pageSize,
-                statusFilter !== 'ALL' ? statusFilter : undefined
-            );
+            const response: AdminBlogListResponse = await getAdminBlogs({
+                page: pagination.currentPage,
+                size: pagination.pageSize,
+                status: statusFilter !== 'ALL' ? statusFilter : undefined
+            });
 
             setBlogs(response.content);
             setPagination({

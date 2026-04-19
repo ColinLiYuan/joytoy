@@ -37,38 +37,31 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // 直接调用后端上传接口
-        const backendUrl = `${BACKEND_CONFIG.baseURL}/api/admin/V1/product/upload/image`;
+        // 调用后端产品图片上传接口
+        const backendUrl = `${BACKEND_CONFIG.baseURL}/api/admin/V1/upload/myth/product/image`;
 
         console.log('调用后端上传接口:', backendUrl);
 
         // 创建新的 FormData
         const backendFormData = new FormData();
-        backendFormData.append('file', file, fileName); // 使用生成的文件名
-        backendFormData.append('type', type);
+        backendFormData.append('file', file, fileName); // 使用原始文件名
         backendFormData.append('slug', slug);
-        backendFormData.append('fileName', fileName);
         if (index) {
             backendFormData.append('index', index);
         }
-
-        console.log('FormData 字段:', {
-            hasFile: backendFormData.has('file'),
-            hasType: backendFormData.has('type'),
-            hasSlug: backendFormData.has('slug'),
-            hasFileName: backendFormData.has('fileName'),
-            hasIndex: backendFormData.has('index')
-        });
 
         const backendResponse = await fetch(backendUrl, {
             method: 'POST',
             body: backendFormData,
             headers: {
-                ...(BACKEND_CONFIG.defaultHeaders['Authorization'] && {
-                    'Authorization': BACKEND_CONFIG.defaultHeaders['Authorization']
+                // 注意：不要手动设置 Content-Type，让浏览器自动设置 multipart/form-data + boundary
+                // 优先使用前端传来的 Authorization header
+                ...(request.headers.get('authorization') && {
+                    'Authorization': request.headers.get('authorization')!
                 }),
-                ...(BACKEND_CONFIG.defaultHeaders['Cookie'] && {
-                    'Cookie': BACKEND_CONFIG.defaultHeaders['Cookie']
+                // 如果没有，再使用默认的
+                ...(!request.headers.get('authorization') && BACKEND_CONFIG.defaultHeaders['Authorization'] && {
+                    'Authorization': BACKEND_CONFIG.defaultHeaders['Authorization']
                 })
             },
         });
@@ -102,7 +95,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({
             success: true,
             data: {
-                url: backendResult.url || backendResult.data?.url || fileName, // 使用文件名作为URL
+                url: backendResult.url || backendResult.data?.url || backendResult.path || backendResult.data?.path || fileName,
                 fileName: backendResult.fileName || backendResult.data?.fileName || fileName,
                 originalName: file.name,
                 size: file.size,

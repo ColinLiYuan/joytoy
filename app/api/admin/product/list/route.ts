@@ -19,7 +19,14 @@ export async function GET(request: NextRequest) {
         if (vendor) url += `&vendor=${vendor}`;
         // console.log('query list url ' + url)
 
-        const result = await apiGet(url);
+        // 获取前端传来的 Authorization header
+        const authHeader = request.headers.get('authorization');
+        const headers: Record<string, string> = {};
+        if (authHeader) {
+            headers['Authorization'] = authHeader;
+        }
+
+        const result = await apiGet(url, { headers });
         // console.log('admin product list route:', result);
 
         return NextResponse.json(result);

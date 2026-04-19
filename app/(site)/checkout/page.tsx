@@ -70,7 +70,7 @@ export default function CheckoutPage() {
                 productSku: item.productSku,
                 productImage: item.productImage,
                 color: item.color || 'Default',
-                skuId: item.itemId
+                skuId: item.skuId  // ✅ 使用购物车项中的skuId，而不是itemId
             })));
         }
     }, [cart?.items]);

@@ -1,8 +1,8 @@
-// app/admin/user/route.ts
+// app/admin/user/page.tsx
 'use client'
 
 import { useState, useEffect } from 'react';
-import authService from '@/services/authService';
+import { getAdminUsers } from '@/app/actions/admin/user';
 import { UserResponse } from '@/types/auth'
 import {
     Search,
@@ -24,7 +24,7 @@ export default function AdminUserListPage() {
     const fetchUsers = async () => {
         setLoading(true);
         try {
-            const data = await authService.adminList({
+            const data = await getAdminUsers({
                 page: currentPage,
                 size: 10,
                 status: status || undefined,
@@ -32,7 +32,6 @@ export default function AdminUserListPage() {
             });
             setUsers(data.content);
             setTotalPages(data.totalPages);
-            console.log('users: ', users)
         } catch (error) {
             console.error('Fetch users failed', error);
         } finally {

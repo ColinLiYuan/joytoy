@@ -2,7 +2,7 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
-import { blogService } from '@/services/blogService';
+import { uploadBlogImage } from '@/app/actions/admin/blog-upload';
 import { RefreshCw } from 'lucide-react';
 
 // 动态导入 MD 编辑器
@@ -174,7 +174,12 @@ export default function BlogForm({
 
         try {
             setUploadingImage(true);
-            const result = await blogService.uploadImage(file);
+            
+            // 创建 FormData
+            const uploadFormData = new FormData();
+            uploadFormData.append('file', file);
+            
+            const result = await uploadBlogImage(uploadFormData);
 
             // 获取完整 URL (用于 Markdown 预览)
             const fullImageUrl = getImageUrl(result.url);
@@ -185,7 +190,7 @@ export default function BlogForm({
                 const newContent = formData.content + `\n${imageMarkdown}\n`;
                 handleChange('content', newContent);
             } else if (uploadTarget === 'COVER') {
-                // 封面：修改这里！只填入后端返回的原始路径/文件名 (不带前缀)
+                // 封面：只填入后端返回的原始路径/文件名 (不带前缀)
                 handleChange('coverImage', result.url);
             }
 

@@ -1,9 +1,9 @@
-// /app/admin/products/route.ts
+// /app/admin/product/page.tsx
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
-import { productService } from '@/services/product-service'
+import { getAdminProducts } from '@/app/actions/admin/product'
 import { ProductResponse, ProductListResponse } from '@/types/product'
 import { VENDORS } from '@/lib/constants/product-options'
 
@@ -62,15 +62,15 @@ export default function ProductList() {
                 statusParam = 'INACTIVE'
             }
 
-            // 调用产品服务获取数据，传递所有筛选条件
-            const result: ProductListResponse = await productService.adminList(
-                searchFilters.category || '', // category slug参数
-                pagination.currentPage, // page
-                12, // size
-                searchFilters.keyword || '', // 搜索关键词（产品名称）
-                statusParam || '', // 状态
-                searchFilters.vendor || '' // 供应商
-            )
+            // 调用 Server Action 获取数据
+            const result: ProductListResponse = await getAdminProducts({
+                category: searchFilters.category || '',
+                page: pagination.currentPage,
+                size: 12,
+                keyword: searchFilters.keyword || '',
+                status: statusParam || '',
+                vendor: searchFilters.vendor || ''
+            })
 
             setProducts(result.content || [])
             setPagination({

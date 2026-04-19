@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { orderService } from '@/services/orderService';
+import { getOrderDetail } from '@/app/actions/admin/order-detail';
 import { OrderResponse } from '@/types/order';
 import { getProductImageUrl } from '@/lib/image-utils';
 import {
@@ -28,8 +28,8 @@ export default function OrderDetailPage() {
             }
 
             try {
-                // 调用 service 获取数据
-                const data = await orderService.getOrder(orderNo);
+                // 调用 Server Action 获取数据
+                const data = await getOrderDetail(orderNo);
                 console.log('Fetched Detail:', data);
                 setOrder(data);
             } catch (err) {

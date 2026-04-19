@@ -4,6 +4,7 @@ import { ProductListResponse } from '@/types/product';
 import { ADMIN_CONFIG, SERVER_CONFIG } from '@/lib/api-config';
 import {AdminProductResponse, ReleaseProductRequest} from "@/types/admin/adminProduct";
 import {ProductResponse} from "@/types/product";
+import { getToken } from '@/lib/token-utils';
 
 export interface UploadResult {
     url: string;
@@ -47,16 +48,22 @@ class ProductService {
                 queryParams.append('vendor', vendor);
             }
 
-            // 构建完整 URL
-            const url = `${ADMIN_CONFIG.apiRoutes.product}/list?${queryParams.toString()}`;
+            // 构建完整 URL - 走 Next.js API Route
+            const url = `${SERVER_CONFIG.baseURL}/api/admin/product/list?${queryParams.toString()}`;
 
             // console.log('Fetching products from URL:', url); // 添加调试日志
 
+            const token = await getToken();
+            const headers: Record<string, string> = {
+                'Content-Type': 'application/json',
+            };
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+
             const response = await fetch(url, {
                 cache: 'no-store',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers,
             });
 
             if (!response.ok) {
@@ -90,10 +97,17 @@ class ProductService {
         try {
             // console.log('product release: ', request)
 
-            const url = `${ADMIN_CONFIG.apiRoutes.product}/release`;
+            const url = `${SERVER_CONFIG.baseURL}/api/admin/product/release`;
+            
+            const token = await getToken();
+            const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+            
             const response = await fetch(url, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers,
                 body: JSON.stringify(request),
             });
 
@@ -113,13 +127,19 @@ class ProductService {
 
     async adminGetById(id: string): Promise<AdminProductResponse> {
         try {
-            const url = `${ADMIN_CONFIG.apiRoutes.product}/fetch?id=${id}`;
+            const url = `${SERVER_CONFIG.baseURL}/api/admin/product/fetch?id=${id}`;
+
+            const token = await getToken();
+            const headers: Record<string, string> = {
+                'Content-Type': 'application/json',
+            };
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
 
             const response = await fetch(url, {
                 cache: 'no-store',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers,
             });
 
             const apiResponse = await response.json();
@@ -142,15 +162,25 @@ class ProductService {
         try {
             const formData = new FormData();
             formData.append('file', file);
+            formData.append('type', type);
             formData.append('slug', slug);
+            formData.append('fileName', file.name);
             if (index !== undefined) {
                 formData.append('index', index.toString());
             }
 
-            // ✅ 使用新的统一上传接口
-            const url = `${ADMIN_CONFIG.baseURL}/api/admin/V1/upload/myth/product/image`;
+            // ✅ 走 Next.js 上传路由
+            const url = `${SERVER_CONFIG.baseURL}/api/admin/product/upload`;
+            
+            const token = await getToken();
+            const headers: Record<string, string> = {};
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+            
             const response = await fetch(url, {
                 method: 'POST',
+                headers,
                 body: formData,
             });
 

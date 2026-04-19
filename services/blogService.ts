@@ -3,6 +3,7 @@
 import { ADMIN_CONFIG } from '@/lib/api-config';
 import { AdminBlogResponse, AdminBlogListResponse } from '@/types/admin/adminBlog';
 import {ReleaseBlogRequest} from "../types/admin/adminBlog";
+import { getToken } from '@/lib/token-utils';
 
 export interface UploadResult {
     url: string;
@@ -32,11 +33,18 @@ class BlogService {
 
             const url = `${ADMIN_CONFIG.apiRoutes.blog}/list?${queryParams}`;
             // console.log('BlogService adminList url: ', url)
+            
+            const token = await getToken();
+            const headers: Record<string, string> = {
+                'Content-Type': 'application/json',
+            };
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+            
             const response = await fetch(url, {
                 cache: 'no-store',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers,
             });
 
             if (!response.ok) {
@@ -67,11 +75,18 @@ class BlogService {
     async getById(id: number): Promise<AdminBlogResponse> {
         try {
             const url = `${ADMIN_CONFIG.apiRoutes.blog}/fetch?id=${id}`;
+            
+            const token = await getToken();
+            const headers: Record<string, string> = {
+                'Content-Type': 'application/json',
+            };
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+            
             const response = await fetch(url, {
                 cache: 'no-store',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers,
             });
 
             if (!response.ok) {
@@ -90,9 +105,16 @@ class BlogService {
     async release(request: ReleaseBlogRequest): Promise<AdminBlogResponse> {
         try {
             const url = `${ADMIN_CONFIG.apiRoutes.blog}/release`;
+            
+            const token = await getToken();
+            const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+            
             const response = await fetch(url, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers,
                 body: JSON.stringify(request),
             });
 
@@ -118,8 +140,16 @@ class BlogService {
 
             // ✅ 使用新的统一上传接口
             const url = `${ADMIN_CONFIG.baseURL}/api/admin/V1/upload/myth/blog/image`;
+            
+            const token = await getToken();
+            const headers: Record<string, string> = {};
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+            
             const response = await fetch(url, {
                 method: 'POST',
+                headers,
                 body: formData,
             });
 

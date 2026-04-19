@@ -16,8 +16,8 @@ import AdminPublishActions from './admin-publish-actions';
 import ProductSkus from './admin-product-skus';
 
 // 服务引用
-import { categoryService } from '@/services/category-service';
-import { productService } from '@/services/product-service';
+import { getAdminRootCategories } from '@/app/actions/admin/category';
+import { getAdminProductById, releaseAdminProduct } from '@/app/actions/admin/product';
 
 // 类型引用
 import { RootResponse } from '@/types/category';
@@ -86,7 +86,7 @@ export default function AdminProductForm() {
 
     const loadRoots = async (): Promise<Category[]> => {
         try {
-            const rootsResponse: RootResponse[] = await categoryService.getRoots();
+            const rootsResponse: RootResponse[] = await getAdminRootCategories();
             return rootsResponse.map(root => ({
                 slug: root.slug,
                 name: root.name,
@@ -105,7 +105,7 @@ export default function AdminProductForm() {
 
     const loadProductData = async (id: string) => {
         try {
-            const productData = await productService.adminGetById(id);
+            const productData = await getAdminProductById(id);
             setProduct(productData);
         } catch (error) {
             console.error('加载产品数据失败:', error);
@@ -193,7 +193,7 @@ export default function AdminProductForm() {
 
             // 2. 提交API
             // console.log('Submitting Product:', submitData);
-            await productService.adminRelease(submitData);
+            await releaseAdminProduct(submitData);
 
             // 3. 成功反馈
             alert(productId ? '产品更新成功！' : '产品发布成功！');

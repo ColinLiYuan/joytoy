@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { orderService } from '@/services/orderService'
+import { getAdminOrders, updateOrderStatus } from '@/app/actions/admin/order'
 import { OrderResponse, OrderStatus } from '@/types/order'
 import {
     Search,
@@ -17,7 +17,6 @@ import {
     ChevronRight,
     RotateCcw
 } from 'lucide-react'
-import { sendShippingConfirmationEmail } from '@/app/actions/send-shipping-email';
 
 // 定义所有状态
 const statuses: (OrderStatus | 'ALL')[] = [
@@ -65,7 +64,7 @@ export default function OrderPage() {
     const fetchOrders = useCallback(async () => {
         setLoading(true)
         try {
-            const data = await orderService.adminList({
+            const data = await getAdminOrders({
                 page,
                 size: 7,
                 status: activeStatus === 'ALL' ? undefined : activeStatus,
@@ -90,9 +89,7 @@ export default function OrderPage() {
         if (!window.confirm(`确定要将订单状态手动更新为【${statusLabel}】吗？`)) return;
 
         try {
-            // 这里调用 updateStatus，第二个参数传 status 字符串（如果后端支持）
-            // 或者你需要专门的 updateStatus 接口，这里暂用你 service 定义的 updateStatus
-            await orderService.updateStatus(orderId, newStatus);
+            await updateOrderStatus(orderId, newStatus);
             fetchOrders();
         } catch (error: any) {
             alert('操作失败: ' + (error.message || '未知错误'));
@@ -104,7 +101,7 @@ export default function OrderPage() {
         if (!refundOrder) return
         setRefundLoading(true)
         try {
-            await orderService.updateStatus(refundOrder.id, 'REFUNDED');
+            await updateOrderStatus(refundOrder.id, 'REFUNDED');
             // TODO: 如果需要发送退款邮件，可以调用 sendRefundEmail
             setIsRefundModalOpen(false)
             setRefundReason('')
@@ -122,27 +119,9 @@ export default function OrderPage() {
         if (!trackingNumber || !shipOrder) return
         setShipLoading(true)
         try {
-            await orderService.updateStatus(shipOrder.id, trackingNumber);
+            await updateOrderStatus(shipOrder.id, trackingNumber);
 
-            await sendShippingConfirmationEmail({
-                orderNumber: shipOrder.orderNumber,
-                email: shipOrder.guestEmail || shipOrder.shippingAddress.email || "",
-                firstName: shipOrder.shippingAddress.firstName || "Customer",
-                lastName: shipOrder.shippingAddress.lastName || "Customer",
-                carrier: 'Standard Shipping',
-                trackingNumber: trackingNumber,
-                shippingAddress: {
-                    addressLine1: shipOrder.shippingAddress.addressLine1 || "",
-                    city: shipOrder.shippingAddress.city || "",
-                    country: shipOrder.shippingAddress.country || ""
-                },
-                items: shipOrder.items.map(item => ({
-                    title: item.productTitle,
-                    quantity: item.quantity,
-                    color: item.color,
-                    image: ""
-                }))
-            });
+            // ✅ 发货邮件由后端自动发送，前端无需处理
 
             setIsShipModalOpen(false)
             setTrackingNumber('')

@@ -7,7 +7,6 @@ import { Loader2, AlertCircle, ShieldCheck, Lock, ChevronLeft, CheckCircle2 } fr
 import { orderService } from '@/services/orderService';
 import { useAuth } from '@/contexts/authContext';
 import { useCartStore } from '@/stores/useCartStore';
-// import { sendOrderConfirmationEmail } from '@/app/actions/send-order-email'; // ✅ 邮件改为后端发送
 
 // --- 配置区域 ---
 const PAYMENT_CONFIG = {

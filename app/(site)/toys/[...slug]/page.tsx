@@ -92,6 +92,14 @@ export default async function ProductDetail({ params }: PageProps) {
         ? product.description.replace(/['"]/g, '').replace(/[#*`_]/g, '').substring(0, 200) + '...'
         : product.title;
 
+    const breadcrumbs = generateBreadcrumbPaths(
+        Array.isArray(resolvedParams.slug) ? resolvedParams.slug : [resolvedParams.slug],
+        product
+    );
+
+    // ------------------------------------------------
+    // JSON-LD Structured Data
+    // ------------------------------------------------
     const jsonLd = {
         '@context': 'https://schema.org',
         '@graph': [
@@ -135,30 +143,30 @@ export default async function ProductDetail({ params }: PageProps) {
             }
         ]
     };
-    // ------------------------------------------------
-
-    const breadcrumbs = generateBreadcrumbPaths(
-        Array.isArray(resolvedParams.slug) ? resolvedParams.slug : [resolvedParams.slug],
-        product
-    );
 
     // ... 这一块处理 galleryImages 的逻辑保持不变 ...
     const getGalleryItems = () => {
         if (!product) return [];
-        const hasGallery = !!(product.galleries && product.galleries.length > 0);
-        return hasGallery ?
-            product.galleries!.map(gallery => ({
+        
+        // 始终将主图作为第一张图片
+        const items = [{
+            url: getProductImageUrl('', product.image),
+            alt: product.title,
+            type: 'image' as const,
+            poster: ''
+        }];
+        
+        // 如果有额外的 galleries，追加到后面
+        if (product.galleries && product.galleries.length > 0) {
+            items.push(...product.galleries.map(gallery => ({
                 url: getProductImageUrl('', gallery.url),
                 alt: gallery.alt || product.title,
-                type: gallery.type,
+                type: gallery.type || 'image',
                 poster: getProductImageUrl('', gallery.poster)
-            })) :
-            [{
-                url: getProductImageUrl('', product.image),
-                alt: product.title,
-                type: 'image',
-                poster: getProductImageUrl('', '')
-            }];
+            })));
+        }
+        
+        return items;
     };
 
     const galleryItems = getGalleryItems();

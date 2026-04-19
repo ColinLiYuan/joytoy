@@ -2,6 +2,7 @@
 import { OrderCreateRequest, OrderResponse, OrderListResponse } from '@/types/order';
 import { SERVER_CONFIG, ADMIN_CONFIG } from '@/lib/api-config';
 import { PaymentRequest } from '@/types/payment';
+import { getToken } from '@/lib/token-utils';
 
 class OrderService {
     // 创建订单
@@ -127,12 +128,18 @@ class OrderService {
 
             const url = `${ADMIN_CONFIG.apiRoutes.order}/list?${queryParams.toString()}`;
             // console.log('Fetching orders from URL:', url);
+            
+            const token = await getToken();
+            const headers: Record<string, string> = {
+                'Content-Type': 'application/json',
+            };
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
 
             const response = await fetch(url, {
                 cache: 'no-store',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers,
             });
 
             if (!response.ok) throw new Error('Failed to fetch orders');
@@ -154,10 +161,16 @@ class OrderService {
         // 假设后端接口为 PUT /api/admin/order/{id}/ship
         // 你需要在后端 AdminOrderController 实现这个接口
         const url = `${ADMIN_CONFIG.apiRoutes.order}/updateStatus`;
+        
+        const token = await getToken();
+        const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
 
         const response = await fetch(url, {
             method: 'POST', // 或 POST，取决于后端定义
-            headers: { 'Content-Type': 'application/json' },
+            headers,
             body: JSON.stringify({ orderId, trackingNumber })
         });
 

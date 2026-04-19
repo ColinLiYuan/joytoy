@@ -4,7 +4,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { blogService } from '@/services/blogService';
+import { updateBlog } from '@/app/actions/admin/blog-detail';
 import BlogForm from '../components/admin-blog-form';
 
 export default function AddBlogPage() {
@@ -14,7 +14,7 @@ export default function AddBlogPage() {
     const handleSubmit = async (formData: any) => {
         setSaving(true);
         try {
-            await blogService.release(formData);
+            await updateBlog(0, formData); // 对于新建，id 为 0 或 undefined，后端会创建新记录
             router.push('/admin/blog');
             // 可以添加成功提示：创建博客成功！
         } catch (error) {

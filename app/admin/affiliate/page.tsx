@@ -4,6 +4,7 @@
 import React, { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Users, MousePointerClick, DollarSign, TrendingUp, Calendar, Search, Filter } from 'lucide-react'
+import { getAdminAffiliateStats, getAdminAffiliateList } from '@/app/actions/admin/affiliate'
 
 interface AffiliateUser {
     id: number;
@@ -47,24 +48,12 @@ export default function AdminAffiliatePage() {
             setLoading(true);
             
             // 获取统计数据
-            const statsResponse = await fetch('/api/admin/affiliate/stats', {
-                cache: 'no-store'
-            });
-            const statsData = await statsResponse.json();
-            
-            if (statsData.success) {
-                setStats(statsData.data);
-            }
+            const statsData = await getAdminAffiliateStats();
+            setStats(statsData);
 
             // 获取联盟成员列表
-            const listResponse = await fetch('/api/admin/affiliate/list?page=0&size=100', {
-                cache: 'no-store'
-            });
-            const listData = await listResponse.json();
-            
-            if (listData.success) {
-                setAffiliates(listData.data.content || []);
-            }
+            const listData = await getAdminAffiliateList({ page: 0, size: 100 });
+            setAffiliates(listData.content || []);
         } catch (error) {
             console.error('Failed to fetch affiliate data:', error);
         } finally {

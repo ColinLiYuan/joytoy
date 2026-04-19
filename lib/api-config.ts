@@ -10,7 +10,8 @@ export const BACKEND_CONFIG = {
 };
 
 export const SERVER_CONFIG = {
-    baseURL: process.env.API_BASE_URL,
+    // 客户端必须使用 NEXT_PUBLIC_ 前缀，否则为空走相对路径
+    baseURL: process.env.NEXT_PUBLIC_API_BASE_URL || process.env.API_BASE_URL || '',
 
     // 前端 API 路由前缀
     apiRoutes: {
@@ -29,6 +30,7 @@ export const SERVER_CONFIG = {
 };
 
 export const ADMIN_CONFIG = {
+    baseURL: process.env.BACKEND_BASE_URL,
     apiRoutes: {
         order: '/api/admin/order',
         product: '/api/admin/product',
@@ -37,5 +39,11 @@ export const ADMIN_CONFIG = {
         blog: '/api/admin/blog',
         review: '/api/admin/review',
         user: '/api/admin/user',
+        // 后端真实路径
+        V1_product: '/api/admin/V1/product',
+        V1_order: '/api/admin/V1/order',
+        V1_blog: '/api/admin/V1/blog',
+        V1_review: '/api/admin/V1/review',
+        V1_user: '/api/admin/V1/user',
     }
 };

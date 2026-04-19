@@ -59,7 +59,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                     email: formData.email,
                     password: formData.password
                 });
-                showToast('success', 'Welcome back', 'Logged in successfully.');
+                // 通知已在 authContext.login 中发送，无需重复
                 onClose();
             } else if (view === 'register') {
                 // 模式3：注册 - 验证两次密码一致性并传对象
@@ -72,7 +72,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                     email: formData.email,
                     password: formData.password
                 });
-                showToast('success', 'Account created', 'Please sign in with your new credentials.');
+                // 通知已在 authContext.register 中发送，无需重复
                 setView('login');
             }
         } catch (error: any) {

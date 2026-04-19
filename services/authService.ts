@@ -6,6 +6,7 @@ import {
     RegisterResponse,
     UserListResponse} from '@/types/auth';
 import { SERVER_CONFIG, ADMIN_CONFIG } from '@/lib/api-config';
+import { getToken } from '@/lib/token-utils';
 
 class AuthService {
 
@@ -96,13 +97,18 @@ class AuthService {
 
             // 使用后端 AdminUserInterface 定义的路径
             const url = `${ADMIN_CONFIG.apiRoutes.user}/list?${queryParams.toString()}`;
+            
+            const token = await getToken();
+            const headers: Record<string, string> = {
+                'Content-Type': 'application/json',
+            };
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
 
             const response = await fetch(url, {
                 cache: 'no-store',
-                headers: {
-                    'Content-Type': 'application/json',
-                    // 如果你的拦截器没处理 Token，这里需要手动加 Authorization
-                },
+                headers,
             });
 
             if (!response.ok) throw new Error('Failed to fetch user list');

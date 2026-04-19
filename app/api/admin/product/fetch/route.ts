@@ -12,7 +12,15 @@ export async function GET(request: NextRequest) {
         }
 
         const url = `/api/admin/V1/product/${id}`;
-        const result = await apiGet(url);
+        
+        // 获取前端传来的 Authorization header
+        const authHeader = request.headers.get('authorization');
+        const headers: Record<string, string> = {};
+        if (authHeader) {
+            headers['Authorization'] = authHeader;
+        }
+        
+        const result = await apiGet(url, { headers });
 
         return NextResponse.json(result);
     } catch (error) {
