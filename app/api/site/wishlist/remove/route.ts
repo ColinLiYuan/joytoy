@@ -14,7 +14,7 @@ export async function DELETE(
             return NextResponse.json(
                 {
                     success: false,
-                    error: 'productId 参数缺失'
+                    message: 'productId 参数缺失'
                 },
                 { status: 400 }
             );
@@ -27,7 +27,7 @@ export async function DELETE(
             return NextResponse.json(
                 {
                     success: false,
-                    error: '用户未登录，无法操作心愿单'
+                    message: '用户未登录，无法操作心愿单'
                 },
                 { status: 401 }
             );
@@ -47,17 +47,21 @@ export async function DELETE(
             requestOptions
         );
 
-        return NextResponse.json(result);
+        // 确保返回标准 JSON 格式
+        return NextResponse.json({
+            success: result.success,
+            message: result.message,
+            data: result.data
+        });
 
     } catch (error) {
         console.error('移除心愿单代理错误:', error);
-        // 正确使用 handleApiError
         const { errorMessage } = handleApiError(error);
 
         return NextResponse.json(
             {
                 success: false,
-                errorMessage
+                message: errorMessage || '移除心愿单失败'
             },
             { status: 500 }
         );

@@ -80,6 +80,7 @@ export async function proxyRequest(
         retry = 0,
         headers = {},
         _isRetry = false,
+        method = 'GET',
         ...fetchOptions
     } = options;
 
@@ -106,6 +107,7 @@ export async function proxyRequest(
     try {
         const response = await fetch(url, {
             ...fetchOptions,
+            method,
             headers: requestHeaders,
             signal: controller.signal,
         });
@@ -114,40 +116,27 @@ export async function proxyRequest(
 
         // 3. 拦截 401 并重试
         if (response.status === 401 && !_isRetry) {
-            console.warn('401 Unauthorized, attempting refresh...');
+            console.warn('401 Unauthorized, token expired.');
 
-            // ✅ 临时禁用刷新，直接清除 Token
-            console.error('Token expired, please login again.');
+            // ✅ 清除 Token
             clearTokens();
+            
+            // ✅ 触发自定义事件，通知全局显示登录框
             if (typeof window !== 'undefined') {
-                window.location.href = '/';
+                window.dispatchEvent(new CustomEvent('auth:tokenExpired', {
+                    detail: { message: 'Your session has expired. Please login again.' }
+                }));
             }
             
-            /*
-            // 尝试刷新
-            const newToken = await refreshAccessToken();
-
-            if (newToken) {
-                console.log('Retrying original request with new token...');
-
-                // ✅ 递归调用，并强制覆盖 Authorization Header
-                return proxyRequest(endpoint, {
-                    ...options,
-                    headers: {
-                        ...headers,
-                        'Authorization': `Bearer ${newToken}`
-                    },
-                    _isRetry: true // 标记防止死循环
-                });
-            } else {
-                console.error('Refresh failed, logging out.');
-                clearTokens();
-                // 可选：触发页面跳转
-                if (typeof window !== 'undefined') {
-                    window.location.href = '/';
-                }
-            }
-            */
+            // 返回一个特殊响应，让业务层停止处理
+            return new Response(JSON.stringify({
+                success: false,
+                message: 'Session expired, please login again',
+                errorType: 'auth'
+            }), {
+                status: 401,
+                headers: { 'Content-Type': 'application/json' }
+            });
         }
 
         return response;
@@ -203,7 +192,17 @@ export async function handleApiResponse<T>(
         const responseClone = response.clone();
         const responseText = await responseClone.text();
 
-        if (!responseText.trim()) {
+        // 🔍 调试日志：记录原始响应
+        console.log('[API-UTILS] Raw response:', {
+            url: response.url,
+            status: response.status,
+            ok: response.ok,
+            textLength: responseText?.length || 0,
+            first100Chars: responseText?.substring(0, 100)
+        });
+
+        // 处理空响应
+        if (!responseText || !responseText.trim()) {
             return {
                 success: response.ok,
                 message: response.ok ? undefined : 'Empty response body',
@@ -214,8 +213,31 @@ export async function handleApiResponse<T>(
 
         let data: any;
         try {
-            data = JSON.parse(responseText);
+            // 尝试清理响应文本（移除可能的 BOM 或空白）
+            const cleanedText = responseText.trim().replace(/^\uFEFF/, '');
+            
+            // 如果清理后为空，视为空响应
+            if (!cleanedText) {
+                console.warn('[API-UTILS] Empty response after cleaning:', {
+                    url: response.url,
+                    status: response.status
+                });
+                return {
+                    success: response.ok,
+                    message: response.ok ? undefined : 'Empty response body',
+                    status: response.status,
+                    errorType: 'http' as ApiErrorType
+                };
+            }
+            
+            data = JSON.parse(cleanedText);
         } catch (parseError) {
+            console.error('[API-UTILS] JSON parse failed:', {
+                url: response.url,
+                status: response.status,
+                rawText: responseText.substring(0, 200),
+                error: parseError instanceof Error ? parseError.message : String(parseError)
+            });
             return {
                 success: false,
                 message: 'Failed to parse response as JSON',
@@ -226,6 +248,29 @@ export async function handleApiResponse<T>(
 
         const backendResponse: BackendApiResponse<T> = data;
         const errorType = getErrorType(response.status, backendResponse);
+
+        // 🔍 检测后端返回的认证错误（HTTP 200 但 success: false 且 message 包含认证关键词）
+        if (!backendResponse.success && backendResponse.message) {
+            const msg = backendResponse.message.toLowerCase();
+            const isAuthError = msg.includes('请先登录') || 
+                               msg.includes('登录') || 
+                               msg.includes('authenticate') || 
+                               msg.includes('login') || 
+                               msg.includes('authentication required') ||
+                               msg.includes('unauthorized');
+            
+            if (isAuthError && typeof window !== 'undefined') {
+                console.log('[API-UTILS] Backend returned auth error (HTTP 200):', backendResponse.message);
+                
+                // 清除 Token
+                clearTokens();
+                
+                // 触发自定义事件，通知全局显示登录框
+                window.dispatchEvent(new CustomEvent('auth:tokenExpired', {
+                    detail: { message: backendResponse.message }
+                }));
+            }
+        }
 
         if (!response.ok || !backendResponse.success) {
             return {

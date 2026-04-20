@@ -55,6 +55,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const onSuccessCallbackRef = useRef<(() => void) | null>(null);
     const { showToast } = useSafeToast();
 
+    // ✅ 定义 openAuthModal 在使用它之前
+    const openAuthModal = useCallback((mode: 'login' | 'register' = 'login', options?: { onSuccess?: () => void }) => {
+        setAuthModalMode(mode);
+        setIsAuthModalOpen(true);
+        if (options?.onSuccess) {
+            onSuccessCallbackRef.current = options.onSuccess;
+        }
+    }, []);
+
+    const closeAuthModal = useCallback(() => {
+        setIsAuthModalOpen(false);
+        onSuccessCallbackRef.current = null;
+    }, []);
+
     // 在客户端初始化认证状态
     useEffect(() => {
         setIsClient(true);
@@ -80,15 +94,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
     }, []);
 
-    const logout = useCallback(() => {
-        // console.log('Logging out...');
+    // ✅ 全局监听 token 过期事件，自动弹出登录框
+    useEffect(() => {
+        const handleTokenExpired = (event: CustomEvent<{ message: string }>) => {
+            console.log('Token expired event received:', event.detail.message);
+            
+            // 直接设置状态
+            setAuthModalMode('login');
+            setIsAuthModalOpen(true);
+        };
 
+        if (typeof window !== 'undefined') {
+            window.addEventListener('auth:tokenExpired', handleTokenExpired as EventListener);
+        }
+
+        return () => {
+            if (typeof window !== 'undefined') {
+                window.removeEventListener('auth:tokenExpired', handleTokenExpired as EventListener);
+            }
+        };
+    }, []);
+
+    const logout = useCallback(() => {
         clearTokens();
         setIsLoggedIn(false);
         setUserInfo(null);
-
-        // localStorage.removeItem('isLoggedIn');
-        // localStorage.removeItem('userInfo');
 
         const { clearCart } = useCartStore.getState();
         clearCart();
@@ -99,19 +129,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             window.location.href = '/';
         }, 1000);
     }, [showToast]);
-
-    const openAuthModal = useCallback((mode: 'login' | 'register' = 'login', options?: { onSuccess?: () => void }) => {
-        setAuthModalMode(mode);
-        setIsAuthModalOpen(true);
-        if (options?.onSuccess) {
-            onSuccessCallbackRef.current = options.onSuccess;
-        }
-    }, []);
-
-    const closeAuthModal = useCallback(() => {
-        setIsAuthModalOpen(false);
-        onSuccessCallbackRef.current = null;
-    }, []);
 
     const login = useCallback(async (loginRequest: LoginRequest): Promise<LoginResponse> => {
         try {

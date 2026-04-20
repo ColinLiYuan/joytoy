@@ -16,7 +16,7 @@ export async function POST(
             return NextResponse.json(
                 {
                     success: false,
-                    error: '用户未登录，无法添加心愿单'
+                    message: '用户未登录，无法添加心愿单'
                 },
                 { status: 401 }
             );
@@ -33,7 +33,12 @@ export async function POST(
         // 3. 调用后端 API 添加到心愿单
         const result = await apiPost(`/api/V1/wishlist`, body, requestOptions);
 
-        return NextResponse.json(result);
+        // 确保返回标准 JSON 格式
+        return NextResponse.json({
+            success: result.success,
+            message: result.message,
+            data: result.data
+        });
 
     } catch (error) {
         console.error('添加到心愿单代理错误:', error);
@@ -41,7 +46,7 @@ export async function POST(
         return NextResponse.json(
             {
                 success: false,
-                errorMessage
+                message: errorMessage || '添加到心愿单失败'
             },
             { status: 500 }
         );

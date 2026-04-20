@@ -43,16 +43,35 @@ class OrderService {
     }
 
     // 获取用户订单列表
-    async getUserOrders(page: number = 0, size: number = 20): Promise<OrderResponse[]> {
-        const url = `${SERVER_CONFIG.apiRoutes.order}/list?page=${page}&size=${size}`;
-        const response = await fetch(url, {
-            credentials: 'include',
-        });
+    // @returns 订单列表，如果 session 过期则返回 null
+    async getUserOrders(page: number = 0, size: number = 20): Promise<OrderResponse[] | null> {
+        try {
+            const url = `${SERVER_CONFIG.apiRoutes.order}/list?page=${page}&size=${size}`;
+            const response = await fetch(url, {
+                credentials: 'include',
+            });
 
-        const apiResponse = await response.json();
+            const apiResponse = await response.json().catch(() => null);
 
-        // console.log('getUserOrders service: ', apiResponse)
-        return apiResponse.data;
+            // 检查 HTTP 状态码和业务逻辑成功标志
+            if (!response.ok || !apiResponse?.success) {
+                const errorMessage = apiResponse?.message || `Failed to fetch orders: ${response.status}`;
+                
+                // 如果是认证错误，静默返回 null
+                if (response.status === 401 || errorMessage.includes('未登录') || errorMessage.includes('Session expired')) {
+                    return null;
+                }
+                
+                // 其他错误抛出异常
+                throw new Error(errorMessage);
+            }
+
+            return apiResponse.data;
+        } catch (error) {
+            // 网络错误或解析错误，静默返回 null
+            console.error('[OrderService] Network error:', error);
+            return null;
+        }
     }
 
     async payOrder(orderNumber: string, paymentRequest: PaymentRequest, signal?: AbortSignal): Promise<OrderPaymentResult> {

@@ -51,7 +51,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
             if (view === 'forgot-password') {
                 // 模式1：忘记密码 - 只需要传 email 字符串
                 await forgotPassword(formData.email);
-                showToast('success', 'Email Sent', 'If an account exists, you will receive a reset link.');
+                // Toast 已在 authContext.forgotPassword 中显示，无需重复
                 setView('login'); // 成功后跳回登录
             } else if (view === 'login') {
                 // 模式2：登录 - 必须传对象 { email, password }

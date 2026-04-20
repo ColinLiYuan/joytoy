@@ -103,7 +103,7 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
         try {
             if (!userInfo) return;
             if (newState) {
-                await wishlistService.addItemToWishlist({
+                const success = await wishlistService.addItemToWishlist({
                     productId: product.id,
                     productTitle: product.title,
                     image: product.image,
@@ -111,13 +111,29 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
                     slug: product.slug,
                     badge: product.badge
                 });
+                
+                // 如果返回 false，说明 session 过期，需要登录
+                if (!success) {
+                    setIsFavorited(!newState); // 回滚 UI 状态
+                    openAuthModal('login', { onSuccess: executeToggleFavorite });
+                    return;
+                }
             } else {
-                await wishlistService.removeItemFromWishlist({ productId: product.id });
+                const success = await wishlistService.removeItemFromWishlist({ productId: product.id });
+                
+                // 如果返回 false，说明 session 过期，需要登录
+                if (!success) {
+                    setIsFavorited(!newState); // 回滚 UI 状态
+                    openAuthModal('login', { onSuccess: executeToggleFavorite });
+                    return;
+                }
             }
             onWishlistUpdate?.();
         } catch (error) {
+            // 只有真正的错误才会走到这里，静默回滚 UI
             setIsFavorited(!newState);
-            showToast('error', 'Error', 'Failed to update wishlist');
+            console.error('Wishlist toggle error:', error);
+            showToast('error', 'Oops!', 'Something went wrong. Please try again.');
         } finally {
             setIsLoading(false);
         }

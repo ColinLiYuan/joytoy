@@ -12,6 +12,7 @@ import {
     ArrowRight, AlertCircle, ShoppingBag, XCircle, CreditCard, ChevronRight, RefreshCw, Archive
 } from 'lucide-react';
 import { SITE_CONFIG } from '@/lib/constants/site-config';
+import { useAuth } from '@/contexts/authContext';
 
 // ✅ 严格按照后端枚举映射状态
 const getStatusConfig = (status: string) => {
@@ -54,6 +55,8 @@ export default function OrdersPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [error, setError] = useState<string>('');
+    const [isAuthRequired, setIsAuthRequired] = useState(false);
+    const { isLoggedIn, isClient, openAuthModal } = useAuth();
 
     useEffect(() => {
         fetchOrders();
@@ -62,10 +65,23 @@ export default function OrdersPage() {
     const fetchOrders = async () => {
         try {
             setIsLoading(true);
+            setError('');
+            setIsAuthRequired(false);
             const userId = getUserId();
-            if (!userId) { setOrders([]); return; }
-            const data = await orderService.getUserOrders(userId, 20);
+            if (!userId) { 
+                setOrders([]); 
+                return; 
+            }
+            const data = await orderService.getUserOrders(0, 20);
             console.log('user orders: ', data)
+            
+            // 如果返回 null，说明 session 过期
+            if (data === null) {
+                setIsAuthRequired(true);
+                setOrders([]);
+                return;
+            }
+            
             setOrders(Array.isArray(data) ? data : []);
         } catch (error) {
             console.error(error);
@@ -73,6 +89,11 @@ export default function OrdersPage() {
         } finally {
             setIsLoading(false);
         }
+    };
+
+    const handleLoginSuccess = () => {
+        setIsAuthRequired(false);
+        fetchOrders();
     };
 
     const filteredOrders = orders.filter(order =>
@@ -135,7 +156,21 @@ export default function OrdersPage() {
                 )}
 
                 {/* Empty State */}
-                {filteredOrders.length === 0 && !isLoading ? (
+                {isAuthRequired ? (
+                    <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-gray-200">
+                        <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <ShoppingBag className="w-8 h-8 text-gray-300" />
+                        </div>
+                        <h3 className="text-lg font-bold text-gray-900 mb-1">Please Login</h3>
+                        <p className="text-gray-500 text-sm mb-6">You need to login to view your orders</p>
+                        <button
+                            onClick={() => openAuthModal('login', { onSuccess: handleLoginSuccess })}
+                            className="inline-block bg-black text-white px-8 py-3 rounded-lg text-sm font-bold shadow-lg hover:bg-gray-800 transition-all hover:-translate-y-0.5"
+                        >
+                            Login to Continue
+                        </button>
+                    </div>
+                ) : filteredOrders.length === 0 && !isLoading ? (
                     <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-gray-200">
                         <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
                             <ShoppingBag className="w-8 h-8 text-gray-300" />
