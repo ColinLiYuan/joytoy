@@ -1,27 +1,19 @@
 // services/blog-service.ts
 
-import { ADMIN_CONFIG, BACKEND_CONFIG } from '@/lib/api-config';
+import axiosClient from '@/lib/axios-client';
 import { AdminBlogResponse, AdminBlogListResponse } from '@/types/admin/adminBlog';
-import {ReleaseBlogRequest} from "../types/admin/adminBlog";
-import { getToken } from '@/lib/token-utils';
-
-export interface UploadResult {
-    url: string;
-    fileName: string;
-    originalName: string;
-    size: number;
-    finalSlug: string;
-}
-
+import { BACKEND_API_ROUTES } from '@/lib/api-config';
 
 class BlogService {
+    /**
+     * 获取管理端博客列表 (查询 - 使用 Axios 直连后端)
+     */
     async adminList(
         page: number = 0,
         size: number = 12,
         status?: string
     ): Promise<AdminBlogListResponse> {
         try {
-            // console.log('BlogService adminList')
             const queryParams = new URLSearchParams({
                 page: page.toString(),
                 size: size.toString()
@@ -31,142 +23,44 @@ class BlogService {
                 queryParams.append('status', status);
             }
 
-            const url = `${BACKEND_CONFIG.baseURL}${ADMIN_CONFIG.apiRoutes.blog}/list?${queryParams}`;
-            // console.log('BlogService adminList url: ', url)
+            const url = `${BACKEND_API_ROUTES.admin.blog.list}?${queryParams}`;
+            console.log('[BlogService] Fetching admin blogs from:', url);
             
-            const token = await getToken();
-            const headers: Record<string, string> = {
-                'Content-Type': 'application/json',
-            };
-            if (token) {
-                headers['Authorization'] = `Bearer ${token}`;
-            }
-            
-            const response = await fetch(url, {
-                cache: 'no-store',
-                headers,
-            });
+            const response = await axiosClient.get(url);
+            console.log('[BlogService] Admin blogs response:', response.data);
 
-            if (!response.ok) {
-                throw new Error('Failed to fetch blogs');
+            if (response.data?.success) {
+                return response.data.data;
             }
 
-            const apiResponse = await response.json();
-
-            if (!apiResponse.success) {
-                throw new Error(apiResponse.error || 'Failed to fetch blogs');
-            }
-
-            return apiResponse.data || {
-                content: [],
-                currentPage: page,
-                pageSize: size,
-                totalElements: 0,
-                totalPages: 0,
-                hasNext: false,
-                hasPrevious: false
-            };
+            throw new Error(response.data?.message || 'Failed to fetch blogs');
         } catch (error) {
-            console.error('Error fetching blogs:', error);
+            console.error('❌ [BlogService] Error fetching blogs:', error);
             throw error;
         }
     }
 
+    /**
+     * 根据ID获取博客详情 (查询 - 使用 Axios 直连后端)
+     */
     async getById(id: number): Promise<AdminBlogResponse> {
         try {
-            const url = `${BACKEND_CONFIG.baseURL}${ADMIN_CONFIG.apiRoutes.blog}/fetch?id=${id}`;
+            const url = `${BACKEND_API_ROUTES.admin.blog.detail}/${id}`;
+            console.log('[BlogService] Fetching blog by ID:', url);
             
-            const token = await getToken();
-            const headers: Record<string, string> = {
-                'Content-Type': 'application/json',
-            };
-            if (token) {
-                headers['Authorization'] = `Bearer ${token}`;
-            }
-            
-            const response = await fetch(url, {
-                cache: 'no-store',
-                headers,
-            });
+            const response = await axiosClient.get(url);
+            console.log('[BlogService] Blog detail response:', response.data);
 
-            if (!response.ok) {
-                throw new Error('Failed to fetch blog');
+            if (response.data?.success) {
+                return response.data.data;
             }
 
-            const apiResponse = await response.json();
-
-            return apiResponse.data;
+            throw new Error(response.data?.message || 'Failed to fetch blog');
         } catch (error) {
-            console.error('Get blog failed:', error);
+            console.error('❌ [BlogService] Get blog failed:', error);
             throw error;
         }
     }
-
-    async release(request: ReleaseBlogRequest): Promise<AdminBlogResponse> {
-        try {
-            const url = `${BACKEND_CONFIG.baseURL}${ADMIN_CONFIG.apiRoutes.blog}/release`;
-            
-            const token = await getToken();
-            const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-            if (token) {
-                headers['Authorization'] = `Bearer ${token}`;
-            }
-            
-            const response = await fetch(url, {
-                method: 'POST',
-                headers,
-                body: JSON.stringify(request),
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => null);
-                throw new Error(errorData?.error || `Failed to create blog: ${response.status}`);
-            }
-
-            const apiResponse = await response.json();
-            return apiResponse.data;
-        } catch (error) {
-            console.error('Create blog failed:', error);
-            throw error;
-        }
-    }
-
-    async uploadImage(
-        file: File
-    ): Promise<UploadResult> {
-        try {
-            const formData = new FormData();
-            formData.append('file', file);
-
-            // ✅ 使用新的统一上传接口
-            const url = `${ADMIN_CONFIG.baseURL}/api/admin/V1/upload/myth/blog/image`;
-            
-            const token = await getToken();
-            const headers: Record<string, string> = {};
-            if (token) {
-                headers['Authorization'] = `Bearer ${token}`;
-            }
-            
-            const response = await fetch(url, {
-                method: 'POST',
-                headers,
-                body: formData,
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => null);
-                throw new Error(errorData?.error || `上传失败: ${response.status}`);
-            }
-
-            const apiResponse = await response.json();
-            return apiResponse.data;
-
-        } catch (error) {
-            console.error('Upload image failed:', error);
-            throw error;
-        }
-    }
-
 }
 
 export const blogService = new BlogService();

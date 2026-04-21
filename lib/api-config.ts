@@ -55,5 +55,13 @@ export const BACKEND_API_ROUTES = {
     review: {
         list: '/api/V1/review/list',
         create: '/api/V1/review',
+    },
+    admin: {
+        blog: {
+            list: '/api/admin/V1/blog/list',
+            detail: '/api/admin/V1/blog',
+            release: '/api/admin/V1/blog/release',
+            upload: '/api/admin/V1/upload/myth/blog/image',
+        },
     }
 };
