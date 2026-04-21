@@ -33,7 +33,9 @@ export async function GET(request: NextRequest) {
         let url = `/api/V1/order/list?page=${page}&size=${size}`;
         const result = await apiGet(url, requestOptions);
 
-        return NextResponse.json(result);
+        // ✅ 关键修复：传递后端返回的状态码
+        const status = result.status || (result.success ? 200 : 500);
+        return NextResponse.json(result, { status });
 
     } catch (error) {
         console.error('🔴 ORDERS LIST Error:', error);

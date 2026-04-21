@@ -1,118 +1,48 @@
 // services/wishlistService.ts
-import { WishlistRequest, WishlistResponse } from '@/types/wishlist';
-import { SERVER_CONFIG } from '@/lib/api-config';
-
-// 自定义认证错误类，用于静默处理
-export class AuthRequiredError extends Error {
-    constructor(message: string) {
-        super(message);
-        this.name = 'AuthRequiredError';
-    }
-}
+import axiosClient from '@/lib/axios-client';
+import { WishlistResponse } from '@/types/wishlist';
 
 class WishlistService {
 
     /**
-     * 获取用户心愿单
+     * 获取用户心愿单（查询 - 使用 Axios 直连后端）
      * @returns 心愿单列表，如果 session 过期则返回 null
      */
     async getWishlist(): Promise<WishlistResponse[] | null> {
         try {
-            const url = `${SERVER_CONFIG.apiRoutes.wishlist}/list`;
-            const response = await fetch(url);
-
-            const responseData = await response.json().catch(() => null);
+            console.log('[WishlistService] Calling getWishlist...')
+            const response = await axiosClient.get('/api/V1/wishlist')
+            console.log('[WishlistService] Full response:', JSON.stringify(response.data, null, 2))
             
-            // 检查 HTTP 状态码和业务逻辑成功标志
-            if (!response.ok || !responseData?.success) {
-                const errorMessage = responseData?.message || `Failed to fetch wishlist: ${response.status}`;
-                
-                // 如果是认证错误，静默返回 null
-                if (response.status === 401 || errorMessage.includes('未登录') || errorMessage.includes('Session expired')) {
-                    return null;
-                }
-                
-                console.error('[WishlistService] Failed to fetch wishlist:', errorMessage);
-                throw new Error(errorMessage);
+            if (response.data?.success) {
+                console.log('[WishlistService] Data array:', response.data.data)
+                console.log('[WishlistService] First item:', response.data.data?.[0])
+                console.log('[WishlistService] First item keys:', response.data.data?.[0] ? Object.keys(response.data.data[0]) : 'empty')
+                console.log('[WishlistService] Success! Items count:', response.data.data?.length)
+                return response.data.data || []
             }
-            
-            return responseData.data || [];
-        } catch (error) {
-            console.error('❌ Get wishlist failed:', error);
-            throw error;
-        }
-    }
-
-    /**
-     * 添加商品到心愿单
-     * @returns true 成功，false 需要登录
-     */
-    async addItemToWishlist(request: WishlistRequest): Promise<boolean> {
-        try {
-            const url = `${SERVER_CONFIG.apiRoutes.wishlist}/add`;
-            
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(request),
-            });
-
-            const responseData = await response.json().catch(() => null);
-            
-            // 检查 HTTP 状态码和业务逻辑成功标志
-            if (!response.ok || !responseData?.success) {
-                const errorMessage = responseData?.message || `Failed to add item to wishlist: ${response.status}`;
                 
-                // 如果是认证错误，静默返回 false，不抛出异常
-                if (response.status === 401 || errorMessage.includes('未登录') || errorMessage.includes('Session expired')) {
-                    return false;
-                }
-                
-                console.error('[WishlistService] Failed to add item:', errorMessage);
-                throw new Error(errorMessage);
+            // 检查是否是认证相关错误
+            const errorMsg = response.data?.message?.toLowerCase() || ''
+            if (errorMsg.includes('session') || 
+                errorMsg.includes('login') || 
+                errorMsg.includes('auth') || 
+                errorMsg.includes('unauthorized') ||
+                errorMsg.includes('登录') ||
+                errorMsg.includes('expired')) {
+                console.log('[WishlistService] Auth error detected')
+                return null
             }
-            
-            return true;
-        } catch (error) {
-            console.error('Add item to wishlist failed:', error);
-            throw error;
-        }
-    }
-
-    /**
-     * 从心愿单移除商品
-     * @returns true 成功，false 需要登录
-     */
-    async removeItemFromWishlist(request: WishlistRequest): Promise<boolean> {
-        try {
-            const params = new URLSearchParams({
-                productId: request.productId.toString()
-            });
-            const url = `${SERVER_CONFIG.apiRoutes.wishlist}/remove?${params.toString()}`;
-            
-            const response = await fetch(url, {
-                method: 'DELETE',
-            });
-            
-            const responseData = await response.json().catch(() => null);
-            
-            // 检查 HTTP 状态码和业务逻辑成功标志
-            if (!response.ok || !responseData?.success) {
-                const errorMessage = responseData?.message || 'Failed to remove item from wishlist';
                 
-                // 如果是认证错误，静默返回 false，不抛出异常
-                if (response.status === 401 || errorMessage.includes('未登录') || errorMessage.includes('Session expired')) {
-                    return false;
-                }
-                
-                console.error('[WishlistService] Failed to remove item:', errorMessage);
-                throw new Error(errorMessage);
+            throw new Error(response.data?.message || 'Failed to fetch wishlist')
+        } catch (error: any) {
+            // 401 或其他认证错误
+            if (error.response?.status === 401) {
+                console.log('[WishlistService] 401 error')
+                return null
             }
-            
-            return true;
-        } catch (error) {
-            console.error('Remove item from wishlist failed:', error);
-            throw error;
+            console.error('❌ Get wishlist failed:', error)
+            throw error
         }
     }
 }

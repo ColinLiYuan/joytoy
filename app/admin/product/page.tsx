@@ -19,7 +19,8 @@ import {
     Info,
     ChevronLeft,
     ChevronRight,
-    Package
+    Package,
+    Eye
 } from 'lucide-react'
 import { getProductImageUrl } from '@/lib/image-utils';
 
@@ -332,6 +333,14 @@ export default function ProductList() {
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="flex items-center space-x-2">
+                                            {/* 查看商品 */}
+                                            <Link
+                                                href={`/admin/product/${product.id}`}
+                                                className="bg-green-100 hover:bg-green-200 text-green-700 p-2 rounded transition-colors"
+                                                title="查看商品"
+                                            >
+                                                <Eye className="h-4 w-4" />
+                                            </Link>
                                             {/* 完整编辑 */}
                                             <Link
                                                 href={`/admin/product/edit/${product.id}`}

@@ -30,7 +30,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
                 authors: [blog.author || 'MythToy'],
             },
             alternates: {
-                canonical: `/blog/${blog.slug}`,
+                canonical: `https://mythtoy.com/blog/${blog.slug}`,
             },
         };
     } catch (error) {

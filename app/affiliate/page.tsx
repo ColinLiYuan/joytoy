@@ -7,7 +7,11 @@ import {
     TrendingUp,
     Link as LinkIcon,
     BarChart3,
-    Target
+    Target,
+    Wallet,
+    Clock,
+    CheckCircle,
+    AlertCircle
 } from 'lucide-react'
 // 导入定义的类型
 import { AffDashboardResponse } from '@/types/affiliate'
@@ -94,6 +98,56 @@ export default function AffiliateDashboard() {
                     color="text-orange-600"
                     bg="bg-orange-50"
                 />
+            </div>
+
+            {/* 2. Financial Overview */}
+            <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+                <div className="flex items-center gap-2 mb-6">
+                    <Wallet className="h-5 w-5 text-gray-400" />
+                    <h3 className="font-bold text-gray-900">Financial Overview</h3>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                    <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                            <CheckCircle className="h-4 w-4 text-emerald-500" />
+                            <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">Settled</span>
+                        </div>
+                        <div className="text-2xl font-black text-gray-900">
+                            ${data.summary.settledAmount?.toFixed(2) || '0.00'}
+                        </div>
+                        <div className="text-xs text-gray-400">Available for withdrawal</div>
+                    </div>
+                    <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                            <Clock className="h-4 w-4 text-amber-500" />
+                            <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">Pending</span>
+                        </div>
+                        <div className="text-2xl font-black text-gray-900">
+                            ${data.summary.pendingAmount?.toFixed(2) || '0.00'}
+                        </div>
+                        <div className="text-xs text-gray-400">Unsettled (within 30 days)</div>
+                    </div>
+                    <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                            <Wallet className="h-4 w-4 text-blue-500" />
+                            <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">Balance</span>
+                        </div>
+                        <div className="text-2xl font-black text-gray-900">
+                            ${data.summary.currentBalance?.toFixed(2) || '0.00'}
+                        </div>
+                        <div className="text-xs text-gray-400">Current balance</div>
+                    </div>
+                    <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                            <AlertCircle className="h-4 w-4 text-purple-500" />
+                            <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">Paid Out</span>
+                        </div>
+                        <div className="text-2xl font-black text-gray-900">
+                            ${data.summary.totalPaid?.toFixed(2) || '0.00'}
+                        </div>
+                        <div className="text-xs text-gray-400">Total withdrawn</div>
+                    </div>
+                </div>
             </div>
 
             {/* 2. Path Stats Grid */}

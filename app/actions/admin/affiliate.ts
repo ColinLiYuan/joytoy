@@ -1,7 +1,7 @@
 'use server'
 
 import { cookies } from 'next/headers'
-import { SERVER_CONFIG } from '@/lib/api-config'
+import { BACKEND_CONFIG } from '@/lib/api-config'
 
 interface AffiliateUser {
     id: number;
@@ -29,16 +29,76 @@ interface AffiliateStats {
     conversionRate: number;
 }
 
-export async function getAdminAffiliateStats(): Promise<AffiliateStats> {
+/**
+ * 服务端刷新 Token
+ */
+async function refreshServerToken(): Promise<string | null> {
     const cookieStore = await cookies()
-    const token = cookieStore.get('accessToken')?.value
+    const refreshToken = cookieStore.get('refreshToken')?.value
+
+    if (!refreshToken) {
+        console.warn('[Refresh Server Token] No refresh token found')
+        return null
+    }
+
+    try {
+        const url = `${BACKEND_CONFIG.baseURL}/api/V1/users/refresh`
+        console.log('[Refresh Server Token] Refreshing...')
+
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ refreshToken })
+        })
+
+        if (!response.ok) {
+            console.error('[Refresh Server Token] Failed with status:', response.status)
+            return null
+        }
+
+        const data = await response.json()
+
+        if (data.success && data.data) {
+            const { accessToken, refreshToken: newRefresh } = data.data
+
+            // 更新 Cookie
+            cookieStore.set('accessToken', accessToken, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'lax',
+                path: '/',
+                maxAge: 30 * 60 // 30分钟
+            })
+
+            if (newRefresh) {
+                cookieStore.set('refreshToken', newRefresh, {
+                    httpOnly: true,
+                    secure: process.env.NODE_ENV === 'production',
+                    sameSite: 'lax',
+                    path: '/',
+                    maxAge: 7 * 24 * 60 * 60 // 7天
+                })
+            }
+
+            console.log('[Refresh Server Token] Success')
+            return accessToken
+        }
+        return null
+    } catch (e) {
+        console.error('[Refresh Server Token] Error:', e)
+        return null
+    }
+}
+
+export async function getAdminAffiliateStats(retry = false): Promise<AffiliateStats> {
+    let token = (await cookies()).get('accessToken')?.value
 
     if (!token) {
         throw new Error('未登录或登录已过期')
     }
 
     try {
-        const response = await fetch(`${SERVER_CONFIG.baseURL}/api/admin/affiliate/stats`, {
+        const response = await fetch(`${BACKEND_CONFIG.baseURL}/api/admin/V1/affiliate/stats`, {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -47,8 +107,22 @@ export async function getAdminAffiliateStats(): Promise<AffiliateStats> {
             cache: 'no-store',
         })
 
+        // 401 且未重试过，则刷新 Token 后重试
+        if (response.status === 401 && !retry) {
+            console.log('[Get Admin Affiliate Stats] Token expired, refreshing...')
+            const newToken = await refreshServerToken()
+            if (newToken) {
+                console.log('[Get Admin Affiliate Stats] Token refreshed, retrying...')
+                return getAdminAffiliateStats(true)
+            } else {
+                throw new Error('Token refresh failed, please login again')
+            }
+        }
+
         if (!response.ok) {
-            throw new Error(`获取统计数据失败: ${response.status}`)
+            const errorText = await response.text()
+            console.error('[Get Admin Affiliate Stats] Backend error response:', errorText)
+            throw new Error(`获取统计数据失败: ${response.status} - ${errorText}`)
         }
 
         const data = await response.json()
@@ -64,20 +138,19 @@ export async function getAdminAffiliateStats(): Promise<AffiliateStats> {
     }
 }
 
-export async function getAdminAffiliateList(params: { page: number; size: number }): Promise<{
+export async function getAdminAffiliateList(params: { page: number; size: number }, retry = false): Promise<{
     content: AffiliateUser[];
     totalPages: number;
     totalElements: number;
 }> {
-    const cookieStore = await cookies()
-    const token = cookieStore.get('accessToken')?.value
+    let token = (await cookies()).get('accessToken')?.value
 
     if (!token) {
         throw new Error('未登录或登录已过期')
     }
 
     try {
-        const url = new URL(`${SERVER_CONFIG.baseURL}/api/admin/affiliate/list`)
+        const url = new URL(`${BACKEND_CONFIG.baseURL}/api/admin/V1/affiliate/list`)
         url.searchParams.append('page', params.page.toString())
         url.searchParams.append('size', params.size.toString())
 
@@ -90,8 +163,22 @@ export async function getAdminAffiliateList(params: { page: number; size: number
             cache: 'no-store',
         })
 
+        // 401 且未重试过，则刷新 Token 后重试
+        if (response.status === 401 && !retry) {
+            console.log('[Get Admin Affiliate List] Token expired, refreshing...')
+            const newToken = await refreshServerToken()
+            if (newToken) {
+                console.log('[Get Admin Affiliate List] Token refreshed, retrying...')
+                return getAdminAffiliateList(params, true)
+            } else {
+                throw new Error('Token refresh failed, please login again')
+            }
+        }
+
         if (!response.ok) {
-            throw new Error(`获取联盟列表失败: ${response.status}`)
+            const errorText = await response.text()
+            console.error('[Get Admin Affiliate List] Backend error response:', errorText)
+            throw new Error(`获取联盟列表失败: ${response.status} - ${errorText}`)
         }
 
         const data = await response.json()

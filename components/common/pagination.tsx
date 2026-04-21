@@ -1,11 +1,16 @@
 // components/common/pagination.tsx
 
+'use client';
+
+import { usePathname } from 'next/navigation';
+
 interface PaginationProps {
     currentPage: number;
     totalPages: number;
 }
 
 export default function Pagination({ currentPage, totalPages }: PaginationProps) {
+    const pathname = usePathname();
     const displayPage = currentPage + 1;
 
     // 服务端分页处理
@@ -32,7 +37,7 @@ export default function Pagination({ currentPage, totalPages }: PaginationProps)
             {/* 上一页按钮 - 使用链接而不是事件处理器 */}
             {currentPage > 0 ? (
                 <a
-                    href={`?page=${currentPage - 1}`}
+                    href={currentPage === 1 ? pathname : `?page=${currentPage - 1}`}
                     className="flex items-center justify-center w-10 h-10 border border-gray-300 bg-white text-gray-700 cursor-pointer transition-all duration-200 hover:bg-gray-50"
                     aria-label="Previous page"
                 >
@@ -49,25 +54,31 @@ export default function Pagination({ currentPage, totalPages }: PaginationProps)
             )}
 
             <div className="flex gap-0">
-                {pageNumbers.map((page) => (
-                    <a
-                        key={page}
-                        href={`?page=${page - 1}`}
-                        className={`
-                            flex items-center justify-center min-w-[2.5rem] h-10 px-3 
-                            border border-l-0 border-gray-300 
-                            bg-white text-gray-700 
-                            cursor-pointer transition-all duration-200 
-                            text-sm font-medium
-                            hover:bg-gray-50
-                            ${displayPage === page ? 'text-[var(--primary-color)] font-semibold' : ''}
-                            ${page === 1 ? 'border-l border-gray-300' : ''}
-                            ${page === pageNumbers.length ? 'border-r border-gray-300' : ''}
-                        `}
-                    >
-                        {page}
-                    </a>
-                ))}
+                {pageNumbers.map((page) => {
+                    const pageIndex = page - 1;
+                    // 第一页不携带 page 参数，避免生成 ?page=0
+                    const href = pageIndex === 0 ? pathname : `?page=${pageIndex}`;
+                    
+                    return (
+                        <a
+                            key={page}
+                            href={href}
+                            className={`
+                                flex items-center justify-center min-w-[2.5rem] h-10 px-3 
+                                border border-l-0 border-gray-300 
+                                bg-white text-gray-700 
+                                cursor-pointer transition-all duration-200 
+                                text-sm font-medium
+                                hover:bg-gray-50
+                                ${displayPage === page ? 'text-[var(--primary-color)] font-semibold' : ''}
+                                ${page === 1 ? 'border-l border-gray-300' : ''}
+                                ${page === pageNumbers.length ? 'border-r border-gray-300' : ''}
+                            `}
+                        >
+                            {page}
+                        </a>
+                    );
+                })}
             </div>
 
             {/* 下一页按钮 - 使用链接而不是事件处理器 */}

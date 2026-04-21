@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { LayoutDashboard, ShoppingCart, Wallet, Settings, LogOut, LinkIcon, Menu, X, ArrowLeft } from 'lucide-react'
+import { LayoutDashboard, ShoppingCart, Wallet, Settings, LogOut, LinkIcon, Menu, X, ArrowLeft, DollarSign } from 'lucide-react'
 import { useAuth } from '@/contexts/authContext'
 
 export default function AffiliateLayoutClient({ children }: { children: React.ReactNode }) {
@@ -14,6 +14,8 @@ export default function AffiliateLayoutClient({ children }: { children: React.Re
     const navItems = [
         { label: 'Dashboard', href: '/affiliate', icon: LayoutDashboard },
         { label: 'Orders', href: '/affiliate/order', icon: ShoppingCart },
+        { label: 'Commission History', href: '/affiliate/commission', icon: DollarSign },
+        { label: 'Payouts', href: '/affiliate/payouts', icon: Wallet },
         { label: 'Promote Links', href: '/affiliate/links', icon: LinkIcon },
     ]
 

@@ -59,7 +59,57 @@ const gonePaths = new Set([
     '/collections/valentine',
     '/collections/nipple-toys',
     '/collections/silicone-male-masturbator',
-    '/collections/female'
+    '/collections/female',
+    // 新增下架产品路径
+    '/female-sex-toys/bullet-vibrators/the-brush',
+    '/sex-toys/butt-plugs/gem-remote-metal-plug',
+    '/female-sex-toys/bullet-vibrators/the-rouge-ii',
+    '/lingerie/bodystockings/the-mesh',
+    '/female-sex-toys/g-spot-vibrators/the-emerald',
+    '/male-sex-toys/male-masturbators/the-shadow',
+    '/male-sex-toys/male-masturbators/realistic-pocket-pussy-snow',
+    '/female-sex-toys/wand-vibrators/scepter-smart-wand',
+    '/blog/why-do-men-sleep-after-sex',
+    '/female-sex-toys/g-spot-vibrators/the-link',
+    '/toys/female-sex-toys/clit-vibrators/secret-wearable-app-vibe',
+    '/toys/male-sex-toys/prostate-toys/remote-control-p-vibrator',
+    '/toys/female-sex-toys/clit-suction-vibrators/charming-vibes',
+    '/toys/female-sex-toys/clit-vibrators/power-clit-vibrator',
+    '/toys/female-sex-toys/g-spot-vibrators/g-spot-green-191',
+    '/toys/male-sex-toys/male-masturbators/funny-peach-pussy',
+    '/toys/female-sex-toys/g-spot-vibrators/charming-vibes',
+    '/toys/female-sex-toys/dildos/realistic-dildos-aley',
+    '/toys/sex-toys/butt-plugs/medal-butt-plug-HT019',
+    '/female-sex-toys/wand-vibrators/the-feather',
+    '/female-sex-toys/rabbit-vibrators/mythtoy-jade-rabbit-heated',
+    '/male-sex-toys/pussy-masturbators/realistic-pocket-pussy-dream',
+    '/female-sex-toys/bullet-vibrators/dart-precision-bullet',
+    '/pages/return-refund',
+    '/female-sex-toys/bullet-vibrators/matte-red-lipstick-bullet-vibes',
+    '/sex-toys/butt-plugs/medal-butt-plug-ht019',
+    '/toys/male-sex-toys/male-masturbators/auto-suction-masturbator-fire',
+    '/collections/vibrator?page=0',
+    // 下架博客文章
+    '/blog/health-benefits-of-solo-play',
+    '/blog/stress-and-libido-connection',
+    '/blog/minimalist-bedroom-aesthetic-guide',
+    '/blog/science-of-afterglow-hormones',
+    '/blog/ultimate-toy-care-guide',
+    '/blog/why-do-men-sleep-after-sex',
+    // 下架产品
+    '/toys/female-sex-toys/clit-vibrators/rose-licking-vibrator',
+    // 下架分类
+    '/collections/male-sex-toys/manual-strokers',
+    '/collections/best-sellers',
+    // 下架产品（404列表）
+    '/toys/female-sex-toys/g-spot-vibrators/the-swan',
+    '/toys/female-sex-toys/clit-vibrators/vibrator-g-sucking-usb-szm',
+    '/toys/female-sex-toys/clit-vibrators/squirrel-auto-suction-vibes',
+    '/toys/male-sex-toys/pussy-masturbators/silicone-life-like-pussy',
+    '/toys/female-sex-toys/clit-vibrators/suction-sex-toy-soft-szm',
+    '/toys/male-sex-toys/male-masturbators/realistic-pocket-pussy-snow',
+    '/toys/male-sex-toys/pussy-masturbators/realistic-pocket-pussy-dream',
+    '/toys/male-sex-toys/sex-dolls/sex-doll-linda',
 ]);
 
 // 3. 定义 410 前缀匹配规则
@@ -70,9 +120,40 @@ const gonePrefixes = [
 ];
 
 export function middleware(request: NextRequest) {
-    const { pathname } = request.nextUrl;
+    const { pathname, searchParams } = request.nextUrl;
+    
+    // 🛑 核心修复：开发环境/本地访问直接跳过所有重定向，防止 SSL 错误
+    const hostname = request.nextUrl.hostname;
+    const isLocal = hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '0.0.0.0';
+    
+    if (!isLocal) {
+        const protocol = request.headers.get('x-forwarded-proto') || 'https';
+        const host = request.headers.get('host') || '';
+        
+        // 1. 强制 HTTPS
+        if (protocol === 'http') {
+            const url = request.nextUrl.clone();
+            url.protocol = 'https:';
+            return NextResponse.redirect(url, { status: 301 });
+        }
+        
+        // 2. 强制非 www
+        if (host.startsWith('www.')) {
+            const url = request.nextUrl.clone();
+            url.host = host.replace('www.', '');
+            return NextResponse.redirect(url, { status: 301 });
+        }
+    }
 
-    // --- 优先处理 301 重定向 (Redirects) ---
+    // --- 1. 移除 ?page=0 参数 ---
+    if (searchParams.get('page') === '0') {
+        const url = request.nextUrl.clone();
+        searchParams.delete('page');
+        url.search = searchParams.toString();
+        return NextResponse.redirect(url, { status: 301 });
+    }
+
+    // --- 2. 优先处理 301 重定向 (Redirects) ---
     // 如果这个路径在映射表里，直接跳走
     if (redirectMap[pathname]) {
         const destination = new URL(redirectMap[pathname], request.url);
@@ -114,7 +195,6 @@ export function middleware(request: NextRequest) {
 
     // ✅ 新增：联盟路由保护
     if (pathname.startsWith('/affiliate')) {
-        // 注意：Cookie key 是 refreshToken (驼峰)，不是 refresh_token
         const token = request.cookies.get('accessToken') || request.cookies.get('access_token');
         
         if (!token) {
@@ -124,7 +204,9 @@ export function middleware(request: NextRequest) {
         
         try {
             const payload = parseJwt(token.value);
-            if (!payload.isAffiliate) {
+            // 修复：同时检查 isAffiliate 和 affiliateId 字段
+            // 后端可能只返回其中一个
+            if (!payload.isAffiliate && !payload.affiliateId) {
                 return NextResponse.redirect(new URL('/403', request.url));
             }
         } catch {

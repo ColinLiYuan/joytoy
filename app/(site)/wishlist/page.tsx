@@ -54,8 +54,12 @@ export default function WishlistPage() {
             setIsLoading(true);
             setError('');
             setIsAuthRequired(false);
-            const items = await wishlistService.getWishlist();
-            
+            const items = await wishlistService.getWishlist()
+                        
+            // 调试：查看原始数据
+            console.log('[WishlistPage] Raw items from service:', items)
+            console.log('[WishlistPage] First item detail:', items?.[0])
+                        
             // 如果返回 null，说明 session 过期
             if (items === null) {
                 setIsAuthRequired(true);

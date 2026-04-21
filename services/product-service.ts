@@ -1,9 +1,10 @@
 // services/product-service.ts
 
 import { ProductListResponse } from '@/types/product';
-import { ADMIN_CONFIG, SERVER_CONFIG } from '@/lib/api-config';
+import { ADMIN_CONFIG, SERVER_CONFIG, BACKEND_CONFIG } from '@/lib/api-config';
 import {AdminProductResponse, ReleaseProductRequest} from "@/types/admin/adminProduct";
 import {ProductResponse} from "@/types/product";
+import { apiGet, apiPost } from '@/lib/api-utils';
 import { getToken } from '@/lib/token-utils';
 
 export interface UploadResult {
@@ -25,10 +26,8 @@ class ProductService {
         vendor: string = ''
     ): Promise<ProductListResponse> {
         try {
-            // 构建查询参数
             const queryParams = new URLSearchParams();
 
-            // 添加所有参数，包括 category
             if (category) {
                 queryParams.append('category', category);
             }
@@ -48,37 +47,13 @@ class ProductService {
                 queryParams.append('vendor', vendor);
             }
 
-            // 构建完整 URL - 走 Next.js API Route
-            const url = `${SERVER_CONFIG.baseURL}/api/admin/product/list?${queryParams.toString()}`;
+            const result = await apiGet<ProductListResponse>(`${BACKEND_CONFIG.baseURL}/api/admin/product/list?${queryParams.toString()}`);
 
-            // console.log('Fetching products from URL:', url); // 添加调试日志
-
-            const token = await getToken();
-            const headers: Record<string, string> = {
-                'Content-Type': 'application/json',
-            };
-            if (token) {
-                headers['Authorization'] = `Bearer ${token}`;
+            if (!result.success) {
+                throw new Error(result.message || 'Failed to fetch products');
             }
 
-            const response = await fetch(url, {
-                cache: 'no-store',
-                headers,
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to fetch products');
-            }
-
-            const apiResponse = await response.json();
-
-            // console.log('API Response:', apiResponse);
-
-            if (!apiResponse.success) {
-                throw new Error(apiResponse.error || 'Failed to fetch products');
-            }
-
-            return apiResponse.data || {
+            return result.data || {
                 content: [],
                 currentPage: page,
                 pageSize: size,
@@ -94,63 +69,23 @@ class ProductService {
     }
 
     async adminRelease(request: ReleaseProductRequest): Promise<ProductListResponse> {
-        try {
-            // console.log('product release: ', request)
+        const result = await apiPost<ProductListResponse>(`${BACKEND_CONFIG.baseURL}/api/admin/product/release`, request);
 
-            const url = `${SERVER_CONFIG.baseURL}/api/admin/product/release`;
-            
-            const token = await getToken();
-            const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-            if (token) {
-                headers['Authorization'] = `Bearer ${token}`;
-            }
-            
-            const response = await fetch(url, {
-                method: 'POST',
-                headers,
-                body: JSON.stringify(request),
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => null);
-                throw new Error(errorData?.error || `Failed to release product: ${response.status}`);
-            }
-
-            const apiResponse = await response.json();
-            return apiResponse.data;
-
-        } catch (error) {
-            console.error('product release:', error);
-            throw error;
+        if (!result.success) {
+            throw new Error(result.message || `Failed to release product`);
         }
+
+        return result.data;
     }
 
     async adminGetById(id: string): Promise<AdminProductResponse> {
-        try {
-            const url = `${SERVER_CONFIG.baseURL}/api/admin/product/fetch?id=${id}`;
+        const result = await apiGet<AdminProductResponse>(`${BACKEND_CONFIG.baseURL}/api/admin/product/fetch?id=${id}`);
 
-            const token = await getToken();
-            const headers: Record<string, string> = {
-                'Content-Type': 'application/json',
-            };
-            if (token) {
-                headers['Authorization'] = `Bearer ${token}`;
-            }
-
-            const response = await fetch(url, {
-                cache: 'no-store',
-                headers,
-            });
-
-            const apiResponse = await response.json();
-
-            const productResponse: AdminProductResponse = apiResponse.data;
-
-            return productResponse;
-        } catch (error) {
-            console.error('Get product by slug failed:', error);
-            throw error;
+        if (!result.success) {
+            throw new Error(result.message || 'Failed to fetch product');
         }
+
+        return result.data;
     }
 
     async uploadImage(
@@ -169,10 +104,10 @@ class ProductService {
                 formData.append('index', index.toString());
             }
 
-            // ✅ 走 Next.js 上传路由
-            const url = `${SERVER_CONFIG.baseURL}/api/admin/product/upload`;
-            
+            // 文件上传需要特殊处理，继续使用原生 fetch
+            const url = `${BACKEND_CONFIG.baseURL}/api/admin/product/upload`;
             const token = await getToken();
+            
             const headers: Record<string, string> = {};
             if (token) {
                 headers['Authorization'] = `Bearer ${token}`;
@@ -254,7 +189,6 @@ class ProductService {
                 sortDirection: filters?.sortDirection || 'DESC'
             });
 
-            // 添加筛选参数
             if (filters) {
                 if (filters.priceRange && filters.priceRange.length === 2) {
                     queryParams.append('minPrice', filters.priceRange[0].toString());
@@ -271,30 +205,13 @@ class ProductService {
                 }
             }
 
-            // 使用 SERVER_CONFIG (前台API) 而不是 ADMIN_CONFIG
-            const url = `${SERVER_CONFIG.apiRoutes.product}/list?${queryParams.toString()}`;
+            const result = await apiGet<ProductListResponse>(`${SERVER_CONFIG.apiRoutes.product}/list?${queryParams.toString()}`);
 
-            // console.log('Search products url:', url);
-
-            const response = await fetch(url, {
-                cache: 'no-store', // 搜索结果通常不缓存，或者使用短缓存
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            });
-
-            if (!response.ok) {
+            if (!result.success || !result.data) {
                 return this.getEmptyList(page, size);
             }
 
-            const apiResponse = await response.json();
-
-            // 兼容 apiResult 结构
-            const data = apiResponse.data || apiResponse;
-
-            if (!data || (!data.content && !Array.isArray(data))) {
-                return this.getEmptyList(page, size);
-            }
+            const data = result.data;
 
             return {
                 content: Array.isArray(data.content) ? data.content : [],
@@ -332,17 +249,16 @@ class ProductService {
      * 通常是价格低于 $25 的小商品
      */
     async getAddOnProducts(limit: number = 8): Promise<ProductResponse[]> {
-        const url = `${SERVER_CONFIG.apiRoutes.product}/list?maxPrice=25&size=${limit}`;
-        // console.log('product service getAddOnProducts url: ', url)
         try {
-            const response = await fetch(url, {
-                next: { revalidate: 36000 } // 缓存10小时
+            const result = await apiGet<ProductListResponse>(`${SERVER_CONFIG.apiRoutes.product}/list?maxPrice=25&size=${limit}`, {
+                retry: 1
             });
 
-            if (!response.ok) return [];
+            if (!result.success || !result.data) {
+                return [];
+            }
 
-            const json = await response.json();
-            return json.data?.content || [];
+            return result.data.content || [];
         } catch (error) {
             console.error("Failed to fetch add-ons", error);
             return [];

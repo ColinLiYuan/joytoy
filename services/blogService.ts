@@ -1,6 +1,6 @@
 // services/blog-service.ts
 
-import { ADMIN_CONFIG } from '@/lib/api-config';
+import { ADMIN_CONFIG, BACKEND_CONFIG } from '@/lib/api-config';
 import { AdminBlogResponse, AdminBlogListResponse } from '@/types/admin/adminBlog';
 import {ReleaseBlogRequest} from "../types/admin/adminBlog";
 import { getToken } from '@/lib/token-utils';
@@ -31,7 +31,7 @@ class BlogService {
                 queryParams.append('status', status);
             }
 
-            const url = `${ADMIN_CONFIG.apiRoutes.blog}/list?${queryParams}`;
+            const url = `${BACKEND_CONFIG.baseURL}${ADMIN_CONFIG.apiRoutes.blog}/list?${queryParams}`;
             // console.log('BlogService adminList url: ', url)
             
             const token = await getToken();
@@ -74,7 +74,7 @@ class BlogService {
 
     async getById(id: number): Promise<AdminBlogResponse> {
         try {
-            const url = `${ADMIN_CONFIG.apiRoutes.blog}/fetch?id=${id}`;
+            const url = `${BACKEND_CONFIG.baseURL}${ADMIN_CONFIG.apiRoutes.blog}/fetch?id=${id}`;
             
             const token = await getToken();
             const headers: Record<string, string> = {
@@ -104,7 +104,7 @@ class BlogService {
 
     async release(request: ReleaseBlogRequest): Promise<AdminBlogResponse> {
         try {
-            const url = `${ADMIN_CONFIG.apiRoutes.blog}/release`;
+            const url = `${BACKEND_CONFIG.baseURL}${ADMIN_CONFIG.apiRoutes.blog}/release`;
             
             const token = await getToken();
             const headers: Record<string, string> = { 'Content-Type': 'application/json' };

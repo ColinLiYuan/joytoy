@@ -3,7 +3,7 @@
 
 import React, { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Users, MousePointerClick, DollarSign, TrendingUp, Calendar, Search, Filter } from 'lucide-react'
+import { Users, MousePointerClick, DollarSign, TrendingUp, Calendar, Search, Filter, Wallet, Clock, CheckCircle, AlertCircle } from 'lucide-react'
 import { getAdminAffiliateStats, getAdminAffiliateList } from '@/app/actions/admin/affiliate'
 
 interface AffiliateUser {
@@ -30,6 +30,10 @@ interface AffiliateStats {
     totalConversions: number;
     totalCommission: number;
     conversionRate: number;
+    settledAmount: number;       // 已结算金额（超过30天）
+    pendingAmount: number;       // 待结算金额（未到30天）
+    currentBalance: number;      // 当前总余额
+    totalPaid: number;           // 累计已支付金额
 }
 
 export default function AdminAffiliatePage() {
@@ -99,36 +103,88 @@ export default function AdminAffiliatePage() {
 
             {/* Stats Cards */}
             {stats && (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <StatCard
-                        title="总联盟成员"
-                        value={stats.totalAffiliates.toString()}
-                        subtitle={`${stats.activeAffiliates} 活跃`}
-                        icon={Users}
-                        color="blue"
-                    />
-                    <StatCard
-                        title="总点击数"
-                        value={stats.totalClicks.toLocaleString()}
-                        subtitle="所有链接累计"
-                        icon={MousePointerClick}
-                        color="purple"
-                    />
-                    <StatCard
-                        title="总转化订单"
-                        value={stats.totalConversions.toString()}
-                        subtitle={`转化率 ${stats.conversionRate}%`}
-                        icon={TrendingUp}
-                        color="green"
-                    />
-                    <StatCard
-                        title="总佣金支出"
-                        value={`$${stats.totalCommission.toFixed(2)}`}
-                        subtitle="累计支付"
-                        icon={DollarSign}
-                        color="orange"
-                    />
-                </div>
+                <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <StatCard
+                            title="总联盟成员"
+                            value={stats.totalAffiliates.toString()}
+                            subtitle={`${stats.activeAffiliates} 活跃`}
+                            icon={Users}
+                            color="blue"
+                        />
+                        <StatCard
+                            title="总点击数"
+                            value={stats.totalClicks.toLocaleString()}
+                            subtitle="所有链接累计"
+                            icon={MousePointerClick}
+                            color="purple"
+                        />
+                        <StatCard
+                            title="总转化订单"
+                            value={stats.totalConversions.toString()}
+                            subtitle={`转化率 ${stats.conversionRate}%`}
+                            icon={TrendingUp}
+                            color="green"
+                        />
+                        <StatCard
+                            title="总佣金支出"
+                            value={`$${stats.totalCommission.toFixed(2)}`}
+                            subtitle="累计支付"
+                            icon={DollarSign}
+                            color="orange"
+                        />
+                    </div>
+
+                    {/* Financial Overview */}
+                    <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+                        <div className="flex items-center gap-2 mb-6">
+                            <Wallet className="h-5 w-5 text-gray-400" />
+                            <h3 className="font-bold text-gray-900">财务概览</h3>
+                        </div>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                            <div className="space-y-2">
+                                <div className="flex items-center gap-2">
+                                    <CheckCircle className="h-4 w-4 text-emerald-500" />
+                                    <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">已结算</span>
+                                </div>
+                                <div className="text-2xl font-black text-gray-900">
+                                    ${stats.settledAmount?.toFixed(2) || '0.00'}
+                                </div>
+                                <div className="text-xs text-gray-400">可提现金额</div>
+                            </div>
+                            <div className="space-y-2">
+                                <div className="flex items-center gap-2">
+                                    <Clock className="h-4 w-4 text-amber-500" />
+                                    <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">待结算</span>
+                                </div>
+                                <div className="text-2xl font-black text-gray-900">
+                                    ${stats.pendingAmount?.toFixed(2) || '0.00'}
+                                </div>
+                                <div className="text-xs text-gray-400">冷静期内（30天）</div>
+                            </div>
+                            <div className="space-y-2">
+                                <div className="flex items-center gap-2">
+                                    <Wallet className="h-4 w-4 text-blue-500" />
+                                    <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">总余额</span>
+                                </div>
+                                <div className="text-2xl font-black text-gray-900">
+                                    ${stats.currentBalance?.toFixed(2) || '0.00'}
+                                </div>
+                                <div className="text-xs text-gray-400">所有联盟成员合计</div>
+                            </div>
+                            <div className="space-y-2">
+                                <div className="flex items-center gap-2">
+                                    <AlertCircle className="h-4 w-4 text-purple-500" />
+                                    <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">已提现</span>
+                                </div>
+                                <div className="text-2xl font-black text-gray-900">
+                                    ${stats.totalPaid?.toFixed(2) || '0.00'}
+                                </div>
+                                <div className="text-xs text-gray-400">历史累计提现</div>
+                            </div>
+                        </div>
+                    </div>
+                </>
             )}
 
             {/* Filters */}

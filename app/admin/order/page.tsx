@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { getAdminOrders, updateOrderStatus } from '@/app/actions/admin/order'
+import { getAdminOrders, updateOrderStatus, cancelAdminOrder, settleOrderCommission } from '@/app/actions/admin/order'
 import { OrderResponse, OrderStatus } from '@/types/order'
 import {
     Search,
@@ -15,7 +15,9 @@ import {
     Loader2,
     ChevronLeft,
     ChevronRight,
-    RotateCcw
+    RotateCcw,
+    XCircle,
+    DollarSign
 } from 'lucide-react'
 
 // 定义所有状态
@@ -60,6 +62,14 @@ export default function OrderPage() {
     const [refundReason, setRefundReason] = useState('')
     const [refundLoading, setRefundLoading] = useState(false)
 
+    // 取消订单弹窗状态
+    const [isCancelModalOpen, setIsCancelModalOpen] = useState(false)
+    const [cancelOrder, setCancelOrder] = useState<OrderResponse | null>(null)
+    const [cancelLoading, setCancelLoading] = useState(false)
+    
+    // 佣金结算 loading 状态
+    const [settlingOrderId, setSettlingOrderId] = useState<number | null>(null)
+
     // 获取订单列表
     const fetchOrders = useCallback(async () => {
         setLoading(true)
@@ -84,14 +94,18 @@ export default function OrderPage() {
     }, [fetchOrders])
 
     // 更新状态逻辑
-    const handleUpdateStatus = async (orderId: number, newStatus: string) => {
-        const statusLabel = statusMap[newStatus] || newStatus;
-        if (!window.confirm(`确定要将订单状态手动更新为【${statusLabel}】吗？`)) return;
+    const handleUpdateStatus = async (orderNumber: string, newStatus: string) => {
+        console.log('[Handle Update Status] orderNumber:', orderNumber, 'newStatus:', newStatus);
+        const statusLabel = statusMap[newStatus] || newStatus || '下一状态';
+        if (!window.confirm(`确定要推进订单状态吗？`)) return;
 
         try {
-            await updateOrderStatus(orderId, newStatus);
+            console.log('[Handle Update Status] Calling updateOrderStatus...');
+            await updateOrderStatus(orderNumber, newStatus);
+            console.log('[Handle Update Status] Success, refreshing orders...');
             fetchOrders();
         } catch (error: any) {
+            console.error('[Handle Update Status] Error:', error);
             alert('操作失败: ' + (error.message || '未知错误'));
         }
     };
@@ -101,7 +115,7 @@ export default function OrderPage() {
         if (!refundOrder) return
         setRefundLoading(true)
         try {
-            await updateOrderStatus(refundOrder.id, 'REFUNDED');
+            await updateOrderStatus(refundOrder.orderNumber, 'REFUNDED');
             // TODO: 如果需要发送退款邮件，可以调用 sendRefundEmail
             setIsRefundModalOpen(false)
             setRefundReason('')
@@ -114,12 +128,53 @@ export default function OrderPage() {
         }
     }
 
+    // 取消订单提交
+    const handleCancelSubmit = async () => {
+        if (!cancelOrder) return
+        setCancelLoading(true)
+        try {
+            await cancelAdminOrder(cancelOrder.orderNumber)
+            setIsCancelModalOpen(false)
+            fetchOrders()
+        } catch (error: any) {
+            console.error('Cancel error:', error)
+            alert('取消订单失败: ' + (error.message || '未知错误'));
+        } finally {
+            setCancelLoading(false)
+        }
+    }
+    
+    // 佣金结算
+    const handleSettleCommission = async (order: OrderResponse) => {
+        if (!window.confirm(`确定要结算订单 #${order.orderNumber} 的佣金吗？`)) return;
+        
+        setSettlingOrderId(order.id);
+        try {
+            const result = await settleOrderCommission(order.orderNumber);
+            alert(`佣金结算成功！\n联盟ID: ${result.affiliateId}\n佣金金额: $${result.commissionAmount}`);
+            fetchOrders();
+        } catch (error: any) {
+            console.error('Settle commission error:', error);
+            // 显示后端返回的具体错误信息
+            const errorMsg = error.message || '未知错误';
+            if (errorMsg.includes('没有联盟推广')) {
+                alert('该订单没有联盟推广，无需结算佣金。');
+            } else if (errorMsg.includes('已结算')) {
+                alert('该订单佣金已结算，无需重复操作。');
+            } else {
+                alert('佣金结算失败: ' + errorMsg);
+            }
+        } finally {
+            setSettlingOrderId(null);
+        }
+    }
+
     // 发货提交
     const handleShipSubmit = async () => {
         if (!trackingNumber || !shipOrder) return
         setShipLoading(true)
         try {
-            await updateOrderStatus(shipOrder.id, trackingNumber);
+            await updateOrderStatus(shipOrder.orderNumber, trackingNumber);
 
             // ✅ 发货邮件由后端自动发送，前端无需处理
 
@@ -188,7 +243,10 @@ export default function OrderPage() {
                         <thead>
                         <tr className="bg-gray-50 border-b border-gray-200">
                             <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">订单编号</th>
+                            <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">商品名称</th>
                             <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">客户邮箱</th>
+                            <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">联盟信息</th>
+                            <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">佣金状态</th>
                             <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">实付金额</th>
                             <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">当前状态</th>
                             <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-right">管理操作</th>
@@ -197,12 +255,25 @@ export default function OrderPage() {
                         <tbody className="divide-y divide-gray-100">
                         {loading ? (
                             <tr>
-                                <td colSpan={5} className="py-20 text-center text-gray-400">
+                                <td colSpan={8} className="py-20 text-center text-gray-400">
                                     <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2" />
                                     正在加载订单数据...
                                 </td>
                             </tr>
-                        ) : orders.map((order) => (
+                        ) : orders.map((order) => {
+                            // 调试日志：检查 COMPLETED 订单
+                            if (order.status === 'COMPLETED') {
+                                console.log('[Order Debug] COMPLETED order:', {
+                                    orderNumber: order.orderNumber,
+                                    affiliateId: order.affiliateId,
+                                    affiliateCode: order.affiliateCode,
+                                    commissionAmount: order.commissionAmount,
+                                    affiliatePayoutStatus: order.affiliatePayoutStatus,
+                                    shouldShowSettleButton: order.affiliateId && order.commissionAmount && order.commissionAmount > 0 && order.affiliatePayoutStatus?.toUpperCase() === 'PENDING'
+                                });
+                            }
+                            
+                            return (
                             <tr key={order.id} className="hover:bg-gray-50/50 transition-colors">
                                 <td className="px-6 py-4">
                                     <div className="font-mono text-sm font-bold text-gray-900">#{order.orderNumber}</div>
@@ -211,7 +282,52 @@ export default function OrderPage() {
                                         {new Date(order.createdAt).toLocaleDateString()}
                                     </div>
                                 </td>
+                                <td className="px-6 py-4">
+                                    <div className="max-w-xs truncate" title={order.items?.[0]?.productTitle || '无商品'}>
+                                        <span className="text-sm text-gray-900">
+                                            {order.items?.[0]?.productTitle || '-'}
+                                        </span>
+                                        {order.items && order.items.length > 1 && (
+                                            <span className="ml-2 text-xs text-gray-400">+{order.items.length - 1} 更多</span>
+                                        )}
+                                    </div>
+                                </td>
                                 <td className="px-6 py-4 text-sm text-gray-600">{order.guestEmail}</td>
+                                <td className="px-6 py-4">
+                                    {order.affiliateCode ? (
+                                        <div className="flex flex-col gap-1">
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-xs font-bold text-gray-900">{order.affiliateCode}</span>
+                                                {order.commissionAmount !== undefined && order.commissionAmount > 0 && (
+                                                    <span className="text-[10px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-medium">
+                                                        ${order.commissionAmount.toFixed(2)}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <span className="text-xs text-gray-400">-</span>
+                                    )}
+                                </td>
+                                <td className="px-6 py-4">
+                                    {order.affiliatePayoutStatus ? (
+                                        <span className={`px-3 py-1 text-[10px] font-bold rounded-full border ${
+                                            order.affiliatePayoutStatus === 'PAID' 
+                                                ? 'bg-green-100 text-green-700 border-green-200' 
+                                                : order.affiliatePayoutStatus === 'PENDING'
+                                                    ? 'bg-yellow-100 text-yellow-700 border-yellow-200'
+                                                    : 'bg-gray-100 text-gray-600 border-gray-200'
+                                        }`}>
+                                            {order.affiliatePayoutStatus === 'PAID' 
+                                                ? '已结算' 
+                                                : order.affiliatePayoutStatus === 'PENDING' 
+                                                    ? '待结算' 
+                                                    : order.affiliatePayoutStatus}
+                                        </span>
+                                    ) : (
+                                        <span className="text-xs text-gray-400">-</span>
+                                    )}
+                                </td>
                                 <td className="px-6 py-4 text-sm font-bold text-gray-900">${order.finalAmount.toFixed(2)}</td>
                                 <td className="px-6 py-4">
                                         <span className={`px-3 py-1 rounded-full text-[10px] font-bold border ${getStatusColor(order.status)}`}>
@@ -230,24 +346,38 @@ export default function OrderPage() {
                                         </button>
 
                                         {order.status === 'PENDING' && (
-                                            <button onClick={() => handleUpdateStatus(order.id, 'PAID')} className="p-2 text-green-500 hover:bg-green-50 rounded-lg" title="确认支付"><CreditCard className="h-5 w-5" /></button>
+                                            <button onClick={() => handleUpdateStatus(order.orderNumber, 'PAID')} className="p-2 text-green-500 hover:bg-green-50 rounded-lg" title="确认支付"><CreditCard className="h-5 w-5" /></button>
                                         )}
-                                        {(order.status === 'PAID' || order.status === 'PROCESSING') && (
+                                        {['PAID', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'COMPLETED'].includes(order.status) && (
                                             <button onClick={() => { setRefundOrder(order); setIsRefundModalOpen(true); }} className="p-2 text-red-500 hover:bg-red-50 rounded-lg" title="退款"><RotateCcw className="h-5 w-5" /></button>
                                         )}
                                         {order.status === 'PAID' && (
-                                            <button onClick={() => handleUpdateStatus(order.id, 'PROCESSING')} className="p-2 text-indigo-500 hover:bg-indigo-50 rounded-lg" title="开始处理"><Package className="h-5 w-5" /></button>
+                                            <button onClick={() => handleUpdateStatus(order.orderNumber, 'PROCESSING')} className="p-2 text-indigo-500 hover:bg-indigo-50 rounded-lg" title="开始处理"><Package className="h-5 w-5" /></button>
                                         )}
                                         {order.status === 'PROCESSING' && (
                                             <button onClick={() => { setShipOrder(order); setIsShipModalOpen(true); }} className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg" title="去发货"><Truck className="h-5 w-5" /></button>
                                         )}
+                                        {order.status === 'PENDING' && (
+                                            <button onClick={() => { setCancelOrder(order); setIsCancelModalOpen(true); }} className="p-2 text-red-500 hover:bg-red-50 rounded-lg" title="取消订单"><XCircle className="h-5 w-5" /></button>
+                                        )}
                                         {order.status === 'SHIPPED' && (
-                                            <button onClick={() => handleUpdateStatus(order.id, 'DELIVERED')} className="p-2 text-orange-500 hover:bg-orange-50 rounded-lg" title="确认签收"><PackageCheck className="h-5 w-5" /></button>
+                                            <button onClick={() => handleUpdateStatus(order.orderNumber, '')} className="p-2 text-orange-500 hover:bg-orange-50 rounded-lg" title="确认签收"><PackageCheck className="h-5 w-5" /></button>
+                                        )}
+                                        {order.status === 'COMPLETED' && order.affiliateId && order.commissionAmount > 0 && order.affiliatePayoutStatus?.toUpperCase() === 'PENDING' && (
+                                            <button 
+                                                onClick={() => handleSettleCommission(order)} 
+                                                disabled={settlingOrderId === order.id}
+                                                className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg disabled:opacity-50" 
+                                                title="结算佣金"
+                                            >
+                                                {settlingOrderId === order.id ? <Loader2 className="h-5 w-5 animate-spin" /> : <DollarSign className="h-5 w-5" />}
+                                            </button>
                                         )}
                                     </div>
                                 </td>
                             </tr>
-                        ))}
+                        );
+                        })}
                         </tbody>
                     </table>
 
@@ -306,6 +436,38 @@ export default function OrderPage() {
                                 className="px-6 py-2 bg-red-600 text-white text-sm font-bold rounded-lg hover:bg-red-700 disabled:opacity-50"
                             >
                                 {refundLoading ? '处理中...' : '确认退款'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* 取消订单模态框 */}
+            {isCancelModalOpen && cancelOrder && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div className="fixed inset-0 bg-black/50 transition-opacity" onClick={() => setIsCancelModalOpen(false)} />
+                    <div className="relative bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
+                        <div className="p-6">
+                            <h3 className="text-lg font-bold text-gray-900 mb-4">取消订单</h3>
+                            <div className="mb-4">
+                                <p className="text-sm text-gray-600">订单号：<span className="font-mono font-bold">#{cancelOrder.orderNumber}</span></p>
+                                <p className="text-sm text-gray-600">订单金额：<span className="font-bold">${cancelOrder.finalAmount.toFixed(2)}</span></p>
+                                <p className="text-sm text-gray-600">当前状态：<span className="font-medium">{statusMap[cancelOrder.status]}</span></p>
+                            </div>
+                            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                                <p className="text-sm text-red-800">
+                                    <strong>注意：</strong>此操作不可撤销。
+                                </p>
+                            </div>
+                        </div>
+                        <div className="bg-gray-50 px-6 py-4 flex justify-end space-x-3">
+                            <button onClick={() => setIsCancelModalOpen(false)} className="px-4 py-2 text-sm text-gray-600">取消</button>
+                            <button
+                                onClick={handleCancelSubmit}
+                                disabled={cancelLoading}
+                                className="px-6 py-2 bg-red-600 text-white text-sm font-bold rounded-lg hover:bg-red-700 disabled:opacity-50"
+                            >
+                                {cancelLoading ? '处理中...' : '确认取消'}
                             </button>
                         </div>
                     </div>

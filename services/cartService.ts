@@ -2,14 +2,31 @@
 import { AddToCartRequest, CartResponse } from '@/types/cart';
 import { SERVER_CONFIG } from '@/lib/api-config';
 
+// 辅助函数：检查响应是否为 JSON
+function validateJsonResponse(response: Response, serviceName: string, url: string) {
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+        console.error(`[${serviceName}] Non-JSON response received:`, {
+            url: url,
+            status: response.status,
+            statusText: response.statusText,
+            contentType: contentType || 'null',
+            ok: response.ok
+        });
+        throw new Error(`Invalid server response: Expected JSON but got ${contentType || 'no content-type'} (Status: ${response.status})`);
+    }
+}
+
 class CartService {
     /**
      * 获取购物车
      */
     async getCart(): Promise<CartResponse> {
         try {
-            let url = `${SERVER_CONFIG.apiRoutes.cart}/get`;
+            const url = `${SERVER_CONFIG.apiRoutes.cart}/get`;
             const response = await fetch(url);
+
+            validateJsonResponse(response, 'CartService', url);
 
             if (!response.ok) {
                 const errorData = await response.json().catch(() => null);
@@ -29,12 +46,14 @@ class CartService {
      */
     async addItemToCart(request: AddToCartRequest): Promise<CartResponse> {
         try {
-            let url = `${SERVER_CONFIG.apiRoutes.cart}/add`;
+            const url = `${SERVER_CONFIG.apiRoutes.cart}/add`;
             const response = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(request),
             });
+
+            validateJsonResponse(response, 'CartService', url);
 
             if (!response.ok) {
                 const errorData = await response.json().catch(() => null);
@@ -55,12 +74,14 @@ class CartService {
      */
     async removeItemFromCart(itemId: number): Promise<CartResponse> {
         try {
-            let url = `${SERVER_CONFIG.apiRoutes.cart}/remove`;
+            const url = `${SERVER_CONFIG.apiRoutes.cart}/remove`;
             const response = await fetch(url, {
                 method: 'DELETE',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ itemId }),
             });
+
+            validateJsonResponse(response, 'CartService', url);
 
             if (!response.ok) {
                 const errorData = await response.json().catch(() => null);
@@ -87,6 +108,8 @@ class CartService {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ quantity, itemId }),
             });
+
+            validateJsonResponse(response, 'CartService', url);
 
             if (!response.ok) {
                 const errorData = await response.json().catch(() => null);

@@ -6,7 +6,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import Image from 'next/image';
 import { ProductResponse, ProductSku } from '@/types/product';
 import { getProductImageUrl } from '@/lib/image-utils';
-import { wishlistService } from '@/services/wishlistService';
+import { addToWishlist, removeFromWishlist } from '@/app/actions/wishlist';
 import { useAuth } from '@/contexts/authContext';
 import { useToast } from '@/contexts/toastContext';
 import { useCartStore } from '@/stores/useCartStore';
@@ -103,13 +103,15 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
         try {
             if (!userInfo) return;
             if (newState) {
-                const success = await wishlistService.addItemToWishlist({
+                // 传递完整的产品信息
+                const success = await addToWishlist({
                     productId: product.id,
+                    slug: product.slug,
                     productTitle: product.title,
                     image: product.image,
                     currentPrice: product.currentPrice,
-                    slug: product.slug,
-                    badge: product.badge
+                    originalPrice: product.originalPrice,
+                    badge: product.badge,
                 });
                 
                 // 如果返回 false，说明 session 过期，需要登录
@@ -119,7 +121,7 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
                     return;
                 }
             } else {
-                const success = await wishlistService.removeItemFromWishlist({ productId: product.id });
+                const success = await removeFromWishlist(product.id);
                 
                 // 如果返回 false，说明 session 过期，需要登录
                 if (!success) {
@@ -142,6 +144,10 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
     const isOnSale = product.originalPrice > product.currentPrice;
 
     const renderTitle = (fullTitle: string) => {
+        if (!fullTitle) {
+            return <span className="font-medium text-gray-900 line-clamp-2 leading-snug">Untitled Product</span>;
+        }
+        
         if (fullTitle.includes('|')) {
             const [name, desc] = fullTitle.split('|');
             return (
@@ -163,7 +169,7 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
                 <div className="absolute inset-0 flex items-center justify-center">
                     <Image
                         src={mainImage}
-                        alt={product.title}
+                        alt={product.title || 'Product image'}
                         width={400}
                         height={400}
                         className="p-6 object-contain w-full h-full group-hover:scale-105 transition-transform duration-500 mix-blend-multiply"

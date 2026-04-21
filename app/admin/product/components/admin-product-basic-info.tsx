@@ -1,7 +1,7 @@
 // /app/admin/products/components/admin-product-basic-info.tsx
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { VENDORS } from '@/lib/constants/product-options';
 import { COLOR_SYSTEM } from '@/lib/constants/color-config';
@@ -19,6 +19,16 @@ interface BasicInfoProps {
 
 export default function AdminProductBasicInfo({ product, updateProduct }: BasicInfoProps) {
     const [customColor, setCustomColor] = useState('');
+    const [showSuggestedPrice, setShowSuggestedPrice] = useState(false);
+
+    // 当采购价变化时，自动计算建议售价
+    useEffect(() => {
+        if (product.purchasePrice && product.purchasePrice > 0) {
+            setShowSuggestedPrice(true);
+        } else {
+            setShowSuggestedPrice(false);
+        }
+    }, [product.purchasePrice]);
 
     const handleInputChange = (field: string, value: any) => {
         updateProduct({ [field]: value });
@@ -118,9 +128,9 @@ export default function AdminProductBasicInfo({ product, updateProduct }: BasicI
                     </div>
                 </div>
 
-                {/* 第二行：产品名称 */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="md:col-span-2">
+                {/* 第二行：产品名称、品牌 */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="md:col-span-1">
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                             产品名称 (中文/自定义名称)
                         </label>
@@ -129,135 +139,90 @@ export default function AdminProductBasicInfo({ product, updateProduct }: BasicI
                             value={product.name || ''}
                             onChange={(e) => handleInputChange('name', e.target.value)}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
-                            placeholder="输入产品的中文名称或自定义名称..."
+                            placeholder="中文名称..."
                         />
-                        <p className="text-xs text-gray-500 mt-1">用于内部管理或显示在特定位置的产品名称</p>
                     </div>
-                </div>
-
-                {/* 颜色选择区域 - 升级版 (使用 COLOR_SYSTEM) */}
-                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                    <div className="flex justify-between items-center mb-3">
-                        <label className="text-sm font-medium text-gray-700">颜色变体</label>
-
-                        {/* 自定义颜色添加器 */}
-                        <div className="flex items-center space-x-2">
-                            <input
-                                type="text"
-                                value={customColor}
-                                onChange={(e) => setCustomColor(e.target.value)}
-                                placeholder="输入特殊颜色..."
-                                className="px-2 py-1 text-sm border border-gray-300 rounded w-32 focus:outline-none focus:border-blue-500"
-                                onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addCustomColor())}
-                            />
-                            <button
-                                type="button"
-                                onClick={addCustomColor}
-                                className="px-3 py-1 bg-white border border-gray-300 text-gray-700 text-xs rounded hover:bg-gray-100"
-                            >
-                                添加
-                            </button>
-                        </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">品牌</label>
+                        <input
+                            type="text"
+                            value={product.brand || ''}
+                            onChange={(e) => handleInputChange('brand', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="品牌名称"
+                        />
                     </div>
-
-                    {/* 已选颜色预览 */}
-                    {product.colors && product.colors.length > 0 && (
-                        <div className="flex flex-wrap gap-2 mb-4 p-3 bg-white rounded border border-gray-100">
-                            {product.colors.map((color: string) => (
-                                <span key={color} className="inline-flex items-center px-2 py-1 rounded-full text-xs border bg-blue-50 text-blue-700 border-blue-200">
-                                    <span
-                                        className="w-3 h-3 rounded-full mr-1.5 border border-black/10 shadow-sm"
-                                        style={{ backgroundColor: getPreviewHex(color) }}
-                                    ></span>
-                                    {color}
-                                    <button
-                                        type="button"
-                                        onClick={() => handleColorChange(color, false)}
-                                        className="ml-1.5 text-blue-400 hover:text-blue-900 font-bold"
-                                    >×</button>
-                                </span>
-                            ))}
-                        </div>
-                    )}
-
-                    {/* 颜色分组选择器 */}
-                    <div className="space-y-5 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
-                        {Object.entries(COLOR_SYSTEM).map(([groupName, groupData]) => (
-                            <div key={groupName} className="border-b border-gray-200 pb-3 last:border-0 last:pb-0">
-                                {/* 分组标题 */}
-                                <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-2">
-                                    <span
-                                        className="w-3 h-3 rounded-full border border-gray-300 shadow-sm"
-                                        style={{backgroundColor: groupData.hex}}
-                                    ></span>
-                                    {groupName} 系
-                                </h4>
-
-                                {/* 变体选项 */}
-                                <div className="flex flex-wrap gap-2 ml-1">
-                                    {Object.entries(groupData.variants).map(([variantName, hexVal]) => (
-                                        <label
-                                            key={variantName}
-                                            className={`inline-flex items-center px-3 py-1.5 border rounded-full cursor-pointer transition-all select-none text-xs ${
-                                                product.colors?.includes(variantName)
-                                                    ? 'bg-blue-600 border-blue-600 text-white shadow-md transform scale-105'
-                                                    : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400 hover:bg-gray-50'
-                                            }`}
-                                        >
-                                            <input
-                                                type="checkbox"
-                                                className="hidden"
-                                                checked={product.colors?.includes(variantName) || false}
-                                                onChange={(e) => handleColorChange(variantName, e.target.checked)}
-                                            />
-                                            {/* 颜色预览圆点 */}
-                                            <span
-                                                className={`w-2.5 h-2.5 rounded-full mr-1.5 border ${
-                                                    product.colors?.includes(variantName) ? 'border-white/50' : 'border-black/10'
-                                                }`}
-                                                style={{ backgroundColor: hexVal }}
-                                            ></span>
-                                            <span className="font-medium">{variantName}</span>
-                                        </label>
-                                    ))}
-                                </div>
-                            </div>
-                        ))}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">标签/徽章</label>
+                        <select
+                            value={product.badge || ''}
+                            onChange={(e) => handleInputChange('badge', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
+                        >
+                            <option value="">无徽章</option>
+                            <option value="HOT">🔥 热销</option>
+                            <option value="NEW">✨ 新品</option>
+                            <option value="STAFF_PICK">⭐ 推荐</option>
+                        </select>
+                        <p className="text-xs text-gray-500 mt-1">显示在产品卡片上的标签</p>
                     </div>
                 </div>
 
                 {/* 价格与库存 */}
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">采购价 (CNY)</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">采购价 (USD)</label>
                         <input
                             type="number"
                             step="0.01"
                             value={product.purchasePrice || ''}
                             onChange={(e) => handleInputChange('purchasePrice', parseFloat(e.target.value))}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                            placeholder="输入采购价"
                         />
                     </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">原价 (USD) <span className="text-red-500">*</span></label>
-                        <input
-                            type="number"
-                            step="0.01"
-                            value={product.originalPrice || ''}
-                            onChange={(e) => handleInputChange('originalPrice', parseFloat(e.target.value))}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">现价 (USD) <span className="text-red-500">*</span></label>
-                        <input
-                            type="number"
-                            step="0.01"
-                            value={product.currentPrice || ''}
-                            onChange={(e) => handleInputChange('currentPrice', parseFloat(e.target.value))}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm font-semibold text-blue-600"
-                        />
-                    </div>
+                    {showSuggestedPrice && product.purchasePrice && (
+                        <div className="md:col-span-3 grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">原价 (USD) <span className="text-red-500">*</span></label>
+                                <input
+                                    type="number"
+                                    step="0.01"
+                                    value={product.originalPrice || ''}
+                                    onChange={(e) => handleInputChange('originalPrice', parseFloat(e.target.value))}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                                    placeholder="输入原价"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">现价 (USD) <span className="text-red-500">*</span></label>
+                                <div className="flex gap-2">
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        value={product.currentPrice || ''}
+                                        onChange={(e) => handleInputChange('currentPrice', parseFloat(e.target.value))}
+                                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm font-semibold text-blue-600"
+                                        placeholder="输入现价"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            // 建议售价 = 采购价 * 3.5 (考虑运费、利润等)
+                                            const suggested = Math.round(product.purchasePrice! * 3.5 * 100) / 100;
+                                            handleInputChange('currentPrice', suggested);
+                                            handleInputChange('originalPrice', Math.round(suggested * 1.3 * 100) / 100);
+                                        }}
+                                        className="px-3 py-2 bg-green-100 text-green-700 text-xs font-medium rounded-md hover:bg-green-200 whitespace-nowrap"
+                                        title="根据采购价自动计算"
+                                    >
+                                        💡 建议售价
+                                    </button>
+                                </div>
+                                <p className="text-xs text-gray-500 mt-1">采购价 × 3.5 ≈ ${Math.round(product.purchasePrice * 3.5 * 100) / 100}</p>
+                            </div>
+                        </div>
+                    )}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">总库存</label>
                         <input

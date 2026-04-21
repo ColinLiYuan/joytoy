@@ -4,6 +4,7 @@ import { cookies } from 'next/headers'
 import { BACKEND_CONFIG } from '@/lib/api-config'
 import { ProductListResponse } from '@/types/product'
 import { AdminProductResponse, ReleaseProductRequest } from '@/types/admin/adminProduct'
+import { getRefreshToken } from '@/lib/token-utils'
 
 export async function getAdminProducts(params: {
     category: string
@@ -81,7 +82,7 @@ export async function getAdminProducts(params: {
 }
 
 // 获取产品详情
-export async function getAdminProductById(id: string): Promise<AdminProductResponse> {
+export async function getAdminProductById(id: string, retry = false): Promise<AdminProductResponse> {
     try {
         const cookieStore = await cookies()
         const token = cookieStore.get('accessToken')?.value
@@ -100,6 +101,46 @@ export async function getAdminProductById(id: string): Promise<AdminProductRespo
             },
         })
 
+        if (response.status === 401 && !retry) {
+            console.log('[Get Admin Product] Token expired, refreshing...')
+            const refreshToken = await getRefreshToken()
+            if (refreshToken) {
+                const refreshUrl = `${BACKEND_CONFIG.baseURL}/api/V1/users/refresh`
+                const refreshResponse = await fetch(refreshUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ refreshToken })
+                })
+
+                if (refreshResponse.ok) {
+                    const refreshData = await refreshResponse.json()
+                    if (refreshData.success && refreshData.data?.accessToken) {
+                        const newToken = refreshData.data.accessToken
+                        const newRefresh = refreshData.data.refreshToken || refreshToken
+                        
+                        cookieStore.set('accessToken', newToken, {
+                            httpOnly: true,
+                            secure: process.env.NODE_ENV === 'production',
+                            sameSite: 'lax',
+                            path: '/',
+                            maxAge: 60 * 60 * 24 * 30
+                        })
+                        cookieStore.set('refreshToken', newRefresh, {
+                            httpOnly: true,
+                            secure: process.env.NODE_ENV === 'production',
+                            sameSite: 'lax',
+                            path: '/',
+                            maxAge: 60 * 60 * 24 * 30
+                        })
+                        
+                        console.log('[Get Admin Product] Token refreshed, retrying...')
+                        return getAdminProductById(id, true)
+                    }
+                }
+            }
+            throw new Error('Token refresh failed, please login again')
+        }
+
         if (!response.ok) {
             throw new Error(`获取产品详情失败: ${response.status}`)
         }
@@ -112,13 +153,13 @@ export async function getAdminProductById(id: string): Promise<AdminProductRespo
 
         return apiResponse.data
     } catch (error) {
-        console.error('Server Action: Error fetching product detail:', error)
+        console.error('[Get Admin Product] Error:', error)
         throw error
     }
 }
 
 // 发布/更新产品
-export async function releaseAdminProduct(productData: ReleaseProductRequest): Promise<void> {
+export async function releaseAdminProduct(productData: ReleaseProductRequest, retry = false): Promise<void> {
     try {
         const cookieStore = await cookies()
         const token = cookieStore.get('accessToken')?.value
@@ -139,6 +180,46 @@ export async function releaseAdminProduct(productData: ReleaseProductRequest): P
             body: JSON.stringify(productData),
         })
 
+        if (response.status === 401 && !retry) {
+            console.log('[Release Product] Token expired, refreshing...')
+            const refreshToken = await getRefreshToken()
+            if (refreshToken) {
+                const refreshUrl = `${BACKEND_CONFIG.baseURL}/api/V1/users/refresh`
+                const refreshResponse = await fetch(refreshUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ refreshToken })
+                })
+
+                if (refreshResponse.ok) {
+                    const refreshData = await refreshResponse.json()
+                    if (refreshData.success && refreshData.data?.accessToken) {
+                        const newToken = refreshData.data.accessToken
+                        const newRefresh = refreshData.data.refreshToken || refreshToken
+                        
+                        cookieStore.set('accessToken', newToken, {
+                            httpOnly: true,
+                            secure: process.env.NODE_ENV === 'production',
+                            sameSite: 'lax',
+                            path: '/',
+                            maxAge: 60 * 60 * 24 * 30
+                        })
+                        cookieStore.set('refreshToken', newRefresh, {
+                            httpOnly: true,
+                            secure: process.env.NODE_ENV === 'production',
+                            sameSite: 'lax',
+                            path: '/',
+                            maxAge: 60 * 60 * 24 * 30
+                        })
+                        
+                        console.log('[Release Product] Token refreshed, retrying...')
+                        return releaseAdminProduct(productData, true)
+                    }
+                }
+            }
+            throw new Error('Token refresh failed, please login again')
+        }
+
         if (!response.ok) {
             const errorText = await response.text()
             throw new Error(`发布产品失败: ${response.status} - ${errorText}`)
@@ -150,7 +231,7 @@ export async function releaseAdminProduct(productData: ReleaseProductRequest): P
             throw new Error(apiResponse.error || '发布产品失败')
         }
     } catch (error) {
-        console.error('Server Action: Error releasing product:', error)
+        console.error('[Release Product] Error:', error)
         throw error
     }
 }

@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import {
     ShoppingCart,
     Users,
@@ -8,7 +9,9 @@ import {
     BarChart3,
     BookOpen,
     MessageSquare,
-    TrendingUp
+    TrendingUp,
+    CreditCard,
+    ChevronDown
 } from 'lucide-react';
 
 interface SidebarContentProps {
@@ -21,13 +24,23 @@ export default function AdminSidebar({ sidebarOpen, setSidebarOpen }: SidebarCon
 }
 
 function SidebarContent({ sidebarOpen, setSidebarOpen }: SidebarContentProps) {
+    const pathname = usePathname()
 
     // 导航配置
     const navigation = [
         { name: '仪表盘', href: '/admin', icon: BarChart3 },
         { name: '商品管理', href: '/admin/product', icon: Package },
         { name: '订单管理', href: '/admin/order', icon: ShoppingCart },
-        { name: '联盟管理', href: '/admin/affiliate', icon: TrendingUp },
+        { name: '购物车管理', href: '/admin/cart', icon: CreditCard },
+        { 
+            name: '联盟管理', 
+            href: '/admin/affiliate',
+            icon: TrendingUp,
+            children: [
+                { name: '成员列表', href: '/admin/affiliate' },
+                { name: '提现管理', href: '/admin/affiliate/payouts' }
+            ]
+        },
         { name: '用户管理', href: '/admin/user', icon: Users },
         { name: '评论管理', href: '/admin/review', icon: MessageSquare },
         { name: '博客管理', href: '/admin/blog', icon: BookOpen },
@@ -51,20 +64,20 @@ function SidebarContent({ sidebarOpen, setSidebarOpen }: SidebarContentProps) {
                                 </svg>
                             </button>
                         </div>
-                        <SidebarNav navigation={navigation} />
+                        <SidebarNav navigation={navigation} pathname={pathname} />
                     </div>
                 </div>
             )}
 
             {/* 桌面端固定侧边栏 */}
             <div className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 shadow-lg z-20">
-                <SidebarNav navigation={navigation} />
+                <SidebarNav navigation={navigation} pathname={pathname} />
             </div>
         </>
     );
 }
 
-function SidebarNav({ navigation }: { navigation: any[] }) {
+function SidebarNav({ navigation, pathname }: { navigation: any[]; pathname: string }) {
     return (
         <div className="flex flex-col h-full bg-white border-r border-gray-200">
             <div className="flex items-center h-16 flex-shrink-0 px-6 bg-gray-900">
@@ -73,11 +86,53 @@ function SidebarNav({ navigation }: { navigation: any[] }) {
             <div className="flex-1 flex flex-col overflow-y-auto">
                 <nav className="flex-1 px-3 py-4 space-y-1">
                     {navigation.map((item) => {
+                        const isActive = pathname === item.href || (item.children && pathname.startsWith(item.href))
+                        
+                        if (item.children) {
+                            // 有子菜单的项目
+                            return (
+                                <div key={item.name}>
+                                    <div className={`group flex items-center justify-between px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 ${
+                                        isActive ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                                    }`}>
+                                        <div className="flex items-center">
+                                            <item.icon className="mr-3 flex-shrink-0 h-5 w-5 text-gray-400 group-hover:text-gray-500" />
+                                            {item.name}
+                                        </div>
+                                        <ChevronDown className={`h-4 w-4 transition-transform ${isActive ? 'rotate-180' : ''}`} />
+                                    </div>
+                                    <div className="mt-1 ml-8 space-y-1">
+                                        {item.children.map((child: any) => {
+                                            const isChildActive = pathname === child.href
+                                            return (
+                                                <Link
+                                                    key={child.name}
+                                                    href={child.href}
+                                                    className={`block px-3 py-2 text-sm rounded-lg transition-colors ${
+                                                        isChildActive
+                                                            ? 'bg-black text-white font-medium'
+                                                            : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                                                    }`}
+                                                >
+                                                    {child.name}
+                                                </Link>
+                                            )
+                                        })}
+                                    </div>
+                                </div>
+                            )
+                        }
+                        
+                        // 没有子菜单的项目
                         return (
                             <Link
                                 key={item.name}
                                 href={item.href}
-                                className="group flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                                className={`group flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 ${
+                                    isActive
+                                        ? 'bg-gray-100 text-gray-900'
+                                        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                                }`}
                             >
                                 <item.icon className="mr-3 flex-shrink-0 h-5 w-5 text-gray-400 group-hover:text-gray-500" />
                                 {item.name}

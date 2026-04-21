@@ -19,9 +19,44 @@ export async function GET(
             );
         }
 
-        // 调用后端API获取订单详情
-        const result = await apiGet(`/api/V1/order/${orderNumber}`);
-        // console.log('🟢 Order get API result:', result);
+        // 🔧 Extract token from Cookie header
+        const cookieHeader = request.headers.get('cookie') || '';
+        const token = parseAccessTokenFromCookie(cookieHeader);
+
+        console.log('[ORDER DETAIL] Token extracted:', token ? 'YES' : 'NO');
+        if (token) {
+            console.log('[ORDER DETAIL] Token preview:', token.substring(0, 50) + '...');
+        }
+
+        if (!token) {
+            return NextResponse.json(
+                {
+                    success: false,
+                    errorMessage: '用户未登录，无法获取订单详情'
+                },
+                { status: 401 }
+            );
+        }
+
+        // Call backend API with token
+        console.log('[ORDER DETAIL] Calling backend:', `/api/V1/order/${orderNumber}`);
+        const result = await apiGet(`/api/V1/order/${orderNumber}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+            },
+        });
+
+        console.log('[ORDER DETAIL] Backend response:', {
+            success: result.success,
+            message: result.message,
+            status: result.status,
+            hasData: !!result.data
+        });
+
+        // 🔧 关键修复：如果后端返回 401，直接透传给客户端，让客户端处理刷新
+        if (result.status === 401) {
+            return NextResponse.json(result, { status: 401 });
+        }
 
         return NextResponse.json(result);
 
@@ -33,4 +68,18 @@ export async function GET(
             { status: 500 }
         );
     }
+}
+
+// Helper: parse accessToken from cookie string
+function parseAccessTokenFromCookie(cookieString: string): string | null {
+    if (!cookieString) return null;
+    
+    const cookies = cookieString.split(';');
+    for (const cookie of cookies) {
+        const [name, value] = cookie.trim().split('=');
+        if (name === 'accessToken') {
+            return decodeURIComponent(value);
+        }
+    }
+    return null;
 }

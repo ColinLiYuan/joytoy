@@ -24,6 +24,7 @@
     "@fortawesome/react-fontawesome": "^3.0.2",
     "@paypal/react-paypal-js": "^8.9.2",
     "@uiw/react-md-editor": "^4.0.8",
+    "axios": "^1.15.1",
     "js-cookie": "^3.0.5",
     "lucide-react": "^0.553.0",
     "next": "^16.0.7",

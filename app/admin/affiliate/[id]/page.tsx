@@ -4,7 +4,9 @@
 import { Suspense } from 'react'
 import React, { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { ArrowLeft, MousePointerClick, ShoppingCart, DollarSign, TrendingUp } from 'lucide-react'
+import { ArrowLeft, MousePointerClick, ShoppingCart, DollarSign, TrendingUp, Clock, ChevronLeft, ChevronRight, Loader2, Wallet, CheckCircle, AlertCircle } from 'lucide-react'
+import { getAdminAffiliateCommissionLogs, AdminCommissionLogResponse, AdminCommissionLogsPageResponse } from '@/app/actions/admin/affiliate-commission-logs'
+import { getAdminAffiliateList } from '@/app/actions/admin/affiliate'
 
 interface AffiliateDetail {
     id: number;
@@ -18,6 +20,9 @@ interface AffiliateDetail {
     totalOrders: number;
     totalEarnings: number;      // 累计总收益（已结算）
     currentBalance: number;     // 当前余额（待支付）
+    settledAmount: number;      // 已结算金额（超过30天）
+    pendingAmount: number;      // 待结算金额（未到30天）
+    totalPaid: number;          // 累计已支付/已提现金额
     status: 'ACTIVE' | 'SUSPENDED' | 'PENDING';
     createdAt: string | null;
     updatedAt: string | null;
@@ -30,23 +35,44 @@ function AffiliateDetailContent() {
 
     const [detail, setDetail] = useState<AffiliateDetail | null>(null);
     const [loading, setLoading] = useState(true);
+    
+    // 佣金日志状态
+    const [commissionLogs, setCommissionLogs] = useState<AdminCommissionLogsPageResponse | null>(null);
+    const [logsLoading, setLogsLoading] = useState(false);
+    const [currentPage, setCurrentPage] = useState(0);
 
     useEffect(() => {
         fetchData();
     }, [affiliateId]);
+    
+    // 获取佣金日志
+    useEffect(() => {
+        if (detail) {
+            fetchCommissionLogs();
+        }
+    }, [detail, currentPage]);
+    
+    const fetchCommissionLogs = async () => {
+        setLogsLoading(true);
+        try {
+            const logs = await getAdminAffiliateCommissionLogs(detail!.affiliateId, currentPage, 10);
+            setCommissionLogs(logs);
+        } catch (error) {
+            console.error('Failed to load commission logs:', error);
+        } finally {
+            setLogsLoading(false);
+        }
+    };
 
     const fetchData = async () => {
         try {
             setLoading(true);
             
             // 获取成员详情（从列表中找到对应的）
-            const listResponse = await fetch(`/api/admin/affiliate/list?page=0&size=100`, {
-                cache: 'no-store'
-            });
-            const listData = await listResponse.json();
+            const listData = await getAdminAffiliateList({ page: 0, size: 100 });
             
-            if (listData.success) {
-                const member = listData.data.content.find((m: AffiliateDetail) => m.id.toString() === affiliateId);
+            if (listData.content) {
+                const member = listData.content.find((m: AffiliateDetail) => m.id.toString() === affiliateId);
                 if (member) {
                     setDetail(member);
                 }
@@ -132,16 +158,68 @@ function AffiliateDetailContent() {
                 />
                 <StatCard
                     title="已结算金额"
-                    value={`$${(detail.totalEarnings || 0).toFixed(2)}`}
+                    value={`$${(detail.settledAmount || 0).toFixed(2)}`}
+                    subtitle="可提现"
                     icon={DollarSign}
                     color="purple"
                 />
                 <StatCard
-                    title="待支付金额"
-                    value={`$${(detail.currentBalance || 0).toFixed(2)}`}
+                    title="待结算金额"
+                    value={`$${(detail.pendingAmount || 0).toFixed(2)}`}
+                    subtitle="冷静期内"
                     icon={TrendingUp}
                     color="orange"
                 />
+            </div>
+
+            {/* Financial Overview */}
+            <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+                <div className="flex items-center gap-2 mb-6">
+                    <Wallet className="h-5 w-5 text-gray-400" />
+                    <h3 className="font-bold text-gray-900">财务概览</h3>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                    <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                            <CheckCircle className="h-4 w-4 text-emerald-500" />
+                            <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">已结算</span>
+                        </div>
+                        <div className="text-2xl font-black text-gray-900">
+                            ${(detail.settledAmount || 0).toFixed(2)}
+                        </div>
+                        <div className="text-xs text-gray-400">可提现金额</div>
+                    </div>
+                    <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                            <Clock className="h-4 w-4 text-amber-500" />
+                            <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">待结算</span>
+                        </div>
+                        <div className="text-2xl font-black text-gray-900">
+                            ${(detail.pendingAmount || 0).toFixed(2)}
+                        </div>
+                        <div className="text-xs text-gray-400">冷静期内（30天）</div>
+                    </div>
+                    <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                            <Wallet className="h-4 w-4 text-blue-500" />
+                            <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">当前余额</span>
+                        </div>
+                        <div className="text-2xl font-black text-gray-900">
+                            ${(detail.currentBalance || 0).toFixed(2)}
+                        </div>
+                        <div className="text-xs text-gray-400">待支付金额</div>
+                    </div>
+                    <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                            <AlertCircle className="h-4 w-4 text-purple-500" />
+                            <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">已提现</span>
+                        </div>
+                        <div className="text-2xl font-black text-gray-900">
+                            ${(detail.totalPaid || 0).toFixed(2)}
+                        </div>
+                        <div className="text-xs text-gray-400">历史累计提现</div>
+                    </div>
+                </div>
             </div>
 
             {/* Basic Info */}
@@ -157,8 +235,11 @@ function AffiliateDetailContent() {
                     <InfoRow label="状态" value={detail.status} />
                     <InfoRow label="总点击数" value={detail.totalClicks.toLocaleString()} />
                     <InfoRow label="总订单数" value={detail.totalOrders.toString()} />
-                    <InfoRow label="已结算金额" value={`$${(detail.totalEarnings || 0).toFixed(2)}`} />
-                    <InfoRow label="待支付金额" value={`$${(detail.currentBalance || 0).toFixed(2)}`} />
+                    <InfoRow label="累计总收益" value={`$${(detail.totalEarnings || 0).toFixed(2)}`} />
+                    <InfoRow label="已结算金额" value={`$${(detail.settledAmount || 0).toFixed(2)}`} />
+                    <InfoRow label="待结算金额" value={`$${(detail.pendingAmount || 0).toFixed(2)}`} />
+                    <InfoRow label="当前余额" value={`$${(detail.currentBalance || 0).toFixed(2)}`} />
+                    <InfoRow label="已提现金额" value={`$${(detail.totalPaid || 0).toFixed(2)}`} />
                     <InfoRow label="注册时间" value={formatDate(detail.createdAt)} />
                     <InfoRow label="更新时间" value={formatDate(detail.updatedAt)} />
                 </div>
@@ -180,11 +261,71 @@ function AffiliateDetailContent() {
                     <p className="text-sm text-gray-400">暂无推广码</p>
                 )}
             </div>
+            
+            {/* Commission Logs */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        <DollarSign className="h-5 w-5 text-gray-400" />
+                        <h3 className="text-lg font-semibold text-gray-900">佣金流水记录</h3>
+                    </div>
+                    {commissionLogs && (
+                        <span className="text-xs text-gray-500 font-medium">
+                            共 {commissionLogs.totalElements} 条记录
+                        </span>
+                    )}
+                </div>
+                
+                <div className="p-6">
+                    {logsLoading ? (
+                        <div className="flex items-center justify-center py-12">
+                            <Loader2 className="animate-spin text-gray-400" size={24} />
+                        </div>
+                    ) : !commissionLogs || commissionLogs.content.length === 0 ? (
+                        <div className="py-12 text-center text-gray-400 text-sm">
+                            暂无佣金流水记录
+                        </div>
+                    ) : (
+                        <>
+                            <div className="space-y-3">
+                                {commissionLogs.content.map((log) => (
+                                    <CommissionLogItem key={log.id} log={log} />
+                                ))}
+                            </div>
+                            
+                            {/* Pagination */}
+                            {commissionLogs.totalPages > 1 && (
+                                <div className="mt-6 pt-6 border-t border-gray-100 flex items-center justify-between">
+                                    <p className="text-xs text-gray-500">
+                                        第 {commissionLogs.currentPage + 1} / {commissionLogs.totalPages} 页
+                                    </p>
+                                    <div className="flex space-x-2">
+                                        <button
+                                            disabled={!commissionLogs.hasPrevious}
+                                            onClick={() => setCurrentPage(p => p - 1)}
+                                            className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                        >
+                                            <ChevronLeft size={16} />
+                                        </button>
+                                        <button
+                                            disabled={!commissionLogs.hasNext}
+                                            onClick={() => setCurrentPage(p => p + 1)}
+                                            className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                        >
+                                            <ChevronRight size={16} />
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </>
+                    )}
+                </div>
+            </div>
         </div>
     );
 }
 
-function StatCard({ title, value, icon: Icon, color }: any) {
+function StatCard({ title, value, subtitle, icon: Icon, color }: any) {
     const colorClasses = {
         blue: 'bg-blue-50 text-blue-600',
         green: 'bg-green-50 text-green-600',
@@ -198,6 +339,7 @@ function StatCard({ title, value, icon: Icon, color }: any) {
                 <div>
                     <p className="text-sm font-medium text-gray-500">{title}</p>
                     <p className="text-xl font-bold text-gray-900 mt-1">{value}</p>
+                    {subtitle && <p className="text-xs text-gray-400 mt-1">{subtitle}</p>}
                 </div>
                 <div className={`p-3 rounded-lg ${colorClasses[color as keyof typeof colorClasses]}`}>
                     <Icon className="h-5 w-5" />
@@ -212,6 +354,92 @@ function InfoRow({ label, value }: { label: string; value: string }) {
         <div>
             <p className="text-xs font-medium text-gray-500 uppercase">{label}</p>
             <p className="text-sm text-gray-900 mt-1">{value}</p>
+        </div>
+    );
+}
+
+/**
+ * 佣金日志项组件
+ */
+function CommissionLogItem({ log }: { log: AdminCommissionLogResponse }) {
+    const isEarn = log.changeType === 'EARN';
+    const isRefund = log.changeType === 'REFUND_DEDUCT';
+    
+    return (
+        <div className="border border-gray-100 rounded-xl p-4 hover:bg-gray-50 transition-colors">
+            {/* 头部：时间和类型 */}
+            <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-1.5 text-xs text-gray-400">
+                    <Clock size={12} />
+                    {new Date(log.createdAt).toLocaleString('zh-CN', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    })}
+                </div>
+                <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide ${
+                    isEarn 
+                        ? 'bg-green-100 text-green-700' 
+                        : isRefund
+                            ? 'bg-red-100 text-red-700'
+                            : 'bg-gray-100 text-gray-600'
+                }`}>
+                    {isEarn ? '获得佣金' : isRefund ? '退款扣减' : log.changeType}
+                </span>
+            </div>
+            
+            {/* 订单号 */}
+            <div className="mb-3">
+                <span className="text-xs text-gray-500 font-medium">订单号: </span>
+                <span className="text-xs font-mono font-bold text-gray-900">#{log.orderNumber}</span>
+            </div>
+            
+            {/* 金额信息 */}
+            <div className="flex items-center gap-4 mb-3">
+                <div className="flex items-center gap-1.5">
+                    <TrendingUp size={14} className={isEarn ? 'text-green-600' : 'text-red-600'} />
+                    <span className={`text-sm font-black ${
+                        isEarn ? 'text-green-600' : 'text-red-600'
+                    }`}>
+                        {isEarn ? '+' : '-'}${Math.abs(log.commissionAmount).toFixed(2)}
+                    </span>
+                </div>
+            </div>
+            
+            {/* 余额和累计收益变化 */}
+            <div className="grid grid-cols-2 gap-4 text-xs">
+                <div>
+                    <span className="text-gray-400 font-medium">余额: </span>
+                    <span className="font-bold text-gray-700">${log.balanceBefore.toFixed(2)}</span>
+                    <span className="text-gray-400 mx-1">→</span>
+                    <span className="font-bold text-gray-900">${log.balanceAfter.toFixed(2)}</span>
+                </div>
+                <div>
+                    <span className="text-gray-400 font-medium">累计收益: </span>
+                    <span className="font-bold text-gray-700">${log.totalEarnedBefore.toFixed(2)}</span>
+                    <span className="text-gray-400 mx-1">→</span>
+                    <span className="font-bold text-gray-900">${log.totalEarnedAfter.toFixed(2)}</span>
+                </div>
+            </div>
+            
+            {/* 结算状态变化 */}
+            {(log.payoutStatusBefore || log.payoutStatusAfter) && (
+                <div className="mt-2 text-xs">
+                    <span className="text-gray-400 font-medium">结算状态: </span>
+                    <span className="font-medium text-gray-700">{log.payoutStatusBefore || '-'}</span>
+                    <span className="text-gray-400 mx-1">→</span>
+                    <span className="font-medium text-gray-900">{log.payoutStatusAfter || '-'}</span>
+                </div>
+            )}
+            
+            {/* 描述 */}
+            {log.description && (
+                <div className="mt-3 pt-3 border-t border-gray-100">
+                    <p className="text-xs text-gray-500">{log.description}</p>
+                </div>
+            )}
         </div>
     );
 }

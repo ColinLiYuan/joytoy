@@ -1,6 +1,6 @@
 // lib/api-config.ts
 export const BACKEND_CONFIG = {
-    baseURL: process.env.BACKEND_BASE_URL,
+    baseURL: process.env.BACKEND_BASE_URL || 'http://localhost:9356',
     timeout: 30000,
     defaultHeaders: {
         'Content-Type': 'application/json',
@@ -30,7 +30,7 @@ export const SERVER_CONFIG = {
 };
 
 export const ADMIN_CONFIG = {
-    baseURL: process.env.BACKEND_BASE_URL,
+    baseURL: process.env.BACKEND_BASE_URL || 'http://localhost:9356',
     apiRoutes: {
         order: '/api/admin/order',
         product: '/api/admin/product',
@@ -39,11 +39,21 @@ export const ADMIN_CONFIG = {
         blog: '/api/admin/blog',
         review: '/api/admin/review',
         user: '/api/admin/user',
+        cart: '/api/admin/V1/cart',
         // 后端真实路径
         V1_product: '/api/admin/V1/product',
         V1_order: '/api/admin/V1/order',
         V1_blog: '/api/admin/V1/blog',
         V1_review: '/api/admin/V1/review',
         V1_user: '/api/admin/V1/user',
+        V1_cart: '/api/admin/V1/cart',
+    }
+};
+
+// 后端通用 API 配置（非管理端）
+export const BACKEND_API_ROUTES = {
+    review: {
+        list: '/api/V1/review/list',
+        create: '/api/V1/review',
     }
 };

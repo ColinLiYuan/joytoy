@@ -5,18 +5,36 @@ import {
     LoginResponse,
     RegisterResponse,
     UserListResponse} from '@/types/auth';
-import { SERVER_CONFIG, ADMIN_CONFIG } from '@/lib/api-config';
+import { SERVER_CONFIG, ADMIN_CONFIG, BACKEND_CONFIG } from '@/lib/api-config';
 import { getToken } from '@/lib/token-utils';
+
+// 辅助函数：检查响应是否为 JSON
+function validateJsonResponse(response: Response, serviceName: string, url: string) {
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+        console.error(`[${serviceName}] Non-JSON response received:`, {
+            url: url,
+            status: response.status,
+            statusText: response.statusText,
+            contentType: contentType || 'null',
+            ok: response.ok
+        });
+        throw new Error(`Invalid server response: Expected JSON but got ${contentType || 'no content-type'} (Status: ${response.status})`);
+    }
+}
 
 class AuthService {
 
     async login(request: LoginRequest): Promise<LoginResponse> {
         // console.log('AuthService login start');
-        const response = await fetch(`${SERVER_CONFIG.apiRoutes.auth}/login`, {
+        const url = `${SERVER_CONFIG.apiRoutes.auth}/login`;
+        const response = await fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(request),
         });
+
+        validateJsonResponse(response, 'AuthService', url);
 
         // console.log('AuthService login route response ');
         const apiResponse = await response.json();
@@ -29,11 +47,14 @@ class AuthService {
     }
 
     async register(request: RegisterRequest): Promise<RegisterResponse> {
-        const response = await fetch(`${SERVER_CONFIG.apiRoutes.auth}/register`, {
+        const url = `${SERVER_CONFIG.apiRoutes.auth}/register`;
+        const response = await fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(request),
         });
+
+        validateJsonResponse(response, 'AuthService', url);
 
         const apiResponse = await response.json();
 
@@ -45,11 +66,14 @@ class AuthService {
     }
 
     async forgotPassword(email: string): Promise<void> {
-        const response = await fetch(`${SERVER_CONFIG.apiRoutes.auth}/forgot-password`, {
+        const url = `${SERVER_CONFIG.apiRoutes.auth}/forgot-password`;
+        const response = await fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email }),
         });
+
+        validateJsonResponse(response, 'AuthService', url);
 
         const apiResponse = await response.json();
         if (!apiResponse.success) {
@@ -58,11 +82,14 @@ class AuthService {
     }
 
     async resetPassword(token: string, password: string): Promise<void> {
-        const response = await fetch(`${SERVER_CONFIG.apiRoutes.auth}/reset-password`, {
+        const url = `${SERVER_CONFIG.apiRoutes.auth}/reset-password`;
+        const response = await fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ token, password }),
         });
+
+        validateJsonResponse(response, 'AuthService', url);
 
         const apiResponse = await response.json();
 
@@ -96,7 +123,7 @@ class AuthService {
             if (status) queryParams.append('status', status);
 
             // 使用后端 AdminUserInterface 定义的路径
-            const url = `${ADMIN_CONFIG.apiRoutes.user}/list?${queryParams.toString()}`;
+            const url = `${BACKEND_CONFIG.baseURL}${ADMIN_CONFIG.apiRoutes.user}/list?${queryParams.toString()}`;
             
             const token = await getToken();
             const headers: Record<string, string> = {
@@ -112,6 +139,8 @@ class AuthService {
             });
 
             if (!response.ok) throw new Error('Failed to fetch user list');
+
+            validateJsonResponse(response, 'AuthService', url);
 
             const apiResponse = await response.json();
 

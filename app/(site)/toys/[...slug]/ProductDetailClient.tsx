@@ -8,7 +8,7 @@ import { ProductResponse, ProductSku, HighlightData } from '@/types/product';
 import { useToast } from '@/contexts/toastContext';
 import { useAuth } from '@/contexts/authContext';
 import { useCartStore } from '@/stores/useCartStore';
-import { wishlistService } from '@/services/wishlistService';
+import { addToWishlist, removeFromWishlist } from '@/app/actions/wishlist';
 import { productService } from '@/services/product-service';
 import { joinWaitlist } from '@/app/actions/waitlist'; // ✅ Import the new action
 import { getProductImageUrl } from '@/lib/image-utils';
@@ -282,20 +282,37 @@ export default function ProductDetailClient({
         setIsFavorited(newState);
         try {
             if (newState) {
-                await wishlistService.addItemToWishlist({
+                // 传递完整的产品信息
+                const success = await addToWishlist({
                     productId: product.id,
+                    slug: product.slug,
                     productTitle: product.title,
                     image: product.image,
                     currentPrice: product.currentPrice,
-                    slug: product.slug,
-                    badge: product.badge
+                    originalPrice: product.originalPrice,
+                    badge: product.badge,
                 });
-                showToast('success', 'Saved', 'Added to your wishlist');
+                if (success) {
+                    showToast('success', 'Saved', 'Added to your wishlist');
+                } else {
+                    setIsFavorited(!newState);
+                    showToast('error', 'Login Required', 'Please login to add items to wishlist');
+                }
             } else {
-                await wishlistService.removeItemFromWishlist({ productId: product.id });
-                showToast('success', 'Removed', 'Removed from wishlist');
+                const success = await removeFromWishlist(product.id);
+                if (success) {
+                    showToast('success', 'Removed', 'Removed from wishlist');
+                } else {
+                    setIsFavorited(!newState);
+                    showToast('error', 'Login Required', 'Please login to manage wishlist');
+                }
             }
-        } catch (error) { setIsFavorited(!newState); showToast('error', 'Error', 'Failed to update wishlist'); } finally { setIsWishlistLoading(false); }
+        } catch (error) { 
+            setIsFavorited(!newState); 
+            showToast('error', 'Error', 'Failed to update wishlist'); 
+        } finally { 
+            setIsWishlistLoading(false); 
+        }
     };
 
     const performAddToCart = async () => {

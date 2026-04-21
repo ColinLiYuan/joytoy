@@ -1,72 +1,75 @@
 // services/orderService.ts
 import { OrderCreateRequest, OrderResponse, OrderListResponse, OrderPaymentResult } from '@/types/order';
-import { SERVER_CONFIG, ADMIN_CONFIG } from '@/lib/api-config';
+import { SERVER_CONFIG, ADMIN_CONFIG, BACKEND_CONFIG } from '@/lib/api-config';
 import { PaymentRequest } from '@/types/payment';
-import { getToken } from '@/lib/token-utils';
+import { apiGet, apiPost } from '@/lib/api-utils';
 
 class OrderService {
     // 创建订单
     async createOrder(orderCreateRequest: OrderCreateRequest): Promise<OrderResponse> {
-        const url = `${SERVER_CONFIG.apiRoutes.order}/add`;
-        // console.log('🟢 Creating order, URL:', url);
+        const result = await apiPost<OrderResponse>(`${SERVER_CONFIG.apiRoutes.order}/add`, orderCreateRequest);
 
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(orderCreateRequest),
-            credentials: 'include',
-        });
-
-        const apiResponse = await response.json();
-
-        if (!apiResponse.success) {
-            throw new Error(apiResponse.message || 'order creation failed, please contact support@mythtoy.com');
+        if (!result.success) {
+            throw new Error(result.message || 'order creation failed, please contact support@mythtoy.com');
         }
 
-        // console.log('createOrder service: ', apiResponse)
-        return apiResponse.data;
+        return result.data;
     }
 
     // 获取订单详情
     async getOrder(orderNumber: string): Promise<OrderResponse> {
-        const url = `${SERVER_CONFIG.apiRoutes.order}/${orderNumber}`;
-        const response = await fetch(url, {
-            credentials: 'include', // 添加这行
+        const result = await apiGet<OrderResponse>(`${SERVER_CONFIG.apiRoutes.order}/${orderNumber}`);
+
+        console.log('[OrderService.getOrder] Result:', {
+            success: result.success,
+            message: result.message,
+            status: result.status,
+            errorType: result.errorType,
+            data: result.data
         });
 
-        const apiResponse = await response.json();
+        if (!result.success) {
+            throw new Error(result.message || `Failed to fetch order (Status: ${result.status})`);
+        }
 
-        // console.log('getOrder service: ', apiResponse)
-        return apiResponse.data;
+        return result.data;
     }
 
     // 获取用户订单列表
     // @returns 订单列表，如果 session 过期则返回 null
     async getUserOrders(page: number = 0, size: number = 20): Promise<OrderResponse[] | null> {
         try {
-            const url = `${SERVER_CONFIG.apiRoutes.order}/list?page=${page}&size=${size}`;
-            const response = await fetch(url, {
-                credentials: 'include',
+            const result = await apiGet<OrderResponse[]>(`${SERVER_CONFIG.apiRoutes.order}/list?page=${page}&size=${size}`);
+            
+            console.log('[OrderService.getUserOrders] Result:', {
+                success: result.success,
+                message: result.message,
+                status: result.status,
+                errorType: result.errorType
             });
-
-            const apiResponse = await response.json().catch(() => null);
-
-            // 检查 HTTP 状态码和业务逻辑成功标志
-            if (!response.ok || !apiResponse?.success) {
-                const errorMessage = apiResponse?.message || `Failed to fetch orders: ${response.status}`;
-                
-                // 如果是认证错误，静默返回 null
-                if (response.status === 401 || errorMessage.includes('未登录') || errorMessage.includes('Session expired')) {
-                    return null;
-                }
-                
-                // 其他错误抛出异常
-                throw new Error(errorMessage);
+            
+            // 检查错误消息，判断是否是 session 过期
+            const errorMsg = result.message?.toLowerCase() || '';
+            const isSessionExpired = errorMsg.includes('session') || 
+                                    errorMsg.includes('login') || 
+                                    errorMsg.includes('auth') || 
+                                    errorMsg.includes('unauthorized') ||
+                                    errorMsg.includes('登录') ||
+                                    errorMsg.includes('expired');
+            
+            // 如果是认证错误或 session 过期，静默返回 null
+            if (result.status === 401 || 
+                result.status === 403 || 
+                result.errorType === 'auth' ||
+                isSessionExpired) {
+                return null;
+            }
+            
+            if (!result.success) {
+                throw new Error(result.message || `Failed to fetch orders`);
             }
 
-            return apiResponse.data;
+            return result.data;
         } catch (error) {
             // 网络错误或解析错误，静默返回 null
             console.error('[OrderService] Network error:', error);
@@ -75,45 +78,25 @@ class OrderService {
     }
 
     async payOrder(orderNumber: string, paymentRequest: PaymentRequest, signal?: AbortSignal): Promise<OrderPaymentResult> {
-        const url = `${SERVER_CONFIG.apiRoutes.order}/${orderNumber}/pay`;
-        // console.log('🟢 Paying order, URL:', url);
+        const result = await apiPost<OrderPaymentResult>(
+            `${SERVER_CONFIG.apiRoutes.order}/${orderNumber}/pay`,
+            paymentRequest
+        );
 
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(paymentRequest),
-            credentials: 'include',
-            signal, // ✅ 支持超时中断
-        });
-
-        const apiResponse = await response.json();
-        // console.log('payOrder service response: ', apiResponse);
-
-        if (!apiResponse.success) {
-            throw new Error(apiResponse.message || 'order creation failed, please contact support@mythtoy.com');
+        if (!result.success) {
+            throw new Error(result.message || 'order creation failed, please contact support@mythtoy.com');
         }
-        return apiResponse.data;
+        return result.data;
     }
 
     async trackOrder(orderNumber: string, email: string) {
-        // 请求我们自己项目里的 Next.js API 路由
-        const url = `${SERVER_CONFIG.apiRoutes.order}/track`;
+        const result = await apiPost(`${SERVER_CONFIG.apiRoutes.order}/track`, { orderNumber, email });
 
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ orderNumber, email })
-        });
-
-        const json = await response.json();
-
-        if (!json.success) {
-            throw new Error(json.error || json.errorMessage || 'Tracking failed, please check your info.');
+        if (!result.success) {
+            throw new Error(result.message || 'Tracking failed, please check your info.');
         }
 
-        return json.data;
+        return result.data;
     }
 
     async adminList(params: {
@@ -135,8 +118,6 @@ class OrderService {
             } = params;
 
             const queryParams = new URLSearchParams();
-
-            // 统一使用 toString() 确保拼接到 URL 的是纯字符串
             queryParams.append('page', page.toString());
             queryParams.append('size', size.toString());
 
@@ -145,30 +126,13 @@ class OrderService {
             if (orderNumber) queryParams.append('orderNumber', orderNumber);
             if (guestEmail) queryParams.append('guestEmail', guestEmail);
 
-            const url = `${ADMIN_CONFIG.apiRoutes.order}/list?${queryParams.toString()}`;
-            // console.log('Fetching orders from URL:', url);
-            
-            const token = await getToken();
-            const headers: Record<string, string> = {
-                'Content-Type': 'application/json',
-            };
-            if (token) {
-                headers['Authorization'] = `Bearer ${token}`;
+            const result = await apiGet<OrderListResponse>(`${BACKEND_CONFIG.baseURL}${ADMIN_CONFIG.apiRoutes.order}/list?${queryParams.toString()}`);
+
+            if (!result.success) {
+                throw new Error(result.message || 'Failed to fetch orders');
             }
 
-            const response = await fetch(url, {
-                cache: 'no-store',
-                headers,
-            });
-
-            if (!response.ok) throw new Error('Failed to fetch orders');
-
-            const apiResponse = await response.json();
-            if (!apiResponse.success) {
-                throw new Error(apiResponse.error || 'Failed to fetch orders');
-            }
-
-            return apiResponse.data;
+            return result.data;
         } catch (error) {
             console.error('Error fetching orders:', error);
             throw error;
@@ -177,29 +141,27 @@ class OrderService {
 
     // ✅ 新增：管理员发货
     async updateStatus(orderId: number, trackingNumber: string): Promise<OrderResponse> {
-        // 假设后端接口为 PUT /api/admin/order/{id}/ship
-        // 你需要在后端 AdminOrderController 实现这个接口
-        const url = `${ADMIN_CONFIG.apiRoutes.order}/updateStatus`;
-        
-        const token = await getToken();
-        const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-        if (token) {
-            headers['Authorization'] = `Bearer ${token}`;
+        const result = await apiPost<OrderResponse>(
+            `${BACKEND_CONFIG.baseURL}${ADMIN_CONFIG.apiRoutes.order}/updateStatus`,
+            { orderId, trackingNumber }
+        );
+
+        if (!result.success) {
+            throw new Error(result.message || 'Shipping failed');
         }
 
-        const response = await fetch(url, {
-            method: 'POST', // 或 POST，取决于后端定义
-            headers,
-            body: JSON.stringify({ orderId, trackingNumber })
-        });
+        return result.data;
+    }
 
-        const apiResponse = await response.json();
+    // ✅ 用户取消订单
+    async cancelOrder(orderNumber: string): Promise<boolean> {
+        const result = await apiPost(`${SERVER_CONFIG.apiRoutes.order}/${orderNumber}/cancel`);
 
-        if (!apiResponse.success) {
-            throw new Error(apiResponse.message || 'Shipping failed');
+        if (!result.success) {
+            throw new Error(result.message || 'Failed to cancel order');
         }
 
-        return apiResponse.data;
+        return true;
     }
 }
 

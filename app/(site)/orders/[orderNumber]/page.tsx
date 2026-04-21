@@ -17,7 +17,8 @@ import {
     Calendar,
     ShieldCheck,
     CreditCard,
-    Receipt
+    Receipt,
+    XCircle
 } from 'lucide-react';
 
 function OrderDetailsContent({ params }: { params: Promise<{ orderNumber: string }> }) {
@@ -28,11 +29,21 @@ function OrderDetailsContent({ params }: { params: Promise<{ orderNumber: string
     const [order, setOrder] = useState<OrderResponse | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [subtotal, setSubtotal] = useState(0);
+    const [authError, setAuthError] = useState(false);
 
     useEffect(() => {
         const fetchOrder = async () => {
             try {
                 const data = await orderService.getOrder(orderNumber);
+                console.log('📦 Order Detail Data:', data);
+                
+                if (!data) {
+                    console.error('⚠️ Order data is null');
+                    setOrder(null);
+                    return;
+                }
+                
+                console.log('📦 First Item:', data.items?.[0]);
                 setOrder(data);
 
                 // 计算商品小计
@@ -40,8 +51,13 @@ function OrderDetailsContent({ params }: { params: Promise<{ orderNumber: string
                     return total + (item.unitPrice * (item.quantity || 1));
                 }, 0);
                 setSubtotal(calculatedSubtotal);
-            } catch (error) {
+            } catch (error: any) {
                 console.error('Failed to load order:', error);
+                
+                // 检测是否是认证错误
+                if (error.message?.includes('请先登录') || error.message?.includes('login')) {
+                    setAuthError(true);
+                }
             } finally {
                 setIsLoading(false);
             }
@@ -60,8 +76,18 @@ function OrderDetailsContent({ params }: { params: Promise<{ orderNumber: string
     if (!order) {
         return (
             <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 w-full max-w-full overflow-x-hidden">
-                <h2 className="text-xl font-bold text-gray-900 mb-2">Order Not Found</h2>
-                <Link href="/orders" className="text-pink-600 hover:underline">Return to My Orders</Link>
+                {authError ? (
+                    <>
+                        <h2 className="text-xl font-bold text-gray-900 mb-2">Please Login</h2>
+                        <p className="text-gray-600 mb-4">You need to login to view order details.</p>
+                        <Link href="/orders" className="text-pink-600 hover:underline">Return to My Orders</Link>
+                    </>
+                ) : (
+                    <>
+                        <h2 className="text-xl font-bold text-gray-900 mb-2">Order Not Found</h2>
+                        <Link href="/orders" className="text-pink-600 hover:underline">Return to My Orders</Link>
+                    </>
+                )}
             </div>
         );
     }
@@ -289,12 +315,31 @@ function OrderDetailsContent({ params }: { params: Promise<{ orderNumber: string
                     </div>
                 </div>
 
-                {/* 底部帮助 */}
-                <div className="text-center mt-12 mb-8">
-                    <p className="text-gray-400 text-sm">Need help with this order?</p>
-                    <a href="mailto:support@mythtoy.com" className="text-black font-bold text-sm hover:underline mt-1 inline-block">
-                        Contact Support
-                    </a>
+                {/* 底部操作区 */}
+                <div className="flex justify-between items-center mt-8 mb-12">
+                    <Link href="/orders" className="text-sm text-gray-500 hover:text-black transition-colors flex items-center gap-1">
+                        <ArrowLeft size={16} /> Back to Orders
+                    </Link>
+                    
+                    {['PENDING', 'PAID'].includes(order.status.toUpperCase()) && (
+                        <button
+                            onClick={async () => {
+                                if (confirm('Are you sure you want to cancel this order? This action cannot be undone.')) {
+                                    try {
+                                        await orderService.cancelOrder(order.orderNumber);
+                                        alert('Order cancelled successfully.');
+                                        window.location.reload();
+                                    } catch (error: any) {
+                                        alert(error.message || 'Failed to cancel order');
+                                    }
+                                }
+                            }}
+                            className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors border border-red-100"
+                        >
+                            <XCircle size={16} />
+                            Cancel Order
+                        </button>
+                    )}
                 </div>
 
             </div>

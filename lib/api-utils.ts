@@ -26,7 +26,7 @@ class ApiError extends Error {
 /**
  * 刷新 Token 的独立逻辑
  */
-async function refreshAccessToken(): Promise<string | null> {
+export async function refreshAccessToken(): Promise<string | null> {
     try {
         const refreshToken = await getRefreshToken();
 
@@ -54,11 +54,15 @@ async function refreshAccessToken(): Promise<string | null> {
         if (data.success && data.data) {
             const { accessToken, refreshToken: newRefresh } = data.data;
 
-            // ✅ 核心修复：直接使用 setTokens 统一更新 Cookie 和 LocalStorage
-            // 如果后端没返回新的 refresh token，就沿用旧的
-            setTokens(accessToken, newRefresh || refreshToken);
+            // ✅ 关键修复：在客户端更新 Token，Server 端只返回新 Token
+            if (typeof window !== 'undefined') {
+                // 客户端：使用 setTokens 更新 Cookie 和 LocalStorage
+                setTokens(accessToken, newRefresh || refreshToken);
+            }
+            // Server 端：不执行任何操作，只返回新 Token
+            // 调用方需要自己处理 Cookie 更新
 
-            // console.log('Token refreshed successfully: ', accessToken);
+            console.log('Token refreshed successfully');
             return accessToken;
         }
         return null;
@@ -84,10 +88,25 @@ export async function proxyRequest(
         ...fetchOptions
     } = options;
 
-    const url = `${BACKEND_CONFIG.baseURL}${endpoint}`;
+    // 🔧 关键修复：判断是 Next.js API Route 还是后端接口
+    // - 如果 endpoint 以 /api/site/ 开头，说明是 Next.js API Route，使用相对路径
+    // - 否则，认为是后端接口，拼接 BACKEND_CONFIG.baseURL
+    const isNextJsRoute = endpoint.startsWith('/api/site/');
+    const url = isNextJsRoute ? endpoint : `${BACKEND_CONFIG.baseURL}${endpoint}`;
 
-    // 1. 获取 Token (Async)
-    const token = await getToken();
+    // 1. 获取 Token (Async) - 只有在没有手动传递 Authorization 时才获取
+    let token: string | undefined;
+    const hasCustomAuth = headers && headers['Authorization'];
+    
+    console.log('[PROXY REQUEST] Endpoint:', endpoint);
+    console.log('[PROXY REQUEST] Has custom auth:', !!hasCustomAuth);
+    
+    if (!hasCustomAuth) {
+        token = await getToken();
+        console.log('[PROXY REQUEST] Auto-fetched token:', token ? 'YES' : 'NO');
+    } else {
+        console.log('[PROXY REQUEST] Using custom auth header');
+    }
 
     // 2. 构造 Header
     const authHeaders: Record<string, string> = {};
@@ -95,37 +114,76 @@ export async function proxyRequest(
         authHeaders['Authorization'] = `Bearer ${token}`;
     }
 
+    // 🔧 重要：不要包含 BACKEND_CONFIG.defaultHeaders 中的 Authorization
+    // 因为它可能是空字符串，会覆盖后面传递的 Token
     const requestHeaders = {
-        ...BACKEND_CONFIG.defaultHeaders,
-        ...authHeaders,
-        ...headers,
+        'Content-Type': 'application/json', // 只保留 Content-Type
+        ...authHeaders,                     // 自动获取的 Token
+        ...headers,                         // 手动传递的 Token（优先级最高）
     };
+    
+    console.log('[PROXY REQUEST] Final headers:', {
+        hasAuth: !!requestHeaders['Authorization'],
+        authPreview: requestHeaders['Authorization'] ? `${requestHeaders['Authorization'].substring(0, 30)}...` : 'none'
+    });
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeout);
 
     try {
-        const response = await fetch(url, {
+        const fetchConfig: RequestInit = {
             ...fetchOptions,
             method,
             headers: requestHeaders,
             signal: controller.signal,
-        });
+        };
+        
+        // 🔧 Critical: include credentials (cookies) when calling Next.js API Routes
+        // Without this, HttpOnly cookies won't be sent
+        if (isNextJsRoute) {
+            fetchConfig.credentials = 'include';
+        }
+        
+        const response = await fetch(url, fetchConfig);
 
         clearTimeout(timeoutId);
 
-        // 3. 拦截 401 并重试
+        // 3. 拦截 401，先尝试刷新 Token
         if (response.status === 401 && !_isRetry) {
             console.warn('401 Unauthorized, token expired.');
-
-            // ✅ 清除 Token
-            clearTokens();
             
-            // ✅ 触发自定义事件，通知全局显示登录框
+            // 🔧 关键修复：只在客户端尝试刷新，Server 端直接返回 401
             if (typeof window !== 'undefined') {
+                console.log('Attempting refresh on client...');
+                
+                // 尝试刷新 Token
+                const newToken = await refreshAccessToken();
+                
+                if (newToken) {
+                    // 刷新成功，使用新 Token 重试请求
+                    console.log('Token refreshed successfully, retrying request...');
+                    return proxyRequest(endpoint, {
+                        ...options,
+                        _isRetry: true,
+                    });
+                }
+                
+                // 刷新失败，清除 Token 并触发登录事件
+                console.warn('Token refresh failed, clearing tokens...');
+                // 🔧 关键修复：只清除 Access Token，保留 Refresh Token
+                // 因为 Refresh Token 可能还没过期，下次可以直接用
+                if (typeof window !== 'undefined') {
+                    localStorage.removeItem('accessToken');
+                    // 不删除 refreshToken，让它继续保留
+                }
+                
+                // 触发自定义事件，通知全局显示登录框
                 window.dispatchEvent(new CustomEvent('auth:tokenExpired', {
                     detail: { message: 'Your session has expired. Please login again.' }
                 }));
+            } else {
+                // Server 端：不尝试刷新，直接返回 401 给客户端处理
+                console.log('Server-side 401, forwarding to client...');
             }
             
             // 返回一个特殊响应，让业务层停止处理
@@ -260,15 +318,28 @@ export async function handleApiResponse<T>(
                                msg.includes('unauthorized');
             
             if (isAuthError && typeof window !== 'undefined') {
-                console.log('[API-UTILS] Backend returned auth error (HTTP 200):', backendResponse.message);
+                console.log('[API-UTILS] Backend returned auth error:', backendResponse.message);
                 
-                // 清除 Token
-                clearTokens();
+                // 🔧 关键修复：先尝试刷新 Token
+                const newToken = await refreshAccessToken();
                 
-                // 触发自定义事件，通知全局显示登录框
-                window.dispatchEvent(new CustomEvent('auth:tokenExpired', {
-                    detail: { message: backendResponse.message }
-                }));
+                if (newToken) {
+                    console.log('[API-UTILS] Token refreshed successfully');
+                    // 注意：这里无法直接重试，因为已经解析完响应了
+                    // 刷新成功后，下次请求会自动使用新 Token
+                } else {
+                    // 刷新失败，只清除 Access Token，保留 Refresh Token
+                    console.warn('[API-UTILS] Token refresh failed, clearing access token only...');
+                    if (typeof window !== 'undefined') {
+                        localStorage.removeItem('accessToken');
+                        // 不删除 refreshToken，让它继续保留
+                    }
+                    
+                    // 触发自定义事件，通知全局显示登录框
+                    window.dispatchEvent(new CustomEvent('auth:tokenExpired', {
+                        detail: { message: backendResponse.message }
+                    }));
+                }
             }
         }
 

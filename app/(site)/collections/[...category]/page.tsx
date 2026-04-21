@@ -19,13 +19,30 @@ interface PageProps {
     searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+export async function generateMetadata({ params, searchParams }: PageProps): Promise<Metadata> {
     const resolvedParams = await params;
+    const resolvedSearchParams = await searchParams;
     const path = Array.isArray(resolvedParams.category)
         ? resolvedParams.category.join('/')
         : resolvedParams.category;
     const canonicalUrl = `https://mythtoy.com/collections/${path}`;
-    return { title: 'Collection - Myth Toy', alternates: { canonical: canonicalUrl } };
+
+    // 如果有筛选/排序参数（非第一页），建议不索引，指向主页面
+    const hasFilters = resolvedSearchParams.priceRange || resolvedSearchParams.colors ||
+        resolvedSearchParams.features || resolvedSearchParams.materials;
+    const page = parseInt(resolvedSearchParams.page as string) || 0;
+
+    const metadata: Metadata = {
+        title: 'Collection - Myth Toy',
+        alternates: { canonical: canonicalUrl },
+    };
+
+    // 有筛选参数或不是第一页，告诉 Google 不索引此变体
+    if (hasFilters || page > 0) {
+        metadata.robots = { index: false, follow: true };
+    }
+
+    return metadata;
 }
 
 // ... parsePriceRange 和 extractFilterArray 保持不变 ...
