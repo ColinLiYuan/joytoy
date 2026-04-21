@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { getAdminBlogs } from '@/app/actions/admin/blog';
-import { AdminBlogResponse, AdminBlogListResponse } from '@/types/admin/adminBlog'
+import { AdminBlogResponse, AdminBlogListResponse } from '@/app/actions/admin/blog-types'
 import { Eye, Edit, Plus, ExternalLink } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';

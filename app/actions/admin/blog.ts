@@ -2,7 +2,7 @@
 
 import { cookies } from 'next/headers'
 import { BACKEND_CONFIG, BACKEND_API_ROUTES } from '@/lib/api-config'
-import { AdminBlogListResponse, AdminBlogResponse, ReleaseBlogRequest } from '@/types/admin/adminBlog'
+import { AdminBlogListResponse, AdminBlogResponse, ReleaseBlogRequest } from './blog-types'
 
 /**
  * 刷新 Token

@@ -1,7 +1,7 @@
 // services/blog-service.ts
 
 import axiosClient from '@/lib/axios-client';
-import { AdminBlogResponse, AdminBlogListResponse } from '@/types/admin/adminBlog';
+import { AdminBlogResponse, AdminBlogListResponse } from '@/app/actions/admin/blog-types';
 import { BACKEND_API_ROUTES } from '@/lib/api-config';
 
 class BlogService {

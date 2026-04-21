@@ -1,4 +1,4 @@
-// types/admin/adminBlog.ts
+// app/actions/admin/blog-types.ts
 
 export enum BlogStatus {
     DRAFT = 'DRAFT',
