@@ -1,7 +1,7 @@
 // services/blog-service.ts
 
 import axiosClient from '@/lib/axios-client';
-import { AdminBlogResponse, AdminBlogListResponse } from '@/app/actions/admin/blog-types';
+import { AdminBlogResponse, AdminBlogListResponse } from '@/types/blog';
 import { BACKEND_API_ROUTES } from '@/lib/api-config';
 
 class BlogService {
@@ -11,7 +11,8 @@ class BlogService {
     async adminList(
         page: number = 0,
         size: number = 12,
-        status?: string
+        status?: string,
+        sortBy?: string
     ): Promise<AdminBlogListResponse> {
         try {
             const queryParams = new URLSearchParams({
@@ -21,6 +22,10 @@ class BlogService {
 
             if (status && status !== 'ALL') {
                 queryParams.append('status', status);
+            }
+            
+            if (sortBy) {
+                queryParams.append('sortBy', sortBy);
             }
 
             const url = `${BACKEND_API_ROUTES.admin.blog.list}?${queryParams}`;

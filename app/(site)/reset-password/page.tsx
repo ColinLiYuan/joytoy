@@ -2,7 +2,7 @@
 
 import { useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import authService from '@/services/authService';
+import { resetPassword as resetPasswordAction } from '@/app/actions/auth';
 import { Loader2, CheckCircle2, Lock } from 'lucide-react';
 
 function ResetPasswordForm() {
@@ -31,7 +31,7 @@ function ResetPasswordForm() {
         setError('');
 
         try {
-            await authService.resetPassword(token, password);
+            await resetPasswordAction(token, password);
             setIsSuccess(true);
             // 3秒后自动返回首页并弹出登录框
             setTimeout(() => {

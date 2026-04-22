@@ -120,6 +120,9 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
                     openAuthModal('login', { onSuccess: executeToggleFavorite });
                     return;
                 }
+                
+                // 更新 localStorage 中的最近浏览记录
+                updateRecentlyViewedFavorite(product.id, true);
             } else {
                 const success = await removeFromWishlist(product.id);
                 
@@ -129,6 +132,9 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
                     openAuthModal('login', { onSuccess: executeToggleFavorite });
                     return;
                 }
+                
+                // 更新 localStorage 中的最近浏览记录
+                updateRecentlyViewedFavorite(product.id, false);
             }
             onWishlistUpdate?.();
         } catch (error) {
@@ -142,6 +148,23 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
     };
 
     const isOnSale = product.originalPrice > product.currentPrice;
+
+    // 更新最近浏览记录中的收藏状态
+    const updateRecentlyViewedFavorite = (productId: number, favorited: boolean) => {
+        try {
+            const stored = localStorage.getItem('recently_viewed');
+            if (!stored) return;
+            
+            const viewed: ProductResponse[] = JSON.parse(stored);
+            const updated = viewed.map(p => 
+                p.id === productId ? { ...p, favorited } : p
+            );
+            
+            localStorage.setItem('recently_viewed', JSON.stringify(updated));
+        } catch (e) {
+            console.error('Failed to update recently viewed favorite status:', e);
+        }
+    };
 
     const renderTitle = (fullTitle: string) => {
         if (!fullTitle) {

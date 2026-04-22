@@ -9,7 +9,7 @@ import { Z_INDEX } from '@/lib/constants/z-index';
 import { getProductImageUrl } from '@/lib/image-utils';
 import { ProductResponse } from '@/types/product';
 // ✅ 直接引入你提供的客户端 Service
-import { productService } from '@/services/product-service';
+import { productService } from '@/services/productService';
 
 // 热门搜索词
 const TRENDING = ["Rabbit", "Wand", "Onyx", "Swan", "G-Spot", "Muse"];

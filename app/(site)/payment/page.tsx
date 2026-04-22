@@ -73,8 +73,26 @@ function PaymentContent() {
                 setIsLoading(false);
                 return;
             }
+
             try {
-                const data = await orderService.getOrder(orderNumber);
+                let data = null;
+                
+                // ✅ 先尝试从 localStorage 获取（游客模式）
+                const savedOrder = localStorage.getItem('currentOrder');
+                if (savedOrder) {
+                    const parsed = JSON.parse(savedOrder);
+                    if (parsed.orderNumber === orderNumber || parsed.orderNumber === `#${orderNumber}`) {
+                        console.log('[Payment] Found order in localStorage');
+                        data = parsed;
+                    }
+                }
+                
+                // ✅ 如果 localStorage 没有或订单号不匹配，调用 API
+                if (!data) {
+                    console.log('[Payment] Fetching order from API...');
+                    data = await orderService.getOrder(orderNumber);
+                }
+                
                 if (data) {
                     setOrderData(data);
                     
@@ -99,8 +117,23 @@ function PaymentContent() {
                 } else {
                     throw new Error('Order not found');
                 }
-            } catch (error) {
-                setErrorMessage('Failed to load order details');
+            } catch (error: any) {
+                console.error('[Payment] Failed to load order:', error);
+                
+                // ✅ 如果是 401 错误，尝试从 localStorage 恢复
+                if (error.response?.status === 401) {
+                    const savedOrder = localStorage.getItem('currentOrder');
+                    if (savedOrder) {
+                        const parsed = JSON.parse(savedOrder);
+                        if (parsed.orderNumber === orderNumber || parsed.orderNumber === `#${orderNumber}`) {
+                            console.log('[Payment] Using localStorage order due to auth error');
+                            setOrderData(parsed);
+                            return;
+                        }
+                    }
+                }
+                
+                setErrorMessage('Failed to load order details. Please try again or contact support.');
             } finally {
                 setIsLoading(false);
             }

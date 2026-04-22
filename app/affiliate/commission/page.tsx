@@ -7,19 +7,54 @@ import {
     Clock,
     ChevronLeft,
     ChevronRight,
-    Loader2
+    Loader2,
+    ShieldCheck
 } from 'lucide-react'
-import { getAffiliateCommissionLogs, CommissionLogResponse, CommissionLogsPageResponse } from '@/app/actions/affiliate/commission-logs'
+import { getAffiliateCommissionLogs, CommissionLogResponse, CommissionLogsPageResponse } from '@/app/actions/affiliate'
+import { getUserId } from '@/lib/user-utils'
+import { useAuth } from '@/contexts/authContext'
+
+export interface CommissionLogResponse {
+    id: number
+    orderNumber: string
+    changeType: string
+    commissionAmount: number
+    balanceBefore: number
+    balanceAfter: number
+    totalEarnedBefore: number
+    totalEarnedAfter: number
+    description?: string
+    createdAt: string
+}
 
 export default function CommissionHistoryPage() {
     // 佣金日志状态
-    const [commissionLogs, setCommissionLogs] = useState<CommissionLogsPageResponse | null>(null);
+    const [commissionLogs, setCommissionLogs] = useState<{
+        content: CommissionLogResponse[]
+        currentPage: number
+        pageSize: number
+        totalElements: number
+        totalPages: number
+        hasNext: boolean
+        hasPrevious: boolean
+    } | null>(null);
     const [logsLoading, setLogsLoading] = useState(true);
     const [currentPage, setCurrentPage] = useState(0);
+    const [authError, setAuthError] = useState(false);
+    const { isClient, openAuthModal } = useAuth();
     
     // 获取佣金日志
     useEffect(() => {
         const fetchCommissionLogs = async () => {
+            // ✅ 先检查是否登录
+            const userId = getUserId();
+            if (!userId) {
+                console.log('[Commission History] User not logged in');
+                setAuthError(true);
+                setLogsLoading(false);
+                return;
+            }
+
             setLogsLoading(true);
             try {
                 const logs = await getAffiliateCommissionLogs(currentPage, 10);
@@ -31,9 +66,36 @@ export default function CommissionHistoryPage() {
             }
         };
         
-        fetchCommissionLogs();
-    }, [currentPage]);
+        if (isClient) {
+            fetchCommissionLogs();
+        }
+    }, [currentPage, isClient]);
     
+    // 未登录状态
+    if (authError || !isClient) {
+        return (
+            <div className="space-y-8">
+                <div className="flex flex-col items-center justify-center min-h-[400px] bg-white rounded-2xl border border-dashed border-gray-200 p-12">
+                    <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
+                        <ShieldCheck className="w-8 h-8 text-gray-300" />
+                    </div>
+                    <h3 className="text-lg font-bold text-gray-900 mb-2">Please Login</h3>
+                    <p className="text-gray-500 text-sm mb-6 text-center max-w-md">
+                        You need to login as an affiliate to view your commission history.
+                    </p>
+                    <button
+                        onClick={() => openAuthModal('login', { 
+                            onSuccess: () => window.location.reload() 
+                        })}
+                        className="inline-block bg-black text-white px-8 py-3 rounded-lg text-sm font-bold shadow-lg hover:bg-gray-800 transition-all hover:-translate-y-0.5"
+                    >
+                        Login to Continue
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="space-y-8">
             {/* Header */}

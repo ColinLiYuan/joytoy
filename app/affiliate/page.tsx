@@ -11,19 +11,33 @@ import {
     Wallet,
     Clock,
     CheckCircle,
-    AlertCircle
+    AlertCircle,
+    ShieldCheck
 } from 'lucide-react'
-// 导入定义的类型
 import { AffDashboardResponse } from '@/types/affiliate'
 import { affiliateService } from '@/services/affiliateService'
+import { getUserId } from '@/lib/user-utils'
+import { useAuth } from '@/contexts/authContext'
+import Link from 'next/link'
 
 export default function AffiliateDashboard() {
     const [data, setData] = useState<AffDashboardResponse | null>(null);
     const [loading, setLoading] = useState(true);
+    const [authError, setAuthError] = useState(false);
+    const { isLoggedIn, isClient, openAuthModal } = useAuth();
 
     // 接入后端数据
     useEffect(() => {
         const fetchDashboard = async () => {
+            // ✅ 先检查是否登录（跟订单列表一样）
+            const userId = getUserId();
+            if (!userId) {
+                console.log('[Affiliate Dashboard] User not logged in');
+                setAuthError(true);
+                setLoading(false);
+                return;
+            }
+
             try {
                 const response = await affiliateService.getDashboardData();
                 setData(response);
@@ -34,14 +48,39 @@ export default function AffiliateDashboard() {
             }
         };
 
-        fetchDashboard();
-    }, []);
+        if (isClient) {
+            fetchDashboard();
+        }
+    }, [isClient]);
 
     // 加载状态
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-[400px]">
                 <div className="text-gray-400 font-medium animate-pulse">Loading performance data...</div>
+            </div>
+        );
+    }
+
+    // 未登录状态
+    if (authError || !isClient) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[400px] bg-white rounded-2xl border border-dashed border-gray-200 p-12">
+                <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
+                    <ShieldCheck className="w-8 h-8 text-gray-300" />
+                </div>
+                <h3 className="text-lg font-bold text-gray-900 mb-2">Please Login</h3>
+                <p className="text-gray-500 text-sm mb-6 text-center max-w-md">
+                    You need to login as an affiliate to view your dashboard and track performance.
+                </p>
+                <button
+                    onClick={() => openAuthModal('login', { 
+                        onSuccess: () => window.location.reload() 
+                    })}
+                    className="inline-block bg-black text-white px-8 py-3 rounded-lg text-sm font-bold shadow-lg hover:bg-gray-800 transition-all hover:-translate-y-0.5"
+                >
+                    Login to Continue
+                </button>
             </div>
         );
     }

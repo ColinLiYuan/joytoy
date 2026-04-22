@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
-import { getAdminProducts } from '@/app/actions/admin/product'
+import { productService } from '@/services/productService'
 import { ProductResponse, ProductListResponse } from '@/types/product'
 import { VENDORS } from '@/lib/constants/product-options'
 
@@ -65,15 +65,15 @@ export default function ProductList() {
                 statusParam = 'INACTIVE'
             }
 
-            // 调用 Server Action 获取数据
-            const result: ProductListResponse = await getAdminProducts({
-                category: searchFilters.category || '',
-                page: pagination.currentPage,
-                size: 12,
-                keyword: searchFilters.keyword || '',
-                status: statusParam || '',
-                vendor: searchFilters.vendor || ''
-            })
+            // 调用 Service 获取数据
+            const result: ProductListResponse = await productService.adminList(
+                searchFilters.category || '',
+                pagination.currentPage,
+                12,
+                searchFilters.keyword || '',
+                statusParam || '',
+                searchFilters.vendor || ''
+            )
 
             setProducts(result.content || [])
             setPagination({

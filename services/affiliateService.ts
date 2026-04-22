@@ -139,19 +139,6 @@ export class AffiliateService {
     }
 
     /**
-     * 申请提现
-     */
-    async requestPayout(request: PayoutRequest): Promise<any> {
-        const result = await apiPost(`${SERVER_CONFIG.apiRoutes.affiliate}/payout/request`, request);
-        
-        if (!result.success) {
-            throw new Error(result.message || 'Failed to request payout');
-        }
-
-        return result.data;
-    }
-
-    /**
      * 获取我的提现记录
      */
     async getMyPayouts(page: number = 0, size: number = 20): Promise<PageResponse<PayoutResponse>> {

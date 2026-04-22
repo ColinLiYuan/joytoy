@@ -1,9 +1,12 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Wallet, DollarSign, Clock, CheckCircle, AlertCircle, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
+import { Wallet, DollarSign, Clock, CheckCircle, AlertCircle, ChevronLeft, ChevronRight, Loader2, ShieldCheck } from 'lucide-react'
 import { affiliateService } from '@/services/affiliateService'
 import { PayoutResponse } from '@/types/affiliate'
+import { getUserId } from '@/lib/user-utils'
+import { useAuth } from '@/contexts/authContext'
+import { requestAffiliatePayout } from '@/app/actions/affiliate'
 
 export default function AffiliatePayoutsPage() {
     const [payouts, setPayouts] = useState<PayoutResponse[]>([])
@@ -15,12 +18,25 @@ export default function AffiliatePayoutsPage() {
     const [requestAmount, setRequestAmount] = useState('')
     const [paypalEmail, setPaypalEmail] = useState('')
     const [submitting, setSubmitting] = useState(false)
+    const [authError, setAuthError] = useState(false)
+    const { isClient, openAuthModal } = useAuth()
 
     useEffect(() => {
-        fetchPayouts()
-    }, [currentPage])
+        if (isClient) {
+            fetchPayouts()
+        }
+    }, [currentPage, isClient])
 
     const fetchPayouts = async () => {
+        // ✅ 先检查是否登录
+        const userId = getUserId();
+        if (!userId) {
+            console.log('[Affiliate Payouts] User not logged in');
+            setAuthError(true);
+            setLoading(false);
+            return;
+        }
+
         try {
             setLoading(true)
             const data = await affiliateService.getMyPayouts(currentPage, 20)
@@ -50,7 +66,7 @@ export default function AffiliatePayoutsPage() {
 
         try {
             setSubmitting(true)
-            await affiliateService.requestPayout({
+            await requestAffiliatePayout({
                 amount,
                 paypalEmail
             })
@@ -123,6 +139,29 @@ export default function AffiliatePayoutsPage() {
 
     return (
         <div className="space-y-6">
+            {/* 未登录状态 */}
+            {authError && (
+                <div className="flex flex-col items-center justify-center min-h-[400px] bg-white rounded-2xl border border-dashed border-gray-200 p-12">
+                    <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
+                        <ShieldCheck className="w-8 h-8 text-gray-300" />
+                    </div>
+                    <h3 className="text-lg font-bold text-gray-900 mb-2">Please Login</h3>
+                    <p className="text-gray-500 text-sm mb-6 text-center max-w-md">
+                        You need to login as an affiliate to manage your payouts.
+                    </p>
+                    <button
+                        onClick={() => openAuthModal('login', { 
+                            onSuccess: () => window.location.reload() 
+                        })}
+                        className="inline-block bg-black text-white px-8 py-3 rounded-lg text-sm font-bold shadow-lg hover:bg-gray-800 transition-all hover:-translate-y-0.5"
+                    >
+                        Login to Continue
+                    </button>
+                </div>
+            )}
+
+            {!authError && (
+            <>
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
@@ -321,6 +360,8 @@ export default function AffiliatePayoutsPage() {
                     </div>
                 </div>
             )}
+            </>
+        )}
         </div>
     )
 }

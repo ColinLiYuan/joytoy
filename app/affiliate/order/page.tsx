@@ -2,6 +2,9 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { affiliateService } from '@/services/affiliateService'
+import { getUserId } from '@/lib/user-utils'
+import { useAuth } from '@/contexts/authContext'
+import { ShieldCheck } from 'lucide-react'
 import {
     Search,
     Calendar,
@@ -32,6 +35,8 @@ interface OrderResponse {
 export default function AffiliateOrdersPage() {
     const [orders, setOrders] = useState<OrderResponse[]>([])
     const [loading, setLoading] = useState(true)
+    const [authError, setAuthError] = useState(false)
+    const { isClient, openAuthModal } = useAuth()
 
     // 分页与搜索状态 (与 Admin 保持一致)
     const [statusFilter, setStatusFilter] = useState<string>('ALL')
@@ -41,6 +46,15 @@ export default function AffiliateOrdersPage() {
     const [totalElements, setTotalElements] = useState(0)
 
     const fetchOrders = useCallback(async () => {
+        // ✅ 先检查是否登录
+        const userId = getUserId();
+        if (!userId) {
+            console.log('[Affiliate Orders] User not logged in');
+            setAuthError(true);
+            setLoading(false);
+            return;
+        }
+
         try {
             setLoading(true)
             // ✅ 共用订单查询接口，但后端会根据当前登录的 Affiliate 角色自动过滤
@@ -62,8 +76,10 @@ export default function AffiliateOrdersPage() {
     }, [page, statusFilter, searchOrderNumber])
 
     useEffect(() => {
-        fetchOrders()
-    }, [fetchOrders])
+        if (isClient) {
+            fetchOrders()
+        }
+    }, [isClient, fetchOrders])
 
     // 状态样式映射
     const getStatusBadge = (status: OrderStatus) => {
@@ -88,6 +104,29 @@ export default function AffiliateOrdersPage() {
 
     return (
         <div className="space-y-6">
+            {/* 未登录状态 */}
+            {authError && (
+                <div className="flex flex-col items-center justify-center min-h-[400px] bg-white rounded-2xl border border-dashed border-gray-200 p-12">
+                    <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
+                        <ShieldCheck className="w-8 h-8 text-gray-300" />
+                    </div>
+                    <h3 className="text-lg font-bold text-gray-900 mb-2">Please Login</h3>
+                    <p className="text-gray-500 text-sm mb-6 text-center max-w-md">
+                        You need to login as an affiliate to view your referral orders.
+                    </p>
+                    <button
+                        onClick={() => openAuthModal('login', { 
+                            onSuccess: () => window.location.reload() 
+                        })}
+                        className="inline-block bg-black text-white px-8 py-3 rounded-lg text-sm font-bold shadow-lg hover:bg-gray-800 transition-all hover:-translate-y-0.5"
+                    >
+                        Login to Continue
+                    </button>
+                </div>
+            )}
+
+            {!authError && (
+            <>
             <div className="flex justify-between items-end">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Referral Orders</h1>
@@ -201,6 +240,8 @@ export default function AffiliateOrdersPage() {
                     </div>
                 </div>
             </div>
+            </>
+            )}
         </div>
     )
 }

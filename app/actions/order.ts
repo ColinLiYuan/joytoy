@@ -1,147 +1,144 @@
 'use server'
 
-import { cookies } from 'next/headers'
 import { BACKEND_CONFIG } from '@/lib/api-config'
-import { OrderResponse } from '@/types/order'
+import { fetchWithAuth } from '@/lib/server-token-utils'
 
-// API 路径常量
 const API_PATHS = {
-  ORDER_LIST: `${BACKEND_CONFIG.baseURL}/api/V1/orders`,
-  TOKEN_REFRESH: `${BACKEND_CONFIG.baseURL}/api/V1/users/refresh`,
+  ORDER_CANCEL: (orderNumber: string) => `${BACKEND_CONFIG.baseURL}/api/admin/V1/order/${orderNumber}/cancel`,
+  ORDER_REFUND: (orderNumber: string) => `${BACKEND_CONFIG.baseURL}/api/admin/V1/order/${orderNumber}/refund`,
+  ORDER_SETTLE_COMMISSION: (orderNumber: string) => `${BACKEND_CONFIG.baseURL}/api/admin/V1/order/${orderNumber}/commission/settle`,
+  ORDER_UPDATE_STATUS: (orderNumber: string) => `${BACKEND_CONFIG.baseURL}/api/admin/V1/order/${orderNumber}/status`,
 } as const
 
 /**
- * 获取用户订单列表
- * @returns 订单列表，如果未登录返回 null，如果 session 过期返回 null
+ * 管理员取消订单
  */
-export async function getUserOrders(page = 0, size = 20, retry = false): Promise<OrderResponse[] | null> {
+export async function cancelAdminOrder(orderNumber: string, reason?: string): Promise<void> {
     try {
-        const cookieStore = await cookies()
-        let token = cookieStore.get('accessToken')?.value
+        console.log('[Order Action] Cancelling order:', orderNumber)
 
-        if (!token) {
-            console.log('[Get User Orders] No token found, trying to refresh...')
-            
-            // 尝试刷新 Token
-            const refreshTokenValue = cookieStore.get('refreshToken')?.value
-            if (refreshTokenValue) {
-                const newToken = await refreshToken(refreshTokenValue)
-                if (newToken) {
-                    token = newToken
-                    console.log('[Get User Orders] Token refreshed successfully')
-                    cookieStore.set('accessToken', newToken, {
-                        path: '/',
-                        maxAge: 1800,
-                    })
-                }
-            }
-        }
-
-        if (!token) {
-            console.log('[Get User Orders] No token available, returning null')
-            return null
-        }
-
-        const url = `${API_PATHS.ORDER_LIST}?page=${page}&size=${size}`
-        console.log('[Get User Orders] Calling URL:', url)
-
-        let response = await fetch(url, {
+        const response = await fetchWithAuth(API_PATHS.ORDER_CANCEL(orderNumber), {
             cache: 'no-store',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
-            },
+            method: 'POST',
+            body: JSON.stringify({ reason: reason || '管理员取消' }),
         })
 
-        // 如果 401，尝试刷新 token
-        if (response.status === 401 && !retry) {
-            console.log('[Get User Orders] Got 401, trying to refresh token...')
-            const refreshTokenValue = cookieStore.get('refreshToken')?.value
-            if (refreshTokenValue) {
-                const newToken = await refreshToken(refreshTokenValue)
-                if (newToken) {
-                    console.log('[Get User Orders] Token refreshed, retrying...')
-                    cookieStore.set('accessToken', newToken, {
-                        path: '/',
-                        maxAge: 1800,
-                    })
-
-                    // 重试请求
-                    response = await fetch(url, {
-                        cache: 'no-store',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${newToken}`,
-                        },
-                    })
-
-                    console.log('[Get User Orders] Retry response status:', response.status)
-                }
-            }
-        }
+        console.log('[Order Action] Response status:', response.status)
 
         if (!response.ok) {
-            console.error('[Get User Orders] Response not ok:', response.status)
-            return null
+            console.log('[Order Action] Failed:', response.status)
+            const errorText = await response.text()
+            throw new Error(`Failed to cancel order: ${errorText}`)
         }
 
-        const apiResponse = await response.json()
+        const result = await response.json()
+        console.log('[Order Action] Success:', result)
 
-        if (!apiResponse.success) {
-            console.error('[Get User Orders] API response not success:', apiResponse.message)
-            // 检查是否是认证相关错误
-            const errorMsg = apiResponse.message?.toLowerCase() || ''
-            if (errorMsg.includes('session') || 
-                errorMsg.includes('login') || 
-                errorMsg.includes('auth') || 
-                errorMsg.includes('unauthorized') ||
-                errorMsg.includes('登录') ||
-                errorMsg.includes('expired')) {
-                return null
-            }
-            return null
+        if (!result.success) {
+            throw new Error(result.message || 'Failed to cancel order')
         }
-
-        return apiResponse.data || []
     } catch (error) {
-        console.error('[Get User Orders] Error:', error)
-        return null
+        console.error('[Order Action] Error:', error)
+        throw error
     }
 }
 
 /**
- * 刷新 Token
+ * 管理员退款订单
  */
-async function refreshToken(refreshTokenValue: string): Promise<string | null> {
+export async function refundAdminOrder(orderNumber: string, reason?: string): Promise<void> {
     try {
-        console.log('[Refresh Token] Calling refresh endpoint...')
-        const response = await fetch(API_PATHS.TOKEN_REFRESH, {
+        console.log('[Order Action] Refunding order:', orderNumber)
+
+        const response = await fetchWithAuth(API_PATHS.ORDER_REFUND(orderNumber), {
+            cache: 'no-store',
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ refreshToken: refreshTokenValue }),
+            body: JSON.stringify({ reason: reason || '管理员退款' }),
         })
 
-        console.log('[Refresh Token] Response status:', response.status)
+        console.log('[Order Action] Response status:', response.status)
 
         if (!response.ok) {
-            console.log('[Refresh Token] Failed, status:', response.status)
-            return null
+            console.log('[Order Action] Failed:', response.status)
+            const errorText = await response.text()
+            throw new Error(`Failed to refund order: ${errorText}`)
         }
 
         const result = await response.json()
-        console.log('[Refresh Token] Response:', result)
-        
-        if (result.success && result.data?.accessToken) {
-            console.log('[Refresh Token] Success, new token length:', result.data.accessToken.length)
-            return result.data.accessToken
+        console.log('[Order Action] Success:', result)
+
+        if (!result.success) {
+            throw new Error(result.message || 'Failed to refund order')
+        }
+    } catch (error) {
+        console.error('[Order Action] Error:', error)
+        throw error
+    }
+}
+
+/**
+ * 结算订单佣金
+ */
+export async function settleOrderCommission(orderNumber: string): Promise<any> {
+    try {
+        console.log('[Order Action] Settling commission for order:', orderNumber)
+
+        const response = await fetchWithAuth(API_PATHS.ORDER_SETTLE_COMMISSION(orderNumber), {
+            cache: 'no-store',
+            method: 'POST',
+        })
+
+        console.log('[Order Action] Response status:', response.status)
+
+        if (!response.ok) {
+            console.log('[Order Action] Failed:', response.status)
+            const errorText = await response.text()
+            throw new Error(`Failed to settle commission: ${errorText}`)
         }
 
-        console.log('[Refresh Token] No access token in response')
-        return null
+        const result = await response.json()
+        console.log('[Order Action] Success:', result)
+
+        if (!result.success) {
+            throw new Error(result.message || 'Failed to settle commission')
+        }
+
+        return result.data
     } catch (error) {
-        console.error('[Refresh Token] Error:', error)
-        return null
+        console.error('[Order Action] Error:', error)
+        throw error
+    }
+}
+
+/**
+ * 更新订单状态（发货等）
+ */
+export async function updateOrderStatus(orderNumber: string, trackingNumber?: string): Promise<void> {
+    try {
+        console.log('[Order Action] Updating order status:', orderNumber)
+
+        const response = await fetchWithAuth(API_PATHS.ORDER_UPDATE_STATUS(orderNumber), {
+            cache: 'no-store',
+            method: 'PUT',
+            body: JSON.stringify({ trackingNumber }),
+        })
+
+        console.log('[Order Action] Response status:', response.status)
+
+        if (!response.ok) {
+            console.log('[Order Action] Failed:', response.status)
+            const errorText = await response.text()
+            throw new Error(`Failed to update order status: ${errorText}`)
+        }
+
+        const result = await response.json()
+        console.log('[Order Action] Success:', result)
+
+        if (!result.success) {
+            throw new Error(result.message || 'Failed to update order status')
+        }
+    } catch (error) {
+        console.error('[Order Action] Error:', error)
+        throw error
     }
 }

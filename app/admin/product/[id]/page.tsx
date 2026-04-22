@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { getAdminProductById } from '@/app/actions/admin/product'
+import { productService } from '@/services/productService';
 import { AdminProductResponse } from '@/types/admin/adminProduct'
 import { getProductImageUrl } from '@/lib/image-utils'
 import {
@@ -38,7 +38,7 @@ export default function AdminProductDetailPage() {
             try {
                 setLoading(true)
                 setError('')
-                const data = await getAdminProductById(id)
+                const data = await productService.adminGetById(id)
                 console.log('[Admin Product Detail] Product data:', data)
                 setProduct(data)
             } catch (err: any) {

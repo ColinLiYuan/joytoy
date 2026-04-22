@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { getAdminOrders, updateOrderStatus, cancelAdminOrder, settleOrderCommission } from '@/app/actions/admin/order'
+import { cancelAdminOrder, settleOrderCommission, updateOrderStatus } from '@/app/actions/order'
+import { orderService } from '@/services/orderService'
 import { OrderResponse, OrderStatus } from '@/types/order'
 import {
     Search,
@@ -74,7 +75,7 @@ export default function OrderPage() {
     const fetchOrders = useCallback(async () => {
         setLoading(true)
         try {
-            const data = await getAdminOrders({
+            const data = await orderService.adminList({
                 page,
                 size: 7,
                 status: activeStatus === 'ALL' ? undefined : activeStatus,

@@ -2,16 +2,11 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import {
-    getAdminCartList,
-    getAdminCartDetail,
-    getAdminCartStatistics,
     clearAdminCart,
     abandonAdminCart,
-    cleanupExpiredAdminCarts,
-    CartResponse,
-    CartItem,
-    CartStatistics
-} from '@/app/actions/admin/cart'
+    cleanupExpiredAdminCarts
+} from '@/app/actions/cart'
+import { cartService, CartResponse, CartItem, CartStatistics } from '@/services/cartService'
 import { getProductImageUrl } from '@/lib/image-utils'
 import {
     Search,
@@ -55,7 +50,7 @@ export default function AdminCartPage() {
     const fetchCarts = useCallback(async () => {
         setLoading(true)
         try {
-            const data = await getAdminCartList({
+            const data = await cartService.adminList({
                 page,
                 size: 10,
                 status: activeStatus === 'ALL' ? undefined : activeStatus,
@@ -72,7 +67,7 @@ export default function AdminCartPage() {
     // 获取统计数据
     const fetchStatistics = useCallback(async () => {
         try {
-            const stats = await getAdminCartStatistics()
+            const stats = await cartService.getAdminCartStatistics()
             setStatistics(stats)
         } catch (error) {
             console.error('Fetch statistics failed:', error)
@@ -89,7 +84,7 @@ export default function AdminCartPage() {
         setDetailLoading(true)
         setIsDetailModalOpen(true)
         try {
-            const cart = await getAdminCartDetail(cartId)
+            const cart = await cartService.getAdminCartDetail(cartId)
             console.log('[Client] Cart detail received:', {
                 status: cart.status,
                 itemsCount: cart.items?.length,

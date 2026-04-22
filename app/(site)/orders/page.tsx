@@ -59,23 +59,23 @@ export default function OrdersPage() {
     const { isLoggedIn, isClient, openAuthModal } = useAuth();
 
     useEffect(() => {
+        console.log('[OrdersPage] Component mounted, fetching orders...');
         fetchOrders();
     }, []);
 
     const fetchOrders = async () => {
+        console.log('[OrdersPage] fetchOrders called');
         try {
             setIsLoading(true);
             setError('');
             setIsAuthRequired(false);
-            const userId = getUserId();
-            if (!userId) { 
-                setOrders([]); 
-                return; 
-            }
-            const data = await orderService.getUserOrders(0, 20);
-            console.log('user orders: ', data)
             
-            // 如果返回 null，说明 session 过期
+            console.log('[OrdersPage] Calling orderService.getUserOrders()...');
+            // ✅ 直接调用接口，让后端根据 Token 判断
+            const data = await orderService.getUserOrders(0, 20);
+            console.log('[OrdersPage] Got response from orderService:', data)
+            
+            // 如果返回 null，说明 session 过期或未登录
             if (data === null) {
                 setIsAuthRequired(true);
                 setOrders([]);

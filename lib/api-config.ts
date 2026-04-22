@@ -15,7 +15,7 @@ export const SERVER_CONFIG = {
 
     // 前端 API 路由前缀
     apiRoutes: {
-        product: '/api/site/product',
+        product: '/api/product',
         review: '/api/site/review',
         category: '/api/site/category',
         filter: '/api/site/filter',
@@ -25,7 +25,8 @@ export const SERVER_CONFIG = {
         cart: '/api/site/cart',
         blog: '/api/site/blog',
         checkout: '/api/site/checkout',
-        affiliate: '/api/site/affiliate',
+        // affiliate 使用直连后端，不走前端 API Route
+        affiliate: '/api/V1/affiliate',
     }
 };
 
@@ -62,6 +63,9 @@ export const BACKEND_API_ROUTES = {
             detail: '/api/admin/V1/blog',
             release: '/api/admin/V1/blog/release',
             upload: '/api/admin/V1/upload/myth/blog/image',
+        },
+        user: {
+            list: '/api/admin/V1/users/list',
         },
     }
 };

@@ -9,7 +9,7 @@ import { useToast } from '@/contexts/toastContext';
 import { useAuth } from '@/contexts/authContext';
 import { useCartStore } from '@/stores/useCartStore';
 import { addToWishlist, removeFromWishlist } from '@/app/actions/wishlist';
-import { productService } from '@/services/product-service';
+import { productService } from '@/services/productService';
 import { joinWaitlist } from '@/app/actions/waitlist'; // ✅ Import the new action
 import { getProductImageUrl } from '@/lib/image-utils';
 import { Z_INDEX } from '@/lib/constants/z-index';
@@ -270,6 +270,26 @@ export default function ProductDetailClient({
     const getMappedColor = (color: string) => colorMap[color.toLowerCase().trim()] || color;
     const isOnSale = product.originalPrice > product.currentPrice;
 
+    // 更新最近浏览记录中的收藏状态
+    const updateRecentlyViewedFavorite = (productId: number, favorited: boolean) => {
+        try {
+            const stored = localStorage.getItem('recently_viewed');
+            if (!stored) return;
+            
+            const viewed: ProductResponse[] = JSON.parse(stored);
+            const updated = viewed.map(p => 
+                p.id === productId ? { ...p, favorited } : p
+            );
+            
+            localStorage.setItem('recently_viewed', JSON.stringify(updated));
+            
+            // 同时更新显示的状态
+            setRecentlyViewed(updated.filter(p => p.id !== product.id).slice(0, 4));
+        } catch (e) {
+            console.error('Failed to update recently viewed favorite status:', e);
+        }
+    };
+
     const handleToggleFavorite = async () => {
         if (!isLoggedIn) { openAuthModal('login', { onSuccess: executeToggleFavorite }); return; }
         executeToggleFavorite();
@@ -294,6 +314,8 @@ export default function ProductDetailClient({
                 });
                 if (success) {
                     showToast('success', 'Saved', 'Added to your wishlist');
+                    // 更新 localStorage 中的最近浏览记录
+                    updateRecentlyViewedFavorite(product.id, true);
                 } else {
                     setIsFavorited(!newState);
                     showToast('error', 'Login Required', 'Please login to add items to wishlist');
@@ -302,6 +324,8 @@ export default function ProductDetailClient({
                 const success = await removeFromWishlist(product.id);
                 if (success) {
                     showToast('success', 'Removed', 'Removed from wishlist');
+                    // 更新 localStorage 中的最近浏览记录
+                    updateRecentlyViewedFavorite(product.id, false);
                 } else {
                     setIsFavorited(!newState);
                     showToast('error', 'Login Required', 'Please login to manage wishlist');

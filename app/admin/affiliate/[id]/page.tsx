@@ -5,8 +5,7 @@ import { Suspense } from 'react'
 import React, { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { ArrowLeft, MousePointerClick, ShoppingCart, DollarSign, TrendingUp, Clock, ChevronLeft, ChevronRight, Loader2, Wallet, CheckCircle, AlertCircle } from 'lucide-react'
-import { getAdminAffiliateCommissionLogs, AdminCommissionLogResponse, AdminCommissionLogsPageResponse } from '@/app/actions/admin/affiliate-commission-logs'
-import { getAdminAffiliateList } from '@/app/actions/admin/affiliate'
+import { getAdminAffiliateCommissionLogs, AdminCommissionLogResponse, AdminCommissionLogsPageResponse, getAdminAffiliateList } from '@/app/actions/admin'
 
 interface AffiliateDetail {
     id: number;

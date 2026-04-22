@@ -6,7 +6,7 @@ import { useToast } from '@/contexts/toastContext';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/authContext';
 import { useCartStore } from '@/stores/useCartStore';
-import { productService } from '@/services/product-service';
+import { productService } from '@/services/productService';
 import { ProductResponse } from '@/types/product';
 import { Z_INDEX } from '@/lib/constants/z-index';
 import { colorMap } from '@/lib/constants/color-map';

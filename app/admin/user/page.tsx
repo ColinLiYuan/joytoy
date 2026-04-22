@@ -2,7 +2,7 @@
 'use client'
 
 import { useState, useEffect } from 'react';
-import { getAdminUsers } from '@/app/actions/admin/user';
+import { userService } from '@/services/userService';
 import { UserResponse } from '@/types/auth'
 import {
     Search,
@@ -24,16 +24,19 @@ export default function AdminUserListPage() {
     const fetchUsers = async () => {
         setLoading(true);
         try {
-            const data = await getAdminUsers({
-                page: currentPage,
-                size: 10,
-                status: status || undefined,
-                keyword: keyword || undefined
-            });
+            const data = await userService.adminList(
+                currentPage,
+                10,
+                keyword || undefined,
+                status || undefined
+            );
             setUsers(data.content);
             setTotalPages(data.totalPages);
-        } catch (error) {
-            console.error('Fetch users failed', error);
+        } catch (error: any) {
+            // ✅ 401 错误会触发自动登录框，不需要重复报错
+            if (error.response?.status !== 401) {
+                console.error('Fetch users failed', error);
+            }
         } finally {
             setLoading(false);
         }

@@ -1,102 +1,142 @@
 // services/orderService.ts
+import axiosClient from '@/lib/axios-client';
 import { OrderCreateRequest, OrderResponse, OrderListResponse, OrderPaymentResult } from '@/types/order';
 import { SERVER_CONFIG, ADMIN_CONFIG, BACKEND_CONFIG } from '@/lib/api-config';
 import { PaymentRequest } from '@/types/payment';
 import { apiGet, apiPost } from '@/lib/api-utils';
 
+export interface OrderStatusLog {
+    id: number
+    orderId: number
+    orderNumber: string
+    oldStatus?: string
+    newStatus: string
+    changedBy?: string
+    reason?: string
+    affiliatePayoutStatusBefore?: string
+    affiliatePayoutStatusAfter?: string
+    ipAddress?: string
+    createdAt: string
+}
+
+export interface AffiliateCommissionLog {
+    id: number
+    affiliateId: string
+    orderId: number
+    orderNumber: string
+    changeType: string
+    commissionAmount: number
+    balanceBefore: number
+    balanceAfter: number
+    totalEarnedBefore: number
+    totalEarnedAfter: number
+    description?: string
+    payoutStatusBefore?: string
+    payoutStatusAfter?: string
+    createdAt: string
+}
+
 class OrderService {
     // 创建订单
     async createOrder(orderCreateRequest: OrderCreateRequest): Promise<OrderResponse> {
-        const result = await apiPost<OrderResponse>(`${SERVER_CONFIG.apiRoutes.order}/add`, orderCreateRequest);
+        const url = `/api/V1/order`;
+        console.log('[OrderService] Creating order...')
+        console.log('[OrderService] Request URL:', url)
+        console.log('[OrderService] Request data:', JSON.stringify(orderCreateRequest, null, 2))
+        
+        try {
+            const response = await axiosClient.post(url, orderCreateRequest);
+            console.log('[OrderService] Create order response status:', response.status)
+            console.log('[OrderService] Create order response data:', response.data)
 
-        if (!result.success) {
-            throw new Error(result.message || 'order creation failed, please contact support@mythtoy.com');
+            if (response.data?.success) {
+                return response.data.data;
+            }
+
+            throw new Error(response.data?.message || 'order creation failed, please contact support@mythtoy.com');
+        } catch (error: any) {
+            console.error('[OrderService] Create order failed - Full error:', error)
+            console.error('[OrderService] Error name:', error.name)
+            console.error('[OrderService] Error message:', error.message)
+            console.error('[OrderService] Error stack:', error.stack)
+            
+            if (error.response) {
+                console.error('[OrderService] Error response status:', error.response.status)
+                console.error('[OrderService] Error response data:', error.response.data)
+            } else if (error.request) {
+                console.error('[OrderService] Error request (no response received):', error.request)
+            } else {
+                console.error('[OrderService] Error setting up request:', error.message)
+            }
+            
+            throw error;
         }
-
-        return result.data;
     }
 
     // 获取订单详情
     async getOrder(orderNumber: string): Promise<OrderResponse> {
-        const result = await apiGet<OrderResponse>(`${SERVER_CONFIG.apiRoutes.order}/${orderNumber}`);
+        const url = `/api/V1/order/${orderNumber}`;
+        const response = await axiosClient.get(url);
 
-        console.log('[OrderService.getOrder] Result:', {
-            success: result.success,
-            message: result.message,
-            status: result.status,
-            errorType: result.errorType,
-            data: result.data
-        });
-
-        if (!result.success) {
-            throw new Error(result.message || `Failed to fetch order (Status: ${result.status})`);
+        if (response.data?.success) {
+            return response.data.data;
         }
 
-        return result.data;
+        throw new Error(response.data?.message || `Failed to fetch order`);
     }
 
     // 获取用户订单列表
-    // @returns 订单列表，如果 session 过期则返回 null
     async getUserOrders(page: number = 0, size: number = 20): Promise<OrderResponse[] | null> {
         try {
-            const result = await apiGet<OrderResponse[]>(`${SERVER_CONFIG.apiRoutes.order}/list?page=${page}&size=${size}`);
-            
-            console.log('[OrderService.getUserOrders] Result:', {
-                success: result.success,
-                message: result.message,
-                status: result.status,
-                errorType: result.errorType
-            });
-            
-            // 检查错误消息，判断是否是 session 过期
-            const errorMsg = result.message?.toLowerCase() || '';
-            const isSessionExpired = errorMsg.includes('session') || 
-                                    errorMsg.includes('login') || 
-                                    errorMsg.includes('auth') || 
-                                    errorMsg.includes('unauthorized') ||
-                                    errorMsg.includes('登录') ||
-                                    errorMsg.includes('expired');
-            
-            // 如果是认证错误或 session 过期，静默返回 null
-            if (result.status === 401 || 
-                result.status === 403 || 
-                result.errorType === 'auth' ||
-                isSessionExpired) {
-                return null;
-            }
-            
-            if (!result.success) {
-                throw new Error(result.message || `Failed to fetch orders`);
+            const url = `/api/V1/order/list?page=${page}&size=${size}`;
+            const response = await axiosClient.get(url);
+
+            if (response.data?.success) {
+                return response.data.data;
             }
 
-            return result.data;
-        } catch (error) {
-            // 网络错误或解析错误，静默返回 null
+            // 检查是否是认证相关错误
+            const errorMsg = response.data?.message?.toLowerCase() || '';
+            if (errorMsg.includes('session') || 
+                errorMsg.includes('login') || 
+                errorMsg.includes('auth') || 
+                errorMsg.includes('unauthorized') ||
+                errorMsg.includes('登录') ||
+                errorMsg.includes('expired')) {
+                return null;
+            }
+
+            throw new Error(response.data?.message || `Failed to fetch orders`);
+        } catch (error: any) {
+            // 401 或其他认证错误
+            if (error.response?.status === 401) {
+                return null;
+            }
             console.error('[OrderService] Network error:', error);
             return null;
         }
     }
 
     async payOrder(orderNumber: string, paymentRequest: PaymentRequest, signal?: AbortSignal): Promise<OrderPaymentResult> {
-        const result = await apiPost<OrderPaymentResult>(
-            `${SERVER_CONFIG.apiRoutes.order}/${orderNumber}/pay`,
-            paymentRequest
-        );
+        const url = `/api/V1/order/${orderNumber}/pay`;
+        const response = await axiosClient.post(url, paymentRequest);
 
-        if (!result.success) {
-            throw new Error(result.message || 'order creation failed, please contact support@mythtoy.com');
+        if (response.data?.success) {
+            return response.data.data;
         }
-        return result.data;
+
+        throw new Error(response.data?.message || 'order creation failed, please contact support@mythtoy.com');
     }
 
     async trackOrder(orderNumber: string, email: string) {
-        const result = await apiPost(`${SERVER_CONFIG.apiRoutes.order}/track`, { orderNumber, email });
+        const url = `/api/V1/order/track`;
+        const response = await axiosClient.post(url, { orderNumber, email });
 
-        if (!result.success) {
-            throw new Error(result.message || 'Tracking failed, please check your info.');
+        if (response.data?.success) {
+            return response.data.data;
         }
 
-        return result.data;
+        throw new Error(response.data?.message || 'Tracking failed, please check your info.');
     }
 
     async adminList(params: {
@@ -117,24 +157,29 @@ class OrderService {
                 guestEmail = ''
             } = params;
 
-            const queryParams = new URLSearchParams();
-            queryParams.append('page', page.toString());
-            queryParams.append('size', size.toString());
+            const queryParams = new URLSearchParams({
+                page: page.toString(),
+                size: size.toString()
+            });
 
             if (keyword) queryParams.append('keyword', keyword);
             if (status) queryParams.append('status', status);
             if (orderNumber) queryParams.append('orderNumber', orderNumber);
             if (guestEmail) queryParams.append('guestEmail', guestEmail);
 
-            const result = await apiGet<OrderListResponse>(`${BACKEND_CONFIG.baseURL}${ADMIN_CONFIG.apiRoutes.order}/list?${queryParams.toString()}`);
+            const url = `/api/admin/V1/order/list?${queryParams.toString()}`;
+            console.log('[OrderService] Fetching admin orders from:', url);
+            
+            const response = await axiosClient.get(url);
+            console.log('[OrderService] Admin orders response:', response.data);
 
-            if (!result.success) {
-                throw new Error(result.message || 'Failed to fetch orders');
+            if (response.data?.success) {
+                return response.data.data;
             }
 
-            return result.data;
+            throw new Error(response.data?.message || 'Failed to fetch orders');
         } catch (error) {
-            console.error('Error fetching orders:', error);
+            console.error('❌ [OrderService] Error fetching orders:', error);
             throw error;
         }
     }
@@ -155,13 +200,50 @@ class OrderService {
 
     // ✅ 用户取消订单
     async cancelOrder(orderNumber: string): Promise<boolean> {
-        const result = await apiPost(`${SERVER_CONFIG.apiRoutes.order}/${orderNumber}/cancel`);
+        const url = `/api/V1/order/${orderNumber}/cancel`;
+        const response = await axiosClient.post(url);
 
-        if (!result.success) {
-            throw new Error(result.message || 'Failed to cancel order');
+        if (response.data?.success) {
+            return true;
         }
 
-        return true;
+        throw new Error(response.data?.message || 'Failed to cancel order');
+    }
+
+    // ✅ 管理员获取订单详情
+    async getAdminOrderDetail(orderNumber: string): Promise<OrderResponse> {
+        const url = `/api/admin/V1/order/${orderNumber}`;
+        const response = await axiosClient.get(url);
+
+        if (response.data?.success) {
+            return response.data.data;
+        }
+
+        throw new Error(response.data?.message || 'Failed to fetch order detail');
+    }
+
+    // ✅ 获取订单状态历史
+    async getOrderStatusLogs(orderNumber: string): Promise<OrderStatusLog[]> {
+        const url = `/api/admin/V1/order/${orderNumber}/status-logs`;
+        const response = await axiosClient.get(url);
+
+        if (response.data?.success) {
+            return response.data.data || [];
+        }
+
+        throw new Error(response.data?.message || 'Failed to fetch order status logs');
+    }
+
+    // ✅ 获取订单佣金流水日志
+    async getOrderCommissionLogs(orderNumber: string): Promise<AffiliateCommissionLog[]> {
+        const url = `/api/admin/V1/order/${orderNumber}/commission-logs`;
+        const response = await axiosClient.get(url);
+
+        if (response.data?.success) {
+            return response.data.data || [];
+        }
+
+        throw new Error(response.data?.message || 'Failed to fetch order commission logs');
     }
 }
 

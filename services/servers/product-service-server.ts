@@ -48,7 +48,7 @@ class ProductServiceServer {
         const url = `/api/V1/product/list?${queryParams}`;
 
         const result = await callBackendGet<any>(url, {
-            requiresAuth: true
+            requiresAuth: true // 有 Token 自动传，无 Token 不传，后端自动适配
         });
 
         // console.log('getProductsByCategory result:', result.data)
@@ -137,7 +137,7 @@ class ProductServiceServer {
         const url = `/api/V1/product/list?${queryParams}`;
 
         const result = await callBackendGet<any>(url, {
-            requiresAuth: true // 根据你后端需求，搜索可能不需要 Auth，如果报错改为 false
+            requiresAuth: true // 有 Token 自动传，无 Token 不传，后端自动适配
         });
 
         const data = result.data || {};

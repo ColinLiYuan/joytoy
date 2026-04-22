@@ -1,6 +1,6 @@
 // app/collections/[category]/route.ts
 import { productServiceServer } from '@/services/servers/product-service-server';
-import { categoryService } from '@/services/category-service';
+import { categoryService } from '@/services/categoryService';
 import { filterServiceServer } from '@/services/servers/product-filter-service-server';
 import ProductList from '@/components/product/product-list';
 import Breadcrumb, { BreadcrumbItem } from '@/components/common/breadcrumb';

@@ -7,6 +7,8 @@ import BestSellersSection from '@/components/home/best-sellers-section';
 import CategoriesSection from '@/components/home/categories-section';
 import TrustSignals from '@/components/home/trust-signals';
 import FAQSection from '@/components/common/faq-section';
+import { Suspense } from 'react';
+import AutoLoginModal from '@/components/common/auto-login-modal';
 
 // 生成页面元数据
 export async function generateMetadata() {
@@ -118,7 +120,10 @@ const structuredData = {
   ]
 };
 
-export default async function HomePage() {
+export default async function HomePage(props: { searchParams: Promise<{ redirect?: string }> }) {
+    const searchParams = await props.searchParams;
+    const redirectPath = searchParams.redirect || null;
+    
     // 服务端获取数据
     let bestSellers: ProductResponse[] = [];
     let error: string | null = null;
@@ -140,6 +145,11 @@ export default async function HomePage() {
         <>
             {/* ... scripts ... */}
             <ClientAgeVerification />
+            
+            {/* 如果 URL 有 redirect 参数，自动弹出登录框 */}
+            <Suspense fallback={null}>
+                <AutoLoginModal redirectPath={redirectPath} />
+            </Suspense>
 
             {/* ✅ 修复：移除 id="main-content" 上可能存在的任何 width/padding 类 */}
             {/* 直接作为一个纯净的容器，或者干脆去掉这个 div，用 Fragment 包裹 */}

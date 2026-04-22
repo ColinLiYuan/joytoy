@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { uploadProductImage } from '@/app/actions/admin/product-upload';
+import { uploadProductImage } from '@/app/actions/product';
 import { getProductImageUrl } from '@/lib/image-utils';
 
 // --- dnd-kit 依赖 ---

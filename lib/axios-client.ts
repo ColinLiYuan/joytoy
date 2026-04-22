@@ -1,6 +1,7 @@
 // lib/axios-client.ts
 import axios from 'axios';
 import { BACKEND_CONFIG } from '@/lib/api-config';
+import { setCookie, removeCookie } from '@/lib/cookie-utils';
 
 // 创建 Axios 实例 - 直接调用后端 API
 const axiosClient = axios.create({
@@ -53,10 +54,11 @@ const processQueue = (error: any, token: string | null = null) => {
     failedQueue = [];
 };
 
-// 获取 Token（从 Cookie）
+// 获取 Token（从 Cookie 或 LocalStorage）
 const getAccessToken = (): string | null => {
     if (typeof window === 'undefined') return null;
     
+    // 1. 先尝试从 Cookie 读取
     const cookies = document.cookie.split(';');
     for (const cookie of cookies) {
         const [name, value] = cookie.trim().split('=');
@@ -66,13 +68,25 @@ const getAccessToken = (): string | null => {
         }
     }
     
-    console.log('[AxiosClient] accessToken not found in cookie');
+    // 2. 如果 Cookie 没有，尝试从 localStorage 读取
+    try {
+        const token = localStorage.getItem('accessToken');
+        if (token) {
+            console.log('[AxiosClient] Found accessToken in localStorage');
+            return token;
+        }
+    } catch (e) {
+        console.log('[AxiosClient] Failed to read localStorage:', e);
+    }
+    
+    console.log('[AxiosClient] accessToken not found');
     return null;
 };
 
 const getRefreshToken = (): string | null => {
     if (typeof window === 'undefined') return null;
     
+    // 1. 先尝试从 Cookie 读取
     const cookies = document.cookie.split(';');
     for (const cookie of cookies) {
         const [name, value] = cookie.trim().split('=');
@@ -82,7 +96,18 @@ const getRefreshToken = (): string | null => {
         }
     }
     
-    console.log('[AxiosClient] refreshToken not found in cookie');
+    // 2. 如果 Cookie 没有，尝试从 localStorage 读取
+    try {
+        const token = localStorage.getItem('refreshToken');
+        if (token) {
+            console.log('[AxiosClient] Found refreshToken in localStorage');
+            return token;
+        }
+    } catch (e) {
+        console.log('[AxiosClient] Failed to read localStorage:', e);
+    }
+    
+    console.log('[AxiosClient] refreshToken not found');
     return null;
 };
 
@@ -133,33 +158,89 @@ axiosClient.interceptors.response.use(
                 // 尝试刷新 Token
                 const refreshToken = getRefreshToken();
                 if (!refreshToken) {
+                    console.log('[AxiosClient] No refresh token found, skipping refresh');
                     throw new Error('No refresh token');
                 }
 
-                const refreshResponse = await axios.post(`${BACKEND_CONFIG.baseURL}/api/V1/users/refresh`, {
+                console.log('[AxiosClient] Attempting to refresh token...');
+                
+                // ✅ 创建一个新的 axios 实例，避免触发拦截器造成死循环
+                const refreshAxios = axios.create({
+                    baseURL: BACKEND_CONFIG.baseURL,
+                    timeout: 30000,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                });
+                
+                const refreshResponse = await refreshAxios.post('/api/V1/users/refresh', {
                     refreshToken,
                 });
+
+                console.log('[AxiosClient] Refresh response:', refreshResponse.data);
 
                 if (refreshResponse.data?.success && refreshResponse.data?.data?.accessToken) {
                     console.log('[AxiosClient] Token refreshed successfully');
                     
-                    // 更新 Cookie 中的 accessToken
+                    const newAccessToken = refreshResponse.data.data.accessToken;
+                    const newRefreshToken = refreshResponse.data.data.refreshToken;
+                    
+                    // ✅ 同时更新 localStorage 和 Cookie，确保 getAccessToken 能读取到新 Token
                     if (typeof window !== 'undefined') {
-                        const newAccessToken = refreshResponse.data.data.accessToken;
-                        document.cookie = `accessToken=${encodeURIComponent(newAccessToken)}; path=/; max-age=1800`;
+                        try {
+                            localStorage.setItem('accessToken', newAccessToken);
+                            if (newRefreshToken) {
+                                localStorage.setItem('refreshToken', newRefreshToken);
+                            }
+                            console.log('[AxiosClient] Tokens updated in localStorage');
+                        } catch (e) {
+                            console.error('[AxiosClient] Failed to update localStorage:', e);
+                        }
+                        
+                        // 同时写入 Cookie
+                        setCookie('accessToken', newAccessToken, {
+                            expires: 30 / 60 / 24, // 30分钟
+                            path: '/',
+                            sameSite: 'lax',
+                            secure: window.location.protocol === 'https:',
+                        });
+                        
+                        if (newRefreshToken) {
+                            setCookie('refreshToken', newRefreshToken, {
+                                expires: 7, // 7天
+                                path: '/',
+                                sameSite: 'lax',
+                                secure: window.location.protocol === 'https:',
+                            });
+                        }
+                        
+                        console.log('[AxiosClient] Tokens updated in cookie');
                     }
+                    
+                    // ✅ 强制更新 originalRequest 的 Authorization header
+                    originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
                     
                     processQueue(null);
                     return axiosClient(originalRequest);
+                } else {
+                    console.log('[AxiosClient] Refresh response invalid:', refreshResponse.data);
+                    throw new Error('Invalid refresh response');
                 }
-            } catch (refreshError) {
-                console.log('[AxiosClient] Token refresh failed');
+            } catch (refreshError: any) {
+                // 区分"没有 Refresh Token"和"刷新失败"两种情况
+                // ✅ 静默处理，不打印日志（这是正常的用户未登录状态）
+                            
                 processQueue(refreshError, null);
-                
+                            
                 // 清除本地 Token
                 if (typeof window !== 'undefined') {
-                    document.cookie = 'accessToken=; path=/; max-age=0';
-                    document.cookie = 'refreshToken=; path=/; max-age=0';
+                    removeCookie('accessToken');
+                    removeCookie('refreshToken');
+                                
+                    // ✅ 触发统一的 Token 过期事件，自动弹出登录框
+                    window.dispatchEvent(new CustomEvent('auth:tokenExpired', {
+                        detail: { message: 'Session expired, please login again' }
+                    }));
                 }
             } finally {
                 isRefreshing = false;

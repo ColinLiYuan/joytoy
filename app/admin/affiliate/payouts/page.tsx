@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { Wallet, Clock, CheckCircle, AlertCircle, ChevronLeft, ChevronRight, Loader2, X } from 'lucide-react'
-import { getAllPayouts, approvePayout, rejectPayout } from '@/app/actions/admin/affiliate-payouts'
+import { getAllPayouts, approvePayout, rejectPayout } from '@/app/actions/admin'
 import { PayoutResponse } from '@/types/affiliate'
 
 export default function AdminPayoutsPage() {

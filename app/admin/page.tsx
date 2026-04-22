@@ -9,7 +9,7 @@ import {
     TrendingUp,
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { getDashboardStats, getRecentOrders, DashboardStats, RecentOrder } from '@/app/actions/admin/dashboard'
+import { getDashboardStats, getRecentOrders, DashboardStats, RecentOrder } from '@/app/actions/admin'
 
 export const dynamic = 'force-dynamic';
 

@@ -3,7 +3,7 @@
 
 import { createContext, useContext, useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { LoginResponse, LoginRequest, RegisterRequest, RegisterResponse } from '@/types/auth';
-import authService from '@/services/authService';
+import { loginUser, registerUser, forgotPassword as forgotPasswordAction } from '@/app/actions/auth';
 import AuthModal from '@/components/common/auth-modal';
 import { useCartStore } from '@/stores/useCartStore';
 import { setTokens, clearTokens } from '@/lib/token-utils';
@@ -53,6 +53,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [isClient, setIsClient] = useState(false); // 客户端状态
 
     const onSuccessCallbackRef = useRef<(() => void) | null>(null);
+    const isHandlingTokenExpiredRef = useRef(false); // ✅ 防止重复处理 Token 过期
     const { showToast } = useSafeToast();
 
     // ✅ 定义 openAuthModal 在使用它之前
@@ -94,25 +95,53 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
     }, []);
 
-    // ✅ 全局监听 token 过期事件，自动弹出登录框
+    // ✅ 全局监听 token 过期事件,自动弹出登录框
     useEffect(() => {
         const handleTokenExpired = (event: CustomEvent<{ message: string }>) => {
-            console.log('Token expired event received:', event.detail.message);
-            
-            // 直接设置状态
+            // 如果正在处理,直接返回
+            if (isHandlingTokenExpiredRef.current) {
+                return;
+            }
+                
+            isHandlingTokenExpiredRef.current = true;
+            console.log('[AuthContext] Token expired event received:', event.detail.message);
+                
+            // 清除认证状态
+            clearTokens();
+            setIsLoggedIn(false);
+            setUserInfo(null);
+            localStorage.removeItem('isLoggedIn');
+            localStorage.removeItem('userInfo');
+                
+            // 清空购物车
+            const { clearCart } = useCartStore.getState();
+            clearCart();
+                
+            // 显示提示
+            setTimeout(() => {
+                showToast('info', 'Session Expired', 'Your session has expired. Please login again.');
+            }, 0);
+                
+            // 直接弹出登录框
             setAuthModalMode('login');
             setIsAuthModalOpen(true);
+                
+            // 500ms 后重置标志,允许下次处理
+            setTimeout(() => {
+                isHandlingTokenExpiredRef.current = false;
+            }, 500);
         };
-
+    
         if (typeof window !== 'undefined') {
             window.addEventListener('auth:tokenExpired', handleTokenExpired as EventListener);
         }
-
+    
         return () => {
             if (typeof window !== 'undefined') {
                 window.removeEventListener('auth:tokenExpired', handleTokenExpired as EventListener);
             }
         };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const logout = useCallback(() => {
@@ -132,9 +161,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const login = useCallback(async (loginRequest: LoginRequest): Promise<LoginResponse> => {
         try {
-            // authService.login 现在会返回 LoginResponse (用户数据)，或者抛出 Error
-            const loginResponse = await authService.login(loginRequest);
-            // console.log('login callback result: ', loginResponse)
+            const loginResponse = await loginUser(loginRequest);
 
             setTokens(loginResponse.accessToken, loginResponse.refreshToken);
             setIsLoggedIn(true);
@@ -151,10 +178,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 const redirect = urlParams.get('redirect');
                 
                 if (redirect) {
-                    // 有 redirect 参数，等待 Cookie 写入后跳转到目标页面
+                    // 有 redirect 参数，先关闭弹窗，再等待 Cookie 写入后跳转
+                    closeAuthModal();
                     setTimeout(() => {
                         window.location.href = redirect;
-                    }, 100); // 等待 100ms 确保 Cookie 写入
+                    }, 300); // 等待 300ms 确保 Cookie 写入和弹窗关闭动画完成
                     return loginResponse;
                 }
             }
@@ -182,7 +210,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const register = useCallback(async (registerRequest: RegisterRequest): Promise<RegisterResponse> => {
         try {
-            const registerResponse = await authService.register(registerRequest);
+            const registerResponse = await registerUser(registerRequest);
 
             showToast('success', 'Registration Successful', 'Please login to continue');
             setAuthModalMode('login');
@@ -195,7 +223,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const forgotPassword = useCallback(async (email: string) => {
         try {
-            await authService.forgotPassword(email);
+            await forgotPasswordAction(email);
             showToast('success', 'Email Sent', 'Password reset instructions have been sent to your inbox.');
         } catch (error: any) {
             console.error('Forgot password failed:', error);

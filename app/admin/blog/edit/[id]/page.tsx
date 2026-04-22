@@ -3,7 +3,8 @@
 import { Suspense, useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { getBlogById, updateBlog } from '@/app/actions/admin/blog-detail';
+import { blogService } from '@/services/blogService';
+import { releaseBlog } from '@/app/actions/blog';
 import BlogForm from '../../components/admin-blog-form';
 import { ChevronLeft } from 'lucide-react'; // 图标优化
 
@@ -22,7 +23,7 @@ function EditBlogContent() {
     const fetchBlog = async () => {
         try {
             setLoading(true);
-            const blogData = await getBlogById(blogId);
+            const blogData = await blogService.getById(blogId);
             setInitialData({
                 title: blogData.title || '',
                 slug: blogData.slug || '', // 获取 slug
@@ -45,7 +46,11 @@ function EditBlogContent() {
     const handleSubmit = async (formData: any) => {
         setSaving(true);
         try {
-            await updateBlog(blogId, formData);
+            // 使用 Server Action releaseBlog 更新博客
+            await releaseBlog({
+                id: blogId,
+                ...formData
+            });
             // 不立即跳转，而是提示成功，可以给用户继续编辑的机会，或者跳转
             // 这里选择跳转回列表
             router.push('/admin/blog');

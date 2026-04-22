@@ -4,7 +4,7 @@
 import { Suspense, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { updateBlog } from '@/app/actions/admin/blog-detail';
+import { releaseBlog } from '@/app/actions/blog';
 import BlogForm from '../components/admin-blog-form';
 
 export const dynamic = 'force-dynamic';
@@ -16,7 +16,11 @@ function AddBlogContent() {
     const handleSubmit = async (formData: any) => {
         setSaving(true);
         try {
-            await updateBlog(0, formData); // 对于新建，id 为 0 或 undefined，后端会创建新记录
+            // 使用 Server Action releaseBlog 创建新博客
+            await releaseBlog({
+                id: 0, // 对于新建，id 为 0，后端会创建新记录
+                ...formData
+            });
             router.push('/admin/blog');
             // 可以添加成功提示：创建博客成功！
         } catch (error) {

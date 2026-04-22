@@ -13,10 +13,20 @@ async function getAuthToken(): Promise<string | null> {
         if (typeof window !== 'undefined') {
             return getClientAuthToken();
         } else {
-            const { getToken } = await import('@/lib/token-utils');
-            // console.log('server get token')
+            // 服务端：检查 Token 是否过期，如果过期则主动刷新
+            const { getToken, isTokenExpired, refreshTokenIfNeeded, setTokens } = await import('@/lib/token-utils');
             const token = await getToken();
-            return token || null; // 将 undefined 转换为 null
+            
+            if (!token) return null;
+            
+            // 检查是否过期
+            if (isTokenExpired(token)) {
+                console.log('[BackendUtils] Server token expired, refreshing...');
+                const newToken = await refreshTokenIfNeeded();
+                return newToken || null;
+            }
+            
+            return token;
         }
     } catch (error) {
         console.error('Failed to get auth token:', error);
@@ -26,25 +36,17 @@ async function getAuthToken(): Promise<string | null> {
 
 function getClientAuthToken(): string | null {
     try {
-        const userInfoStr = localStorage.getItem('userInfo');
-
-        if (userInfoStr) {
-            try {
-                const userInfo = JSON.parse(userInfoStr);
-                if (userInfo?.token) {
-                    return userInfo.token;
+        // 使用 token-utils 的统一方法获取 Token
+        if (typeof window !== 'undefined') {
+            const token = localStorage.getItem('accessToken');
+            if (token) {
+                // 检查是否过期
+                const { isTokenExpired } = require('@/lib/token-utils');
+                if (isTokenExpired(token)) {
+                    console.log('[BackendUtils] Client token expired, will let axios interceptor handle refresh');
+                    // 客户端让 axios 拦截器处理刷新，这里直接返回 token
                 }
-            } catch (parseError) {
-                console.error('Failed to parse userInfo from localStorage:', parseError);
-                localStorage.removeItem('userInfo');
-                localStorage.removeItem('isLoggedIn');
-            }
-        }
-
-        const cookies = document.cookie.split('; ');
-        for (const cookie of cookies) {
-            if (cookie.startsWith('auth_token=')) {
-                return cookie.substring('auth_token='.length);
+                return token;
             }
         }
 

@@ -16,8 +16,9 @@ import AdminProductHighlight from './admin-product-highlight';
 import AdminProductCategoryUrl from './admin-product-category-url';
 
 // 服务引用
-import { getAdminRootCategories } from '@/app/actions/admin/category';
-import { getAdminProductById, releaseAdminProduct } from '@/app/actions/admin/product';
+import { categoryService } from '@/services/categoryService';
+import { productService } from '@/services/productService';
+import { releaseAdminProduct } from '@/app/actions/product';
 
 // 类型引用
 import { RootResponse } from '@/types/category';
@@ -96,7 +97,7 @@ function AdminProductFormContent() {
 
     const loadRoots = async (): Promise<Category[]> => {
         try {
-            const rootsResponse: RootResponse[] = await getAdminRootCategories();
+            const rootsResponse: RootResponse[] = await categoryService.getRoots();
             return rootsResponse.map(root => ({
                 slug: root.slug,
                 name: root.name,
@@ -115,7 +116,7 @@ function AdminProductFormContent() {
 
     const loadProductData = async (id: string) => {
         try {
-            const productData = await getAdminProductById(id);
+            const productData = await productService.adminGetById(id);
             setProduct(productData);
         } catch (error) {
             console.error('加载产品数据失败:', error);

@@ -4,7 +4,7 @@
 import React, { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Users, MousePointerClick, DollarSign, TrendingUp, Calendar, Search, Filter, Wallet, Clock, CheckCircle, AlertCircle } from 'lucide-react'
-import { getAdminAffiliateStats, getAdminAffiliateList } from '@/app/actions/admin/affiliate'
+import { getAdminAffiliateStats, getAdminAffiliateList } from '@/app/actions/admin'
 
 interface AffiliateUser {
     id: number;

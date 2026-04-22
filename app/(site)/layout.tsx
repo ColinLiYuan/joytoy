@@ -1,4 +1,4 @@
-import { categoryService } from '@/services/category-service';
+import { categoryService } from '@/services/categoryService';
 import { RootResponse } from '@/types/category';
 import Notice from '@/components/common/notice';
 import Navigation from '@/components/navigation/navigation';

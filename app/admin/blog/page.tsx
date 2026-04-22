@@ -2,8 +2,8 @@
 'use client';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { getAdminBlogs } from '@/app/actions/admin/blog';
-import { AdminBlogResponse, AdminBlogListResponse } from '@/app/actions/admin/blog-types'
+import { blogService } from '@/services/blogService';
+import { AdminBlogResponse, AdminBlogListResponse } from '@/types/blog'
 import { Eye, Edit, Plus, ExternalLink } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
@@ -45,11 +45,11 @@ export default function BlogManagementPage() {
     const fetchBlogs = async () => {
         try {
             setLoading(true);
-            const response: AdminBlogListResponse = await getAdminBlogs({
-                page: pagination.currentPage,
-                size: pagination.pageSize,
-                status: statusFilter !== 'ALL' ? statusFilter : undefined
-            });
+            const response: AdminBlogListResponse = await blogService.adminList(
+                pagination.currentPage,
+                pagination.pageSize,
+                statusFilter !== 'ALL' ? statusFilter : undefined
+            );
 
             setBlogs(response.content);
             setPagination({

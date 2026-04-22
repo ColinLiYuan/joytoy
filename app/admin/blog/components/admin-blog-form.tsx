@@ -2,7 +2,7 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
-import { uploadBlogImage } from '@/app/actions/admin/blog-upload';
+import { blogService } from '@/services/blogService';
 import { RefreshCw } from 'lucide-react';
 
 // 动态导入 MD 编辑器
@@ -175,11 +175,8 @@ export default function BlogForm({
         try {
             setUploadingImage(true);
             
-            // 创建 FormData
-            const uploadFormData = new FormData();
-            uploadFormData.append('file', file);
-            
-            const result = await uploadBlogImage(uploadFormData);
+            // 直接调用 Service 的 uploadImage 方法
+            const result = await blogService.uploadImage(file);
 
             // 获取完整 URL (用于 Markdown 预览)
             const fullImageUrl = getImageUrl(result.url);

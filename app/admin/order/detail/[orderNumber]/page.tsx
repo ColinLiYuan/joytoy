@@ -2,8 +2,7 @@
 
 import { Suspense, useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { getOrderDetail } from '@/app/actions/admin/order-detail';
-import { getOrderStatusLogs, getOrderCommissionLogs, OrderStatusLog, AffiliateCommissionLog } from '@/app/actions/admin/order-status-history';
+import { orderService, OrderStatusLog, AffiliateCommissionLog } from '@/services/orderService';
 import { OrderResponse } from '@/types/order';
 import { getProductImageUrl } from '@/lib/image-utils';
 import {
@@ -32,16 +31,16 @@ function OrderDetailContent() {
             }
 
             try {
-                // 调用 Server Action 获取数据
-                const data = await getOrderDetail(orderNo);
+                // 调用 service 获取数据
+                const data = await orderService.getAdminOrderDetail(orderNo);
                 console.log('Fetched Detail:', data);
                 setOrder(data);
                 
                 // 获取状态历史和佣金日志
                 setLogsLoading(true);
                 const [statusLogsData, commissionLogsData] = await Promise.all([
-                    getOrderStatusLogs(orderNo),
-                    getOrderCommissionLogs(orderNo)
+                    orderService.getOrderStatusLogs(orderNo),
+                    orderService.getOrderCommissionLogs(orderNo)
                 ]);
                 setStatusLogs(statusLogsData);
                 setCommissionLogs(commissionLogsData);

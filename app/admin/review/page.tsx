@@ -2,7 +2,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { getAdminReviews, auditReview } from '@/app/actions/admin/review'
+import { getAdminReviews, auditReview } from '@/app/actions/review'
 import { Review, ReviewStatus } from '@/types/review'
 import {
     CheckCircle,
