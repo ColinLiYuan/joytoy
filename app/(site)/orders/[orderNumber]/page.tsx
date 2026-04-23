@@ -74,7 +74,7 @@ function OrderDetailsContent({ params }: { params: Promise<{ orderNumber: string
                 setOrder(data);
 
                 // 计算商品小计
-                const calculatedSubtotal = data.items.reduce((total, item) => {
+                const calculatedSubtotal = data.items.reduce((total: number, item: any) => {
                     return total + (item.unitPrice * (item.quantity || 1));
                 }, 0);
                 setSubtotal(calculatedSubtotal);
@@ -372,7 +372,7 @@ function OrderDetailsContent({ params }: { params: Promise<{ orderNumber: string
                         <ArrowLeft size={16} /> Back to Orders
                     </Link>
                     
-                    {['PENDING', 'PAID'].includes(order.status.toUpperCase()) && (
+                    {order.status?.toUpperCase() === 'PENDING' && (
                         <button
                             onClick={async () => {
                                 if (confirm('Are you sure you want to cancel this order? This action cannot be undone.')) {

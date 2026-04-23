@@ -26,10 +26,10 @@ export default function AffiliateDashboard() {
     const [authError, setAuthError] = useState(false);
     const { isLoggedIn, isClient, openAuthModal } = useAuth();
 
-    // 接入后端数据
+    // Fetch backend data
     useEffect(() => {
         const fetchDashboard = async () => {
-            // ✅ 先检查是否登录（跟订单列表一样）
+            // ✅ Check if logged in (same as order list)
             const userId = getUserId();
             if (!userId) {
                 console.log('[Affiliate Dashboard] User not logged in');
@@ -53,7 +53,7 @@ export default function AffiliateDashboard() {
         }
     }, [isClient]);
 
-    // 加载状态
+    // Loading state
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-[400px]">
@@ -62,7 +62,7 @@ export default function AffiliateDashboard() {
         );
     }
 
-    // 未登录状态
+    // Not logged in state
     if (authError || !isClient) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[400px] bg-white rounded-2xl border border-dashed border-gray-200 p-12">
@@ -85,7 +85,7 @@ export default function AffiliateDashboard() {
         );
     }
 
-    // 错误处理或空状态
+    // Error handling or empty state
     if (!data) {
         return (
             <div className="p-8 bg-red-50 border border-red-100 rounded-2xl text-red-600 text-sm font-medium">
@@ -245,7 +245,7 @@ export default function AffiliateDashboard() {
 }
 
 /**
- * 进度条组件：展示具体路径统计
+ * Progress bar component: display specific path statistics
  */
 function ProgressRow({ item, totalClicks, color }: { item: any, totalClicks: number, color: string }) {
     const percentage = totalClicks > 0 ? (item.clicks / totalClicks) * 100 : 0;
@@ -271,7 +271,7 @@ function ProgressRow({ item, totalClicks, color }: { item: any, totalClicks: num
 }
 
 /**
- * 统计卡片组件
+ * Stat card component
  */
 function StatCard({ label, value, icon: Icon, color, bg }: any) {
     return (

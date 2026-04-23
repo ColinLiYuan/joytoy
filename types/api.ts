@@ -29,4 +29,15 @@ export interface PaginatedResponse<T> extends BackendApiResponse<T[]> {
     totalPages: number;
 }
 
+// 后端分页响应格式（用于 Server Action）
+export interface PageResponse<T> {
+    content: T[];
+    currentPage: number;
+    pageSize: number;
+    totalElements: number;
+    totalPages: number;
+    hasNext: boolean;
+    hasPrevious: boolean;
+}
+
 export type ApiErrorType = 'network' | 'http' | 'system_business' | 'custom_business';

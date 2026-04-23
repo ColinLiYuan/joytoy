@@ -238,7 +238,7 @@ function AdminProductFormContent() {
 
     // 计算各区块完成状态
     const sectionStatus = {
-        basic: product.title && product.sourceVendor && product.currentPrice > 0 && product.originalPrice > 0,
+        basic: product.title && product.sourceVendor && (product.currentPrice || 0) > 0 && (product.originalPrice || 0) > 0,
         category_url: product.slug && product.slug.length > 0 && product.categories && product.categories.length > 0,
         images: product.image && product.image.length > 0,
         specs: true, // 可选

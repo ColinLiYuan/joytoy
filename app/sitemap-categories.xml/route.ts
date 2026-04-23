@@ -1,7 +1,7 @@
 // app/sitemap-categories.xml
 
 import { NextResponse } from 'next/server'
-import { categoryService } from '@/services/category-service';
+import { categoryService } from '@/services/categoryService';
 import {CategoryResponse} from "@/types/category";
 
 interface CategoryPath {

@@ -83,6 +83,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 setIsLoggedIn(true);
                 setUserInfo(JSON.parse(userInfoStr));
                 // console.log('AuthContext: User is logged in');
+                
+                // ✅ 修复：检查 Cookie 是否同步，如果没有则从 LocalStorage 补写
+                const cookieToken = document.cookie.includes('accessToken=');
+                const storageToken = localStorage.getItem('accessToken');
+                const storageRefreshToken = localStorage.getItem('refreshToken');
+                
+                if (!cookieToken && storageToken && storageRefreshToken) {
+                    console.log('[AuthContext] Cookie not synced, restoring from localStorage');
+                    setTokens(storageToken, storageRefreshToken);
+                }
             } catch (error) {
                 console.error('Failed to parse user info:', error);
                 // 清除损坏的数据

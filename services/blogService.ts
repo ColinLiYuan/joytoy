@@ -66,6 +66,35 @@ class BlogService {
             throw error;
         }
     }
+
+    /**
+     * 上传图片 (写操作 - 使用 Axios 直连后端)
+     */
+    async uploadImage(file: File): Promise<{ url: string }> {
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const url = `${BACKEND_API_ROUTES.admin.blog.upload}`;
+            console.log('[BlogService] Uploading image to:', url);
+            
+            const response = await axiosClient.post(url, formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
+            console.log('[BlogService] Upload image response:', response.data);
+
+            if (response.data?.success) {
+                return response.data.data;
+            }
+
+            throw new Error(response.data?.message || 'Failed to upload image');
+        } catch (error) {
+            console.error('❌ [BlogService] Upload image failed:', error);
+            throw error;
+        }
+    }
 }
 
 export const blogService = new BlogService();

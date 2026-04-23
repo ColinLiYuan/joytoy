@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { cancelAdminOrder, settleOrderCommission, updateOrderStatus } from '@/app/actions/order'
+import { cancelAdminOrder, refundAdminOrder, settleOrderCommission, updateOrderStatus } from '@/app/actions/order'
 import { orderService } from '@/services/orderService'
 import { OrderResponse, OrderStatus } from '@/types/order'
 import {
@@ -23,7 +23,7 @@ import {
 
 // 定义所有状态
 const statuses: (OrderStatus | 'ALL')[] = [
-    'ALL', 'PENDING', 'PAID', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'COMPLETED', 'CANCELLED'
+    'ALL', 'PENDING', 'PAID', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'COMPLETED', 'CANCELLED', 'REFUNDED'
 ];
 
 // 状态中文映射
@@ -116,8 +116,7 @@ export default function OrderPage() {
         if (!refundOrder) return
         setRefundLoading(true)
         try {
-            await updateOrderStatus(refundOrder.orderNumber, 'REFUNDED');
-            // TODO: 如果需要发送退款邮件，可以调用 sendRefundEmail
+            await refundAdminOrder(refundOrder.orderNumber, refundReason || '管理员退款')
             setIsRefundModalOpen(false)
             setRefundReason('')
             fetchOrders()
@@ -274,26 +273,40 @@ export default function OrderPage() {
                                 });
                             }
                             
+                            // 格式化下单时间
+                            const orderDate = new Date(order.createdAt);
+                            const timeStr = orderDate.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+                            const dateStr = orderDate.toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' });
+                            
+                            // 拼接商品名称
+                            const productNames = order.items?.map(item => item.productTitle).filter(Boolean).join(', ') || '-';
+                            
                             return (
                             <tr key={order.id} className="hover:bg-gray-50/50 transition-colors">
                                 <td className="px-6 py-4">
                                     <div className="font-mono text-sm font-bold text-gray-900">#{order.orderNumber}</div>
-                                    <div className="text-xs text-gray-400 mt-1 flex items-center">
-                                        <Calendar className="h-3 w-3 mr-1" />
-                                        {new Date(order.createdAt).toLocaleDateString()}
+                                    <div className="flex items-center gap-1 mt-1 text-[11px] text-gray-500" title={orderDate.toLocaleString('zh-CN')}>
+                                        <Calendar className="h-3 w-3 flex-shrink-0" />
+                                        <span>{dateStr}</span>
+                                        <span className="text-gray-400">{timeStr}</span>
                                     </div>
                                 </td>
                                 <td className="px-6 py-4">
-                                    <div className="max-w-xs truncate" title={order.items?.[0]?.productTitle || '无商品'}>
-                                        <span className="text-sm text-gray-900">
-                                            {order.items?.[0]?.productTitle || '-'}
-                                        </span>
-                                        {order.items && order.items.length > 1 && (
-                                            <span className="ml-2 text-xs text-gray-400">+{order.items.length - 1} 更多</span>
-                                        )}
+                                    <div 
+                                        className="max-w-[200px] truncate text-xs text-gray-700 cursor-pointer hover:text-gray-900"
+                                        title={productNames}
+                                    >
+                                        {productNames}
                                     </div>
                                 </td>
-                                <td className="px-6 py-4 text-sm text-gray-600">{order.guestEmail}</td>
+                                <td className="px-6 py-4">
+                                    <div 
+                                        className="max-w-[180px] truncate text-xs text-gray-600 cursor-pointer hover:text-gray-900"
+                                        title={order.guestEmail || '-'}
+                                    >
+                                        {order.guestEmail || '-'}
+                                    </div>
+                                </td>
                                 <td className="px-6 py-4">
                                     {order.affiliateCode ? (
                                         <div className="flex flex-col gap-1">
@@ -364,7 +377,7 @@ export default function OrderPage() {
                                         {order.status === 'SHIPPED' && (
                                             <button onClick={() => handleUpdateStatus(order.orderNumber, '')} className="p-2 text-orange-500 hover:bg-orange-50 rounded-lg" title="确认签收"><PackageCheck className="h-5 w-5" /></button>
                                         )}
-                                        {order.status === 'COMPLETED' && order.affiliateId && order.commissionAmount > 0 && order.affiliatePayoutStatus?.toUpperCase() === 'PENDING' && (
+                                        {order.status === 'COMPLETED' && order.affiliateId && (order.commissionAmount || 0) > 0 && order.affiliatePayoutStatus?.toUpperCase() === 'PENDING' && (
                                             <button 
                                                 onClick={() => handleSettleCommission(order)} 
                                                 disabled={settlingOrderId === order.id}

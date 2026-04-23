@@ -10,7 +10,7 @@ import {
     Loader2,
     ShieldCheck
 } from 'lucide-react'
-import { getAffiliateCommissionLogs, CommissionLogResponse, CommissionLogsPageResponse } from '@/app/actions/affiliate'
+import { getAffiliateCommissionLogs, CommissionLogsPageResponse } from '@/app/actions/affiliate'
 import { getUserId } from '@/lib/user-utils'
 import { useAuth } from '@/contexts/authContext'
 

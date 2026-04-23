@@ -69,7 +69,7 @@ class ProductService {
             throw new Error(result.message || `Failed to release product`);
         }
 
-        return result.data;
+        return result.data as ProductListResponse;
     }
 
     async adminGetById(id: string): Promise<AdminProductResponse> {

@@ -179,16 +179,26 @@ export function middleware(request: NextRequest) {
         const token = request.cookies.get('accessToken') || request.cookies.get('access_token');
         
         if (!token) {
+            console.log('[Middleware] Admin access denied: No token found');
             // 重定向到首页，带上 redirect 参数
             return NextResponse.redirect(new URL('/?redirect=/admin', request.url));
         }
         
         try {
             const payload = parseJwt(token.value);
-            if (!payload.isAdmin) {
+            console.log('[Middleware] Admin token payload:', { isAdmin: payload.isAdmin, role: payload.role });
+            
+            // 检查是否有管理员权限（兼容 role 和 isAdmin 两种字段）
+            const hasAdminPermission = payload.isAdmin === true || 
+                                      payload.role === 'ADMIN' || 
+                                      payload.role === 'SUPER_ADMIN';
+            
+            if (!hasAdminPermission) {
+                console.log('[Middleware] Admin access denied: User is not admin');
                 return NextResponse.redirect(new URL('/403', request.url));
             }
-        } catch {
+        } catch (error) {
+            console.log('[Middleware] Admin access denied: Invalid token', error);
             return NextResponse.redirect(new URL('/?redirect=/admin', request.url));
         }
     }

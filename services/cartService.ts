@@ -2,6 +2,8 @@
 import axiosClient from '@/lib/axios-client';
 import { CartResponse } from '@/types/cart';
 
+export type { CartResponse }; // 重新导出 CartResponse
+
 export interface CartItem {
     id: number;
     productId: number;

@@ -93,7 +93,7 @@ export class AffiliateService {
             throw new Error(result.message || 'Failed to fetch dashboard');
         }
 
-        return result.data;
+        return result.data as AffDashboardResponse;
     }
 
     /**
@@ -135,7 +135,7 @@ export class AffiliateService {
             throw new Error(result.message || 'Failed to fetch orders');
         }
 
-        return result.data;
+        return result.data as OrderListResponse;
     }
 
     /**
@@ -153,7 +153,7 @@ export class AffiliateService {
             throw new Error(result.message || 'Failed to fetch payouts');
         }
 
-        return result.data;
+        return result.data as PageResponse<PayoutResponse>;
     }
 }
 

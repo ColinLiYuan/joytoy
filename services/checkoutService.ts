@@ -1,12 +1,12 @@
 // services/checkoutService.ts
 
 import { CheckoutValidateRequest, CouponResponse } from '@/types/checkout';
-import { SERVER_CONFIG } from '@/lib/api-config';
+import { BACKEND_CONFIG } from '@/lib/api-config';
 
 class CheckoutService {
 
     async validateCoupon(checkoutValidateRequest: CheckoutValidateRequest): Promise<CouponResponse> {
-        const url = `${SERVER_CONFIG.apiRoutes.checkout}/validateCoupon`;
+        const url = `${BACKEND_CONFIG.baseURL}/api/V1/checkout/validateCoupon`;
         // console.log('🟢 Creating order, URL:', url);
 
         const response = await fetch(url, {

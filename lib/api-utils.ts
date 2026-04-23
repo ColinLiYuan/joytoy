@@ -96,7 +96,7 @@ export async function proxyRequest(
 
     // 1. 获取 Token (Async) - 只有在没有手动传递 Authorization 时才获取
     let token: string | undefined;
-    const hasCustomAuth = headers && headers['Authorization'];
+    const hasCustomAuth = headers && (headers as Record<string, string>)['Authorization'];
     
     console.log('[PROXY REQUEST] Endpoint:', endpoint);
     console.log('[PROXY REQUEST] Has custom auth:', !!hasCustomAuth);
@@ -123,8 +123,8 @@ export async function proxyRequest(
     };
     
     console.log('[PROXY REQUEST] Final headers:', {
-        hasAuth: !!requestHeaders['Authorization'],
-        authPreview: requestHeaders['Authorization'] ? `${requestHeaders['Authorization'].substring(0, 30)}...` : 'none'
+        hasAuth: !!(requestHeaders as Record<string, string>)['Authorization'],
+        authPreview: (requestHeaders as Record<string, string>)['Authorization'] ? `${(requestHeaders as Record<string, string>)['Authorization'].substring(0, 30)}...` : 'none'
     });
 
     const controller = new AbortController();

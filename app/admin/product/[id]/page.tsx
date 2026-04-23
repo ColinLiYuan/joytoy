@@ -173,7 +173,7 @@ export default function AdminProductDetailPage() {
                                 <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden">
                                     {product.image ? (
                                         <Image
-                                            src={getProductImageUrl('', product.image)}
+                                            src={getProductImageUrl(undefined, product.image)}
                                             alt={product.title || ''}
                                             width={400}
                                             height={400}

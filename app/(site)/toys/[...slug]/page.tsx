@@ -19,7 +19,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     try {
         const product = await productServiceServer.getProductBySlug(slug);
         const canonicalUrl = `https://mythtoy.com/toys${slug}`;
-        const imageUrl = getProductImageUrl('', product.image);
+        const imageUrl = getProductImageUrl(undefined, product.image);
         // 去除 Markdown 符号，只取纯文本作为描述，避免 Schema 报错
         const cleanDescription = product.description?.replace(/[#*`]/g, '').substring(0, 160) || `Buy ${product.title}`;
 
@@ -82,8 +82,8 @@ export default async function ProductDetail({ params }: PageProps) {
     if (!product) notFound();
 
     // --- 🔥 核心修改：构建 Product Schema JSON-LD ---
-    const productImageUrl = getProductImageUrl('', product.image);
-    const galleryUrls = product.galleries?.map(g => getProductImageUrl('', g.url)) || [];
+    const productImageUrl = getProductImageUrl(undefined, product.image);
+    const galleryUrls = product.galleries?.map(g => getProductImageUrl(undefined, g.url)) || [];
     const allImages = [productImageUrl, ...galleryUrls];
 
     // 简单的 Markdown 清理，确保 JSON 不会坏掉
@@ -149,7 +149,7 @@ export default async function ProductDetail({ params }: PageProps) {
         
         // 始终将主图作为第一张图片
         const items: Array<{ url: string; alt: string; type: 'image' | 'video'; poster: string }> = [{
-            url: getProductImageUrl('', product.image),
+            url: getProductImageUrl(undefined, product.image),
             alt: product.title,
             type: 'image',
             poster: ''
@@ -158,10 +158,10 @@ export default async function ProductDetail({ params }: PageProps) {
         // 如果有额外的 galleries，追加到后面
         if (product.galleries && product.galleries.length > 0) {
             const galleryItems = product.galleries.map(gallery => ({
-                url: getProductImageUrl('', gallery.url),
+                url: getProductImageUrl(undefined, gallery.url),
                 alt: gallery.alt || product.title,
                 type: (gallery.type as 'image' | 'video') || 'image',
-                poster: getProductImageUrl('', gallery.poster)
+                poster: getProductImageUrl(undefined, gallery.poster)
             }));
             items.push(...galleryItems);
         }

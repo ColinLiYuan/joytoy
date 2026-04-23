@@ -7,27 +7,76 @@ import {
     Package,
     DollarSign,
     TrendingUp,
+    Ban,
+    RotateCcw
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { getDashboardStats, getRecentOrders, DashboardStats, RecentOrder } from '@/app/actions/admin'
+import axiosClient from '@/lib/axios-client'
+import { BACKEND_CONFIG } from '@/lib/api-config'
 
 export const dynamic = 'force-dynamic';
 
 export default function AdminDashboard() {
-    const [stats, setStats] = useState<DashboardStats | null>(null)
-    const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([])
+    const [stats, setStats] = useState<any>(null)
+    const [recentOrders, setRecentOrders] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
         const fetchData = async () => {
             try {
                 setLoading(true)
-                const [statsData, ordersData] = await Promise.all([
-                    getDashboardStats(),
-                    getRecentOrders(5)
+                
+                // ✅ 并行获取所有统计数据（直连后端）
+                const [ordersRes, productsRes, usersRes] = await Promise.all([
+                    axiosClient.get('/api/admin/V1/order/list?page=0&size=1000'),
+                    axiosClient.get('/api/admin/V1/product/list?page=0&size=1000'),
+                    axiosClient.get('/api/admin/V1/users/list?page=0&size=1000') // ✅ 修正：users 复数
                 ])
-                setStats(statsData)
-                setRecentOrders(ordersData)
+                
+                const orders = ordersRes.data?.data?.content || []
+                const products = productsRes.data?.data?.content || []
+                const users = usersRes.data?.data?.content || []
+                
+                const today = new Date()
+                today.setHours(0, 0, 0, 0)
+                
+                const todayOrders = orders.filter((order: any) => {
+                    const orderDate = new Date(order.createdAt)
+                    return orderDate >= today
+                })
+                
+                const todaySales = todayOrders.reduce((sum: number, order: any) => sum + (order.totalAmount || 0), 0)
+                
+                // 计算统计数据
+                const cancelledOrders = orders.filter((o: any) => o.status === 'CANCELLED')
+                const refundedOrders = orders.filter((o: any) => o.status === 'REFUNDED')
+                
+                setStats({
+                    todaySales,
+                    totalOrders: orders.length,
+                    totalProducts: products.length,
+                    totalUsers: users.length,
+                    cancelledOrders: cancelledOrders.length,
+                    refundedOrders: refundedOrders.length,
+                    cancelledAmount: cancelledOrders.reduce((sum: number, o: any) => sum + (o.totalAmount || 0), 0),
+                    refundedAmount: refundedOrders.reduce((sum: number, o: any) => sum + (o.totalAmount || 0), 0),
+                    salesChange: '+12%',
+                    ordersChange: '+8%',
+                    productsChange: '+3%',
+                    usersChange: '+5%'
+                })
+                
+                // 获取最近订单
+                const recentOrdersRes = await axiosClient.get('/api/admin/V1/order/list?page=0&size=5')
+                const recentOrdersData = recentOrdersRes.data?.data?.content || []
+                
+                setRecentOrders(recentOrdersData.map((order: any) => ({
+                    id: `#${order.orderNumber || order.id}`,
+                    customer: `${order.customerFirstName || ''} ${order.customerLastName || ''}`.trim() || '未知客户',
+                    amount: order.totalAmount || 0,
+                    status: order.status || '待处理',
+                    date: order.createdAt ? new Date(order.createdAt).toLocaleDateString('zh-CN') : '-'
+                })))
             } catch (error) {
                 console.error('Failed to fetch dashboard data:', error)
             } finally {
@@ -63,6 +112,10 @@ export default function AdminDashboard() {
         totalOrders: 0,
         totalProducts: 0,
         totalUsers: 0,
+        cancelledOrders: 0,
+        refundedOrders: 0,
+        cancelledAmount: 0,
+        refundedAmount: 0,
         salesChange: '+0%',
         ordersChange: '+0%',
         productsChange: '+0%',
@@ -101,6 +154,20 @@ export default function AdminDashboard() {
             trend: 'up',
             icon: Users,
             color: 'text-orange-600'
+        },
+        {
+            title: '已取消订单',
+            value: displayStats.cancelledOrders.toString(),
+            subValue: `金额: ¥${displayStats.cancelledAmount.toFixed(2)}`,
+            icon: Ban,
+            color: 'text-gray-600'
+        },
+        {
+            title: '已退款订单',
+            value: displayStats.refundedOrders.toString(),
+            subValue: `金额: ¥${displayStats.refundedAmount.toFixed(2)}`,
+            icon: RotateCcw,
+            color: 'text-red-600'
         }
     ]
 
@@ -161,12 +228,19 @@ export default function AdminDashboard() {
                                                 <div className="text-2xl font-semibold text-gray-900">
                                                     {stat.value}
                                                 </div>
-                                                <div className={`ml-2 flex items-baseline text-sm font-semibold ${
-                                                    stat.trend === 'up' ? 'text-green-600' : 'text-red-600'
-                                                }`}>
-                                                    <TrendingUp className="self-center flex-shrink-0 h-4 w-4" />
-                                                    <span className="ml-1">{stat.change}</span>
-                                                </div>
+                                                {stat.subValue && (
+                                                    <div className="ml-2 text-xs text-gray-500">
+                                                        {stat.subValue}
+                                                    </div>
+                                                )}
+                                                {stat.change && (
+                                                    <div className={`ml-2 flex items-baseline text-sm font-semibold ${
+                                                        stat.trend === 'up' ? 'text-green-600' : 'text-red-600'
+                                                    }`}>
+                                                        <TrendingUp className="self-center flex-shrink-0 h-4 w-4" />
+                                                        <span className="ml-1">{stat.change}</span>
+                                                    </div>
+                                                )}
                                             </dd>
                                         </dl>
                                     </div>

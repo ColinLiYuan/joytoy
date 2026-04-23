@@ -10,6 +10,8 @@ import { useAuth } from '@/contexts/authContext';
 import { useCartStore } from '@/stores/useCartStore';
 import { addToWishlist, removeFromWishlist } from '@/app/actions/wishlist';
 import { productService } from '@/services/productService';
+import { bundleService } from '@/services/bundleService';
+import { ProductBundle, BundleSummary } from '@/types/bundle';
 import { joinWaitlist } from '@/app/actions/waitlist'; // ✅ Import the new action
 import { getProductImageUrl } from '@/lib/image-utils';
 import { Z_INDEX } from '@/lib/constants/z-index';
@@ -19,6 +21,7 @@ import Breadcrumb from '@/components/common/breadcrumb';
 import ProductBadge from '@/components/product/product-badge';
 import ProductReviews from '@/components/product/reviews/product-reviews';
 import FAQSection from '@/components/common/faq-section';
+import BundleUpsell from '@/components/common/bundle-upsell';
 
 import {
     ShoppingBag, ShieldCheck, Package, Truck, ChevronDown, ChevronUp, Star, Heart,
@@ -201,6 +204,7 @@ export default function ProductDetailClient({
     const [activeAccordion, setActiveAccordion] = useState<string | null>('details');
     const [relatedProducts, setRelatedProducts] = useState<ProductResponse[]>([]);
     const [recentlyViewed, setRecentlyViewed] = useState<ProductResponse[]>([]);
+    const [bundleRecommendations, setBundleRecommendations] = useState<BundleSummary[]>([]);
 
     const { showToast } = useToast();
     const { openAuthModal, isLoggedIn } = useAuth();
@@ -255,6 +259,20 @@ export default function ProductDetailClient({
         };
         fetchRelated();
     }, [product.slug]);
+
+    // 加载套装推荐
+    useEffect(() => {
+        const fetchBundleRecommendations = async () => {
+            try {
+                const bundles = await bundleService.getSuggestBundles([product.id]);
+                console.log('📦 [产品详情页] 获取到套装推荐:', bundles);
+                setBundleRecommendations(bundles || []);
+            } catch (error) {
+                console.error('Failed to fetch bundle recommendations:', error);
+            }
+        };
+        fetchBundleRecommendations();
+    }, [product.id]);
 
     useEffect(() => {
         try {
@@ -352,7 +370,7 @@ export default function ProductDetailClient({
                 productTitle: product.title,
                 productName: product.name,
                 productSku: selectedSku.sku,
-                productImage: getProductImageUrl('', product.image),
+                productImage: getProductImageUrl(undefined, product.image),
                 unitPrice: product.currentPrice,
                 quantity: 1,
                 color: selectedSku.color,
@@ -547,6 +565,11 @@ export default function ProductDetailClient({
                             <span className="flex items-center gap-2"><ShieldCheck size={16} /> Body-Safe</span>
                             <span className="flex items-center gap-2"><Package size={16} /> Plain Box</span>
                         </div>
+
+                        {/* 套装推荐 */}
+                        {bundleRecommendations.length > 0 && (
+                            <BundleUpsell bundles={bundleRecommendations} />
+                        )}
                     </div>
                 </div>
             </div>
@@ -556,7 +579,7 @@ export default function ProductDetailClient({
                     <div className="absolute inset-0 bg-black/40 z-10 pointer-events-none" />
                     <div className="relative w-full h-[500px] md:h-[700px]">
                         <Image
-                            src={getProductImageUrl('', highlightData.image)}
+                            src={getProductImageUrl(undefined, highlightData.image)}
                             alt={highlightData.title}
                             fill
                             className="object-cover transition-transform duration-1000 group-hover:scale-105"
@@ -620,7 +643,7 @@ export default function ProductDetailClient({
                                 {highlightData?.imageBox ? (
                                     <div className="relative w-full aspect-square max-w-[280px]">
                                         <Image
-                                            src={getProductImageUrl('', highlightData.imageBox)}
+                                            src={getProductImageUrl(undefined, highlightData.imageBox)}
                                             alt="What's included"
                                             fill
                                             className="object-contain"
@@ -771,7 +794,7 @@ export default function ProductDetailClient({
 
                     <div className="relative w-full h-[500px] md:h-[800px]">
                         <Image
-                            src={getProductImageUrl('', highlightData.imageTail)}
+                            src={getProductImageUrl(undefined, highlightData.imageTail)}
                             alt="Unboxing Ritual"
                             fill
                             className="object-cover transition-transform duration-[3000ms] ease-out group-hover:scale-110"

@@ -195,7 +195,7 @@ class OrderService {
             throw new Error(result.message || 'Shipping failed');
         }
 
-        return result.data;
+        return result.data as OrderResponse;
     }
 
     // ✅ 用户取消订单

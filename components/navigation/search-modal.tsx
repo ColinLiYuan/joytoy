@@ -153,7 +153,7 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
                                 >
                                     <div className="w-14 h-14 relative rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
                                         <Image
-                                            src={getProductImageUrl('', product.image)}
+                                            src={getProductImageUrl(undefined, product.image)}
                                             alt={product.title}
                                             fill
                                             className="object-cover"

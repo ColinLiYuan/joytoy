@@ -103,6 +103,7 @@ export interface OrderItemRequest {
     quantity: number;
     unitPrice: number;
     color: string;
+    bundleId?: number;  // 套装ID，用于标记该商品属于哪个套装
 }
 
 export interface LogisticsCheckpoint {

@@ -11,7 +11,8 @@ import {
     MessageSquare,
     TrendingUp,
     CreditCard,
-    ChevronDown
+    ChevronDown,
+    History
 } from 'lucide-react';
 
 interface SidebarContentProps {
@@ -26,12 +27,25 @@ export default function AdminSidebar({ sidebarOpen, setSidebarOpen }: SidebarCon
 function SidebarContent({ sidebarOpen, setSidebarOpen }: SidebarContentProps) {
     const pathname = usePathname()
 
-    // 导航配置
+    // 导航配置（按业务逻辑分组）
     const navigation = [
+        // 核心业务
         { name: '仪表盘', href: '/admin', icon: BarChart3 },
-        { name: '商品管理', href: '/admin/product', icon: Package },
+        { 
+            name: '商品管理', 
+            href: '/admin/product',
+            icon: Package,
+            children: [
+                { name: '商品列表', href: '/admin/product' },
+                { name: '套装管理', href: '/admin/bundle' },
+                { name: '库存流水', href: '/admin/inventory-logs' }
+            ]
+        },
         { name: '订单管理', href: '/admin/order', icon: ShoppingCart },
+        { name: '用户管理', href: '/admin/user', icon: Users },
         { name: '购物车管理', href: '/admin/cart', icon: CreditCard },
+        
+        // 营销与推广
         { 
             name: '联盟管理', 
             href: '/admin/affiliate',
@@ -41,7 +55,8 @@ function SidebarContent({ sidebarOpen, setSidebarOpen }: SidebarContentProps) {
                 { name: '提现管理', href: '/admin/affiliate/payouts' }
             ]
         },
-        { name: '用户管理', href: '/admin/user', icon: Users },
+        
+        // 内容与互动
         { name: '评论管理', href: '/admin/review', icon: MessageSquare },
         { name: '博客管理', href: '/admin/blog', icon: BookOpen },
     ];

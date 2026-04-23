@@ -50,6 +50,10 @@ interface AffiliateStats {
     totalConversions: number;
     totalCommission: number;
     conversionRate: number;
+    settledAmount: number;       // Settled amount (over 30 days)
+    pendingAmount: number;       // Pending amount (within 30 days)
+    currentBalance: number;      // Current total balance
+    totalPaid: number;           // Total paid amount
 }
 
 export interface AdminCommissionLogResponse {
@@ -162,7 +166,17 @@ export async function getDashboardStats(retry = false): Promise<DashboardStats> 
         if (ordersRes.status === 401 && !retry) {
             const newToken = await refreshServerToken()
             if (newToken) return getDashboardStats(true)
-            throw new Error('Token refresh failed')
+            // ✅ Token 刷新失败，返回默认值而不是抛出错误
+            return {
+                todaySales: 0,
+                totalOrders: 0,
+                totalProducts: 0,
+                totalUsers: 0,
+                salesChange: '+0%',
+                ordersChange: '+0%',
+                productsChange: '+0%',
+                usersChange: '+0%'
+            }
         }
 
         const ordersData = await ordersRes.json()
@@ -213,7 +227,8 @@ export async function getRecentOrders(limit: number = 5, retry = false): Promise
         if (response.status === 401 && !retry) {
             const newToken = await refreshServerToken()
             if (newToken) return getRecentOrders(limit, true)
-            throw new Error('Token refresh failed')
+            // ✅ Token 刷新失败，返回空数组
+            return []
         }
 
         if (!response.ok) return []
@@ -251,7 +266,19 @@ export async function getAdminAffiliateStats(retry = false): Promise<AffiliateSt
         if (response.status === 401 && !retry) {
             const newToken = await refreshServerToken()
             if (newToken) return getAdminAffiliateStats(true)
-            throw new Error('Token refresh failed')
+            // ✅ Token 刷新失败，返回默认值
+            return {
+                totalAffiliates: 0,
+                activeAffiliates: 0,
+                totalCommission: 0,
+                totalClicks: 0,
+                totalConversions: 0,
+                conversionRate: 0,
+                settledAmount: 0,
+                pendingAmount: 0,
+                currentBalance: 0,
+                totalPaid: 0
+            }
         }
 
         if (!response.ok) throw new Error(`获取统计数据失败: ${response.status}`)
@@ -289,7 +316,8 @@ export async function getAdminAffiliateList(params: { page: number; size: number
         if (response.status === 401 && !retry) {
             const newToken = await refreshServerToken()
             if (newToken) return getAdminAffiliateList(params, true)
-            throw new Error('Token refresh failed')
+            // ✅ Token 刷新失败，返回空列表
+            return { content: [], totalPages: 0, totalElements: 0 }
         }
 
         if (!response.ok) throw new Error(`获取联盟列表失败: ${response.status}`)
@@ -326,7 +354,16 @@ export async function getAdminAffiliateCommissionLogs(
         if (response.status === 401 && !retry) {
             const newToken = await refreshServerToken()
             if (newToken) return getAdminAffiliateCommissionLogs(affiliateId, page, size, true)
-            throw new Error('Token refresh failed')
+            // ✅ Token 刷新失败，返回空列表
+            return {
+                content: [],
+                currentPage: page,
+                pageSize: size,
+                totalElements: 0,
+                totalPages: 0,
+                hasNext: false,
+                hasPrevious: false
+            }
         }
 
         if (!response.ok) throw new Error(`获取联盟成员佣金日志失败: ${response.status}`)

@@ -279,8 +279,8 @@ export default function AdminCartPage() {
                                     <div className="text-xs text-gray-400">{cart.currency}</div>
                                 </td>
                                 <td className="px-6 py-4">
-                                    <span className={`px-3 py-1 rounded-full text-[10px] font-bold border ${statusMap[cart.status]?.color || 'bg-gray-100 text-gray-800'}`}>
-                                        {statusMap[cart.status]?.label || cart.status}
+                                    <span className={`px-3 py-1 rounded-full text-[10px] font-bold border ${statusMap[cart.status || '']?.color || 'bg-gray-100 text-gray-800'}`}>
+                                        {statusMap[cart.status || '']?.label || cart.status}
                                     </span>
                                 </td>
                                 <td className="px-6 py-4 text-right">
@@ -380,13 +380,13 @@ export default function AdminCartPage() {
                                         </div>
                                         <div>
                                             <p className="text-xs text-gray-500">状态</p>
-                                            <span className={`px-2 py-1 rounded-full text-xs font-bold border ${statusMap[selectedCart.status]?.color || 'bg-gray-100 text-gray-800 border-gray-200'}`}>
-                                                {statusMap[selectedCart.status]?.label || selectedCart.status}
+                                            <span className={`px-2 py-1 rounded-full text-xs font-bold border ${statusMap[selectedCart.status || '']?.color || 'bg-gray-100 text-gray-800 border-gray-200'}`}>
+                                                {statusMap[selectedCart.status || '']?.label || selectedCart.status}
                                             </span>
                                         </div>
                                         <div>
                                             <p className="text-xs text-gray-500">创建时间</p>
-                                            <p className="text-sm">{new Date(selectedCart.createdAt).toLocaleString()}</p>
+                                            <p className="text-sm">{selectedCart.createdAt ? new Date(selectedCart.createdAt).toLocaleString() : '-'}</p>
                                         </div>
                                         <div>
                                             <p className="text-xs text-gray-500">总金额</p>
@@ -399,7 +399,7 @@ export default function AdminCartPage() {
                                     {selectedCart.items && selectedCart.items.length > 0 ? (
                                         <div className="space-y-3">
                                             {selectedCart.items.map((item) => (
-                                                <div key={item.id} className="flex items-center gap-4 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                                                <div key={item.itemId} className="flex items-center gap-4 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
                                                     <div className="w-16 h-16 bg-gray-100 rounded-lg flex-shrink-0 flex items-center justify-center overflow-hidden">
                                                         {item.productImage ? (
                                                             <img 

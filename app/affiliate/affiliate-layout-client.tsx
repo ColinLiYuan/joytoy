@@ -88,9 +88,6 @@ export default function AffiliateLayoutClient({ children }: { children: React.Re
                         <span>Welcome back,</span>
                         <span className="text-black font-bold">{affiliateId}</span>
                     </div>
-                    <Link href="/" className="hidden md:flex items-center gap-2 text-xs font-bold text-gray-400 hover:text-black transition-colors">
-                        <ArrowLeft className="h-3 w-3" /> Back to Shop
-                    </Link>
                 </header>
                 <div className="p-8 overflow-y-auto">
                     {children}

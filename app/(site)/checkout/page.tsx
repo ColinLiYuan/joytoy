@@ -72,7 +72,8 @@ function CheckoutContent() {
                 unitPrice: item.unitPrice,
                 productSku: item.productSku,  // ✅ SKU Code,后端会通过它查询完整的SKU信息
                 productImage: item.productImage,
-                color: item.color || 'Default'
+                color: item.color || 'Default',
+                bundleId: item.bundleId || undefined  // ✅ 传递套装ID
             })));
         }
     }, [cart?.items]);

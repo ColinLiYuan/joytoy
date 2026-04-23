@@ -106,7 +106,7 @@ export default async function CollectionPage() {
                                     // ✅ 处理图片逻辑
                                     // 假设字段名为 subcategory.image
                                     const hasImage = !!subcategory.image;
-                                    const imageUrl = getProductImageUrl('', subcategory.image);
+                                    const imageUrl = getProductImageUrl(undefined, subcategory.image);
 
                                     return (
                                         <Link

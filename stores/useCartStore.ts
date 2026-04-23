@@ -25,9 +25,19 @@ interface CartStore {
 // 🛠️ 提取公共计算函数
 const calculateTotals = (cart: CartResponse | null) => {
     if (!cart || !cart.items) return { totalItems: 0, totalPrice: 0 };
+    
+    // ✅ 自动判断商品类型：根据 bundleId 设置 isBundle 标识
+    const enrichedItems = cart.items.map(item => ({
+        ...item,
+        isBundle: !!item.bundleId // 如果有 bundleId，则为套装商品
+    }));
+    
+    // 更新 cart.items 为 enrichedItems
+    cart.items = enrichedItems;
+    
     return {
-        totalItems: cart.items.reduce((total, item) => total + item.quantity, 0),
-        totalPrice: cart.items.reduce((total, item) => total + item.totalPrice, 0),
+        totalItems: enrichedItems.reduce((total, item) => total + item.quantity, 0),
+        totalPrice: enrichedItems.reduce((total, item) => total + item.totalPrice, 0),
     };
 };
 

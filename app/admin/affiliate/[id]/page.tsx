@@ -14,14 +14,14 @@ interface AffiliateDetail {
     userEmail: string;
     userName: string;
     commissionRate: number | null;
-    affiliateCodes: string[];  // 推广码列表
+    affiliateCodes: string[];  // Promo code list
     totalClicks: number;
     totalOrders: number;
-    totalEarnings: number;      // 累计总收益（已结算）
-    currentBalance: number;     // 当前余额（待支付）
-    settledAmount: number;      // 已结算金额（超过30天）
-    pendingAmount: number;      // 待结算金额（未到30天）
-    totalPaid: number;          // 累计已支付/已提现金额
+    totalEarnings: number;      // Total accumulated earnings (settled)
+    currentBalance: number;     // Current balance (pending payout)
+    settledAmount: number;      // Settled amount (over 30 days)
+    pendingAmount: number;      // Pending amount (within 30 days)
+    totalPaid: number;          // Total paid/payout amount
     status: 'ACTIVE' | 'SUSPENDED' | 'PENDING';
     createdAt: string | null;
     updatedAt: string | null;
@@ -67,13 +67,19 @@ function AffiliateDetailContent() {
         try {
             setLoading(true);
             
-            // 获取成员详情（从列表中找到对应的）
+            // Fetch member detail (find from list)
             const listData = await getAdminAffiliateList({ page: 0, size: 100 });
             
             if (listData.content) {
-                const member = listData.content.find((m: AffiliateDetail) => m.id.toString() === affiliateId);
+                const member = listData.content.find((m) => m.id.toString() === affiliateId);
                 if (member) {
-                    setDetail(member);
+                    // 将 AffiliateUser 转换为 AffiliateDetail
+                    setDetail({
+                        ...member,
+                        settledAmount: 0,  // 默认值，实际应该从后端获取
+                        pendingAmount: 0,  // 默认值
+                        totalPaid: 0       // 默认值
+                    } as AffiliateDetail);
                 }
             }
         } catch (error) {
@@ -85,7 +91,7 @@ function AffiliateDetailContent() {
 
     const formatDate = (dateString: string | null) => {
         if (!dateString) return '-';
-        return new Date(dateString).toLocaleString('zh-CN', {
+        return new Date(dateString).toLocaleString('en-US', {
             year: 'numeric',
             month: 'short',
             day: 'numeric',
@@ -144,28 +150,28 @@ function AffiliateDetailContent() {
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <StatCard
-                    title="总点击数"
+                    title="Total Clicks"
                     value={detail.totalClicks.toLocaleString()}
                     icon={MousePointerClick}
                     color="blue"
                 />
                 <StatCard
-                    title="总订单数"
+                    title="Total Orders"
                     value={detail.totalOrders.toString()}
                     icon={ShoppingCart}
                     color="green"
                 />
                 <StatCard
-                    title="已结算金额"
+                    title="Settled Amount"
                     value={`$${(detail.settledAmount || 0).toFixed(2)}`}
-                    subtitle="可提现"
+                    subtitle="Available for withdrawal"
                     icon={DollarSign}
                     color="purple"
                 />
                 <StatCard
-                    title="待结算金额"
+                    title="Pending Amount"
                     value={`$${(detail.pendingAmount || 0).toFixed(2)}`}
-                    subtitle="冷静期内"
+                    subtitle="Cooling-off Period"
                     icon={TrendingUp}
                     color="orange"
                 />
@@ -175,78 +181,78 @@ function AffiliateDetailContent() {
             <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
                 <div className="flex items-center gap-2 mb-6">
                     <Wallet className="h-5 w-5 text-gray-400" />
-                    <h3 className="font-bold text-gray-900">财务概览</h3>
+                    <h3 className="font-bold text-gray-900">Financial Overview</h3>
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                     <div className="space-y-2">
                         <div className="flex items-center gap-2">
                             <CheckCircle className="h-4 w-4 text-emerald-500" />
-                            <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">已结算</span>
+                            <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">Settled</span>
                         </div>
                         <div className="text-2xl font-black text-gray-900">
                             ${(detail.settledAmount || 0).toFixed(2)}
                         </div>
-                        <div className="text-xs text-gray-400">可提现金额</div>
+                        <div className="text-xs text-gray-400">Available for withdrawal</div>
                     </div>
                     <div className="space-y-2">
                         <div className="flex items-center gap-2">
                             <Clock className="h-4 w-4 text-amber-500" />
-                            <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">待结算</span>
+                            <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">Pending</span>
                         </div>
                         <div className="text-2xl font-black text-gray-900">
                             ${(detail.pendingAmount || 0).toFixed(2)}
                         </div>
-                        <div className="text-xs text-gray-400">冷静期内（30天）</div>
+                        <div className="text-xs text-gray-400">Cooling-off Period (30 days)</div>
                     </div>
                     <div className="space-y-2">
                         <div className="flex items-center gap-2">
                             <Wallet className="h-4 w-4 text-blue-500" />
-                            <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">当前余额</span>
+                            <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">Current Balance</span>
                         </div>
                         <div className="text-2xl font-black text-gray-900">
                             ${(detail.currentBalance || 0).toFixed(2)}
                         </div>
-                        <div className="text-xs text-gray-400">待支付金额</div>
+                        <div className="text-xs text-gray-400">Pending payout</div>
                     </div>
                     <div className="space-y-2">
                         <div className="flex items-center gap-2">
                             <AlertCircle className="h-4 w-4 text-purple-500" />
-                            <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">已提现</span>
+                            <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">Paid Out</span>
                         </div>
                         <div className="text-2xl font-black text-gray-900">
                             ${(detail.totalPaid || 0).toFixed(2)}
                         </div>
-                        <div className="text-xs text-gray-400">历史累计提现</div>
+                        <div className="text-xs text-gray-400">Historical Total</div>
                     </div>
                 </div>
             </div>
 
             {/* Basic Info */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">基本信息</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Basic Information</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <InfoRow label="用户ID" value={detail.userId?.toString() || '-'} />
-                    <InfoRow label="邮箱" value={detail.userEmail} />
-                    <InfoRow label="姓名" value={detail.userName} />
-                    <InfoRow label="联盟代码" value={detail.affiliateId} />
-                    <InfoRow label="佣金比例" value={`${((detail.commissionRate || 0) * 100).toFixed(0)}%`} />
-                    <InfoRow label="PayPal邮箱" value={detail.userEmail} />
-                    <InfoRow label="状态" value={detail.status} />
-                    <InfoRow label="总点击数" value={detail.totalClicks.toLocaleString()} />
-                    <InfoRow label="总订单数" value={detail.totalOrders.toString()} />
-                    <InfoRow label="累计总收益" value={`$${(detail.totalEarnings || 0).toFixed(2)}`} />
-                    <InfoRow label="已结算金额" value={`$${(detail.settledAmount || 0).toFixed(2)}`} />
-                    <InfoRow label="待结算金额" value={`$${(detail.pendingAmount || 0).toFixed(2)}`} />
-                    <InfoRow label="当前余额" value={`$${(detail.currentBalance || 0).toFixed(2)}`} />
-                    <InfoRow label="已提现金额" value={`$${(detail.totalPaid || 0).toFixed(2)}`} />
-                    <InfoRow label="注册时间" value={formatDate(detail.createdAt)} />
-                    <InfoRow label="更新时间" value={formatDate(detail.updatedAt)} />
+                    <InfoRow label="User ID" value={detail.userId?.toString() || '-'} />
+                    <InfoRow label="Email" value={detail.userEmail} />
+                    <InfoRow label="Name" value={detail.userName} />
+                    <InfoRow label="Affiliate ID" value={detail.affiliateId} />
+                    <InfoRow label="Commission Rate" value={`${((detail.commissionRate || 0) * 100).toFixed(0)}%`} />
+                    <InfoRow label="PayPal Email" value={detail.userEmail} />
+                    <InfoRow label="Status" value={detail.status} />
+                    <InfoRow label="Total Clicks" value={detail.totalClicks.toLocaleString()} />
+                    <InfoRow label="Total Orders" value={detail.totalOrders.toString()} />
+                    <InfoRow label="Total Earnings" value={`$${(detail.totalEarnings || 0).toFixed(2)}`} />
+                    <InfoRow label="Settled Amount" value={`$${(detail.settledAmount || 0).toFixed(2)}`} />
+                    <InfoRow label="Pending Amount" value={`$${(detail.pendingAmount || 0).toFixed(2)}`} />
+                    <InfoRow label="Current Balance" value={`$${(detail.currentBalance || 0).toFixed(2)}`} />
+                    <InfoRow label="Total Paid" value={`$${(detail.totalPaid || 0).toFixed(2)}`} />
+                    <InfoRow label="Registered At" value={formatDate(detail.createdAt)} />
+                    <InfoRow label="Updated At" value={formatDate(detail.updatedAt)} />
                 </div>
             </div>
 
             {/* Affiliate Codes */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">推广码 ({(detail.affiliateCodes || []).length})</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Promo Codes ({(detail.affiliateCodes || []).length})</h3>
                 {detail.affiliateCodes && detail.affiliateCodes.length > 0 ? (
                     <div className="flex flex-wrap gap-3">
                         {detail.affiliateCodes.map((code, index) => (
@@ -257,7 +263,7 @@ function AffiliateDetailContent() {
                         ))}
                     </div>
                 ) : (
-                    <p className="text-sm text-gray-400">暂无推广码</p>
+                    <p className="text-sm text-gray-400">No promo codes yet</p>
                 )}
             </div>
             
@@ -266,11 +272,11 @@ function AffiliateDetailContent() {
                 <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
                     <div className="flex items-center gap-2">
                         <DollarSign className="h-5 w-5 text-gray-400" />
-                        <h3 className="text-lg font-semibold text-gray-900">佣金流水记录</h3>
+                        <h3 className="text-lg font-semibold text-gray-900">Commission History</h3>
                     </div>
                     {commissionLogs && (
                         <span className="text-xs text-gray-500 font-medium">
-                            共 {commissionLogs.totalElements} 条记录
+                            Total: {commissionLogs.totalElements} records
                         </span>
                     )}
                 </div>
@@ -281,8 +287,8 @@ function AffiliateDetailContent() {
                             <Loader2 className="animate-spin text-gray-400" size={24} />
                         </div>
                     ) : !commissionLogs || commissionLogs.content.length === 0 ? (
-                        <div className="py-12 text-center text-gray-400 text-sm">
-                            暂无佣金流水记录
+                            <div className="py-12 text-center text-gray-400 text-sm">
+                            No commission records found
                         </div>
                     ) : (
                         <>
@@ -295,8 +301,8 @@ function AffiliateDetailContent() {
                             {/* Pagination */}
                             {commissionLogs.totalPages > 1 && (
                                 <div className="mt-6 pt-6 border-t border-gray-100 flex items-center justify-between">
-                                    <p className="text-xs text-gray-500">
-                                        第 {commissionLogs.currentPage + 1} / {commissionLogs.totalPages} 页
+                                        <p className="text-xs text-gray-500">
+                                        Page {commissionLogs.currentPage + 1} of {commissionLogs.totalPages}
                                     </p>
                                     <div className="flex space-x-2">
                                         <button
@@ -358,7 +364,7 @@ function InfoRow({ label, value }: { label: string; value: string }) {
 }
 
 /**
- * 佣金日志项组件
+ * Commission Log Item Component
  */
 function CommissionLogItem({ log }: { log: AdminCommissionLogResponse }) {
     const isEarn = log.changeType === 'EARN';
@@ -366,11 +372,11 @@ function CommissionLogItem({ log }: { log: AdminCommissionLogResponse }) {
     
     return (
         <div className="border border-gray-100 rounded-xl p-4 hover:bg-gray-50 transition-colors">
-            {/* 头部：时间和类型 */}
+            {/* Header: Time and Type */}
             <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-1.5 text-xs text-gray-400">
                     <Clock size={12} />
-                    {new Date(log.createdAt).toLocaleString('zh-CN', {
+                    {new Date(log.createdAt).toLocaleString('en-US', {
                         year: 'numeric',
                         month: 'short',
                         day: 'numeric',
@@ -385,17 +391,17 @@ function CommissionLogItem({ log }: { log: AdminCommissionLogResponse }) {
                             ? 'bg-red-100 text-red-700'
                             : 'bg-gray-100 text-gray-600'
                 }`}>
-                    {isEarn ? '获得佣金' : isRefund ? '退款扣减' : log.changeType}
+                    {isEarn ? 'Commission Earned' : isRefund ? 'Refund Deduction' : log.changeType}
                 </span>
             </div>
             
-            {/* 订单号 */}
+            {/* Order Number */}
             <div className="mb-3">
-                <span className="text-xs text-gray-500 font-medium">订单号: </span>
+                <span className="text-xs text-gray-500 font-medium">Order: </span>
                 <span className="text-xs font-mono font-bold text-gray-900">#{log.orderNumber}</span>
             </div>
             
-            {/* 金额信息 */}
+            {/* Amount Information */}
             <div className="flex items-center gap-4 mb-3">
                 <div className="flex items-center gap-1.5">
                     <TrendingUp size={14} className={isEarn ? 'text-green-600' : 'text-red-600'} />
@@ -407,33 +413,33 @@ function CommissionLogItem({ log }: { log: AdminCommissionLogResponse }) {
                 </div>
             </div>
             
-            {/* 余额和累计收益变化 */}
+            {/* Balance and Total Earnings Changes */}
             <div className="grid grid-cols-2 gap-4 text-xs">
                 <div>
-                    <span className="text-gray-400 font-medium">余额: </span>
+                    <span className="text-gray-400 font-medium">Balance: </span>
                     <span className="font-bold text-gray-700">${log.balanceBefore.toFixed(2)}</span>
                     <span className="text-gray-400 mx-1">→</span>
                     <span className="font-bold text-gray-900">${log.balanceAfter.toFixed(2)}</span>
                 </div>
                 <div>
-                    <span className="text-gray-400 font-medium">累计收益: </span>
+                    <span className="text-gray-400 font-medium">Total Earned: </span>
                     <span className="font-bold text-gray-700">${log.totalEarnedBefore.toFixed(2)}</span>
                     <span className="text-gray-400 mx-1">→</span>
                     <span className="font-bold text-gray-900">${log.totalEarnedAfter.toFixed(2)}</span>
                 </div>
             </div>
             
-            {/* 结算状态变化 */}
+            {/* Payout Status Change */}
             {(log.payoutStatusBefore || log.payoutStatusAfter) && (
                 <div className="mt-2 text-xs">
-                    <span className="text-gray-400 font-medium">结算状态: </span>
+                    <span className="text-gray-400 font-medium">Payout Status: </span>
                     <span className="font-medium text-gray-700">{log.payoutStatusBefore || '-'}</span>
                     <span className="text-gray-400 mx-1">→</span>
                     <span className="font-medium text-gray-900">{log.payoutStatusAfter || '-'}</span>
                 </div>
             )}
             
-            {/* 描述 */}
+            {/* Description */}
             {log.description && (
                 <div className="mt-3 pt-3 border-t border-gray-100">
                     <p className="text-xs text-gray-500">{log.description}</p>

@@ -137,7 +137,7 @@ export default function ManualsPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {visibleManuals.map((item) => {
-                        const imageUrl = item.image ? getProductImageUrl('', item.image) : null;
+                        const imageUrl = item.image ? getProductImageUrl(undefined, item.image) : null;
                         // ✅ 判断当前项是否正在检查中
                         const isCheckingThis = checkingId === item.id;
 

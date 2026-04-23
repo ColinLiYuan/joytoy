@@ -1,22 +1,19 @@
 import type { Metadata, Viewport } from "next";
-import { Playfair_Display, Inter } from "next/font/google"; // ✅ 换成你实际用的字体
+// import { Playfair_Display, Inter } from "next/font/google"; // ❌ 注释掉，避免 Turbopack 网络问题
 import "./globals.css";
 import { Providers } from './providers';
 import AffiliateRedirectHandler from '@/components/common/affiliate-redirect-handler';
 
-// ✅ 1. 定义全局主字体 (Inter)
-const inter = Inter({
-    subsets: ['latin'],
+// ✅ 使用系统字体替代 Google Fonts（避免 Turbopack 构建时的网络问题）
+const inter = {
     variable: '--font-inter',
-    display: 'swap',
-});
+    className: 'font-sans',
+};
 
-// ✅ 2. 定义标题字体 (Playfair Display)
-const playfair = Playfair_Display({
-    subsets: ['latin'],
+const playfair = {
     variable: '--font-playfair',
-    display: 'swap',
-});
+    className: 'font-serif',
+};
 
 export const viewport: Viewport = {
     themeColor: 'black',
