@@ -42,25 +42,47 @@ export async function refreshAccessToken(): Promise<string | null> {
 
         if (!response.ok) {
             console.log('[Server Token] Refresh failed, status:', response.status)
+            const errorText = await response.text()
+            console.error('[Server Token] Refresh error response:', errorText)
             return null
         }
 
         const result = await response.json()
-        const newToken = result.success && result.data?.accessToken ? result.data.accessToken : null
+        console.log('[Server Token] Refresh response:', JSON.stringify(result, null, 2))
         
-        if (newToken) {
-            console.log('[Server Token] Token refreshed successfully')
-            // 更新 cookie
-            const cookieStore = await cookies()
-            cookieStore.set('accessToken', newToken, {
-                path: '/',
-                maxAge: 1800, // 30分钟
-            })
+        if (result.success && result.data) {
+            const { accessToken, refreshToken: newRefreshToken } = result.data
+            
+            console.log('[Server Token] Extracted accessToken:', accessToken ? 'YES' : 'NO')
+            console.log('[Server Token] Extracted refreshToken:', newRefreshToken ? 'YES' : 'NO')
+            
+            if (accessToken) {
+                console.log('[Server Token] Token refreshed successfully')
+                // 更新 cookie（同时更新 accessToken 和 refreshToken）
+                const cookieStore = await cookies()
+                cookieStore.set('accessToken', accessToken, {
+                    path: '/',
+                    maxAge: 1800, // 30分钟
+                })
+                
+                // 如果后端返回了新的 refreshToken，也要更新
+                if (newRefreshToken) {
+                    console.log('[Server Token] Updating refresh token')
+                    cookieStore.set('refreshToken', newRefreshToken, {
+                        path: '/',
+                        maxAge: 7 * 24 * 60 * 60, // 7天
+                    })
+                }
+                
+                return accessToken
+            } else {
+                console.log('[Server Token] No access token in response')
+            }
         } else {
-            console.log('[Server Token] No access token in response')
+            console.log('[Server Token] Refresh response not success or no data')
         }
 
-        return newToken
+        return null
     } catch (error) {
         console.error('[Server Token] Refresh error:', error)
         return null
@@ -79,17 +101,27 @@ export async function fetchWithAuth(
     retryCount = 0
 ): Promise<Response> {
     const token = await getAccessToken()
+    
+    console.log('[Server Token] fetchWithAuth called for:', url)
+    console.log('[Server Token] Token exists:', !!token)
+    console.log('[Server Token] Token preview:', token ? `${token.substring(0, 20)}...` : 'none')
+    console.log('[Server Token] Retry count:', retryCount)
 
     // 构建 headers
     const headers = new Headers(options.headers || {})
     if (token) {
         headers.set('Authorization', `Bearer ${token}`)
+        console.log('[Server Token] Authorization header set')
+    } else {
+        console.log('[Server Token] WARNING: No token available!')
     }
     // 只有在 body 不是 FormData 且没有设置 Content-Type 时,才设置为 application/json
     // FormData 需要浏览器自动设置 Content-Type (包含 boundary)
     if (!(options.body instanceof FormData) && !headers.has('Content-Type')) {
         headers.set('Content-Type', 'application/json')
     }
+    
+    console.log('[Server Token] Final headers:', Object.fromEntries(headers.entries()))
 
     const response = await fetch(url, {
         ...options,

@@ -275,8 +275,17 @@ export default function OrderPage() {
                             
                             // 格式化下单时间
                             const orderDate = new Date(order.createdAt);
-                            const timeStr = orderDate.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
-                            const dateStr = orderDate.toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' });
+                            const orderTimeStr = orderDate.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+                            const orderDateStr = orderDate.toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' });
+                            
+                            // 格式化完成时间
+                            let completedTimeStr = '';
+                            let completedDateStr = '';
+                            if (order.completedAt) {
+                                const completedDate = new Date(order.completedAt);
+                                completedTimeStr = completedDate.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+                                completedDateStr = completedDate.toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' });
+                            }
                             
                             // 拼接商品名称
                             const productNames = order.items?.map(item => item.productTitle).filter(Boolean).join(', ') || '-';
@@ -287,9 +296,16 @@ export default function OrderPage() {
                                     <div className="font-mono text-sm font-bold text-gray-900">#{order.orderNumber}</div>
                                     <div className="flex items-center gap-1 mt-1 text-[11px] text-gray-500" title={orderDate.toLocaleString('zh-CN')}>
                                         <Calendar className="h-3 w-3 flex-shrink-0" />
-                                        <span>{dateStr}</span>
-                                        <span className="text-gray-400">{timeStr}</span>
+                                        <span>{orderDateStr}</span>
+                                        <span className="text-gray-400">{orderTimeStr}</span>
                                     </div>
+                                    {order.completedAt && (
+                                        <div className="flex items-center gap-1 mt-0.5 text-[11px] text-green-600" title={new Date(order.completedAt).toLocaleString('zh-CN')}>
+                                            <PackageCheck className="h-3 w-3 flex-shrink-0" />
+                                            <span>{completedDateStr}</span>
+                                            <span className="text-green-500">{completedTimeStr}</span>
+                                        </div>
+                                    )}
                                 </td>
                                 <td className="px-6 py-4">
                                     <div 

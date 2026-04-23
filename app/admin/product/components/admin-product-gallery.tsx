@@ -155,12 +155,6 @@ export default function AdminProductGallery({ product, updateProduct }: ImageUpl
     const handleMainImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
 
-        if (!product.slug) {
-            alert('错误：请先在"URL设置"中生成 Slug，图片文件名依赖于它。');
-            if (mainImageInputRef.current) mainImageInputRef.current.value = '';
-            return;
-        }
-
         if (file) {
             // 校验格式
             if (!validateFile(file)) {
@@ -175,7 +169,6 @@ export default function AdminProductGallery({ product, updateProduct }: ImageUpl
                 const formData = new FormData();
                 formData.append('file', file);
                 formData.append('type', 'main');
-                formData.append('slug', product.slug);
                 
                 const result = await uploadProductImage(formData);
                 updateProduct({ image: result.url });
@@ -201,12 +194,6 @@ export default function AdminProductGallery({ product, updateProduct }: ImageUpl
     // 处理相册图
     const handleGalleryChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
-
-        if (!product.slug) {
-            alert('请先设置 Slug');
-            if (galleryInputRef.current) galleryInputRef.current.value = '';
-            return;
-        }
 
         if (files && files.length > 0) {
             // 过滤无效文件
@@ -247,14 +234,13 @@ export default function AdminProductGallery({ product, updateProduct }: ImageUpl
                     const formData = new FormData();
                     formData.append('file', validFiles[i]);
                     formData.append('type', 'gallery');
-                    formData.append('slug', product.slug);
                     formData.append('index', currentIndex.toString());
                     
                     const result = await uploadProductImage(formData);
 
                     newGalleries.push({
                         url: result.url,
-                        alt: `${product.title || 'product'}-${product.slug}-${currentIndex}`
+                        alt: `${product.title || 'product'}-${currentIndex}`
                     });
                 }
 

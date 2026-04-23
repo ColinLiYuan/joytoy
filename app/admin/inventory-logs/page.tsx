@@ -49,8 +49,12 @@ export default function InventoryLogPage() {
   };
 
   useEffect(() => {
-    fetchLogs();
-  }, [filters.page, filters.size, filters.changeType]);
+    const timer = setTimeout(() => {
+      fetchLogs();
+    }, 300); // 防抖 300ms
+    
+    return () => clearTimeout(timer);
+  }, [filters.page, filters.size, filters.changeType, filters.orderNumber, filters.startTime, filters.endTime]);
 
   const handleFilterChange = (key: string, value: any) => {
     setFilters(prev => ({
@@ -61,6 +65,7 @@ export default function InventoryLogPage() {
   };
 
   const handleSearch = () => {
+    // 清除防抖，立即执行
     fetchLogs();
   };
 

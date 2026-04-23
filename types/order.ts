@@ -40,6 +40,7 @@ export interface OrderResponse {
     discountAmount: number;
     finalAmount: number;
     createdAt: string;
+    completedAt?: string;
     paymentMethod: string;
     shippingMethod: string;
     shippingAddress: AddressRequest;

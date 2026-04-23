@@ -22,17 +22,30 @@ export default function BundleUpsell({ bundles }: BundleUpsellProps) {
     if (bundles.length === 0) return null
 
     const handleAddBundleToCart = async (bundle: BundleSummary) => {
-        if (!cart?.id) {
-            showToast('error', 'Error', 'Cart not initialized')
-            return
-        }
-
+        console.log('[BundleUpsell] handleAddBundleToCart called', { bundleId: bundle.id, hasCart: !!cart?.id });
+        
         setAddingBundleId(bundle.id)
         try {
-            await bundleService.addToCart(bundle.id, 1, cart.id)
+            // 确保购物车已初始化
+            let currentCart = cart
+            if (!currentCart?.id) {
+                console.log('[BundleUpsell] Cart not initialized, calling getCart()...');
+                currentCart = await getCart()
+                console.log('[BundleUpsell] getCart() returned:', currentCart);
+            }
+            
+            if (!currentCart?.id) {
+                console.error('[BundleUpsell] Cart still not initialized after getCart()');
+                showToast('error', 'Unable to Add', 'Your shopping bag is not ready. Please refresh the page and try again.')
+                return
+            }
+
+            console.log('[BundleUpsell] Adding bundle to cart', { bundleId: bundle.id, cartId: currentCart.id });
+            await bundleService.addToCart(bundle.id, 1, currentCart.id)
             await getCart()
             showToast('success', 'Added', `${bundle.bundleName} added to your bag`)
         } catch (error: any) {
+            console.error('[BundleUpsell] Failed to add bundle:', error);
             showToast('error', 'Error', error.message || 'Failed to add bundle')
         } finally {
             setAddingBundleId(null)

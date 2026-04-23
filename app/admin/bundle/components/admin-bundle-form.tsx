@@ -1,14 +1,15 @@
 // app/admin/bundle/components/admin-bundle-form.tsx
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { bundleService } from '@/services/bundleService'
 import { productService } from '@/services/productService'
+import { uploadBundleImage } from '@/app/actions/bundle'
 import { ProductBundle, ProductBundleItem } from '@/types/bundle'
 import { ProductResponse } from '@/types/product'
 import { getProductImageUrl } from '@/lib/image-utils'
-import { Save, Plus, Trash2, Loader2, Package, Search, Check } from 'lucide-react'
+import { Save, Plus, Trash2, Loader2, Package, Search, Check, Upload, Image as ImageIcon } from 'lucide-react'
 
 interface AdminBundleFormProps {
     initialData?: ProductBundle
@@ -16,7 +17,9 @@ interface AdminBundleFormProps {
 
 export default function AdminBundleForm({ initialData }: AdminBundleFormProps) {
     const router = useRouter()
+    const fileInputRef = useRef<HTMLInputElement>(null)
     const [loading, setLoading] = useState(false)
+    const [uploadingImage, setUploadingImage] = useState(false)
     const [products, setProducts] = useState<ProductResponse[]>([])
     const [searchTerm, setSearchTerm] = useState('')
     const [showProductSelector, setShowProductSelector] = useState(false)
@@ -206,6 +209,57 @@ export default function AdminBundleForm({ initialData }: AdminBundleFormProps) {
         }
     }
 
+    // 触发文件选择
+    const triggerFileInput = () => {
+        fileInputRef.current?.click()
+    }
+
+    // 处理文件上传
+    const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (!file) return
+
+        // 验证文件类型
+        const validTypes = ['image/png', 'image/jpeg', 'image/webp']
+        if (!validTypes.includes(file.type)) {
+            alert(`文件格式错误。\n\n请上传 PNG, JPG 或 WebP 格式的图片。`)
+            e.target.value = ''
+            return
+        }
+
+        // 验证文件大小（5MB）
+        if (file.size > 5 * 1024 * 1024) {
+            alert('图片大小不能超过 5MB')
+            e.target.value = ''
+            return
+        }
+
+        try {
+            setUploadingImage(true)
+            
+            // 使用 Server Action 上传
+            const formData = new FormData()
+            formData.append('file', file)
+            
+            const result = await uploadBundleImage(formData)
+            
+            // 填入后端返回的原始路径
+            setFormData(prev => ({
+                ...prev,
+                coverImage: result.url
+            }))
+        } catch (error) {
+            console.error('图片上传失败:', error)
+            alert('图片上传失败，请重试')
+        } finally {
+            setUploadingImage(false)
+            e.target.value = ''
+        }
+    }
+
+    // 预览图片URL
+    const coverImageUrl = formData.coverImage ? getProductImageUrl('', formData.coverImage) : ''
+
     return (
         <form onSubmit={handleSubmit} className="space-y-6">
             {/* 基本信息 */}
@@ -245,14 +299,68 @@ export default function AdminBundleForm({ initialData }: AdminBundleFormProps) {
                         />
                     </div>
                     <div className="md:col-span-2">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">封面图片 URL</label>
-                        <input 
-                            name="coverImage" 
-                            value={formData.coverImage} 
-                            onChange={handleChange} 
-                            placeholder="https://..."
-                            className="w-full px-3 py-2 border rounded-lg" 
-                        />
+                        <label className="block text-sm font-medium text-gray-700 mb-1">封面图片</label>
+                        <div className="space-y-3">
+                            {/* 隐藏的文件输入 */}
+                            <input
+                                type="file"
+                                ref={fileInputRef}
+                                onChange={handleFileSelect}
+                                accept="image/*"
+                                className="hidden"
+                            />
+                            
+                            {/* 图片预览和上传按钮 */}
+                            <div className="flex items-start gap-4">
+                                {/* 图片预览 */}
+                                <div className="relative w-32 h-32 bg-gray-100 rounded-lg overflow-hidden border border-gray-300 flex-shrink-0">
+                                    {coverImageUrl ? (
+                                        <img 
+                                            src={coverImageUrl} 
+                                            alt="封面预览" 
+                                            className="w-full h-full object-cover"
+                                        />
+                                    ) : (
+                                        <div className="w-full h-full flex items-center justify-center text-gray-400">
+                                            <ImageIcon size={32} />
+                                        </div>
+                                    )}
+                                </div>
+                                
+                                {/* 上传按钮和信息 */}
+                                <div className="flex-1 space-y-2">
+                                    <button
+                                        type="button"
+                                        onClick={triggerFileInput}
+                                        disabled={uploadingImage}
+                                        className="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 flex items-center gap-2 text-sm font-medium"
+                                    >
+                                        {uploadingImage ? (
+                                            <>
+                                                <Loader2 size={16} className="animate-spin" />
+                                                上传中...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Upload size={16} />
+                                                选择图片
+                                            </>
+                                        )}
+                                    </button>
+                                    
+                                    <p className="text-xs text-gray-500">
+                                        支持 JPG、PNG 格式，建议尺寸 800x800px，最大 5MB
+                                    </p>
+                                    
+                                    {/* URL输入（可选） */}
+                                    {formData.coverImage && (
+                                        <div className="text-xs text-gray-600 break-all bg-gray-50 p-2 rounded">
+                                            <span className="font-medium">已上传:</span> {formData.coverImage}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
