@@ -199,7 +199,7 @@ export default function ProductDetailClient({
     const [addingToCart, setAddingToCart] = useState(false);
     const [buyingNow, setBuyingNow] = useState(false);
     const [selectedSku, setSelectedSku] = useState<ProductSku | null>(null);
-    const [isFavorited, setIsFavorited] = useState(product.favorited || false);
+    const [isFavorited, setIsFavorited] = useState(false);
     const [isWishlistLoading, setIsWishlistLoading] = useState(false);
     const [activeAccordion, setActiveAccordion] = useState<string | null>('details');
     const [relatedProducts, setRelatedProducts] = useState<ProductResponse[]>([]);
@@ -219,6 +219,33 @@ export default function ProductDetailClient({
     const isLowStock = isProductActive && selectedSku && currentStock > 0 && currentStock < 5;
     // Logic: Can purchase only if active AND has stock
     const canPurchase = isProductActive && selectedSku && currentStock > 0;
+
+    // ✅ 初始化时从后端数据或主动查询获取收藏状态
+    useEffect(() => {
+        const initFavoriteStatus = async () => {
+            // 如果后端已经返回了 favorited=true，直接使用
+            if (product.favorited === true) {
+                setIsFavorited(true);
+                return;
+            }
+            
+            // 否则在客户端主动查询心愿单
+            if (isLoggedIn && product.id) {
+                try {
+                    const { wishlistService } = await import('@/services/wishlistService');
+                    const wishlist = await wishlistService.getWishlist();
+                    if (wishlist) {
+                        const isInWishlist = wishlist.some(item => item.productId === product.id);
+                        setIsFavorited(isInWishlist);
+                    }
+                } catch (error) {
+                    console.error('[ProductDetail] Failed to check wishlist status:', error);
+                }
+            }
+        };
+        
+        initFavoriteStatus();
+    }, [product.favorited, product.id, isLoggedIn]);
 
     const manualUrl = useMemo(() => {
         const baseTitle = product.title.split('|')[0].trim();

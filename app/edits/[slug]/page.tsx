@@ -1,8 +1,9 @@
-// app/edits/[slug]/route.ts
-import { Metadata } from 'next';
-import { notFound } from 'next/navigation';
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useParams, useSearchParams } from 'next/navigation';
+import { productService } from '@/services/productService';
 import ProductList from '@/components/product/product-list';
-import { productServiceServer } from '@/services/servers/product-service-server';
 import { Sparkles, VolumeX, Tag, HeartHandshake } from 'lucide-react';
 
 // 1. 定义专题配置
@@ -41,46 +42,99 @@ const EDITS_CONFIG: Record<string, any> = {
     }
 };
 
-// 2. 生成 Metadata
-export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
-    const resolvedParams = await params;
-    const config = EDITS_CONFIG[resolvedParams.slug];
-    if (!config) return { title: 'Collection Not Found' };
-
-    return {
-        title: `${config.title} | MythToy Curated`,
-        description: config.description,
-    };
-}
-
-// 3. 页面组件
-export default async function EditsPage({ params, searchParams }: {
-    params: Promise<{ slug: string }>;
-    searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
-}) {
-    const resolvedParams = await params;
-    const slug = resolvedParams.slug;
+export default function EditsPage() {
+    const params = useParams();
+    const searchParams = useSearchParams();
+    const slug = params.slug as string;
+    
     const config = EDITS_CONFIG[slug];
 
-    if (!config) return notFound();
+    const [productsData, setProductsData] = useState<any>({
+        content: [],
+        totalPages: 0,
+        totalElements: 0,
+        currentPage: 0
+    });
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
-    // 解析 searchParams
-    const resolvedSearchParams = searchParams ? await searchParams : {};
+    useEffect(() => {
+        if (!config) {
+            setError('Collection not found');
+            setLoading(false);
+            return;
+        }
 
-    // 构造 Filters 对象
-    const currentPage = parseInt((resolvedSearchParams.page as string) || '1');
+        const fetchProducts = async () => {
+            try {
+                setLoading(true);
+                
+                const page = parseInt(searchParams.get('page') || '0');
+                
+                // 构造 Filters 对象
+                const filters = {
+                    ...config.filter,
+                    colors: searchParams.get('colors') ? searchParams.get('colors')!.split(',') : [],
+                    features: searchParams.get('features') ? searchParams.get('features')!.split(',') : (config.filter.features || []),
+                    materials: searchParams.get('materials') ? searchParams.get('materials')!.split(',') : [],
+                    priceRange: config.filter.priceRange || null,
+                    sortBy: searchParams.get('sortBy') || 'createdAt',
+                    sortDirection: searchParams.get('sortDirection') || 'DESC'
+                };
 
-    const filters = {
-        ...config.filter, // 专题预设 (例如 priceRange: [0, 30])
-        ...resolvedSearchParams, // URL 参数覆盖 (例如用户手动排序)
-        page: currentPage,
-        size: 12
-    };
+                // 使用 getProductsByCategory，传入空 slug 和 filters
+                const data = await productService.getProductsByCategory('', page, 12, filters);
+                setProductsData(data);
+                setError(null);
+            } catch (err: any) {
+                console.error('Error fetching products:', err);
+                setError(err.message || 'Failed to load products');
+            } finally {
+                setLoading(false);
+            }
+        };
 
-    // ✅ 调用刚刚在 Service 里新增的方法
-    const productsData = await productServiceServer.getProductsByCategory(filters);
+        fetchProducts();
+    }, [slug, searchParams, config]);
+
+    if (!config) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="text-center">
+                    <h2 className="text-2xl font-bold mb-4">Collection Not Found</h2>
+                    <p className="text-gray-500">The requested collection does not exist.</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-white flex justify-center items-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black"></div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="text-center p-8">
+                    <h2 className="text-2xl font-bold mb-4 text-red-500">Error</h2>
+                    <p>{error}</p>
+                    <button 
+                        onClick={() => window.location.reload()} 
+                        className="mt-4 px-4 py-2 bg-black text-white rounded hover:bg-gray-800"
+                    >
+                        Retry
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     const Icon = config.icon;
+    const currentPage = productsData.currentPage;
 
     return (
         <div className="min-h-screen bg-white">
@@ -104,13 +158,12 @@ export default async function EditsPage({ params, searchParams }: {
                     products={productsData.content}
                     itemsPerPage={12}
                     totalPages={productsData.totalPages}
-                    currentPage={currentPage - 1} // ProductList 分页组件通常也是 0-based
+                    currentPage={currentPage}
                     totalProducts={productsData.totalElements}
-                    // 传入 filter 状态，这样 ProductList 里的筛选器能显示正确的初始状态（例如价格滑块在 0-30）
                     initialFilters={{
-                        priceRange: filters.priceRange || null,
-                        colors: filters.colors ? (Array.isArray(filters.colors) ? filters.colors : filters.colors.split(',')) : [],
-                        features: filters.features ? (Array.isArray(filters.features) ? filters.features : filters.features.split(',')) : [],
+                        priceRange: config.filter.priceRange || null,
+                        colors: [],
+                        features: config.filter.features || [],
                         materials: []
                     }}
                 />

@@ -163,99 +163,38 @@ function PaymentContent() {
     };
 
     // --- PayPal 专用逻辑 ---
-    const createPayPalOrder = (data: any, actions: any) => {
-        // console.log('createPayPalOrder.... ', orderData)
-        const shippingAddr = orderData.shippingAddress;
-        const billingAddr = orderData.billingAddress || orderData.shippingAddress;
-        const calculatedItemTotal = (orderData.items || []).reduce((acc: number, item: any) => {
-            return acc + (Number(item.unitPrice || 0) * Number(item.quantity || 1));
-        }, 0);
-        const shippingValue = Number(orderData.shippingFee || 0);
-        const discountValue = Number(orderData.discountAmount || 0);
-        const calculatedTotal = calculatedItemTotal + shippingValue - discountValue;
-        const cleanPhone = (shippingAddr.phone || "").replace(/\D/g, '');
-
-        return actions.order.create({
-            payer: {
-                name: {
-                    given_name: billingAddr.firstName,
-                    surname: billingAddr.lastName
+    const createPayPalOrder = async (data: any, actions: any) => {
+        try {
+            console.log('[Payment] 调用后端创建 PayPal 订单...');
+            
+            // ✅ 调用前检查并刷新 Token（提前 5 分钟）
+            const { ensureFreshToken } = await import('@/lib/token-utils');
+            await ensureFreshToken(300);
+            
+            // ✅ 使用 /api/backend 前缀，让 Next.js rewrite 代理到后端
+            const response = await fetch(`/api/backend/order/${orderNumber}/paypal/create`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
                 },
-                email_address: billingAddr.email || orderData.guestEmail,
-                phone: {
-                    phone_type: "MOBILE",
-                    phone_number: {
-                        national_number: cleanPhone
-                    }
-                },
-                address: {
-                    address_line_1: billingAddr.addressLine1,
-                    address_line_2: billingAddr.addressLine2 || "",
-                    admin_area_2: billingAddr.city,
-                    admin_area_1: billingAddr.province,
-                    postal_code: billingAddr.zipCode,
-                    country_code: billingAddr.country
-                }
-            },
-            purchase_units: [{
-                reference_id: orderNumber,
-                description: `Order #${orderData.orderNumber}`,
-                items: (orderData.items || []).map((item: any) => {
-                    const rawName = item.productTitle || 'Item';
-                    const cleanName = rawName
-                        .split('|')[0]             // 取竖线前的内容
-                        .replace(/\s+/g, '')       // 去掉所有空格
-                        .replace(/the/gi, '')      // 去掉 "the" (g表示全局，i表示不区分大小写)
-                        .trim()                    // 保险起见再次去除首尾（虽然空格已删）
-                        .substring(0, 127);        // 截取长度
-                    console.log('cleanName......', cleanName)
-
-                    return {
-                        name: cleanName,
-                        sku: item.productSku ? item.productSku.substring(0, 127) : 'SKU',
-                        quantity: String(item.quantity || 1),
-                        unit_amount: {
-                            currency_code: "USD",
-                            value: Number(item.unitPrice || 0).toFixed(2)
-                        },
-                    };
-                }),
-                amount: {
-                    currency_code: "USD",
-                    value: calculatedTotal.toFixed(2),
-                    breakdown: {
-                        item_total: {
-                            value: calculatedItemTotal.toFixed(2),
-                            currency_code: "USD"
-                        },
-                        shipping: {
-                            value: shippingValue.toFixed(2),
-                            currency_code: "USD"
-                        },
-                        discount: {
-                            value: discountValue.toFixed(2),
-                            currency_code: "USD"
-                        }
-                    }
-                },
-                shipping: {
-                    name: { full_name: `${shippingAddr.firstName} ${shippingAddr.lastName}`.trim() },
-                    address: {
-                        address_line_1: shippingAddr.addressLine1,
-                        address_line_2: shippingAddr.addressLine2 || "",
-                        admin_area_2: shippingAddr.city,
-                        admin_area_1: shippingAddr.province,
-                        postal_code: shippingAddr.zipCode,
-                        country_code: shippingAddr.country
-                    }
-                }
-            }],
-            application_context: {
-                brand_name: "MT TECH",  // ✅ 信用卡账单上显示的名称
-                user_action: "PAY_NOW",
-                shipping_preference: "SET_PROVIDED_ADDRESS"
+            });
+            
+            const result = await response.json();
+            
+            if (!result.success) {
+                throw new Error(result.message || '创建 PayPal 订单失败');
             }
-        });
+            
+            const paypalOrderId = result.data;
+            console.log('[Payment] 后端返回 PayPal Order ID:', paypalOrderId);
+            
+            // ✅ 返回后端生成的 PayPal Order ID
+            return paypalOrderId;
+        } catch (error) {
+            console.error('[Payment] 创建 PayPal 订单失败:', error);
+            throw error;
+        }
     };
 
     const onPayPalApprove = async (data: any) => {

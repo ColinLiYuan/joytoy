@@ -1,11 +1,13 @@
 // app/toys/[...slug]/route.ts
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { productServiceServer } from '@/services/servers/product-service-server';
+import { cookies } from 'next/headers';
+import { productService } from '@/services/productService';
 import { ProductResponse } from '@/types/product';
 import ProductDetailClient from './ProductDetailClient';
 import { getProductImageUrl } from '@/lib/image-utils';
 import { colorMap } from '@/lib/constants/color-map';
+import { BACKEND_CONFIG } from '@/lib/api-config';
 
 interface PageProps {
     params: Promise<{
@@ -17,7 +19,27 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     const resolvedParams = await params;
     const slug = Array.isArray(resolvedParams.slug) ? `/${resolvedParams.slug.join('/')}` : `/${resolvedParams.slug}`;
     try {
-        const product = await productServiceServer.getProductBySlug(slug);
+        // ✅ 从 Cookie 读取 Token（服务端）
+        const cookieStore = await cookies();
+        const accessToken = cookieStore.get('accessToken')?.value;
+        
+        // ✅ 手动构建请求，带上 Token
+        const url = `${BACKEND_CONFIG.baseURL}/api/V1/product?slug=${encodeURIComponent(slug)}`;
+        const headers: Record<string, string> = {
+            'Content-Type': 'application/json',
+        };
+        if (accessToken) {
+            headers['Authorization'] = `Bearer ${accessToken}`;
+        }
+        
+        const response = await fetch(url, { headers });
+        const result = await response.json();
+        
+        if (!result?.success) {
+            return { title: 'Product Not Found', description: 'The product does not exist.' };
+        }
+        
+        const product = result.data;
         const canonicalUrl = `https://mythtoy.com/toys${slug}`;
         const imageUrl = getProductImageUrl(undefined, product.image);
         // 去除 Markdown 符号，只取纯文本作为描述，避免 Schema 报错
@@ -74,7 +96,25 @@ export default async function ProductDetail({ params }: PageProps) {
     let product: ProductResponse | null = null;
 
     try {
-        product = await productServiceServer.getProductBySlug(slug);
+        // ✅ 从 Cookie 读取 Token（服务端）
+        const cookieStore = await cookies();
+        const accessToken = cookieStore.get('accessToken')?.value;
+        
+        // ✅ 手动构建请求，带上 Token
+        const url = `${BACKEND_CONFIG.baseURL}/api/V1/product?slug=${encodeURIComponent(slug)}`;
+        const headers: Record<string, string> = {
+            'Content-Type': 'application/json',
+        };
+        if (accessToken) {
+            headers['Authorization'] = `Bearer ${accessToken}`;
+        }
+        
+        const response = await fetch(url, { headers });
+        const result = await response.json();
+        
+        if (result?.success) {
+            product = result.data;
+        }
     } catch (err) {
         console.error('Error fetching product:', err);
     }
