@@ -76,7 +76,12 @@ export default function ProductList({
             features: initialFilters.features,
             materials: initialFilters.materials
         });
-    }, [initialFilters]);
+    }, [
+        initialFilters.priceRange,
+        initialFilters.colors?.join(','),
+        initialFilters.features?.join(','),
+        initialFilters.materials?.join(',')
+    ]);
 
     useEffect(() => {
         if (showFilters && window.innerWidth < 1024) {

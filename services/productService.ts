@@ -6,7 +6,7 @@ import { ADMIN_CONFIG, SERVER_CONFIG, BACKEND_CONFIG } from '@/lib/api-config';
 import {AdminProductResponse, ReleaseProductRequest} from "@/types/admin/adminProduct";
 import {ProductResponse} from "@/types/product";
 import { apiGet, apiPost } from '@/lib/api-utils';
-import { getToken } from '@/lib/token-utils';
+import { getToken, ensureFreshToken } from '@/lib/token-utils';
 
 export interface UploadResult {
     url: string;
@@ -164,6 +164,105 @@ class ProductService {
         }
     }
 
+    /**
+     * 根据分类获取产品（支持分页和筛选）
+     */
+    async getProductsByCategory(
+        slug: string,
+        page: number = 0,
+        size: number = 12,
+        filters?: {
+            priceRange?: [number, number] | null;
+            colors?: string[];
+            features?: string[];
+            materials?: string[];
+            sortBy?: string;
+            sortDirection?: string;
+        }
+    ): Promise<ProductListResponse> {
+        try {
+            // ✅ 在调用接口前检查并刷新 Token（提前 5 分钟）
+            await ensureFreshToken(300);
+            
+            const queryParams = new URLSearchParams({
+                page: page.toString(),
+                size: size.toString(),
+                category: slug || '',
+                sortBy: filters?.sortBy || 'createdAt',
+                sortDirection: filters?.sortDirection || 'DESC'
+            });
+
+            // 添加筛选参数
+            if (filters) {
+                if (filters.priceRange && filters.priceRange.length === 2) {
+                    queryParams.append('minPrice', filters.priceRange[0].toString());
+                    queryParams.append('maxPrice', filters.priceRange[1].toString());
+                }
+                if (filters.colors && filters.colors.length > 0) {
+                    queryParams.append('colors', filters.colors.join(','));
+                }
+                if (filters.features && filters.features.length > 0) {
+                    queryParams.append('features', filters.features.join(','));
+                }
+                if (filters.materials && filters.materials.length > 0) {
+                    queryParams.append('materials', filters.materials.join(','));
+                }
+            }
+
+            const url = `/api/V1/product/list?${queryParams}`;
+            console.log('[ProductService] getProductsByCategory - url:', url);
+
+            const response = await axiosClient.get(url);
+
+            console.log('response:', response)
+
+            if (response.data?.success) {
+                const data = response.data.data;
+                return {
+                    content: Array.isArray(data.content) ? data.content : [],
+                    currentPage: data.currentPage || data.page || page,
+                    pageSize: data.pageSize || data.size || size,
+                    totalElements: data.totalElements || data.total || 0,
+                    totalPages: data.totalPages || Math.ceil((data.totalElements || 0) / size),
+                    hasNext: data.hasNext || (page + 1) * size < (data.totalElements || 0),
+                    hasPrevious: data.hasPrevious || page > 0,
+                };
+            }
+
+            throw new Error(response.data?.message || 'Failed to fetch products');
+        } catch (error: any) {
+            // 401 或其他认证错误 - 不处理，让 axios 拦截器自动重试
+            if (error.response?.status === 401) {
+                console.log('[ProductService] 401 error, returning empty list');
+                return this.getEmptyList(page, size);
+            }
+            console.error('[ProductService] Network error:', error);
+            return this.getEmptyList(page, size);
+        }
+    }
+
+    /**
+     * 根据 slug 获取单个产品详情
+     */
+    async getProductBySlug(slug: string): Promise<ProductResponse> {
+        try {
+            // ✅ 在调用接口前检查并刷新 Token（提前 5 分钟）
+            await ensureFreshToken(300);
+            
+            const url = `/api/V1/product?slug=${encodeURIComponent(slug)}`;
+            const response = await axiosClient.get(url);
+
+            if (response.data?.success) {
+                return response.data.data;
+            }
+
+            throw new Error(response.data?.message || 'Product not found');
+        } catch (error) {
+            console.error('❌ [ProductService] getProductBySlug error:', error);
+            throw error;
+        }
+    }
+
     async searchProducts(
         keyword: string,
         page: number = 0,
@@ -178,6 +277,9 @@ class ProductService {
         }
     ): Promise<ProductListResponse> {
         try {
+            // ✅ 在调用接口前检查并刷新 Token（提前 5 分钟）
+            await ensureFreshToken(300);
+            
             const queryParams = new URLSearchParams({
                 page: page.toString(),
                 size: size.toString(),
@@ -219,8 +321,13 @@ class ProductService {
             }
 
             throw new Error(response.data?.message || 'Failed to fetch products');
-        } catch (error) {
-            console.error('Search products error:', error);
+        } catch (error: any) {
+            // 401 或其他认证错误 - 不处理，让 axios 拦截器自动重试
+            if (error.response?.status === 401) {
+                console.log('[ProductService] 401 error, returning empty list');
+                return this.getEmptyList(page, size);
+            }
+            console.error('[ProductService] Network error:', error);
             return this.getEmptyList(page, size);
         }
     }
@@ -238,6 +345,25 @@ class ProductService {
             hasNext: false,
             hasPrevious: false
         };
+    }
+
+    /**
+     * 获取英雄产品列表（首页推荐）
+     */
+    async getHeroProducts(): Promise<ProductResponse[]> {
+        try {
+            const url = `/api/V1/product/hero`;
+            const response = await axiosClient.get(url);
+
+            if (response.data?.success) {
+                return response.data.data || [];
+            }
+
+            return [];
+        } catch (error) {
+            console.error('❌ [ProductService] getHeroProducts error:', error);
+            return [];
+        }
     }
 
     /**

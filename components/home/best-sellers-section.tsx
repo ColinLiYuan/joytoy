@@ -5,9 +5,10 @@ import ProductCard from '@/components/product/product-card';
 interface BestSellersSectionProps {
     bestSellers: ProductResponse[];
     error?: string | null;
+    loading?: boolean;
 }
 
-export default function BestSellersSection({ bestSellers, error }: BestSellersSectionProps) {
+export default function BestSellersSection({ bestSellers, error, loading }: BestSellersSectionProps) {
     return (
         <>
             <section id="bestsellers" className="bestsellers py-8 bg-white">
@@ -23,22 +24,28 @@ export default function BestSellersSection({ bestSellers, error }: BestSellersSe
                     </div>
 
                     {/* 产品网格 */}
-                    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-                        {bestSellers.length > 0 ? (
-                            bestSellers
-                                .filter(product => product?.id)
-                                .map((product) => (
-                                    <ProductCard
-                                        key={product.id}
-                                        product={product}
-                                    />
-                                ))
-                        ) : (
-                            <div className="col-span-4 text-center py-8">
-                                <div className="text-gray-500">No products available</div>
-                            </div>
-                        )}
-                    </div>
+                    {loading ? (
+                        <div className="flex justify-center items-center py-20">
+                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black"></div>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+                            {bestSellers.length > 0 ? (
+                                bestSellers
+                                    .filter(product => product?.id)
+                                    .map((product) => (
+                                        <ProductCard
+                                            key={product.id}
+                                            product={product}
+                                        />
+                                    ))
+                            ) : (
+                                <div className="col-span-4 text-center py-8">
+                                    <div className="text-gray-500">No products available</div>
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </div>
             </section>
 

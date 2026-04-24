@@ -52,15 +52,20 @@ export async function refreshAccessToken(): Promise<string | null> {
         const data = await response.json();
 
         if (data.success && data.data) {
-            const { accessToken, refreshToken: newRefresh } = data.data;
+            const { accessToken, refreshToken: newRefresh, expiresIn, refreshExpiresIn } = data.data;
 
-            // ✅ 关键修复：在客户端更新 Token，Server 端只返回新 Token
+            // 客户端：更新 token
             if (typeof window !== 'undefined') {
-                // 客户端：使用 setTokens 更新 Cookie 和 LocalStorage
-                setTokens(accessToken, newRefresh || refreshToken);
+                // 客户端：使用 setTokens 更新 Cookie 和 LocalStorage（使用后端返回的过期时间）
+                setTokens(accessToken, newRefresh || refreshToken, expiresIn, refreshExpiresIn);
+            } else {
+                // 服务端：更新内存缓存
+                console.log('[API-UTILS] Server-side token refresh, updating cache...');
+                const tokenUtils = await import('@/lib/token-utils');
+                tokenUtils.serverTokenCache = accessToken;
+                tokenUtils.serverTokenExpiry = Math.floor(Date.now() / 1000) + (expiresIn - 300); // 提前5分钟过期
+                console.log('[API-UTILS] Server token cache updated:', !!tokenUtils.serverTokenCache);
             }
-            // Server 端：不执行任何操作，只返回新 Token
-            // 调用方需要自己处理 Cookie 更新
 
             console.log('Token refreshed successfully');
             return accessToken;
@@ -152,38 +157,35 @@ export async function proxyRequest(
         if (response.status === 401 && !_isRetry) {
             console.warn('401 Unauthorized, token expired.');
             
-            // 🔧 关键修复：只在客户端尝试刷新，Server 端直接返回 401
+            // 尝试刷新 Token（客户端和服务端都尝试）
+            console.log('Attempting token refresh...');
+            
+            const newToken = await refreshAccessToken();
+            
+            if (newToken) {
+                // 刷新成功，使用新 Token 重试请求
+                console.log('Token refreshed successfully, retrying request...');
+                return proxyRequest(endpoint, {
+                    ...options,
+                    _isRetry: true,
+                });
+            }
+            
+            // 刷新失败，处理不同端的情况
+            console.warn('Token refresh failed, clearing tokens...');
+            
             if (typeof window !== 'undefined') {
-                console.log('Attempting refresh on client...');
-                
-                // 尝试刷新 Token
-                const newToken = await refreshAccessToken();
-                
-                if (newToken) {
-                    // 刷新成功，使用新 Token 重试请求
-                    console.log('Token refreshed successfully, retrying request...');
-                    return proxyRequest(endpoint, {
-                        ...options,
-                        _isRetry: true,
-                    });
-                }
-                
-                // 刷新失败，清除 Token 并触发登录事件
-                console.warn('Token refresh failed, clearing tokens...');
-                // 🔧 关键修复：只清除 Access Token，保留 Refresh Token
-                // 因为 Refresh Token 可能还没过期，下次可以直接用
-                if (typeof window !== 'undefined') {
-                    localStorage.removeItem('accessToken');
-                    // 不删除 refreshToken，让它继续保留
-                }
+                // 客户端：只清除 Access Token，保留 Refresh Token
+                localStorage.removeItem('accessToken');
+                // 不删除 refreshToken，让它继续保留
                 
                 // 触发自定义事件，通知全局显示登录框
                 window.dispatchEvent(new CustomEvent('auth:tokenExpired', {
                     detail: { message: 'Your session has expired. Please login again.' }
                 }));
             } else {
-                // Server 端：不尝试刷新，直接返回 401 给客户端处理
-                console.log('Server-side 401, forwarding to client...');
+                // 服务端：刷新失败，返回 401 给客户端处理
+                console.log('Server-side token refresh failed, forwarding 401 to client...');
             }
             
             // 返回一个特殊响应，让业务层停止处理

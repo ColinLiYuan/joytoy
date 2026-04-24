@@ -111,16 +111,21 @@ export async function settleOrderCommission(orderNumber: string): Promise<any> {
 }
 
 /**
- * 更新订单状态（发货等）
+ * 更新订单状态（状态机模式：后端根据当前状态自动推进到下一步）
+ * @param orderNumber 订单号
+ * @param trackingNumber 物流单号（仅发货时需要）
  */
 export async function updateOrderStatus(orderNumber: string, trackingNumber?: string): Promise<void> {
     try {
-        console.log('[Order Action] Updating order status:', orderNumber)
+        console.log('[Order Action] Updating order status:', orderNumber, 'trackingNumber:', trackingNumber)
+
+        // 发货时需要传 trackingNumber，其他操作传空对象
+        const body = trackingNumber ? { trackingNumber } : {}
 
         const response = await fetchWithAuth(API_PATHS.ORDER_UPDATE_STATUS(orderNumber), {
             cache: 'no-store',
             method: 'PUT',
-            body: JSON.stringify({ trackingNumber }),
+            body: JSON.stringify(body),
         })
 
         console.log('[Order Action] Response status:', response.status)

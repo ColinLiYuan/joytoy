@@ -1,6 +1,6 @@
 // app/api/product/related/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { productServiceServer } from '@/services/servers/product-service-server';
+import { productService } from '@/services/productService';
 
 export async function GET(request: NextRequest) {
     try {
@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
         }
 
         // 1. 获取当前商品详情
-        const currentProduct = await productServiceServer.getProductBySlug(currentSlug);
+        const currentProduct = await productService.getProductBySlug(currentSlug);
 
         if (!currentProduct) {
             return NextResponse.json({ data: [] });
@@ -29,16 +29,16 @@ export async function GET(request: NextRequest) {
         }
 
         // 3. 获取同分类产品 (多取一点，比如 16 个，方便随机)
-        const listResponse = await productServiceServer.getProductsByCategory(targetCategorySlug, 0, 16);
+        const listResponse = await productService.getProductsByCategory(targetCategorySlug, 0, 16);
         let products = listResponse.content || [];
 
         // 4. 过滤掉当前商品自己
         products = products.filter(p => p.id !== currentProduct.id);
 
-        // 5. 如果数量不够 4 个，去补 Best Sellers (兜底策略)
+        // 5. 如果数量不够 4 个，去补 Hero Products (兜底策略)
         if (products.length < 4) {
             try {
-                const heroProducts = await productServiceServer.getHeroProducts();
+                const heroProducts = await productService.getHeroProducts();
                 // 过滤掉已经存在的产品和当前产品
                 const existingIds = new Set(products.map(p => p.id));
                 const fillerItems = heroProducts.filter(p => !existingIds.has(p.id) && p.id !== currentProduct.id);

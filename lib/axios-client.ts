@@ -184,6 +184,11 @@ axiosClient.interceptors.response.use(
                     
                     const newAccessToken = refreshResponse.data.data.accessToken;
                     const newRefreshToken = refreshResponse.data.data.refreshToken;
+                    const expiresIn = refreshResponse.data.data.expiresIn;
+                    const refreshExpiresIn = refreshResponse.data.data.refreshExpiresIn;
+                    
+                    console.log('[AxiosClient] Backend returned expiresIn:', expiresIn);
+                    console.log('[AxiosClient] Backend returned refreshExpiresIn:', refreshExpiresIn);
                     
                     // ✅ 同时更新 localStorage 和 Cookie，确保 getAccessToken 能读取到新 Token
                     if (typeof window !== 'undefined') {
@@ -197,9 +202,12 @@ axiosClient.interceptors.response.use(
                             console.error('[AxiosClient] Failed to update localStorage:', e);
                         }
                         
-                        // 同时写入 Cookie
+                        // 同时写入 Cookie（使用后端返回的过期时间）
+                        const accessExpires = expiresIn ? expiresIn / 60 / 60 / 24 : 1 / 60 / 24;
+                        const refreshExpires = refreshExpiresIn ? refreshExpiresIn / 60 / 60 / 24 : 7;
+                        
                         setCookie('accessToken', newAccessToken, {
-                            expires: 30 / 60 / 24, // 30分钟
+                            expires: accessExpires,
                             path: '/',
                             sameSite: 'lax',
                             secure: window.location.protocol === 'https:',
@@ -207,7 +215,7 @@ axiosClient.interceptors.response.use(
                         
                         if (newRefreshToken) {
                             setCookie('refreshToken', newRefreshToken, {
-                                expires: 7, // 7天
+                                expires: refreshExpires,
                                 path: '/',
                                 sameSite: 'lax',
                                 secure: window.location.protocol === 'https:',

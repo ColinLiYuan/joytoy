@@ -173,7 +173,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         try {
             const loginResponse = await loginUser(loginRequest);
 
-            setTokens(loginResponse.accessToken, loginResponse.refreshToken);
+            // 使用后端返回的过期时间设置 Cookie
+            setTokens(
+                loginResponse.accessToken, 
+                loginResponse.refreshToken,
+                loginResponse.expiresIn,
+                loginResponse.refreshExpiresIn
+            );
             setIsLoggedIn(true);
             setUserInfo(loginResponse);
 

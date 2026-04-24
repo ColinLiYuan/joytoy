@@ -12,7 +12,8 @@ import {
     TrendingUp,
     CreditCard,
     ChevronDown,
-    History
+    History,
+    Tag
 } from 'lucide-react';
 
 interface SidebarContentProps {
@@ -44,6 +45,7 @@ function SidebarContent({ sidebarOpen, setSidebarOpen }: SidebarContentProps) {
         { name: '订单管理', href: '/admin/order', icon: ShoppingCart },
         { name: '用户管理', href: '/admin/user', icon: Users },
         { name: '购物车管理', href: '/admin/cart', icon: CreditCard },
+        { name: '优惠券管理', href: '/admin/coupon', icon: Tag },
         
         // 营销与推广
         { 

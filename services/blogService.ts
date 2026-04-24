@@ -2,9 +2,68 @@
 
 import axiosClient from '@/lib/axios-client';
 import { AdminBlogResponse, AdminBlogListResponse } from '@/types/blog';
+import { BlogListResponse, BlogResponse } from '@/types/site/blog';
 import { BACKEND_API_ROUTES } from '@/lib/api-config';
 
 class BlogService {
+    /**
+     * 获取博客列表 (用户端 - 查询)
+     */
+    async list(
+        page: number = 0,
+        size: number = 12
+    ): Promise<BlogListResponse> {
+        try {
+            const queryParams = new URLSearchParams({
+                page: page.toString(),
+                size: size.toString()
+            });
+
+            const url = `/api/V1/blog/list?${queryParams}`;
+            console.log('[BlogService] Fetching blogs from:', url);
+            
+            const response = await axiosClient.get(url);
+
+            if (response.data?.success) {
+                return response.data.data || {
+                    content: [],
+                    currentPage: page,
+                    pageSize: size,
+                    totalElements: 0,
+                    totalPages: 0,
+                    hasNext: false,
+                    hasPrevious: false
+                };
+            }
+
+            throw new Error(response.data?.message || 'Failed to fetch blogs');
+        } catch (error) {
+            console.error('❌ [BlogService] Error fetching blogs:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * 根据 slug 获取博客详情 (用户端 - 查询)
+     */
+    async getBySlug(slug: string): Promise<BlogResponse> {
+        try {
+            const url = `/api/V1/blog?slug=${encodeURIComponent(slug)}`;
+            console.log('[BlogService] Fetching blog by slug:', url);
+            
+            const response = await axiosClient.get(url);
+
+            if (response.data?.success) {
+                return response.data.data;
+            }
+
+            throw new Error(response.data?.message || 'Blog not found');
+        } catch (error) {
+            console.error('❌ [BlogService] Get blog failed:', error);
+            throw error;
+        }
+    }
+
     /**
      * 获取管理端博客列表 (查询 - 使用 Axios 直连后端)
      */

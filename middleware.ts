@@ -102,7 +102,6 @@ const gonePaths = new Set([
     '/collections/male-sex-toys/manual-strokers',
     '/collections/best-sellers',
     // 下架产品（404列表）
-    '/toys/female-sex-toys/g-spot-vibrators/the-swan',
     '/toys/female-sex-toys/clit-vibrators/vibrator-g-sucking-usb-szm',
     '/toys/female-sex-toys/clit-vibrators/squirrel-auto-suction-vibes',
     '/toys/male-sex-toys/pussy-masturbators/silicone-life-like-pussy',
@@ -119,7 +118,7 @@ const gonePrefixes = [
     '/products'
 ];
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
     const { pathname, searchParams } = request.nextUrl;
     
     // 🛑 核心修复：开发环境/本地访问直接跳过所有重定向，防止 SSL 错误
@@ -176,7 +175,7 @@ export function middleware(request: NextRequest) {
     // ✅ 新增：管理员路由保护
     if (pathname.startsWith('/admin')) {
         // 注意：Cookie key 是 accessToken (驼峰)，不是 access_token
-        const token = request.cookies.get('accessToken') || request.cookies.get('access_token');
+        let token = request.cookies.get('accessToken') || request.cookies.get('access_token');
         
         if (!token) {
             console.log('[Middleware] Admin access denied: No token found');
@@ -185,7 +184,7 @@ export function middleware(request: NextRequest) {
         }
         
         try {
-            const payload = parseJwt(token.value);
+            let payload = parseJwt(token.value);
             console.log('[Middleware] Admin token payload:', { isAdmin: payload.isAdmin, role: payload.role });
             
             // 检查是否有管理员权限（兼容 role 和 isAdmin 两种字段）
@@ -196,6 +195,61 @@ export function middleware(request: NextRequest) {
             if (!hasAdminPermission) {
                 console.log('[Middleware] Admin access denied: User is not admin');
                 return NextResponse.redirect(new URL('/403', request.url));
+            }
+            
+            // ✅ 检查 token 是否快过期（5分钟内），如果是则主动刷新
+            const now = Math.floor(Date.now() / 1000);
+            const expiresIn = payload.exp - now;
+            
+            if (expiresIn < 300) { // 5分钟 = 300秒
+                console.log('[Middleware] Token expiring soon, refreshing...');
+                const refreshToken = request.cookies.get('refreshToken');
+                
+                if (refreshToken) {
+                    try {
+                        const backendUrl = process.env.BACKEND_BASE_URL || 'http://localhost:9356';
+                        const refreshResponse = await fetch(`${backendUrl}/api/V1/users/refresh`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ refreshToken: refreshToken.value }),
+                        });
+                        
+                        if (refreshResponse.ok) {
+                            const refreshData = await refreshResponse.json();
+                            if (refreshData.success && refreshData.data) {
+                                const { accessToken: newAccessToken, refreshToken: newRefreshToken } = refreshData.data;
+                                
+                                // 创建新的 response，设置新的 cookie
+                                const response = NextResponse.next();
+                                
+                                // 设置新的 access token
+                                response.cookies.set('accessToken', newAccessToken, {
+                                    path: '/',
+                                    maxAge: 30 * 60, // 30分钟
+                                    httpOnly: true,
+                                    secure: process.env.NODE_ENV === 'production',
+                                    sameSite: 'lax',
+                                });
+                                
+                                // 设置新的 refresh token
+                                if (newRefreshToken) {
+                                    response.cookies.set('refreshToken', newRefreshToken, {
+                                        path: '/',
+                                        maxAge: 7 * 24 * 60 * 60, // 7天
+                                        httpOnly: true,
+                                        secure: process.env.NODE_ENV === 'production',
+                                        sameSite: 'lax',
+                                    });
+                                }
+                                
+                                console.log('[Middleware] Token refreshed successfully');
+                                return response;
+                            }
+                        }
+                    } catch (error) {
+                        console.error('[Middleware] Token refresh failed:', error);
+                    }
+                }
             }
         } catch (error) {
             console.log('[Middleware] Admin access denied: Invalid token', error);

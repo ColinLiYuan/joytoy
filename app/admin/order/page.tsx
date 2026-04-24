@@ -94,15 +94,20 @@ export default function OrderPage() {
         fetchOrders()
     }, [fetchOrders])
 
-    // 更新状态逻辑
-    const handleUpdateStatus = async (orderNumber: string, newStatus: string) => {
-        console.log('[Handle Update Status] orderNumber:', orderNumber, 'newStatus:', newStatus);
-        const statusLabel = statusMap[newStatus] || newStatus || '下一状态';
-        if (!window.confirm(`确定要推进订单状态吗？`)) return;
+    // 更新状态逻辑（后端是状态机模式，根据当前状态自动推进到下一步）
+    const handleUpdateStatus = async (orderNumber: string, trackingNumber?: string) => {
+        console.log('[Handle Update Status] orderNumber:', orderNumber, 'trackingNumber:', trackingNumber);
+        
+        // 如果是发货操作，检查物流单号
+        if (trackingNumber) {
+            if (!window.confirm(`确定要发货吗？物流单号：${trackingNumber}`)) return;
+        } else {
+            if (!window.confirm(`确定要推进订单状态吗？`)) return;
+        }
 
         try {
             console.log('[Handle Update Status] Calling updateOrderStatus...');
-            await updateOrderStatus(orderNumber, newStatus);
+            await updateOrderStatus(orderNumber, trackingNumber);
             console.log('[Handle Update Status] Success, refreshing orders...');
             fetchOrders();
         } catch (error: any) {
@@ -376,13 +381,13 @@ export default function OrderPage() {
                                         </button>
 
                                         {order.status === 'PENDING' && (
-                                            <button onClick={() => handleUpdateStatus(order.orderNumber, 'PAID')} className="p-2 text-green-500 hover:bg-green-50 rounded-lg" title="确认支付"><CreditCard className="h-5 w-5" /></button>
+                                            <button onClick={() => handleUpdateStatus(order.orderNumber)} className="p-2 text-green-500 hover:bg-green-50 rounded-lg" title="确认支付"><CreditCard className="h-5 w-5" /></button>
                                         )}
                                         {['PAID', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'COMPLETED'].includes(order.status) && (
                                             <button onClick={() => { setRefundOrder(order); setIsRefundModalOpen(true); }} className="p-2 text-red-500 hover:bg-red-50 rounded-lg" title="退款"><RotateCcw className="h-5 w-5" /></button>
                                         )}
                                         {order.status === 'PAID' && (
-                                            <button onClick={() => handleUpdateStatus(order.orderNumber, 'PROCESSING')} className="p-2 text-indigo-500 hover:bg-indigo-50 rounded-lg" title="开始处理"><Package className="h-5 w-5" /></button>
+                                            <button onClick={() => handleUpdateStatus(order.orderNumber)} className="p-2 text-indigo-500 hover:bg-indigo-50 rounded-lg" title="开始处理"><Package className="h-5 w-5" /></button>
                                         )}
                                         {order.status === 'PROCESSING' && (
                                             <button onClick={() => { setShipOrder(order); setIsShipModalOpen(true); }} className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg" title="去发货"><Truck className="h-5 w-5" /></button>
@@ -391,7 +396,7 @@ export default function OrderPage() {
                                             <button onClick={() => { setCancelOrder(order); setIsCancelModalOpen(true); }} className="p-2 text-red-500 hover:bg-red-50 rounded-lg" title="取消订单"><XCircle className="h-5 w-5" /></button>
                                         )}
                                         {order.status === 'SHIPPED' && (
-                                            <button onClick={() => handleUpdateStatus(order.orderNumber, '')} className="p-2 text-orange-500 hover:bg-orange-50 rounded-lg" title="确认签收"><PackageCheck className="h-5 w-5" /></button>
+                                            <button onClick={() => handleUpdateStatus(order.orderNumber)} className="p-2 text-orange-500 hover:bg-orange-50 rounded-lg" title="确认签收"><PackageCheck className="h-5 w-5" /></button>
                                         )}
                                         {order.status === 'COMPLETED' && order.affiliateId && (order.commissionAmount || 0) > 0 && order.affiliatePayoutStatus?.toUpperCase() === 'PENDING' && (
                                             <button 

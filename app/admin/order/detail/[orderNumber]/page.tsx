@@ -224,9 +224,38 @@ function OrderDetailContent() {
                                                     {log.changedBy && (
                                                         <p>操作人: <span className="font-medium text-gray-700">{log.changedBy}</span></p>
                                                     )}
-                                                    {log.reason && (
-                                                        <p>原因: <span className="text-gray-600">{log.reason}</span></p>
-                                                    )}
+                                                    {log.reason && (() => {
+                                                        // 根据目标状态智能显示原因和物流单号
+                                                        const trackingNumber = (() => {
+                                                            if (log.newStatus === 'SHIPPED' && log.reason.startsWith('物流单号:')) {
+                                                                return log.reason.replace('物流单号:', '').trim();
+                                                            }
+                                                            return null;
+                                                        })();
+                                                        
+                                                        const displayReason = (() => {
+                                                            // 如果有物流单号且不是发货操作，过滤掉（错误的记录）
+                                                            if (log.newStatus !== 'SHIPPED' && log.reason.startsWith('物流单号:')) {
+                                                                return null;
+                                                            }
+                                                            // 如果是发货操作，且reason只是物流单号，不显示原因（只显示物流单号）
+                                                            if (log.newStatus === 'SHIPPED' && trackingNumber) {
+                                                                return null;
+                                                            }
+                                                            return log.reason || null;
+                                                        })();
+                                                        
+                                                        return (
+                                                            <>
+                                                                {displayReason && (
+                                                                    <p>原因: <span className="text-gray-600">{displayReason}</span></p>
+                                                                )}
+                                                                {trackingNumber && (
+                                                                    <p>物流单号: <span className="text-blue-600 font-medium">{trackingNumber}</span></p>
+                                                                )}
+                                                            </>
+                                                        );
+                                                    })()}
                                                 </div>
                                             </div>
                                         ))}
