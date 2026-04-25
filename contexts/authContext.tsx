@@ -173,6 +173,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         try {
             const loginResponse = await loginUser(loginRequest);
 
+            console.log('[AuthContext] Login response from backend:', {
+                expiresIn: loginResponse.expiresIn,
+                refreshExpiresIn: loginResponse.refreshExpiresIn,
+                expiresInMinutes: loginResponse.expiresIn ? loginResponse.expiresIn / 60 : 'N/A',
+                refreshExpiresInDays: loginResponse.refreshExpiresIn ? loginResponse.refreshExpiresIn / 60 / 60 / 24 : 'N/A',
+                currentTime: new Date().toISOString()
+            });
+
             // 使用后端返回的过期时间设置 Cookie
             setTokens(
                 loginResponse.accessToken, 

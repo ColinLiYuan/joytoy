@@ -88,7 +88,7 @@ export default function AdminAffiliatePage() {
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-[400px]">
-                <div className="text-gray-400 font-medium animate-pulse">Loading affiliate data...</div>
+                <div className="text-gray-400 font-medium animate-pulse">正在加载分销客数据...</div>
             </div>
         );
     }
@@ -97,8 +97,8 @@ export default function AdminAffiliatePage() {
         <div className="space-y-6">
             {/* Header */}
             <div>
-                <h1 className="text-2xl font-bold text-gray-900">Affiliate Marketing</h1>
-                <p className="text-sm text-gray-500 mt-1">Manage and monitor all affiliate performance and commissions</p>
+                <h1 className="text-2xl font-bold text-gray-900">联盟营销管理</h1>
+                <p className="text-sm text-gray-500 mt-1">管理和监控所有分销客的表现和佣金数据</p>
             </div>
 
             {/* Stats Cards */}
@@ -106,30 +106,30 @@ export default function AdminAffiliatePage() {
                 <>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                         <StatCard
-                            title="Total Affiliates"
+                            title="分销客总数"
                             value={stats.totalAffiliates.toString()}
-                            subtitle={`${stats.activeAffiliates} Active`}
+                            subtitle={`${stats.activeAffiliates} 个活跃`}
                             icon={Users}
                             color="blue"
                         />
                         <StatCard
-                            title="Total Clicks"
+                            title="总点击数"
                             value={stats.totalClicks.toLocaleString()}
-                            subtitle="Accumulated across all links"
+                            subtitle="所有链接累计"
                             icon={MousePointerClick}
                             color="purple"
                         />
                         <StatCard
-                            title="Total Conversions"
+                            title="总转化数"
                             value={stats.totalConversions.toString()}
-                            subtitle={`Conversion Rate ${stats.conversionRate}%`}
+                            subtitle={`转化率 ${stats.conversionRate}%`}
                             icon={TrendingUp}
                             color="green"
                         />
                         <StatCard
-                            title="Total Commission"
+                            title="总佣金支出"
                             value={`$${stats.totalCommission.toFixed(2)}`}
-                            subtitle="Accumulated Paid"
+                            subtitle="历史累计支付"
                             icon={DollarSign}
                             color="orange"
                         />
@@ -139,48 +139,48 @@ export default function AdminAffiliatePage() {
                     <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
                         <div className="flex items-center gap-2 mb-6">
                             <Wallet className="h-5 w-5 text-gray-400" />
-                            <h3 className="font-bold text-gray-900">Financial Overview</h3>
+                            <h3 className="font-bold text-gray-900">财务概览</h3>
                         </div>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                             <div className="space-y-2">
                                 <div className="flex items-center gap-2">
                                     <CheckCircle className="h-4 w-4 text-emerald-500" />
-                                    <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">Settled</span>
+                                    <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">已结算</span>
                                 </div>
                                 <div className="text-2xl font-black text-gray-900">
                                     ${stats.settledAmount?.toFixed(2) || '0.00'}
                                 </div>
-                                <div className="text-xs text-gray-400">Available for withdrawal</div>
+                                <div className="text-xs text-gray-400">可提现金额</div>
                             </div>
                             <div className="space-y-2">
                                 <div className="flex items-center gap-2">
                                     <Clock className="h-4 w-4 text-amber-500" />
-                                    <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">Pending</span>
+                                    <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">待结算</span>
                                 </div>
                                 <div className="text-2xl font-black text-gray-900">
                                     ${stats.pendingAmount?.toFixed(2) || '0.00'}
                                 </div>
-                                <div className="text-xs text-gray-400">Cooling-off Period (30 days)</div>
+                                <div className="text-xs text-gray-400">冷静期内 (30天)</div>
                             </div>
                             <div className="space-y-2">
                                 <div className="flex items-center gap-2">
                                     <Wallet className="h-4 w-4 text-blue-500" />
-                                    <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">Total Balance</span>
+                                    <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">总余额</span>
                                 </div>
                                 <div className="text-2xl font-black text-gray-900">
                                     ${stats.currentBalance?.toFixed(2) || '0.00'}
                                 </div>
-                                <div className="text-xs text-gray-400">Total for all affiliates</div>
+                                <div className="text-xs text-gray-400">所有分销客总计</div>
                             </div>
                             <div className="space-y-2">
                                 <div className="flex items-center gap-2">
                                     <AlertCircle className="h-4 w-4 text-purple-500" />
-                                    <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">Paid Out</span>
+                                    <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">已支付</span>
                                 </div>
                                 <div className="text-2xl font-black text-gray-900">
                                     ${stats.totalPaid?.toFixed(2) || '0.00'}
                                 </div>
-                                <div className="text-xs text-gray-400">Historical Total</div>
+                                <div className="text-xs text-gray-400">历史累计</div>
                             </div>
                         </div>
                     </div>
@@ -193,7 +193,7 @@ export default function AdminAffiliatePage() {
                     <div className="relative flex-1">
                         <input
                             type="text"
-                            placeholder="Search affiliate code, name or email..."
+                            placeholder="搜索分销客 ID、姓名或邮箱..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-full"
@@ -205,10 +205,10 @@ export default function AdminAffiliatePage() {
                         onChange={(e) => setStatusFilter(e.target.value)}
                         className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
                     >
-                        <option value="ALL">All Status</option>
-                        <option value="ACTIVE">Active</option>
-                        <option value="SUSPENDED">Suspended</option>
-                        <option value="PENDING">Pending</option>
+                        <option value="ALL">全部状态</option>
+                        <option value="ACTIVE">活跃</option>
+                        <option value="SUSPENDED">已暂停</option>
+                        <option value="PENDING">待审核</option>
                     </select>
                 </div>
             </div>
@@ -219,17 +219,17 @@ export default function AdminAffiliatePage() {
                     <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                             <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Affiliate</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Affiliate ID</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Promo Codes</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Commission Rate</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Clicks</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Orders</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Settled</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pending</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">PayPal</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">分销客</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">分销客 ID</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">推广码</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">佣金比例</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">点击数</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">订单数</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">转化率</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">累计收益</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">当前余额</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">加入日期</th>
+                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
@@ -255,7 +255,7 @@ export default function AdminAffiliatePage() {
                                                     </span>
                                                 ))
                                             ) : (
-                                                <span className="text-xs text-gray-400">None</span>
+                                                <span className="text-xs text-gray-400">无</span>
                                             )}
                                         </div>
                                     </td>
@@ -268,26 +268,24 @@ export default function AdminAffiliatePage() {
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                         {affiliate.totalOrders}
                                     </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        {(affiliate.conversionRate || 0).toFixed(2)}%
+                                    </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">
                                         ${(affiliate.totalEarnings || 0).toFixed(2)}
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-orange-600">
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600">
                                         ${(affiliate.currentBalance || 0).toFixed(2)}
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 truncate max-w-[200px]" title={affiliate.userEmail}>
-                                        {affiliate.userEmail}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <span className={`inline-flex px-2.5 py-0.5 text-xs font-medium rounded-full border ${getStatusColor(affiliate.status)}`}>
-                                            {affiliate.status}
-                                        </span>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        {affiliate.createdAt ? new Date(affiliate.createdAt).toLocaleDateString() : '-'}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         <Link 
                                             href={`/admin/affiliate/${affiliate.id}`}
                                             className="text-blue-600 hover:text-blue-900"
                                         >
-                                            View Details
+                                            查看详情
                                         </Link>
                                     </td>
                                 </tr>
@@ -298,7 +296,7 @@ export default function AdminAffiliatePage() {
                 
                 {filteredAffiliates.length === 0 && (
                     <div className="text-center py-12">
-                        <p className="text-gray-500">No matching affiliates found</p>
+                        <p className="text-gray-500">未找到匹配的分销客</p>
                     </div>
                 )}
             </div>

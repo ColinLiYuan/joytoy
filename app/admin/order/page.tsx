@@ -18,7 +18,8 @@ import {
     ChevronRight,
     RotateCcw,
     XCircle,
-    DollarSign
+    DollarSign,
+    CheckCircle
 } from 'lucide-react'
 
 // 定义所有状态
@@ -45,8 +46,8 @@ export default function OrderPage() {
     const [orders, setOrders] = useState<OrderResponse[]>([])
     const [loading, setLoading] = useState(true)
 
-    // 初始化默认过滤“已支付”状态
-    const [activeStatus, setActiveStatus] = useState<OrderStatus | 'ALL'>('PAID')
+    // 初始化默认过滤“全部订单”状态
+    const [activeStatus, setActiveStatus] = useState<OrderStatus | 'ALL'>('ALL')
     const [searchQuery, setSearchQuery] = useState('')
     const [page, setPage] = useState(0)
     const [totalPages, setTotalPages] = useState(0)
@@ -397,6 +398,9 @@ export default function OrderPage() {
                                         )}
                                         {order.status === 'SHIPPED' && (
                                             <button onClick={() => handleUpdateStatus(order.orderNumber)} className="p-2 text-orange-500 hover:bg-orange-50 rounded-lg" title="确认签收"><PackageCheck className="h-5 w-5" /></button>
+                                        )}
+                                        {order.status === 'DELIVERED' && (
+                                            <button onClick={() => handleUpdateStatus(order.orderNumber)} className="p-2 text-green-600 hover:bg-green-50 rounded-lg" title="标记已完成"><CheckCircle className="h-5 w-5" /></button>
                                         )}
                                         {order.status === 'COMPLETED' && order.affiliateId && (order.commissionAmount || 0) > 0 && order.affiliatePayoutStatus?.toUpperCase() === 'PENDING' && (
                                             <button 

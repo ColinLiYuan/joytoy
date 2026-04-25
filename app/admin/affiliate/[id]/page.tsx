@@ -74,12 +74,7 @@ function AffiliateDetailContent() {
                 const member = listData.content.find((m) => m.id.toString() === affiliateId);
                 if (member) {
                     // 将 AffiliateUser 转换为 AffiliateDetail
-                    setDetail({
-                        ...member,
-                        settledAmount: 0,  // 默认值，实际应该从后端获取
-                        pendingAmount: 0,  // 默认值
-                        totalPaid: 0       // 默认值
-                    } as AffiliateDetail);
+                    setDetail(member as AffiliateDetail);
                 }
             }
         } catch (error) {
@@ -103,7 +98,7 @@ function AffiliateDetailContent() {
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-[400px]">
-                <div className="text-gray-400 font-medium animate-pulse">Loading...</div>
+                <div className="text-gray-400 font-medium animate-pulse">加载中...</div>
             </div>
         );
     }
@@ -111,12 +106,12 @@ function AffiliateDetailContent() {
     if (!detail) {
         return (
             <div className="text-center py-12">
-                <p className="text-gray-500">Member not found</p>
+                <p className="text-gray-500">未找到该分销客</p>
                 <button
                     onClick={() => router.back()}
                     className="mt-4 text-blue-600 hover:text-blue-800"
                 >
-                    ← Back to list
+                    ← 返回列表
                 </button>
             </div>
         );
@@ -141,38 +136,40 @@ function AffiliateDetailContent() {
                 <span className={`inline-flex px-3 py-1 text-sm font-medium rounded-full border ${
                     detail.status === 'ACTIVE' 
                         ? 'bg-green-100 text-green-800 border-green-200' 
-                        : 'bg-red-100 text-red-800 border-red-200'
+                        : detail.status === 'PENDING'
+                            ? 'bg-yellow-100 text-yellow-800 border-yellow-200'
+                            : 'bg-red-100 text-red-800 border-red-200'
                 }`}>
-                    {detail.status}
+                    {detail.status === 'ACTIVE' ? '活跃' : detail.status === 'PENDING' ? '待审核' : '已暂停'}
                 </span>
             </div>
 
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <StatCard
-                    title="Total Clicks"
+                    title="总点击数"
                     value={detail.totalClicks.toLocaleString()}
                     icon={MousePointerClick}
                     color="blue"
                 />
                 <StatCard
-                    title="Total Orders"
+                    title="总订单数"
                     value={detail.totalOrders.toString()}
                     icon={ShoppingCart}
                     color="green"
                 />
                 <StatCard
-                    title="Settled Amount"
-                    value={`$${(detail.settledAmount || 0).toFixed(2)}`}
-                    subtitle="Available for withdrawal"
-                    icon={DollarSign}
+                    title="转化率"
+                    value={`${((detail.totalOrders || 0) / (detail.totalClicks || 1) * 100).toFixed(2)}%`}
+                    subtitle="点击到订单转化"
+                    icon={TrendingUp}
                     color="purple"
                 />
                 <StatCard
-                    title="Pending Amount"
-                    value={`$${(detail.pendingAmount || 0).toFixed(2)}`}
-                    subtitle="Cooling-off Period"
-                    icon={TrendingUp}
+                    title="累计收益"
+                    value={`$${(detail.totalEarnings || 0).toFixed(2)}`}
+                    subtitle="所有订单佣金总和"
+                    icon={DollarSign}
                     color="orange"
                 />
             </div>
@@ -181,78 +178,77 @@ function AffiliateDetailContent() {
             <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
                 <div className="flex items-center gap-2 mb-6">
                     <Wallet className="h-5 w-5 text-gray-400" />
-                    <h3 className="font-bold text-gray-900">Financial Overview</h3>
+                    <h3 className="font-bold text-gray-900">财务概览</h3>
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                     <div className="space-y-2">
                         <div className="flex items-center gap-2">
                             <CheckCircle className="h-4 w-4 text-emerald-500" />
-                            <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">Settled</span>
+                            <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">累计收益</span>
                         </div>
                         <div className="text-2xl font-black text-gray-900">
-                            ${(detail.settledAmount || 0).toFixed(2)}
+                            ${(detail.totalEarnings || 0).toFixed(2)}
                         </div>
-                        <div className="text-xs text-gray-400">Available for withdrawal</div>
-                    </div>
-                    <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                            <Clock className="h-4 w-4 text-amber-500" />
-                            <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">Pending</span>
-                        </div>
-                        <div className="text-2xl font-black text-gray-900">
-                            ${(detail.pendingAmount || 0).toFixed(2)}
-                        </div>
-                        <div className="text-xs text-gray-400">Cooling-off Period (30 days)</div>
+                        <div className="text-xs text-gray-400">所有订单佣金总和</div>
                     </div>
                     <div className="space-y-2">
                         <div className="flex items-center gap-2">
                             <Wallet className="h-4 w-4 text-blue-500" />
-                            <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">Current Balance</span>
+                            <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">当前余额</span>
                         </div>
                         <div className="text-2xl font-black text-gray-900">
                             ${(detail.currentBalance || 0).toFixed(2)}
                         </div>
-                        <div className="text-xs text-gray-400">Pending payout</div>
+                        <div className="text-xs text-gray-400">待提现金额</div>
                     </div>
                     <div className="space-y-2">
                         <div className="flex items-center gap-2">
                             <AlertCircle className="h-4 w-4 text-purple-500" />
-                            <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">Paid Out</span>
+                            <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">已支付</span>
                         </div>
                         <div className="text-2xl font-black text-gray-900">
                             ${(detail.totalPaid || 0).toFixed(2)}
                         </div>
-                        <div className="text-xs text-gray-400">Historical Total</div>
+                        <div className="text-xs text-gray-400">历史累计提现</div>
+                    </div>
+                    <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                            <TrendingUp className="h-4 w-4 text-green-500" />
+                            <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">佣金比例</span>
+                        </div>
+                        <div className="text-2xl font-black text-gray-900">
+                            {((detail.commissionRate || 0) * 100).toFixed(0)}%
+                        </div>
+                        <div className="text-xs text-gray-400">默认佣金比例</div>
                     </div>
                 </div>
             </div>
 
             {/* Basic Info */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Basic Information</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">基本信息</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <InfoRow label="User ID" value={detail.userId?.toString() || '-'} />
-                    <InfoRow label="Email" value={detail.userEmail} />
-                    <InfoRow label="Name" value={detail.userName} />
-                    <InfoRow label="Affiliate ID" value={detail.affiliateId} />
-                    <InfoRow label="Commission Rate" value={`${((detail.commissionRate || 0) * 100).toFixed(0)}%`} />
-                    <InfoRow label="PayPal Email" value={detail.userEmail} />
-                    <InfoRow label="Status" value={detail.status} />
-                    <InfoRow label="Total Clicks" value={detail.totalClicks.toLocaleString()} />
-                    <InfoRow label="Total Orders" value={detail.totalOrders.toString()} />
-                    <InfoRow label="Total Earnings" value={`$${(detail.totalEarnings || 0).toFixed(2)}`} />
-                    <InfoRow label="Settled Amount" value={`$${(detail.settledAmount || 0).toFixed(2)}`} />
-                    <InfoRow label="Pending Amount" value={`$${(detail.pendingAmount || 0).toFixed(2)}`} />
-                    <InfoRow label="Current Balance" value={`$${(detail.currentBalance || 0).toFixed(2)}`} />
-                    <InfoRow label="Total Paid" value={`$${(detail.totalPaid || 0).toFixed(2)}`} />
-                    <InfoRow label="Registered At" value={formatDate(detail.createdAt)} />
-                    <InfoRow label="Updated At" value={formatDate(detail.updatedAt)} />
+                    <InfoRow label="用户 ID" value={detail.userId?.toString() || '-'} />
+                    <InfoRow label="邮箱" value={detail.userEmail} />
+                    <InfoRow label="姓名" value={detail.userName} />
+                    <InfoRow label="分销客 ID" value={detail.affiliateId} />
+                    <InfoRow label="佣金比例" value={`${((detail.commissionRate || 0) * 100).toFixed(0)}%`} />
+                    <InfoRow label="PayPal 邮箱" value={detail.userEmail} />
+                    <InfoRow label="状态" value={detail.status === 'ACTIVE' ? '活跃' : detail.status === 'PENDING' ? '待审核' : '已暂停'} />
+                    <InfoRow label="总点击数" value={detail.totalClicks.toLocaleString()} />
+                    <InfoRow label="总订单数" value={detail.totalOrders.toString()} />
+                    <InfoRow label="转化率" value={`${((detail.totalOrders || 0) / (detail.totalClicks || 1) * 100).toFixed(2)}%`} />
+                    <InfoRow label="累计收益" value={`$${(detail.totalEarnings || 0).toFixed(2)}`} />
+                    <InfoRow label="当前余额" value={`$${(detail.currentBalance || 0).toFixed(2)}`} />
+                    <InfoRow label="已支付总额" value={`$${(detail.totalPaid || 0).toFixed(2)}`} />
+                    <InfoRow label="注册时间" value={formatDate(detail.createdAt)} />
+                    <InfoRow label="更新时间" value={formatDate(detail.updatedAt)} />
                 </div>
             </div>
 
             {/* Affiliate Codes */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Promo Codes ({(detail.affiliateCodes || []).length})</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">推广码 ({(detail.affiliateCodes || []).length} 个)</h3>
                 {detail.affiliateCodes && detail.affiliateCodes.length > 0 ? (
                     <div className="flex flex-wrap gap-3">
                         {detail.affiliateCodes.map((code, index) => (
@@ -263,7 +259,7 @@ function AffiliateDetailContent() {
                         ))}
                     </div>
                 ) : (
-                    <p className="text-sm text-gray-400">No promo codes yet</p>
+                    <p className="text-sm text-gray-400">暂无推广码</p>
                 )}
             </div>
             
@@ -272,11 +268,11 @@ function AffiliateDetailContent() {
                 <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
                     <div className="flex items-center gap-2">
                         <DollarSign className="h-5 w-5 text-gray-400" />
-                        <h3 className="text-lg font-semibold text-gray-900">Commission History</h3>
+                        <h3 className="text-lg font-semibold text-gray-900">佣金历史记录</h3>
                     </div>
                     {commissionLogs && (
                         <span className="text-xs text-gray-500 font-medium">
-                            Total: {commissionLogs.totalElements} records
+                            共 {commissionLogs.totalElements} 条记录
                         </span>
                     )}
                 </div>
@@ -288,7 +284,7 @@ function AffiliateDetailContent() {
                         </div>
                     ) : !commissionLogs || commissionLogs.content.length === 0 ? (
                             <div className="py-12 text-center text-gray-400 text-sm">
-                            No commission records found
+                            暂无佣金记录
                         </div>
                     ) : (
                         <>
@@ -302,7 +298,7 @@ function AffiliateDetailContent() {
                             {commissionLogs.totalPages > 1 && (
                                 <div className="mt-6 pt-6 border-t border-gray-100 flex items-center justify-between">
                                         <p className="text-xs text-gray-500">
-                                        Page {commissionLogs.currentPage + 1} of {commissionLogs.totalPages}
+                                        第 {commissionLogs.currentPage + 1} 页 / 共 {commissionLogs.totalPages} 页
                                     </p>
                                     <div className="flex space-x-2">
                                         <button
@@ -391,13 +387,13 @@ function CommissionLogItem({ log }: { log: AdminCommissionLogResponse }) {
                             ? 'bg-red-100 text-red-700'
                             : 'bg-gray-100 text-gray-600'
                 }`}>
-                    {isEarn ? 'Commission Earned' : isRefund ? 'Refund Deduction' : log.changeType}
+                    {isEarn ? '获得佣金' : isRefund ? '退款扣除' : log.changeType}
                 </span>
             </div>
             
             {/* Order Number */}
             <div className="mb-3">
-                <span className="text-xs text-gray-500 font-medium">Order: </span>
+                <span className="text-xs text-gray-500 font-medium">订单号: </span>
                 <span className="text-xs font-mono font-bold text-gray-900">#{log.orderNumber}</span>
             </div>
             
@@ -416,13 +412,13 @@ function CommissionLogItem({ log }: { log: AdminCommissionLogResponse }) {
             {/* Balance and Total Earnings Changes */}
             <div className="grid grid-cols-2 gap-4 text-xs">
                 <div>
-                    <span className="text-gray-400 font-medium">Balance: </span>
+                    <span className="text-gray-400 font-medium">余额: </span>
                     <span className="font-bold text-gray-700">${log.balanceBefore.toFixed(2)}</span>
                     <span className="text-gray-400 mx-1">→</span>
                     <span className="font-bold text-gray-900">${log.balanceAfter.toFixed(2)}</span>
                 </div>
                 <div>
-                    <span className="text-gray-400 font-medium">Total Earned: </span>
+                    <span className="text-gray-400 font-medium">累计收益: </span>
                     <span className="font-bold text-gray-700">${log.totalEarnedBefore.toFixed(2)}</span>
                     <span className="text-gray-400 mx-1">→</span>
                     <span className="font-bold text-gray-900">${log.totalEarnedAfter.toFixed(2)}</span>
@@ -432,10 +428,10 @@ function CommissionLogItem({ log }: { log: AdminCommissionLogResponse }) {
             {/* Payout Status Change */}
             {(log.payoutStatusBefore || log.payoutStatusAfter) && (
                 <div className="mt-2 text-xs">
-                    <span className="text-gray-400 font-medium">Payout Status: </span>
-                    <span className="font-medium text-gray-700">{log.payoutStatusBefore || '-'}</span>
+                    <span className="text-gray-400 font-medium">提现状态: </span>
+                    <span className="font-medium text-gray-700">{log.payoutStatusBefore === 'PENDING' ? '待结算' : log.payoutStatusBefore === 'PAID' ? '已结算' : log.payoutStatusBefore || '-'}</span>
                     <span className="text-gray-400 mx-1">→</span>
-                    <span className="font-medium text-gray-900">{log.payoutStatusAfter || '-'}</span>
+                    <span className="font-medium text-gray-900">{log.payoutStatusAfter === 'PENDING' ? '待结算' : log.payoutStatusAfter === 'PAID' ? '已结算' : log.payoutStatusAfter || '-'}</span>
                 </div>
             )}
             

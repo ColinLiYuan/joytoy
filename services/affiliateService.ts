@@ -87,9 +87,18 @@ export class AffiliateService {
      * 获取 Dashboard 统计数据 (Java API: /api/V1/affiliate/dashboard)
      */
     async getDashboardData(): Promise<AffDashboardResponse> {
+        console.log('[Affiliate Service] Calling getDashboardData...');
         const result = await apiGet<AffDashboardResponse>(`${SERVER_CONFIG.apiRoutes.affiliate}/dashboard`);
         
+        console.log('[Affiliate Service] getDashboardData result:', {
+            success: result.success,
+            status: result.status,
+            message: result.message,
+            hasData: !!result.data
+        });
+        
         if (!result.success) {
+            console.error('[Affiliate Service] getDashboardData failed:', result);
             throw new Error(result.message || 'Failed to fetch dashboard');
         }
 

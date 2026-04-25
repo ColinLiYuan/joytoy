@@ -53,8 +53,16 @@ export const useCartStore = create<CartStore>()(
             getCart: async () => {
                 set({ loading: true, error: null });
                 try {
+                    console.log('[Cart Store] Calling getUserCart...')
                     const cartResponse = await getUserCart();
                     console.log('[Cart Store] Get cart response:', cartResponse)
+                    
+                    if (!cartResponse) {
+                        console.warn('[Cart Store] Got null/undefined cart response');
+                        set({ loading: false });
+                        return undefined;
+                    }
+                    
                     const totals = calculateTotals(cartResponse);
                     console.log('[Cart Store] Calculated totals:', totals)
 
@@ -66,9 +74,13 @@ export const useCartStore = create<CartStore>()(
                     console.log('[Cart Store] State updated, cart items:', cartResponse.items?.length)
                     return cartResponse;
                 } catch (err) {
-                    console.error('getCart error:', err);
-                    set({ loading: false, error: err instanceof Error ? err.message : 'Failed to fetch cart' });
-                    throw err; // 重新抛出错误，让调用者知道失败了
+                    console.error('[Cart Store] getCart error:', err);
+                    set({ 
+                        loading: false, 
+                        error: err instanceof Error ? err.message : 'Failed to fetch cart' 
+                    });
+                    // 不抛出错误，返回 undefined，让调用者决定如何处理
+                    return undefined;
                 }
             },
 

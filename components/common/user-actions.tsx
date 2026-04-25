@@ -36,13 +36,18 @@ export default function UserActions({
     const pathname = usePathname();
     const isWishlistPage = pathname === '/wishlist';
 
-    // 获取用户首字母
+    // 获取用户首字母（优化：对于中文名称，优先使用英文首字母）
     const getUserInitials = () => {
         if (!userInfo) return 'U';
         
-        // 优先使用 displayName，其次使用 firstName + lastName
+        // 优先使用 displayName
         if (userInfo.displayName) {
-            return userInfo.displayName.charAt(0).toUpperCase();
+            const firstChar = userInfo.displayName.charAt(0);
+            // 如果是中文（Unicode 范围），尝试使用 email 前缀
+            if (/^[\u4e00-\u9fa5]/.test(firstChar)) {
+                return userInfo.email?.charAt(0).toUpperCase() || 'U';
+            }
+            return firstChar.toUpperCase();
         }
         
         const firstInitial = userInfo.firstName?.charAt(0) || '';
@@ -170,11 +175,8 @@ export default function UserActions({
                                     <div className="w-10 h-10 bg-gray-900 rounded-full flex items-center justify-center flex-shrink-0 shadow-sm">
                                         <span className="text-sm font-bold text-white">{getUserInitials()}</span>
                                     </div>
-                                    {/* 用户名和邮箱 */}
+                                    {/* 只显示邮箱 */}
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-semibold text-gray-900 truncate">
-                                            {getUserDisplayName()}
-                                        </p>
                                         <p className="text-xs text-gray-500 truncate">
                                             {userInfo?.email}
                                         </p>

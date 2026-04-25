@@ -9,7 +9,7 @@ class BundleService {
      */
     async adminList(page: number = 0, size: number = 20): Promise<BundleListResponse> {
         try {
-            const url = `${BACKEND_CONFIG.baseURL}/api/admin/bundles?page=${page}&size=${size}`;
+            const url = `/api/admin/V1/bundles?page=${page}&size=${size}`;
             console.log('[BundleService] Fetching admin bundles:', url);
             
             const response = await axiosClient.get(url);
@@ -31,7 +31,7 @@ class BundleService {
      */
     async adminGetById(id: number): Promise<ProductBundle> {
         try {
-            const url = `${BACKEND_CONFIG.baseURL}/api/admin/bundles/${id}`;
+            const url = `/api/admin/V1/bundles/${id}`;
             console.log('[BundleService] Fetching bundle by ID:', url);
             
             const response = await axiosClient.get(url);
@@ -53,7 +53,7 @@ class BundleService {
      */
     async create(bundle: Omit<ProductBundle, 'id' | 'createdAt' | 'updatedAt'>): Promise<ProductBundle> {
         try {
-            const url = `${BACKEND_CONFIG.baseURL}/api/admin/bundles`;
+            const url = `/api/admin/V1/bundles`;
             console.log('[BundleService] Creating bundle:', url);
             
             const response = await axiosClient.post(url, bundle);
@@ -75,7 +75,7 @@ class BundleService {
      */
     async update(id: number, bundle: Partial<ProductBundle>): Promise<ProductBundle> {
         try {
-            const url = `${BACKEND_CONFIG.baseURL}/api/admin/bundles/${id}`;
+            const url = `/api/admin/V1/bundles/${id}`;
             console.log('[BundleService] Updating bundle:', url);
             
             const response = await axiosClient.put(url, bundle);
@@ -97,7 +97,7 @@ class BundleService {
      */
     async delete(id: number): Promise<void> {
         try {
-            const url = `${BACKEND_CONFIG.baseURL}/api/admin/bundles/${id}`;
+            const url = `/api/admin/V1/bundles/${id}`;
             console.log('[BundleService] Deleting bundle:', url);
             
             const response = await axiosClient.delete(url);

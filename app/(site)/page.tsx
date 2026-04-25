@@ -2,7 +2,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
 import { ProductResponse } from '@/types/product';
 import { productService } from '@/services/productService';
 import ClientAgeVerification from '@/components/common/client-age-verification';
@@ -11,12 +10,8 @@ import BestSellersSection from '@/components/home/best-sellers-section';
 import CategoriesSection from '@/components/home/categories-section';
 import TrustSignals from '@/components/home/trust-signals';
 import FAQSection from '@/components/common/faq-section';
-import AutoLoginModal from '@/components/common/auto-login-modal';
 
 export default function HomePage() {
-    const searchParams = useSearchParams();
-    const redirectPath = searchParams.get('redirect') || null;
-    
     const [bestSellers, setBestSellers] = useState<ProductResponse[]>([]);
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
@@ -47,9 +42,6 @@ export default function HomePage() {
     return (
         <>
             <ClientAgeVerification />
-            
-            {/* 如果 URL 有 redirect 参数，自动弹出登录框 */}
-            <AutoLoginModal redirectPath={redirectPath} />
 
             <div className="w-full max-w-full overflow-x-hidden">
                 <HeroSection />

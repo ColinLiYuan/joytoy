@@ -342,7 +342,6 @@ export default function InventoryLogPage() {
                 <Pagination
                   currentPage={currentPage}
                   totalPages={totalPages}
-                  onPageChange={(page) => handleFilterChange('page', page)}
                 />
               </div>
             </div>

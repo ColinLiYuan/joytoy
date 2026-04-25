@@ -71,7 +71,7 @@ export default function Notice({ onCloseMenu }: PromotionBarProps) {
     return (
         // 2. 修复：z-index 改为 40 (比导航栏低)，防止盖住下拉菜单
         <div
-            className="bg-gray-900 text-white py-2.5 overflow-hidden relative"
+            className="bg-gray-900 text-white py-3 overflow-hidden relative"
             style={{ zIndex: Z_INDEX.NOTICE }}
         >
             <div className="container mx-auto px-4 max-w-7xl flex items-center justify-center relative">
@@ -88,7 +88,7 @@ export default function Notice({ onCloseMenu }: PromotionBarProps) {
                 )}
 
                 {/* 文本内容 */}
-                <div className="flex-1 relative h-5 overflow-hidden mx-4">
+                <div className="flex-1 relative h-6 overflow-hidden mx-4">
                     {promotions.map((promotion, index) => (
                         <div
                             key={index}

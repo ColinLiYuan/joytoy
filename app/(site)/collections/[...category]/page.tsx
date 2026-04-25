@@ -77,7 +77,8 @@ export default function ProductListPage({ params }: { params: Promise<{ category
                 const fullSlug = urlSegments.join('/');
                 const page = parseInt(searchParams.get('page') || '0');
                 const sortParam = searchParams.get('sort') || 'newest';
-                const priceRange = parsePriceRange(searchParams.get('priceRange'));
+                const priceRangeParam = searchParams.get('priceRange');
+                const priceRange = priceRangeParam ? parsePriceRange(priceRangeParam) : undefined;
 
                 const filters = {
                     priceRange,

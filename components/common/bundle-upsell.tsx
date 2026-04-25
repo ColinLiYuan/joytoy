@@ -5,13 +5,13 @@ import { useState } from 'react'
 import Image from 'next/image'
 import { bundleService } from '@/services/bundleService'
 import { useCartStore } from '@/stores/useCartStore'
-import { BundleSummary } from '@/types/bundle'
+import { ProductBundle } from '@/types/bundle'
 import { Package, Check, Loader2 } from 'lucide-react'
 import { getProductImageUrl } from '@/lib/image-utils'
 import { useToast } from '@/contexts/toastContext'
 
 interface BundleUpsellProps {
-    bundles: BundleSummary[]
+    bundles: ProductBundle[]
 }
 
 export default function BundleUpsell({ bundles }: BundleUpsellProps) {
@@ -21,16 +21,16 @@ export default function BundleUpsell({ bundles }: BundleUpsellProps) {
 
     if (bundles.length === 0) return null
 
-    const handleAddBundleToCart = async (bundle: BundleSummary) => {
+    const handleAddBundleToCart = async (bundle: ProductBundle) => {
         console.log('[BundleUpsell] handleAddBundleToCart called', { bundleId: bundle.id, hasCart: !!cart?.id });
         
         setAddingBundleId(bundle.id)
         try {
             // 确保购物车已初始化
-            let currentCart = cart
+            let currentCart = cart || null
             if (!currentCart?.id) {
                 console.log('[BundleUpsell] Cart not initialized, calling getCart()...');
-                currentCart = await getCart()
+                currentCart = await getCart() || null
                 console.log('[BundleUpsell] getCart() returned:', currentCart);
             }
             
@@ -83,7 +83,7 @@ export default function BundleUpsell({ bundles }: BundleUpsellProps) {
                                                     {item.productImage ? (
                                                         <Image 
                                                             src={getProductImageUrl(undefined, item.productImage)} 
-                                                            alt={item.productName} 
+                                                            alt={item.productName || 'Bundle item'} 
                                                             width={96}
                                                             height={96}
                                                             className="w-full h-full object-cover" 
@@ -95,9 +95,6 @@ export default function BundleUpsell({ bundles }: BundleUpsellProps) {
                                                     )}
                                                 </div>
                                                 <span className="text-xs text-gray-700 font-medium text-center max-w-[100px] truncate">{item.productName}</span>
-                                                {item.color && (
-                                                    <span className="text-[10px] text-gray-500 text-center">{item.color}</span>
-                                                )}
                                             </div>
                                         ))}
                                     </div>

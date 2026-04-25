@@ -491,7 +491,6 @@ export default function AdminBundleForm({ initialData }: AdminBundleFormProps) {
                                             {currentSku ? (
                                                 <span>
                                                     规格: {currentSku.color || '默认'}
-                                                    {currentSku.size && ` / ${currentSku.size}`}
                                                     <span className="ml-2 text-xs text-gray-400">(SKU: {currentSku.sku})</span>
                                                 </span>
                                             ) : (

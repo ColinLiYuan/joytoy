@@ -36,8 +36,10 @@ interface AffiliateUser {
     affiliateCodes: string[];
     totalClicks: number;
     totalOrders: number;
-    totalEarnings: number;
-    currentBalance: number;
+    conversionRate: number;         // 转化率 (%)
+    totalEarnings: number;          // 累计总收益
+    currentBalance: number;         // 当前余额
+    totalPaid: number;              // 累计已支付
     status: 'ACTIVE' | 'SUSPENDED' | 'PENDING';
     createdAt: string | null;
     updatedAt: string | null;

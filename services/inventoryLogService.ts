@@ -21,7 +21,7 @@ export const inventoryLogService = {
     if (request.startTime) params.append('startTime', request.startTime);
     if (request.endTime) params.append('endTime', request.endTime);
     
-    const url = `/api/V1/admin/inventory-logs?${params.toString()}`;
+    const url = `/api/admin/V1/inventory-logs?${params.toString()}`;
     
     const response = await axiosClient.get(url);
     

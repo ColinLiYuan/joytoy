@@ -398,8 +398,8 @@ export default function AdminCartPage() {
                                     <h4 className="font-bold text-gray-900 mb-4">商品列表 ({selectedCart.items?.length || 0})</h4>
                                     {selectedCart.items && selectedCart.items.length > 0 ? (
                                         <div className="space-y-3">
-                                            {selectedCart.items.map((item) => (
-                                                <div key={item.itemId} className="flex items-center gap-4 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                                            {selectedCart.items.map((item, index) => (
+                                                <div key={item.itemId || `item-${index}`} className="flex items-center gap-4 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
                                                     <div className="w-16 h-16 bg-gray-100 rounded-lg flex-shrink-0 flex items-center justify-center overflow-hidden">
                                                         {item.productImage ? (
                                                             <img 

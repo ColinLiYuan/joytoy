@@ -39,12 +39,23 @@ async function refreshAccessToken(): Promise<string | null> {
         const data = await response.json()
         
         if (data.success && data.data) {
-            const { accessToken, refreshToken: newRefreshToken } = data.data
+            const { accessToken, refreshToken: newRefreshToken, expiresIn, refreshExpiresIn } = data.data
+            
+            // ✅ 使用后端返回的过期时间，而不是写死的 30 分钟
+            const accessMaxAge = expiresIn || 30 * 60 // 默认 30 分钟
+            const refreshMaxAge = refreshExpiresIn || 7 * 24 * 60 * 60 // 默认 7 天
+            
+            console.log('[Server Token] Using backend expires:', {
+                expiresIn: accessMaxAge,
+                refreshExpiresIn: refreshMaxAge,
+                expiresInMinutes: accessMaxAge / 60,
+                refreshExpiresInDays: refreshMaxAge / 60 / 60 / 24
+            })
             
             // 更新 Cookie
             cookieStore.set('accessToken', accessToken, {
                 path: '/',
-                maxAge: 30 * 60, // 30分钟
+                maxAge: accessMaxAge,
                 httpOnly: true,
                 secure: process.env.NODE_ENV === 'production',
                 sameSite: 'lax',
@@ -53,7 +64,7 @@ async function refreshAccessToken(): Promise<string | null> {
             if (newRefreshToken) {
                 cookieStore.set('refreshToken', newRefreshToken, {
                     path: '/',
-                    maxAge: 7 * 24 * 60 * 60, // 7天
+                    maxAge: refreshMaxAge,
                     httpOnly: true,
                     secure: process.env.NODE_ENV === 'production',
                     sameSite: 'lax',
@@ -80,11 +91,20 @@ export async function fetchWithAuth(
 ): Promise<Response> {
     const token = await getAccessToken()
     
+    console.log('[Server Token] fetchWithAuth called:', {
+        url: url.substring(0, 100),
+        hasToken: !!token,
+        tokenLength: token?.length || 0
+    })
+    
     const headers = new Headers(options.headers || {})
     if (token) {
         headers.set('Authorization', `Bearer ${token}`)
+    } else {
+        console.warn('[Server Token] No access token found! Request will be unauthenticated.')
     }
-    if (!headers.has('Content-Type')) {
+    // 只在 body 不是 FormData 时才设置 Content-Type
+    if (!(options.body instanceof FormData) && !headers.has('Content-Type')) {
         headers.set('Content-Type', 'application/json')
     }
 
@@ -94,7 +114,7 @@ export async function fetchWithAuth(
     })
 
     // 如果 401，尝试刷新 token 并重试（只重试一次）
-    if (response.status === 401 && !options.headers?.has('X-Retry-After-Refresh')) {
+    if (response.status === 401 && !headers.has('X-Retry-After-Refresh')) {
         console.log('[Server Token] Got 401, attempting refresh...')
         const newToken = await refreshAccessToken()
         
@@ -102,6 +122,8 @@ export async function fetchWithAuth(
             headers.set('Authorization', `Bearer ${newToken}`)
             // 标记已重试，防止无限循环
             headers.set('X-Retry-After-Refresh', 'true')
+            
+            console.log('[Server Token] Retrying with new token...')
             response = await fetch(url, {
                 ...options,
                 headers,

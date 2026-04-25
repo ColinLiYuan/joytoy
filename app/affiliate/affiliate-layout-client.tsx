@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { LayoutDashboard, ShoppingCart, Wallet, Settings, LogOut, LinkIcon, Menu, X, ArrowLeft, DollarSign } from 'lucide-react'
 import { useAuth } from '@/contexts/authContext'
+import AuthGuard from '@/components/common/auth-guard'
 
 export default function AffiliateLayoutClient({ children }: { children: React.ReactNode }) {
     const { userInfo, logout } = useAuth()
@@ -27,7 +28,8 @@ export default function AffiliateLayoutClient({ children }: { children: React.Re
     const affiliateId = (userInfo?.affiliateId || "PENDING").toUpperCase()
 
     return (
-        <div className="flex min-h-screen bg-gray-50">
+        <AuthGuard requiredRole="affiliate">
+            <div className="flex min-h-screen bg-gray-50">
             {/* Mobile Header */}
             <div className="md:hidden fixed top-0 left-0 right-0 h-14 bg-white border-b border-gray-200 flex items-center justify-between px-4 z-50">
                 <button onClick={() => setSidebarOpen(true)} className="p-2 -ml-2">
@@ -94,5 +96,6 @@ export default function AffiliateLayoutClient({ children }: { children: React.Re
                 </div>
             </main>
         </div>
+        </AuthGuard>
     )
 }

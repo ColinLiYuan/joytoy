@@ -220,7 +220,7 @@ export default function AdminCouponListPage() {
     };
 
     return (
-        <div className="p-6 space-y-6">
+        <div className="p-6 space-y-4">
             <div className="flex justify-between items-center">
                 <h1 className="text-2xl font-bold text-gray-900">优惠券管理</h1>
                 <button
@@ -264,7 +264,6 @@ export default function AdminCouponListPage() {
                             <th className="px-6 py-4">优惠码</th>
                             <th className="px-6 py-4">折扣类型</th>
                             <th className="px-6 py-4">折扣值</th>
-                            <th className="px-6 py-4">最低消费</th>
                             <th className="px-6 py-4">联盟ID</th>
                             <th className="px-6 py-4">状态</th>
                             <th className="px-6 py-4">有效期</th>
@@ -306,9 +305,6 @@ export default function AdminCouponListPage() {
                                         {coupon.type === 'PERCENTAGE' 
                                             ? `${(coupon.value * 100).toFixed(0)}%`
                                             : `$${coupon.value.toFixed(2)}`}
-                                    </td>
-                                    <td className="px-6 py-4 text-sm text-gray-500">
-                                        {coupon.minSpend ? `$${coupon.minSpend.toFixed(2)}` : '无门槛'}
                                     </td>
                                     <td className="px-6 py-4 text-sm font-mono text-gray-600">
                                         {coupon.affiliateId || '-'}

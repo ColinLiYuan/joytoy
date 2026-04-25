@@ -1,16 +1,13 @@
 // app/sitemap-blogs.xml/route.ts
 import { NextResponse } from 'next/server';
-import { blogServiceServer } from '@/services/servers/blog-service-server';
-import { BlogResponse } from '@/types/site/blog';
+import { blogService } from '@/services/blogService';
 
 export async function GET() {
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://mythtoy.com';
-    let blogs: BlogResponse[] = [];
+    let blogs: any[] = [];
 
     try {
-        // 这里假设 page=0, size=1000，尽量一次拉取所有文章用于生成 sitemap
-        // 如果文章非常多(几千篇)，需要考虑分页逻辑或者专门的 all 接口
-        const response = await blogServiceServer.list(0, 1000);
+        const response = await blogService.list(0, 1000);
         blogs = response.content || [];
         console.log(`✅ Sitemap 获取到 ${blogs.length} 篇博客`);
     } catch (error) {

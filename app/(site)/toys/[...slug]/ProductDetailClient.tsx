@@ -11,7 +11,7 @@ import { useCartStore } from '@/stores/useCartStore';
 import { addToWishlist, removeFromWishlist } from '@/app/actions/wishlist';
 import { productService } from '@/services/productService';
 import { bundleService } from '@/services/bundleService';
-import { ProductBundle, BundleSummary } from '@/types/bundle';
+import { ProductBundle } from '@/types/bundle';
 import { joinWaitlist } from '@/app/actions/waitlist'; // ✅ Import the new action
 import { getProductImageUrl } from '@/lib/image-utils';
 import { Z_INDEX } from '@/lib/constants/z-index';
@@ -204,7 +204,7 @@ export default function ProductDetailClient({
     const [activeAccordion, setActiveAccordion] = useState<string | null>('details');
     const [relatedProducts, setRelatedProducts] = useState<ProductResponse[]>([]);
     const [recentlyViewed, setRecentlyViewed] = useState<ProductResponse[]>([]);
-    const [bundleRecommendations, setBundleRecommendations] = useState<BundleSummary[]>([]);
+    const [bundleRecommendations, setBundleRecommendations] = useState<ProductBundle[]>([]);
 
     const { showToast } = useToast();
     const { openAuthModal, isLoggedIn } = useAuth();

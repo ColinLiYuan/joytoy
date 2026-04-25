@@ -33,30 +33,36 @@ export async function getUserCart() {
     const sessionId = await getSessionId()
     console.log('[Cart Action] Getting cart with sessionId:', sessionId)
 
-    const response = await fetchWithAuth(API_PATHS.CART_GET, {
-        cache: 'no-store',
-        headers: { 'X-Session-Id': sessionId },
-    })
-
-    console.log('[Cart Action] Get cart response status:', response.status)
-
-    if (!response.ok) {
-        const errorText = await response.text()
-        console.error('[Cart Action] Get cart failed:', {
-            status: response.status,
-            body: errorText
+    try {
+        const response = await fetchWithAuth(API_PATHS.CART_GET, {
+            cache: 'no-store',
+            headers: { 'X-Session-Id': sessionId },
         })
-        throw new Error(`Failed to fetch cart: ${response.status} - ${errorText}`)
+
+        console.log('[Cart Action] Get cart response status:', response.status)
+
+        if (!response.ok) {
+            const errorText = await response.text()
+            console.error('[Cart Action] Get cart failed:', {
+                status: response.status,
+                statusText: response.statusText,
+                body: errorText
+            })
+            throw new Error(`Failed to fetch cart: ${response.status} - ${errorText}`)
+        }
+
+        const apiResponse = await response.json()
+        console.log('[Cart Action] Get cart success:', apiResponse)
+
+        if (!apiResponse.success) {
+            throw new Error(apiResponse.message || 'Failed to fetch cart')
+        }
+
+        return apiResponse.data
+    } catch (error) {
+        console.error('[Cart Action] getUserCart exception:', error)
+        throw error
     }
-
-    const apiResponse = await response.json()
-    console.log('[Cart Action] Get cart success:', apiResponse)
-
-    if (!apiResponse.success) {
-        throw new Error(apiResponse.message || 'Failed to fetch cart')
-    }
-
-    return apiResponse.data
 }
 
 const API_PATHS = {

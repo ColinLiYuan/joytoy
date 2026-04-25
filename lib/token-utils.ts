@@ -102,26 +102,52 @@ export const setTokens = (
 ) => {
     if (!isBrowser) return;
 
-    // 1. 写入 Cookie（使用后端返回的过期时间）
-    const accessExpires = expiresIn ? expiresIn / 60 / 60 / 24 : 1 / 60 / 24; // 默认 1 分钟
-    const refreshExpires = refreshExpiresIn ? refreshExpiresIn / 60 / 60 / 24 : 7; // 默认 7 天
-    
-    setCookie(ACCESS_TOKEN_KEY, accessToken, {
-        expires: accessExpires,
-        path: '/',
-        sameSite: 'lax',
-        secure: process.env.NODE_ENV === 'production',
+    // 🔍 打印后端返回的过期时间
+    console.log('[TokenUtils] setTokens - Backend response:', {
+        expiresIn,
+        refreshExpiresIn,
+        expiresInDays: expiresIn ? expiresIn / 60 / 60 / 24 : 'default',
+        refreshExpiresInDays: refreshExpiresIn ? refreshExpiresIn / 60 / 60 / 24 : 'default',
+        currentTime: new Date().toISOString(),
+        accessTokenLength: accessToken.length,
+        refreshTokenLength: refreshToken.length
     });
-    setCookie(REFRESH_TOKEN_KEY, refreshToken, {
-        expires: refreshExpires,
-        path: '/',
-        sameSite: 'lax',
-        secure: process.env.NODE_ENV === 'production',
+
+    // 1. 写入 Cookie（使用后端返回的过期时间）
+    // ✅ 修复：使用 Date 对象精确设置过期时间，避免 js-cookie 小数天数问题
+    const accessExpiresAt = expiresIn ? new Date(Date.now() + expiresIn * 1000) : new Date(Date.now() + 30 * 60 * 1000); // 默认 30 分钟
+    const refreshExpiresAt = refreshExpiresIn ? new Date(Date.now() + refreshExpiresIn * 1000) : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 默认 7 天
+    
+    console.log('[TokenUtils] setTokens - Cookie expires calculated:', {
+        accessExpiresAt: accessExpiresAt.toISOString(),
+        refreshExpiresAt: refreshExpiresAt.toISOString(),
+        expiresInSeconds: expiresIn,
+        refreshExpiresInSeconds: refreshExpiresIn
+    });
+    
+    // 1. 写入 Cookie (原生 document.cookie，确保兼容性)
+    // ✅ 修复：绕过 js-cookie，直接设置 expires 属性，解决 Date 对象处理异常导致过期时间变 30 分钟的问题
+    
+    const accessExpiresUTC = accessExpiresAt.toUTCString();
+    const refreshExpiresUTC = refreshExpiresAt.toUTCString();
+    
+    // 构建 Cookie 字符串
+    const accessCookie = `${ACCESS_TOKEN_KEY}=${accessToken}; expires=${accessExpiresUTC}; path=/; SameSite=Lax${process.env.NODE_ENV === 'production' ? '; Secure' : ''}`;
+    const refreshCookie = `${REFRESH_TOKEN_KEY}=${refreshToken}; expires=${refreshExpiresUTC}; path=/; SameSite=Lax${process.env.NODE_ENV === 'production' ? '; Secure' : ''}`;
+    
+    document.cookie = accessCookie;
+    document.cookie = refreshCookie;
+    
+    console.log('[TokenUtils] setTokens - Native cookies set:', {
+        accessExpires: accessExpiresUTC,
+        refreshExpires: refreshExpiresUTC
     });
 
     // 2. 写入 LocalStorage
     localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
     localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
+    
+    console.log('[TokenUtils] setTokens - Tokens saved successfully');
 };
 
 /**
@@ -163,19 +189,15 @@ export const clearTokens = async () => {
     window.dispatchEvent(new Event('storage'));
 };
 
-export const updateAccessToken = (newToken: string): void => {
+export const updateAccessToken = (newToken: string, expiresIn?: number): void => {
     if (!isBrowser) return;
 
     // 更新 localStorage
     localStorage.setItem(ACCESS_TOKEN_KEY, newToken);
 
-    // 更新 cookie（带过期时间）
-    setCookie(ACCESS_TOKEN_KEY, newToken, {
-        expires: 30 / 60 / 24, // 30分钟
-        path: '/',
-        sameSite: 'lax',
-        secure: process.env.NODE_ENV === 'production',
-    });
+    // 更新 cookie（带过期时间，优先使用传入的 expiresIn，否则默认 30 分钟）
+    const expiresAt = expiresIn ? new Date(Date.now() + expiresIn * 1000) : new Date(Date.now() + 30 * 60 * 1000);
+    document.cookie = `${ACCESS_TOKEN_KEY}=${newToken}; expires=${expiresAt.toUTCString()}; path=/; SameSite=Lax${process.env.NODE_ENV === 'production' ? '; Secure' : ''}`;
 };
 
 /**
@@ -314,19 +336,12 @@ export const refreshTokenIfNeeded = async (): Promise<string | undefined> => {
                 
                 // 客户端：更新cookie
                 console.log('[TokenUtils] Updating tokens in client cookie');
-                setCookie(ACCESS_TOKEN_KEY, accessToken, {
-                    expires: (expiresIn || 1800) / 60 / 60 / 24, // 转换为天
-                    path: '/',
-                    sameSite: 'lax',
-                    secure: process.env.NODE_ENV === 'production',
-                });
+                const clientAccessExpiresAt = new Date(Date.now() + (expiresIn || 1800) * 1000);
+                const clientRefreshExpiresAt = new Date(Date.now() + (refreshExpiresIn || 7 * 24 * 60 * 60) * 1000);
+                
+                document.cookie = `${ACCESS_TOKEN_KEY}=${accessToken}; expires=${clientAccessExpiresAt.toUTCString()}; path=/; SameSite=Lax${process.env.NODE_ENV === 'production' ? '; Secure' : ''}`;
                 if (newRefreshToken) {
-                    setCookie(REFRESH_TOKEN_KEY, newRefreshToken, {
-                        expires: (refreshExpiresIn || 7 * 24 * 60 * 60) / 60 / 60 / 24, // 转换为天
-                        path: '/',
-                        sameSite: 'lax',
-                        secure: process.env.NODE_ENV === 'production',
-                    });
+                    document.cookie = `${REFRESH_TOKEN_KEY}=${newRefreshToken}; expires=${clientRefreshExpiresAt.toUTCString()}; path=/; SameSite=Lax${process.env.NODE_ENV === 'production' ? '; Secure' : ''}`;
                 }
             }
 
@@ -398,20 +413,13 @@ export const ensureFreshToken = async (advanceSeconds: number = 300): Promise<st
                 localStorage.setItem(REFRESH_TOKEN_KEY, newRefreshToken);
             }
             
-            // 更新 Cookie
-            setCookie(ACCESS_TOKEN_KEY, accessToken, {
-                expires: (expiresIn || 1800) / 60 / 60 / 24,
-                path: '/',
-                sameSite: 'lax',
-                secure: process.env.NODE_ENV === 'production',
-            });
+            // 更新 Cookie (原生写入，确保兼容)
+            const accessExpiresAt = new Date(Date.now() + (expiresIn || 1800) * 1000);
+            const refreshExpiresAt = new Date(Date.now() + (refreshExpiresIn || 7 * 24 * 60 * 60) * 1000);
+            
+            document.cookie = `${ACCESS_TOKEN_KEY}=${accessToken}; expires=${accessExpiresAt.toUTCString()}; path=/; SameSite=Lax${process.env.NODE_ENV === 'production' ? '; Secure' : ''}`;
             if (newRefreshToken) {
-                setCookie(REFRESH_TOKEN_KEY, newRefreshToken, {
-                    expires: (refreshExpiresIn || 7 * 24 * 60 * 60) / 60 / 60 / 24,
-                    path: '/',
-                    sameSite: 'lax',
-                    secure: process.env.NODE_ENV === 'production',
-                });
+                document.cookie = `${REFRESH_TOKEN_KEY}=${newRefreshToken}; expires=${refreshExpiresAt.toUTCString()}; path=/; SameSite=Lax${process.env.NODE_ENV === 'production' ? '; Secure' : ''}`;
             }
 
             console.log('[TokenUtils] Token proactively refreshed successfully');
