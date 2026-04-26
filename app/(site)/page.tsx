@@ -16,6 +16,17 @@ export default function HomePage() {
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
 
+    // 🔍 浏览器控制台输出环境变量（仅开发环境）
+    useEffect(() => {
+        console.log('\n ========== 环境变量检查 ==========');
+        console.log('📌 NEXT_PUBLIC_BACKEND_BASE_URL:', process.env.NEXT_PUBLIC_BACKEND_BASE_URL);
+        console.log('📌 NEXT_PUBLIC_IMAGE_BASE_URL:', process.env.NEXT_PUBLIC_IMAGE_BASE_URL);
+        console.log('📌 NEXT_PUBLIC_IMAGE_UPLOAD_PATH:', process.env.NEXT_PUBLIC_IMAGE_UPLOAD_PATH);
+        console.log('📌 NEXT_PUBLIC_SITE_URL:', process.env.NEXT_PUBLIC_SITE_URL);
+        console.log('📌 NODE_ENV:', process.env.NODE_ENV);
+        console.log('=====================================\n');
+    }, []);
+
     useEffect(() => {
         const fetchProducts = async () => {
             try {

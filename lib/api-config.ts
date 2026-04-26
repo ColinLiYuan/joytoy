@@ -1,4 +1,12 @@
 // lib/api-config.ts
+
+// 🔍 输出 API 配置（调试用）
+console.log('\n📡 [API Config] Backend Configuration:');
+console.log('  process.env.NEXT_PUBLIC_BACKEND_BASE_URL:', process.env.NEXT_PUBLIC_BACKEND_BASE_URL);
+console.log('  process.env.BACKEND_BASE_URL:', process.env.BACKEND_BASE_URL);
+console.log('  Final baseURL:', process.env.NEXT_PUBLIC_BACKEND_BASE_URL || process.env.BACKEND_BASE_URL || 'http://localhost:9356');
+console.log('');
+
 export const BACKEND_CONFIG = {
     // 客户端必须使用 NEXT_PUBLIC_ 前缀才能读取
     baseURL: process.env.NEXT_PUBLIC_BACKEND_BASE_URL || process.env.BACKEND_BASE_URL || 'http://localhost:9356',
