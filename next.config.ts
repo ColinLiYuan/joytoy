@@ -4,6 +4,14 @@ import type { NextConfig } from "next";
 // 优先使用 NEXT_PUBLIC_BACKEND_BASE_URL（客户端可用）
 const backendUrl = process.env.NEXT_PUBLIC_BACKEND_BASE_URL || process.env.BACKEND_BASE_URL || 'http://localhost:9356';
 
+// 🔍 构建时输出环境变量（调试用）
+console.log('\n🔧 [Build Time] Environment Variables:');
+console.log('  NEXT_PUBLIC_BACKEND_BASE_URL:', process.env.NEXT_PUBLIC_BACKEND_BASE_URL);
+console.log('  BACKEND_BASE_URL:', process.env.BACKEND_BASE_URL);
+console.log('  Resolved backendUrl:', backendUrl);
+console.log('  NODE_ENV:', process.env.NODE_ENV);
+console.log('');
+
 const nextConfig: NextConfig = {
     output: 'standalone',
     

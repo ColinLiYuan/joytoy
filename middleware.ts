@@ -98,9 +98,6 @@ const gonePaths = new Set([
     '/blog/why-do-men-sleep-after-sex',
     // 下架产品
     '/toys/female-sex-toys/clit-vibrators/rose-licking-vibrator',
-    // 下架分类
-    '/collections/male-sex-toys/manual-strokers',
-    '/collections/best-sellers',
     // 下架产品（404列表）
     '/toys/female-sex-toys/clit-vibrators/vibrator-g-sucking-usb-szm',
     '/toys/female-sex-toys/clit-vibrators/squirrel-auto-suction-vibes',
