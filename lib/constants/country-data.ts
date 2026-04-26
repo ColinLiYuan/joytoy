@@ -59,3 +59,20 @@ export const POSTAL_CODE_REGEX: Record<string, RegExp> = {
 };
 
 export const COUNTRIES_FOR_SELECT = Object.keys(COUNTRY_DATA).sort();
+
+// 电话号码格式提示
+export const PHONE_FORMAT_HINTS: Record<string, string> = {
+    "US": "(555) 123-4567",
+    "CA": "(555) 123-4567",
+    "GB": "07700 900123",
+    "AU": "0412 345 678",
+    "DE": "+49 170 1234567",
+    "FR": "+33 6 12 34 56 78",
+    "IT": "+39 312 345 6789",
+    "ES": "+34 612 345 678",
+    "JP": "+81 90-1234-5678",
+    "CN": "+86 138 1234 5678",
+    "KR": "+82 10-1234-5678",
+    "MX": "+52 55 1234 5678",
+    "BR": "+55 11 91234-5678"
+};

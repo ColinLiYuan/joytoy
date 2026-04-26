@@ -1,4 +1,4 @@
-// components/cart/cart.tsx
+ // components/cart/cart.tsx
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
@@ -6,13 +6,13 @@ import { useToast } from '@/contexts/toastContext';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/authContext';
 import { useCartStore } from '@/stores/useCartStore';
-import { productService } from '@/services/product-service';
+import { productService } from '@/services/productService';
 import { ProductResponse } from '@/types/product';
 import { Z_INDEX } from '@/lib/constants/z-index';
 import { colorMap } from '@/lib/constants/color-map';
 import Image from 'next/image';
 import { getProductImageUrl } from '@/lib/image-utils';
-import { X, ShoppingBag, Plus, Minus, Loader2, Trash2, ArrowRight, Sparkles, Truck } from 'lucide-react';
+import { X, ShoppingBag, Plus, Minus, Loader2, Trash2, ArrowRight, Sparkles, Truck, Package } from 'lucide-react';
 
 interface CartProps {
     isOpen: boolean;
@@ -49,11 +49,12 @@ export default function Cart({ isOpen, onClose }: CartProps) {
     // 1. 初始化 & 挂载
     useEffect(() => {
         setIsMounted(true);
+        // ✅ 购物车组件挂载时不再主动获取，由 navigation.tsx 统一处理
+        // 这里只负责显示loading状态
         if (isOpen && isLoggedIn) {
-            setIsInitialLoading(true);
-            getCart().finally(() => setIsInitialLoading(false));
+            setIsInitialLoading(false);  // 数据应该已经从 navigation 获取了
         }
-    }, [isOpen, isLoggedIn, getCart]);
+    }, [isOpen, isLoggedIn]);
 
     // 2. 路由变化自动关闭
     useEffect(() => {
@@ -95,13 +96,15 @@ export default function Cart({ isOpen, onClose }: CartProps) {
                 else {
                     setUpsellTitle("Complete Your Experience");
 
-                    // A. 找出购物车里最贵的商品
-                    const maxPriceItem = [...cart.items].sort((a, b) => b.unitPrice - a.unitPrice)[0];
-                    // console.log('maxPriceItem : ', maxPriceItem)
+                    // A. 找出购物车里最贵的商品（排除套装）
+                    const regularItems = cart.items.filter(item => !item.bundleId && item.productSlug);
+                    const maxPriceItem = regularItems.length > 0 
+                        ? [...regularItems].sort((a, b) => b.unitPrice - a.unitPrice)[0]
+                        : null;
 
                     // B. 尝试获取该商品的关联推荐 (需要 productSlug)
-                    if (maxPriceItem && (maxPriceItem as any).productSlug) {
-                        products = await productService.getRelatedProducts((maxPriceItem as any).productSlug);
+                    if (maxPriceItem && maxPriceItem.productSlug) {
+                        products = await productService.getRelatedProducts(maxPriceItem.productSlug);
                     }
 
                     // C. 兜底：如果没关联品，还是展示 Add-ons
@@ -128,7 +131,11 @@ export default function Cart({ isOpen, onClose }: CartProps) {
     // 5. 过滤掉已经在购物车里的商品
     const filteredUpsells = useMemo(() => {
         if (!upsellProducts.length) return [];
-        const cartProductIds = new Set(cart?.items?.map(item => item.productId.toString()) || []);
+        const cartProductIds = new Set(
+            cart?.items
+                ?.filter(item => item.productId != null) // 过滤掉productId为null的项（如套装）
+                .map(item => item.productId!.toString()) || []
+        );
         return upsellProducts.filter(p => !cartProductIds.has(p.id.toString()));
     }, [upsellProducts, cart?.items]);
 
@@ -153,7 +160,7 @@ export default function Cart({ isOpen, onClose }: CartProps) {
                 productTitle: product.title,
                 productName: product.name,
                 productSku: defaultSku.sku,
-                productImage: getProductImageUrl('', product.image),
+                productImage: getProductImageUrl(undefined, product.image),
                 unitPrice: product.currentPrice,
                 quantity: 1,
                 color: defaultSku.color === '__generic__' ? 'Default' : defaultSku.color,
@@ -272,43 +279,141 @@ export default function Cart({ isOpen, onClose }: CartProps) {
                     )}
 
                     {hasCartItems && (
-                        <div className="flex flex-col gap-8 pb-4">
-                            {cart.items.map(item => (
-                                <div key={item.itemId} className="flex gap-5 group animate-in fade-in slide-in-from-right-4 duration-300">
-                                    <div className="relative w-20 h-24 flex-shrink-0 border border-gray-100 rounded-sm overflow-hidden bg-[#F9FAFB]">
-                                        {item.productImage && <Image src={getProductImageUrl('', item.productImage)} alt={item.productTitle} fill className="object-cover mix-blend-multiply" />}
-                                    </div>
-                                    <div className="flex-1 flex flex-col justify-between min-w-0 py-1">
-                                        <div className="space-y-1">
-                                            <div className="flex justify-between items-start gap-3">
-                                                <h4
-                                                    className="font-medium text-sm text-gray-900 line-clamp-2 leading-relaxed cursor-pointer hover:text-[#E11D48] transition-colors"
-                                                    onClick={() => {
-                                                        if (item.productId) {
-                                                            router.push(`/toys${item.productSlug}`);
-                                                            onClose();
-                                                        }
-                                                    }}
-                                                >
-                                                    {item.productTitle}
-                                                </h4>
-                                                <button className="text-gray-300 hover:text-red-500 p-1 flex-shrink-0 transition-colors" onClick={() => handleRemoveItem(item.itemId)} disabled={isUpdating === item.itemId}>
-                                                    {isUpdating === item.itemId ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-4 h-4" />}
-                                                </button>
+                        <div className="flex flex-col gap-6 pb-4">
+                            {cart.items.map((item, index) => {
+                                // 检查是否是套装商品
+                                const isBundleItem = !!item.bundleId;
+                                
+                                // 如果是套装商品，且不是第一个，跳过渲染（套装整体渲染）
+                                if (isBundleItem && index > 0) {
+                                    const prevItem = cart.items[index - 1];
+                                    if (prevItem?.bundleId === item.bundleId) {
+                                        return null;
+                                    }
+                                }
+                                
+                                // 收集套装的所有商品
+                                let bundleItems: Array<{name: string, quantity: number, color?: string}> = [];
+                                if (isBundleItem && item.bundleItems) {
+                                    try {
+                                        const parsed = JSON.parse(item.bundleItems);
+                                        bundleItems = parsed.map((bi: any) => ({
+                                            name: bi.productName,
+                                            quantity: bi.quantity,
+                                            color: bi.color
+                                        }));
+                                    } catch (e) {
+                                        console.error('Failed to parse bundleItems:', e);
+                                    }
+                                }
+                                
+                                // 套装商品总数
+                                const bundleTotalItems = isBundleItem ? bundleItems.reduce((sum, bi) => sum + bi.quantity, 0) : item.quantity;
+
+                                return (
+                                    <div 
+                                        key={item.itemId} 
+                                        className={`relative flex gap-5 group animate-in fade-in slide-in-from-right-4 duration-300 ${
+                                            isBundleItem ? 'bg-gradient-to-br from-indigo-50/50 to-purple-50/30 p-5 rounded-xl border border-indigo-100/50' : ''
+                                        }`}
+                                    >
+                                        {/* Bundle Label */}
+                                        {isBundleItem && (
+                                            <div className="absolute -top-3 left-4 px-3 py-1 bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-[10px] font-bold uppercase tracking-wider rounded-full shadow-md z-10 flex items-center gap-1">
+                                                <Package size={10} />
+                                                Bundle Set
                                             </div>
-                                            {item.color && formatColorDisplay(item.color)}
+                                        )}
+
+                                        {/* 图片 */}
+                                        <div className={`relative flex-shrink-0 border border-gray-100 rounded-sm overflow-hidden bg-[#F9FAFB] ${isBundleItem ? 'w-24 h-24' : 'w-20 h-24'}`}>
+                                            {item.productImage && <Image src={getProductImageUrl('', item.productImage)} alt={item.productTitle} fill className="object-cover mix-blend-multiply" />}
+                                            {!item.productImage && isBundleItem && (
+                                                <div className="w-full h-full flex items-center justify-center text-indigo-300 bg-indigo-50">
+                                                    <Package size={32} />
+                                                </div>
+                                            )}
                                         </div>
-                                        <div className="flex justify-between items-center">
-                                            <div className="flex items-center border border-gray-200 rounded-sm h-7 w-20">
-                                                <button onClick={() => handleDecreaseQuantity(item.itemId, item.quantity)} className="w-7 h-full flex items-center justify-center hover:bg-gray-50 text-gray-500 transition-colors"><Minus size={10} /></button>
-                                                <span className="flex-1 text-center text-xs font-medium text-gray-900">{item.quantity}</span>
-                                                <button onClick={() => handleIncreaseQuantity(item.itemId, item.quantity)} className="w-7 h-full flex items-center justify-center hover:bg-gray-50 text-gray-500 transition-colors"><Plus size={10} /></button>
+                                        
+                                        <div className="flex-1 min-w-0 py-1">
+                                            <div className="space-y-2">
+                                                {/* Title */}
+                                                <div className="flex justify-between items-start gap-3">
+                                                    <h4
+                                                        className={`text-gray-900 line-clamp-2 leading-relaxed ${isBundleItem ? 'text-base font-bold' : 'font-medium text-sm'}`}
+                                                    >
+                                                        {item.productTitle}
+                                                    </h4>
+                                                    {!isBundleItem && (
+                                                        <button className="text-gray-300 hover:text-red-500 p-1 flex-shrink-0 transition-colors" onClick={() => handleRemoveItem(item.itemId)} disabled={isUpdating === item.itemId}>
+                                                            {isUpdating === item.itemId ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                                                        </button>
+                                                    )}
+                                                </div>
+                                                
+                                                {/* Item List (仅套装显示) */}
+                                                {isBundleItem && bundleItems.length > 0 && (
+                                                    <div className="space-y-2 mt-3 pt-3 border-t border-indigo-100">
+                                                        <div className="text-xs font-medium text-gray-700 mb-2">Included Items:</div>
+                                                        {bundleItems.map((bi, idx) => (
+                                                            <div key={idx} className="flex items-start justify-between gap-2">
+                                                                <div className="flex-1 min-w-0">
+                                                                    <div className="text-xs text-gray-900 font-medium truncate">
+                                                                        {bi.name}{bi.quantity > 1 ? ` ×${bi.quantity}` : ''}
+                                                                    </div>
+                                                                    {bi.color && (
+                                                                        <div className="text-[10px] text-gray-500 mt-0.5 capitalize">
+                                                                            Color: {bi.color}
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                                
+                                                {item.color && formatColorDisplay(item.color)}
                                             </div>
-                                            <p className="font-bold text-sm text-gray-900">${item.unitPrice.toFixed(2)}</p>
+                                            
+                                            {/* Quantity & Price */}
+                                            <div className="flex justify-between items-center mt-3">
+                                                <div className="flex items-center border border-gray-200 rounded-sm h-7 w-20">
+                                                    <button 
+                                                        onClick={() => handleDecreaseQuantity(item.itemId, item.quantity)} 
+                                                        className="w-7 h-full flex items-center justify-center hover:bg-gray-50 text-gray-500 transition-colors"
+                                                        disabled={isUpdating === item.itemId}
+                                                    >
+                                                        <Minus size={10} />
+                                                    </button>
+                                                    <span className="flex-1 text-center text-xs font-medium text-gray-900">{item.quantity}</span>
+                                                    <button 
+                                                        onClick={() => handleIncreaseQuantity(item.itemId, item.quantity)} 
+                                                        className="w-7 h-full flex items-center justify-center hover:bg-gray-50 text-gray-500 transition-colors"
+                                                        disabled={isUpdating === item.itemId}
+                                                    >
+                                                        <Plus size={10} />
+                                                    </button>
+                                                </div>
+                                                <p className="font-bold text-sm text-gray-900">${(item.unitPrice * item.quantity).toFixed(2)}</p>
+                                            </div>
+                                            
+                                            {/* Remove Bundle Button (仅套装显示) */}
+                                            {isBundleItem && (
+                                                <div className="flex justify-end mt-3 pt-3 border-t border-indigo-100">
+                                                    <button 
+                                                        className="text-gray-400 hover:text-red-500 text-xs flex items-center gap-1.5 transition-colors font-medium" 
+                                                        onClick={() => handleRemoveItem(item.itemId)} 
+                                                        disabled={isUpdating === item.itemId}
+                                                    >
+                                                        {isUpdating === item.itemId ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                                                        Remove Bundle
+                                                    </button>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     )}
                 </div>
@@ -331,7 +436,7 @@ export default function Cart({ isOpen, onClose }: CartProps) {
                                             {/* Mini Image (No Border, Light BG) */}
                                             <div className="relative w-14 h-14 bg-[#F5F5F7] rounded-md overflow-hidden flex-shrink-0">
                                                 <Image
-                                                    src={getProductImageUrl('', addon.image)}
+                                                    src={getProductImageUrl(undefined, addon.image)}
                                                     alt={addon.title}
                                                     fill
                                                     className="object-cover mix-blend-multiply transition-transform group-hover:scale-110 duration-500"

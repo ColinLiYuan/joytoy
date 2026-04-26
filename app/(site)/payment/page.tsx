@@ -7,7 +7,7 @@ import { Loader2, AlertCircle, ShieldCheck, Lock, ChevronLeft, CheckCircle2 } fr
 import { orderService } from '@/services/orderService';
 import { useAuth } from '@/contexts/authContext';
 import { useCartStore } from '@/stores/useCartStore';
-import { sendOrderConfirmationEmail } from '@/app/actions/send-order-email';
+import type { OrderPaymentResult } from '@/types/order';
 
 // --- 配置区域 ---
 const PAYMENT_CONFIG = {
@@ -28,6 +28,7 @@ function PaymentContent() {
     const searchParams = useSearchParams();
     const rawOrderNumber = searchParams.get('orderNumber');
     const orderNumber = rawOrderNumber ? rawOrderNumber.replace(/^#/, '') : null;
+    const guestEmail = searchParams.get('email'); // ✅ 从 URL 获取游客邮箱
 
     const { isLoggedIn } = useAuth();
     const { clearCart } = useCartStore();
@@ -38,9 +39,31 @@ function PaymentContent() {
     const [orderData, setOrderData] = useState<any>(null);
     const [errorMessage, setErrorMessage] = useState('');
     const [isMounted, setIsMounted] = useState(false);
-    const [paymentStatus, setPaymentStatus] = useState<'processing' | 'success' | 'error'>('processing');
+    const [paymentStatus, setPaymentStatus] = useState<'idle' | 'processing' | 'success' | 'error'>('idle' as const); // ✅ 初始状态改为 'idle'
+    const [isCheckingStatus, setIsCheckingStatus] = useState(false); // ✅ 检查订单状态中
+    const [recentPaymentAttempt, setRecentPaymentAttempt] = useState(false); // ✅ 检测近期支付尝试
 
     useEffect(() => { setIsMounted(true); }, []);
+
+    // ✅ 检测用户是否刚发起过支付（防止重复提交）
+    useEffect(() => {
+        if (!isMounted || !orderNumber) return;
+        
+        const storageKey = `recent_payment_attempt_${orderNumber}`;
+        const lastAttempt = localStorage.getItem(storageKey);
+        
+        if (lastAttempt) {
+            const attemptTime = parseInt(lastAttempt);
+            const now = Date.now();
+            const secondsSinceAttempt = (now - attemptTime) / 1000;
+            
+            // 如果2分钟内有过支付尝试，显示提示
+            if (secondsSinceAttempt < 120) {
+                console.log('⚠️ 检测到近期支付尝试，显示提示');
+                setRecentPaymentAttempt(true);
+            }
+        }
+    }, [isMounted, orderNumber]);
 
     // 加载订单数据
     useEffect(() => {
@@ -51,18 +74,98 @@ function PaymentContent() {
                 setIsLoading(false);
                 return;
             }
+
             try {
-                const data = await orderService.getOrder(orderNumber);
-                if (data) setOrderData(data);
-                else throw new Error('Order not found');
-            } catch (error) {
-                setErrorMessage('Failed to load order details');
+                let data = null;
+                
+                // ✅ 优先从 localStorage 获取（游客模式）
+                const savedOrder = localStorage.getItem('currentOrder');
+                if (savedOrder) {
+                    const parsed = JSON.parse(savedOrder);
+                    if (parsed.orderNumber === orderNumber || parsed.orderNumber === `#${orderNumber}`) {
+                        console.log('[Payment] Found order in localStorage');
+                        data = parsed;
+                    }
+                }
+                
+                // ✅ 如果 localStorage 没有且用户已登录，调用 API
+                if (!data && isLoggedIn) {
+                    console.log('[Payment] Fetching order from API (logged in)...');
+                    data = await orderService.getOrder(orderNumber);
+                }
+                
+                // ✅ 如果还是没找到数据，但 URL 中有邮箱（游客通过邮件链接访问）
+                if (!data && !isLoggedIn && guestEmail) {
+                    console.log('[Payment] Guest mode with email param, calling /guest-query API...');
+                    // 使用 /api/V1/order/guest-query 接口（支持 orderNumber + email 查询）
+                    const response = await fetch(`/api/backend/order/guest-query?orderNumber=${encodeURIComponent(orderNumber)}&email=${encodeURIComponent(guestEmail)}`, {
+                        headers: {}, // ✅ 确保不携带任何 Token
+                    });
+                    const result = await response.json();
+                    console.log('[Payment] /guest-query API response:', result);
+                    if (result.success) {
+                        data = result.data;
+                    } else {
+                        console.error('[Payment] /guest-query API error:', result.message);
+                    }
+                }
+                
+                // ✅ 如果还是没找到数据
+                if (!data) {
+                    if (isLoggedIn) {
+                        throw new Error('Order not found');
+                    } else {
+                        // 游客模式，localStorage 没有数据且 URL 没有邮箱
+                        console.log('[Payment] Guest mode, no order data. Please access from confirmation email link.');
+                        setErrorMessage('Order data not found. Please access this page from your order confirmation email.');
+                        setIsLoading(false);
+                        return;
+                    }
+                }
+                
+                setOrderData(data);
+                
+                // ✅ 检查订单状态：如果已支付，自动跳转
+                if (data.status === 'PAID') {
+                    console.log('✅ 订单已支付，跳转到确认页面');
+                    if (isLoggedIn) {
+                        router.push(`/orders/${orderNumber}?payment_success=1`);
+                    } else {
+                        router.push(`/order-confirmation?orderNumber=${orderNumber}`);
+                    }
+                    return;
+                }
+                
+                // ✅ 检查订单状态：如果已取消或过期，阻止支付
+                if (data.status === 'CANCELLED' || data.status === 'EXPIRED') {
+                    console.log('❌ 订单已取消或过期:', data.status);
+                    setErrorMessage(`This order has been ${data.status.toLowerCase()}. Please create a new order.`);
+                    setIsLoading(false);
+                    return;
+                }
+            } catch (error: any) {
+                console.error('[Payment] Failed to load order:', error);
+                
+                // ✅ 如果是 401 错误，尝试从 localStorage 恢复
+                if (error.response?.status === 401) {
+                    const savedOrder = localStorage.getItem('currentOrder');
+                    if (savedOrder) {
+                        const parsed = JSON.parse(savedOrder);
+                        if (parsed.orderNumber === orderNumber || parsed.orderNumber === `#${orderNumber}`) {
+                            console.log('[Payment] Using localStorage order due to auth error');
+                            setOrderData(parsed);
+                            return;
+                        }
+                    }
+                }
+                
+                setErrorMessage('Failed to load order details. Please try again or contact support.');
             } finally {
                 setIsLoading(false);
             }
         };
         fetchOrder();
-    }, [orderNumber, isMounted]);
+    }, [orderNumber, isMounted, isLoggedIn, guestEmail]);
 
     // --- 核心：成功处理逻辑 ---
     const handlePaymentSuccess = async () => {
@@ -70,29 +173,8 @@ function PaymentContent() {
             setPaymentStatus('success');
             clearCart();
 
-            const emailData = {
-                orderNumber: orderData.orderNumber,
-                email: orderData.shippingAddress?.email || orderData.guestEmail || '',
-                firstName: orderData.shippingAddress?.firstName || 'Valued Customer',
-                finalAmount: Number(orderData.finalAmount || 0),
-                shippingFee: Number(orderData.shippingFee || 0),
-                discountAmount: Number(orderData.discountAmount || 0),
-                items: (orderData.items || []).map((item: any) => ({
-                    title: item.productTitle || 'Unknown Item',
-                    quantity: Number(item.quantity || 1),
-                    price: Number(item.unitPrice || 0),
-                    sku: item.productSku
-                })),
-                shippingAddress: {
-                    addressLine1: orderData.shippingAddress?.addressLine1 || '',
-                    city: orderData.shippingAddress?.city || '',
-                    state: orderData.shippingAddress?.province || '',
-                    zip: orderData.shippingAddress?.zipCode || '',
-                    country: orderData.shippingAddress?.country || ''
-                }
-            };
-
-            sendOrderConfirmationEmail(emailData).catch(err => console.error('Email failed', err));
+            // ✅ 邮件已改为后端自动发送，无需前端触发
+            // 后端会在支付成功后自动发送订单确认邮件
 
             if (isLoggedIn) {
                 localStorage.removeItem('currentOrder');
@@ -107,111 +189,144 @@ function PaymentContent() {
     };
 
     // --- PayPal 专用逻辑 ---
-    const createPayPalOrder = (data: any, actions: any) => {
-        // console.log('createPayPalOrder.... ', orderData)
-        const shippingAddr = orderData.shippingAddress;
-        const billingAddr = orderData.billingAddress || orderData.shippingAddress;
-        const calculatedItemTotal = (orderData.items || []).reduce((acc: number, item: any) => {
-            return acc + (Number(item.unitPrice || 0) * Number(item.quantity || 1));
-        }, 0);
-        const shippingValue = Number(orderData.shippingFee || 0);
-        const discountValue = Number(orderData.discountAmount || 0);
-        const calculatedTotal = calculatedItemTotal + shippingValue - discountValue;
-        const cleanPhone = (shippingAddr.phone || "").replace(/\D/g, '');
-
-        return actions.order.create({
-            payer: {
-                name: {
-                    given_name: billingAddr.firstName,
-                    surname: billingAddr.lastName
-                },
-                email_address: billingAddr.email || orderData.guestEmail,
-                phone: {
-                    phone_type: "MOBILE",
-                    phone_number: {
-                        national_number: cleanPhone
-                    }
-                },
-                address: {
-                    address_line_1: billingAddr.addressLine1,
-                    address_line_2: billingAddr.addressLine2 || "",
-                    admin_area_2: billingAddr.city,
-                    admin_area_1: billingAddr.province,
-                    postal_code: billingAddr.zipCode,
-                    country_code: billingAddr.country
-                }
-            },
-            purchase_units: [{
-                reference_id: orderNumber,
-                description: `Order #${orderData.orderNumber}`,
-                items: (orderData.items || []).map((item: any) => {
-                    const rawName = item.productTitle || 'Item';
-                    const cleanName = rawName
-                        .split('|')[0]             // 取竖线前的内容
-                        .replace(/\s+/g, '')       // 去掉所有空格
-                        .replace(/the/gi, '')      // 去掉 "the" (g表示全局，i表示不区分大小写)
-                        .trim()                    // 保险起见再次去除首尾（虽然空格已删）
-                        .substring(0, 127);        // 截取长度
-                    console.log('cleanName......', cleanName)
-
-                    return {
-                        name: cleanName,
-                        sku: item.productSku ? item.productSku.substring(0, 127) : 'SKU',
-                        quantity: String(item.quantity || 1),
-                        unit_amount: {
-                            currency_code: "USD",
-                            value: Number(item.unitPrice || 0).toFixed(2)
-                        },
-                    };
-                }),
-                amount: {
-                    currency_code: "USD",
-                    value: calculatedTotal.toFixed(2),
-                    breakdown: {
-                        item_total: {
-                            value: calculatedItemTotal.toFixed(2),
-                            currency_code: "USD"
-                        },
-                        shipping: {
-                            value: shippingValue.toFixed(2),
-                            currency_code: "USD"
-                        },
-                        discount: {
-                            value: discountValue.toFixed(2),
-                            currency_code: "USD"
-                        }
-                    }
-                },
-                shipping: {
-                    name: { full_name: `${shippingAddr.firstName} ${shippingAddr.lastName}`.trim() },
-                    address: {
-                        address_line_1: shippingAddr.addressLine1,
-                        address_line_2: shippingAddr.addressLine2 || "",
-                        admin_area_2: shippingAddr.city,
-                        admin_area_1: shippingAddr.province,
-                        postal_code: shippingAddr.zipCode,
-                        country_code: shippingAddr.country
-                    }
-                }
-            }],
-            application_context: {
-                brand_name: "MYTH TOY",
-                user_action: "PAY_NOW",
-                shipping_preference: "SET_PROVIDED_ADDRESS"
+    const createPayPalOrder = async (data: any, actions: any) => {
+        try {
+            console.log('[Payment] 调用后端创建 PayPal 订单...');
+            
+            // ✅ 调用前检查并刷新 Token（提前 5 分钟）
+            const { ensureFreshToken, getToken } = await import('@/lib/token-utils');
+            await ensureFreshToken(300);
+            
+            // ✅ 获取 Token（游客模式可能为 null）
+            const token = await getToken();
+            
+            // ✅ 构建请求头（游客模式下不添加 Authorization）
+            const headers: Record<string, string> = {
+                'Content-Type': 'application/json',
+            };
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
             }
-        });
+            
+            // ✅ 构建请求体（游客模式必须传递 guestEmail）
+            const body: any = {};
+            if (!token) {
+                // 游客模式：尝试从多个位置获取邮箱
+                const guestEmail = orderData?.guestEmail 
+                    || orderData?.shippingAddress?.email 
+                    || orderData?.billingAddress?.email;
+                
+                if (guestEmail) {
+                    body.guestEmail = guestEmail;
+                    console.log('[Payment] Guest mode, adding guestEmail:', guestEmail);
+                } else {
+                    console.error('[Payment] Guest mode but no email found in order data!');
+                }
+            }
+            
+            // ✅ 使用 /api/backend 前缀，让 Next.js rewrite 代理到后端
+            const response = await fetch(`/api/backend/order/${orderNumber}/paypal/create`, {
+                method: 'POST',
+                headers,
+                body: JSON.stringify(body),
+            });
+            
+            const result = await response.json();
+            console.log('[Payment] Backend response:', result);
+            
+            if (!result.success) {
+                throw new Error(result.message || 'Failed to create PayPal order');
+            }
+            
+            const paypalOrderId = result.data;
+            console.log('[Payment] Backend returned PayPal Order ID:', paypalOrderId);
+            
+            // ✅ 返回后端生成的 PayPal Order ID
+            return paypalOrderId;
+        } catch (error) {
+            console.error('[Payment] Failed to create PayPal order:', error);
+            throw error;
+        }
     };
 
     const onPayPalApprove = async (data: any) => {
+        // ✅ 创建 AbortController 用于超时控制（60秒）
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 60000);
+        
+        // ✅ 记录支付尝试时间
+        if (orderNumber) {
+            const storageKey = `recent_payment_attempt_${orderNumber}`;
+            localStorage.setItem(storageKey, Date.now().toString());
+        }
+        
         try {
-            await orderService.payOrder(orderNumber!, {
+            setPaymentStatus('processing');
+            setErrorMessage('');
+            setRecentPaymentAttempt(false); // ✅ 支付开始后隐藏提示
+            
+            // 1. 调用后端支付接口（后端会同步验证并更新状态）
+            const paymentResult: OrderPaymentResult = await orderService.payOrder(orderNumber!, {
                 transactionId: data.orderID,
                 paymentMethod: 'PAYPAL',
                 currency: 'USD'
-            });
-            await handlePaymentSuccess();
+            }, controller.signal); // ✅ 传递 AbortSignal
+            
+            clearTimeout(timeoutId);
+            
+            // 2. 检查支付结果（OrderPaymentResult 返回的是 { success, message, orderNumber }）
+            if (paymentResult?.success === true) {
+                console.log('✅ Payment confirmed:', paymentResult.message);
+                await handlePaymentSuccess();
+            } else {
+                console.warn('⚠️ Payment failed:', paymentResult?.message);
+                setErrorMessage(paymentResult?.message || 'Payment processing failed. Please contact support.');
+                setPaymentStatus('error');
+            }
         } catch (error: any) {
-            setErrorMessage(error.message || "PayPal verification failed");
+            clearTimeout(timeoutId);
+            console.error('PayPal payment error:', error);
+            
+            // ✅ 区分超时错误和其他错误
+            if (error.name === 'AbortError' || error.message?.includes('aborted')) {
+                setErrorMessage('Payment verification is taking longer than expected. Please check your email for order confirmation or contact support@mythtoy.com. Order: ' + orderNumber);
+            } else if (error.message?.includes('Failed to fetch') || error.message?.includes('NetworkError')) {
+                setErrorMessage('Network connection issue. Please check your internet connection and try again. If the problem persists, contact support. Order: ' + orderNumber);
+            } else {
+                setErrorMessage(error.message || "Payment verification failed. Please contact support. Order: " + orderNumber);
+            }
+            setPaymentStatus('error');
+        }
+    };
+
+    // ✅ 新增：检查订单状态（用于超时或错误后确认是否已支付成功）
+    const checkOrderStatus = async () => {
+        try {
+            setIsCheckingStatus(true);
+            setErrorMessage('');
+            
+            console.log('🔍 Checking order status:', orderNumber);
+            const order = await orderService.getOrder(orderNumber!);
+            
+            if (order.status === 'PAID') {
+                // ✅ Order has been paid successfully, proceed with success flow even if timed out before
+                console.log('✅ Order paid successfully, redirecting to confirmation page');
+                await handlePaymentSuccess();
+            } else if (order.status === 'PENDING') {
+                // ✅ Order still pending, user can retry
+                setErrorMessage('Order is still pending. You can try to pay again or contact support.');
+                setPaymentStatus('error');
+            } else {
+                // ✅ Order status abnormal (cancelled, expired, etc.)
+                setErrorMessage(`Order status: ${order.status}. Please contact support for assistance.`);
+                setPaymentStatus('error');
+            }
+        } catch (error: any) {
+            console.error('Failed to check order status:', error);
+            setErrorMessage('Failed to check order status. Please refresh the page or contact support.');
+            setPaymentStatus('error');
+        } finally {
+            setIsCheckingStatus(false);
         }
     };
 
@@ -264,9 +379,46 @@ function PaymentContent() {
                     <div className="p-8 md:p-10">
                         {/* Error Display */}
                         {errorMessage && (
-                            <div className="mb-6 p-4 bg-red-50 text-red-600 text-xs rounded-2xl flex items-center gap-2 border border-red-100">
-                                <AlertCircle size={16} />
-                                {errorMessage}
+                            <div className="mb-6 p-4 bg-red-50 text-red-600 text-xs rounded-2xl flex items-start gap-2 border border-red-100">
+                                <AlertCircle size={16} className="flex-shrink-0 mt-0.5" />
+                                <span>{errorMessage}</span>
+                            </div>
+                        )}
+
+                        {/* ✅ 近期支付尝试提示（防止重复提交） */}
+                        {recentPaymentAttempt && paymentStatus === 'idle' && (
+                            <div className="mb-6 p-4 bg-yellow-50 text-yellow-800 text-xs rounded-2xl flex items-start gap-2 border border-yellow-200">
+                                <Loader2 size={16} className="flex-shrink-0 mt-0.5 animate-spin" />
+                                <div>
+                                    <p className="font-semibold mb-1">Payment Already in Progress</p>
+                                    <p className="opacity-90">If you clicked pay recently, please wait a moment. The system is processing your payment.</p>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* ✅ 检查订单状态按钮（仅在出错时显示） */}
+                        {paymentStatus === 'error' && (
+                            <div className="mb-6">
+                                <button
+                                    onClick={checkOrderStatus}
+                                    disabled={isCheckingStatus}
+                                    className="w-full bg-blue-50 hover:bg-blue-100 text-blue-700 py-3 rounded-xl text-sm font-semibold transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                                >
+                                    {isCheckingStatus ? (
+                                        <>
+                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                            Checking Order Status...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <CheckCircle2 size={16} />
+                                            Check If Payment Was Successful
+                                        </>
+                                    )}
+                                </button>
+                                <p className="text-[10px] text-gray-400 text-center mt-2">
+                                    Use this if you were charged but the page didn't update
+                                </p>
                             </div>
                         )}
 
@@ -274,21 +426,36 @@ function PaymentContent() {
                         {PAYMENT_CONFIG.ENABLE_PAYPAL ? (
                             <div className="space-y-8">
                                 <div className="relative z-0 min-h-[150px] w-full animate-in fade-in slide-in-from-bottom-2 duration-300">
-                                    {paypalClientId ? (
-                                        <PayPalScriptProvider options={{
-                                            clientId: paypalClientId,
-                                            currency: "USD",
-                                            intent: "capture",
-                                            components: "buttons",
-                                            "disable-funding": "paylater,credit"
-                                        }}>
-                                            <PayPalButtons
-                                                style={{ layout: "vertical", shape: "rect", borderRadius: 12, height: 48 }}
-                                                className="w-full"
-                                                createOrder={createPayPalOrder}
-                                                onApprove={onPayPalApprove}
-                                            />
-                                        </PayPalScriptProvider>
+                                    {paymentStatus === 'processing' ? (
+                                        <div className="relative">
+                                            {/* ✅ 遮罩层：防止重复点击 */}
+                                            <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-10 rounded-xl" />
+                                            <div className="flex flex-col items-center justify-center py-12 relative z-20">
+                                                <Loader2 className="w-10 h-10 animate-spin text-indigo-600 mb-4" />
+                                                <p className="text-sm font-bold text-gray-900 mb-1">Verifying Payment...</p>
+                                                <p className="text-xs text-gray-500 text-center max-w-[250px]">
+                                                    This usually takes a few seconds. Please don't close this page.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    ) : paypalClientId ? (
+                                        <div className={(paymentStatus as string) === 'processing' ? 'pointer-events-none opacity-50' : ''}>
+                                            <PayPalScriptProvider options={{
+                                                clientId: paypalClientId,
+                                                currency: "USD",
+                                                intent: "capture",
+                                                components: "buttons",
+                                                "disable-funding": "paylater,credit"
+                                            }}>
+                                                <PayPalButtons
+                                                    style={{ layout: "vertical", shape: "rect", borderRadius: 12, height: 48 }}
+                                                    className="w-full"
+                                                    createOrder={createPayPalOrder}
+                                                    onApprove={onPayPalApprove}
+                                                    disabled={(paymentStatus as string) === 'processing'} // ✅ 禁用按钮
+                                                />
+                                            </PayPalScriptProvider>
+                                        </div>
                                     ) : (
                                         <div className="text-red-500 text-center text-sm">PayPal Configuration Missing</div>
                                     )}
@@ -322,7 +489,8 @@ function PaymentContent() {
                         <div className="text-center mt-8">
                             <button
                                 onClick={() => router.back()}
-                                className="inline-flex items-center gap-1 text-sm text-gray-400 hover:text-gray-900 transition-all font-medium"
+                                disabled={(paymentStatus as string) === 'processing'} // ✅ 支付处理时禁用返回
+                                className="inline-flex items-center gap-1 text-sm text-gray-400 hover:text-gray-900 transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 <ChevronLeft size={14} /> Back to order details
                             </button>

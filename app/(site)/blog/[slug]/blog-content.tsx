@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic';
 import { BlogResponse } from '@/types/site/blog';
 import { Calendar, User, Clock, Share2, ThumbsUp, Mail, ArrowRight, CheckCircle2, Copy } from 'lucide-react';
 import { useState } from 'react';
-import { subscribeToNewsletter } from '@/app/actions/subscribe-email';
+import { subscribeToNewsletter } from '@/app/actions/email';
 import { useToast } from '@/contexts/toastContext';
 import { getProductImageUrl } from '@/lib/image-utils';
 // ✅ 引入刚才写的配置

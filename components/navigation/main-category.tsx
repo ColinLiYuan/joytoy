@@ -47,7 +47,7 @@ export default function MainCategory({ rootsData = [] }: MainNaviCategoryProps) 
                             <Link
                                 href={`/collections/${root.slug}`}
                                 className={`
-                                    relative block px-6 py-3 text-base font-medium tracking-wide transition-colors duration-200
+                                    relative block px-6 py-3 text-[17px] font-medium tracking-wide transition-colors duration-200
                                     font-['Playfair_Display'] whitespace-nowrap
                                     ${isActive ? 'text-pink-600' : 'text-gray-800 hover:text-pink-600'}
                                 `}

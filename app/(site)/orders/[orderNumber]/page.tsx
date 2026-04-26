@@ -1,12 +1,13 @@
 // app/(site)/orders/[orderNumber]/route.ts
 'use client';
 
-import { useState, useEffect, use } from 'react';
+import { Suspense, useState, useEffect, use } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { orderService } from '@/services/orderService';
 import { OrderResponse } from '@/types/order';
 import { getProductImageUrl } from '@/lib/image-utils';
+import { getUserId } from '@/lib/user-utils';
 import Image from 'next/image';
 import {
     Loader2,
@@ -17,10 +18,11 @@ import {
     Calendar,
     ShieldCheck,
     CreditCard,
-    Receipt
+    Receipt,
+    XCircle
 } from 'lucide-react';
 
-export default function OrderDetailsPage({ params }: { params: Promise<{ orderNumber: string }> }) {
+function OrderDetailsContent({ params }: { params: Promise<{ orderNumber: string }> }) {
     const { orderNumber } = use(params);
     const searchParams = useSearchParams();
     const isJustPaid = searchParams.get('payment_success') === '1';
@@ -28,20 +30,85 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ orderNu
     const [order, setOrder] = useState<OrderResponse | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [subtotal, setSubtotal] = useState(0);
+    const [authError, setAuthError] = useState(false);
 
     useEffect(() => {
         const fetchOrder = async () => {
             try {
-                const data = await orderService.getOrder(orderNumber);
+                // ✅ 先检查是否登录（跟订单列表一样）
+                const userId = getUserId();
+                if (!userId) {
+                    console.log('[Order Detail] User not logged in, redirecting to orders page');
+                    setAuthError(true);
+                    setIsLoading(false);
+                    return;
+                }
+
+                let data = null;
+                
+                // ✅ 先尝试从 localStorage 获取（游客模式）
+                const savedOrder = localStorage.getItem('currentOrder');
+                if (savedOrder) {
+                    const parsed = JSON.parse(savedOrder);
+                    if (parsed.orderNumber === orderNumber || parsed.orderNumber === `#${orderNumber}`) {
+                        console.log('[Order Detail] Found order in localStorage');
+                        data = parsed;
+                    }
+                }
+                
+                // ✅ 如果 localStorage 没有或订单号不匹配，调用 API
+                if (!data) {
+                    console.log('[Order Detail] Fetching order from API...');
+                    data = await orderService.getOrder(orderNumber);
+                }
+                
+                console.log('📦 Order Detail Data:', data);
+                
+                if (!data) {
+                    console.error('⚠️ Order data is null');
+                    setOrder(null);
+                    return;
+                }
+                
+                console.log('📦 First Item:', data.items?.[0]);
                 setOrder(data);
 
                 // 计算商品小计
-                const calculatedSubtotal = data.items.reduce((total, item) => {
+                const calculatedSubtotal = data.items.reduce((total: number, item: any) => {
                     return total + (item.unitPrice * (item.quantity || 1));
                 }, 0);
                 setSubtotal(calculatedSubtotal);
-            } catch (error) {
+            } catch (error: any) {
                 console.error('Failed to load order:', error);
+                console.log('[Order Detail] Error response status:', error.response?.status);
+                console.log('[Order Detail] Error message:', error.message);
+                
+                // 检测是否是认证错误
+                if (error.message?.includes('请先登录') || error.message?.includes('Please login') || error.message?.includes('login') || error.response?.status === 401) {
+                    console.log('[Order Detail] Auth error detected, trying localStorage...');
+                    
+                    // ✅ 尝试从 localStorage 恢复
+                    const savedOrder = localStorage.getItem('currentOrder');
+                    console.log('[Order Detail] localStorage currentOrder:', savedOrder ? 'exists' : 'not found');
+                    
+                    if (savedOrder) {
+                        const parsed = JSON.parse(savedOrder);
+                        console.log('[Order Detail] Parsed order number:', parsed.orderNumber, 'vs requested:', orderNumber);
+                        
+                        if (parsed.orderNumber === orderNumber || parsed.orderNumber === `#${orderNumber}`) {
+                            console.log('[Order Detail] Using localStorage order due to auth error');
+                            setOrder(parsed);
+                            const calculatedSubtotal = parsed.items.reduce((total: number, item: any) => {
+                                return total + (item.unitPrice * (item.quantity || 1));
+                            }, 0);
+                            setSubtotal(calculatedSubtotal);
+                            return;
+                        } else {
+                            console.log('[Order Detail] Order number mismatch, cannot use localStorage');
+                        }
+                    }
+                    setAuthError(true);
+                }
             } finally {
                 setIsLoading(false);
             }
@@ -60,8 +127,18 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ orderNu
     if (!order) {
         return (
             <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 w-full max-w-full overflow-x-hidden">
-                <h2 className="text-xl font-bold text-gray-900 mb-2">Order Not Found</h2>
-                <Link href="/orders" className="text-pink-600 hover:underline">Return to My Orders</Link>
+                {authError ? (
+                    <>
+                        <h2 className="text-xl font-bold text-gray-900 mb-2">Please Login</h2>
+                        <p className="text-gray-600 mb-4">You need to login to view order details.</p>
+                        <Link href="/orders" className="text-pink-600 hover:underline">Return to My Orders</Link>
+                    </>
+                ) : (
+                    <>
+                        <h2 className="text-xl font-bold text-gray-900 mb-2">Order Not Found</h2>
+                        <Link href="/orders" className="text-pink-600 hover:underline">Return to My Orders</Link>
+                    </>
+                )}
             </div>
         );
     }
@@ -289,15 +366,46 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ orderNu
                     </div>
                 </div>
 
-                {/* 底部帮助 */}
-                <div className="text-center mt-12 mb-8">
-                    <p className="text-gray-400 text-sm">Need help with this order?</p>
-                    <a href="mailto:support@mythtoy.com" className="text-black font-bold text-sm hover:underline mt-1 inline-block">
-                        Contact Support
-                    </a>
+                {/* 底部操作区 */}
+                <div className="flex justify-between items-center mt-8 mb-12">
+                    <Link href="/orders" className="text-sm text-gray-500 hover:text-black transition-colors flex items-center gap-1">
+                        <ArrowLeft size={16} /> Back to Orders
+                    </Link>
+                    
+                    {order.status?.toUpperCase() === 'PENDING' && (
+                        <button
+                            onClick={async () => {
+                                if (confirm('Are you sure you want to cancel this order? This action cannot be undone.')) {
+                                    try {
+                                        await orderService.cancelOrder(order.orderNumber);
+                                        alert('Order cancelled successfully.');
+                                        window.location.reload();
+                                    } catch (error: any) {
+                                        alert(error.message || 'Failed to cancel order');
+                                    }
+                                }
+                            }}
+                            className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors border border-red-100"
+                        >
+                            <XCircle size={16} />
+                            Cancel Order
+                        </button>
+                    )}
                 </div>
 
             </div>
         </div>
+    );
+}
+
+export default function OrderDetailsPage({ params }: { params: Promise<{ orderNumber: string }> }) {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center bg-gray-50 w-full max-w-full overflow-x-hidden">
+                <Loader2 className="animate-spin text-gray-400 w-8 h-8" />
+            </div>
+        }>
+            <OrderDetailsContent params={params} />
+        </Suspense>
     );
 }

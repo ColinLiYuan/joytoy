@@ -7,33 +7,61 @@ import {
     TrendingUp,
     Link as LinkIcon,
     BarChart3,
-    Target
+    Target,
+    Wallet,
+    Clock,
+    CheckCircle,
+    AlertCircle,
+    ShieldCheck
 } from 'lucide-react'
-// 导入定义的类型
 import { AffDashboardResponse } from '@/types/affiliate'
 import { affiliateService } from '@/services/affiliateService'
+import { getUserId } from '@/lib/user-utils'
+import { useAuth } from '@/contexts/authContext'
+import Link from 'next/link'
 
 export default function AffiliateDashboard() {
     const [data, setData] = useState<AffDashboardResponse | null>(null);
     const [loading, setLoading] = useState(true);
+    const [authError, setAuthError] = useState(false);
+    const { isLoggedIn, isClient, openAuthModal } = useAuth();
 
-    // 接入后端数据
+    // Fetch backend data
     useEffect(() => {
         const fetchDashboard = async () => {
+            // ✅ Check if logged in (same as order list)
+            const userId = getUserId();
+            console.log('[Affiliate Dashboard] User ID:', userId);
+            
+            if (!userId) {
+                console.log('[Affiliate Dashboard] User not logged in');
+                setAuthError(true);
+                setLoading(false);
+                return;
+            }
+
             try {
+                console.log('[Affiliate Dashboard] Fetching dashboard data...');
                 const response = await affiliateService.getDashboardData();
+                console.log('[Affiliate Dashboard] Dashboard data loaded:', response);
                 setData(response);
-            } catch (error) {
-                console.error("Failed to load dashboard data", error);
+            } catch (error: any) {
+                console.error("[Affiliate Dashboard] Failed to load dashboard data", error);
+                console.error("[Affiliate Dashboard] Error details:", {
+                    message: error.message,
+                    stack: error.stack
+                });
             } finally {
                 setLoading(false);
             }
         };
 
-        fetchDashboard();
-    }, []);
+        if (isClient) {
+            fetchDashboard();
+        }
+    }, [isClient]);
 
-    // 加载状态
+    // Loading state
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-[400px]">
@@ -42,7 +70,30 @@ export default function AffiliateDashboard() {
         );
     }
 
-    // 错误处理或空状态
+    // Not logged in state
+    if (authError || !isClient) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[400px] bg-white rounded-2xl border border-dashed border-gray-200 p-12">
+                <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
+                    <ShieldCheck className="w-8 h-8 text-gray-300" />
+                </div>
+                <h3 className="text-lg font-bold text-gray-900 mb-2">Please Login</h3>
+                <p className="text-gray-500 text-sm mb-6 text-center max-w-md">
+                    You need to login as an affiliate to view your dashboard and track performance.
+                </p>
+                <button
+                    onClick={() => openAuthModal('login', { 
+                        onSuccess: () => window.location.reload() 
+                    })}
+                    className="inline-block bg-black text-white px-8 py-3 rounded-lg text-sm font-bold shadow-lg hover:bg-gray-800 transition-all hover:-translate-y-0.5"
+                >
+                    Login to Continue
+                </button>
+            </div>
+        );
+    }
+
+    // Error handling or empty state
     if (!data) {
         return (
             <div className="p-8 bg-red-50 border border-red-100 rounded-2xl text-red-600 text-sm font-medium">
@@ -94,6 +145,56 @@ export default function AffiliateDashboard() {
                     color="text-orange-600"
                     bg="bg-orange-50"
                 />
+            </div>
+
+            {/* 2. Financial Overview */}
+            <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+                <div className="flex items-center gap-2 mb-6">
+                    <Wallet className="h-5 w-5 text-gray-400" />
+                    <h3 className="font-bold text-gray-900">Financial Overview</h3>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                    <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                            <CheckCircle className="h-4 w-4 text-emerald-500" />
+                            <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">Settled</span>
+                        </div>
+                        <div className="text-2xl font-black text-gray-900">
+                            ${data.summary.settledAmount?.toFixed(2) || '0.00'}
+                        </div>
+                        <div className="text-xs text-gray-400">Available for withdrawal</div>
+                    </div>
+                    <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                            <Clock className="h-4 w-4 text-amber-500" />
+                            <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">Pending</span>
+                        </div>
+                        <div className="text-2xl font-black text-gray-900">
+                            ${data.summary.pendingAmount?.toFixed(2) || '0.00'}
+                        </div>
+                        <div className="text-xs text-gray-400">Unsettled (within 30 days)</div>
+                    </div>
+                    <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                            <Wallet className="h-4 w-4 text-blue-500" />
+                            <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">Balance</span>
+                        </div>
+                        <div className="text-2xl font-black text-gray-900">
+                            ${data.summary.currentBalance?.toFixed(2) || '0.00'}
+                        </div>
+                        <div className="text-xs text-gray-400">Current balance</div>
+                    </div>
+                    <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                            <AlertCircle className="h-4 w-4 text-purple-500" />
+                            <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">Paid Out</span>
+                        </div>
+                        <div className="text-2xl font-black text-gray-900">
+                            ${data.summary.totalPaid?.toFixed(2) || '0.00'}
+                        </div>
+                        <div className="text-xs text-gray-400">Total withdrawn</div>
+                    </div>
+                </div>
             </div>
 
             {/* 2. Path Stats Grid */}
@@ -152,7 +253,7 @@ export default function AffiliateDashboard() {
 }
 
 /**
- * 进度条组件：展示具体路径统计
+ * Progress bar component: display specific path statistics
  */
 function ProgressRow({ item, totalClicks, color }: { item: any, totalClicks: number, color: string }) {
     const percentage = totalClicks > 0 ? (item.clicks / totalClicks) * 100 : 0;
@@ -178,7 +279,7 @@ function ProgressRow({ item, totalClicks, color }: { item: any, totalClicks: num
 }
 
 /**
- * 统计卡片组件
+ * Stat card component
  */
 function StatCard({ label, value, icon: Icon, color, bg }: any) {
     return (

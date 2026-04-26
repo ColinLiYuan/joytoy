@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Star, CheckCircle2, ThumbsUp, PenLine, Loader2, AlertCircle } from 'lucide-react';
-import { Review, ReviewStats, ReviewCreateRequest } from '@/types/review';
+import { Review, ReviewStats } from '@/types/review';
 import { reviewService } from '@/services/reviewService';
+import { createReview, createReviewAsGuest } from '@/app/actions/review'; // 使用 Server Action
 import { useAuth } from '@/contexts/authContext'; // 假设你有这个 hook
 import { useToast } from '@/contexts/toastContext';
 
@@ -69,29 +70,61 @@ export default function ProductReviews({ productId }: ProductReviewsProps) {
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setIsSubmitting(true);
-
+    
         const formData = new FormData(e.currentTarget);
-
-        // 构造请求体
-        const requestData: ReviewCreateRequest = {
-            productId,
-            rating: Number(formData.get('rating')),
-            title: formData.get('title') as string,
-            content: formData.get('content') as string,
-            authorName: formData.get('authorName') as string || 'Anonymous',
-            // 如果没登录，获取表单里的 email；如果登录了，不需要传（后端自己查）或者传 userInfo.email
-            email: !isLoggedIn ? (formData.get('email') as string) : undefined
-        };
-
-        try {
-            await reviewService.createReview(requestData);
-            showToast('success', 'Submitted', 'Your review has been submitted for moderation.');
-            setIsWriting(false); // 关闭表单
-            (e.target as HTMLFormElement).reset(); // 重置表单
-        } catch (error: any) {
-            showToast('error', 'Error', error.message || 'Failed to submit review');
-        } finally {
-            setIsSubmitting(false);
+        
+        // 根据登录状态调用不同的接口
+        if (isLoggedIn) {
+            // 登录用户: 调用 authenticated 接口
+            const requestData = {
+                productId,
+                rating: Number(formData.get('rating')),
+                title: formData.get('title') as string,
+                content: formData.get('content') as string,
+                authorName: formData.get('authorName') as string || 'Anonymous',
+            };
+    
+            try {
+                const success = await createReview(requestData);
+                if (success) {
+                    showToast('success', 'Submitted', 'Your review has been submitted for moderation.');
+                    setIsWriting(false);
+                    (e.target as HTMLFormElement).reset();
+                    await fetchReviews(0);
+                } else {
+                    showToast('error', 'Session Expired', 'Please login again to submit a review.');
+                }
+            } catch (error: any) {
+                showToast('error', 'Error', error.message || 'Failed to submit review');
+            } finally {
+                setIsSubmitting(false);
+            }
+        } else {
+            // 游客: 调用 guest 接口
+            const requestData = {
+                productId,
+                rating: Number(formData.get('rating')),
+                title: formData.get('title') as string,
+                content: formData.get('content') as string,
+                authorName: formData.get('authorName') as string || 'Anonymous',
+                email: formData.get('email') as string,
+            };
+    
+            try {
+                const success = await createReviewAsGuest(requestData);
+                if (success) {
+                    showToast('success', 'Submitted', 'Your review has been submitted for moderation.');
+                    setIsWriting(false);
+                    (e.target as HTMLFormElement).reset();
+                    await fetchReviews(0);
+                } else {
+                    showToast('error', 'Error', 'Failed to submit review. Please try again.');
+                }
+            } catch (error: any) {
+                showToast('error', 'Error', error.message || 'Failed to submit review');
+            } finally {
+                setIsSubmitting(false);
+            }
         }
     };
 

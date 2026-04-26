@@ -1,9 +1,9 @@
-// app/admin/review/route.ts
+// app/admin/review/page.tsx
 'use client'
 
 import { useEffect, useState } from 'react'
-import { reviewService } from '@/services/reviewService'
-import { Review, ReviewStatus } from '@/types/review' // 确保 ReviewStatus 枚举值是 'PENDING', 'APPROVED', 'REJECTED'
+import { getAdminReviews, auditReview } from '@/app/actions/review'
+import { Review, ReviewStatus } from '@/types/review'
 import {
     CheckCircle,
     XCircle,
@@ -24,9 +24,9 @@ export default function AdminReviewPage() {
     const fetchReviews = async () => {
         setLoading(true)
         try {
-            // 如果是 ALL，传 undefined 给 service，否则传当前状态
+            // 如果是 ALL，传 undefined 给 Server Action，否则传当前状态
             const statusFilter = currentStatus === 'ALL' ? undefined : currentStatus;
-            const data = await reviewService.getAdminReviews(page, 10, statusFilter);
+            const data = await getAdminReviews({ page, size: 10, status: statusFilter });
             setReviews(data.content);
             setTotalPages(data.totalPages);
         } catch (error) {
@@ -52,7 +52,7 @@ export default function AdminReviewPage() {
 
         try {
             // 2. 调用接口
-            await reviewService.auditReview(reviewId, status);
+            await auditReview(reviewId, status);
             // 3. 刷新列表
             fetchReviews();
         } catch (error: any) {
@@ -254,4 +254,4 @@ export default function AdminReviewPage() {
             </div>
         </div>
     )
-}
+}export const dynamic = 'force-dynamic'; 

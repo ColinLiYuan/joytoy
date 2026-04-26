@@ -1,6 +1,7 @@
 // app/pages/return-refund/route.ts
 
 import { Metadata } from 'next';
+import { Suspense } from 'react';
 import PolicyNav from '@/components/policy-nav';
 
 export const metadata: Metadata = {
@@ -10,6 +11,8 @@ export const metadata: Metadata = {
         canonical: 'https://mythtoy.com/pages/return-refund',
     },
 };
+
+export const dynamic = 'force-dynamic';
 
 export default function ReturnRefundPolicy() {
     return (
@@ -92,4 +95,4 @@ export default function ReturnRefundPolicy() {
             </div>
         </div>
     );
-}
+} 

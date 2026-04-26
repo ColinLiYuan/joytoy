@@ -1,20 +1,26 @@
 // app/admin/blog/add/route.ts
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { blogService } from '@/services/blogService';
+import { releaseBlog } from '@/app/actions/blog';
 import BlogForm from '../components/admin-blog-form';
 
-export default function AddBlogPage() {
+export const dynamic = 'force-dynamic';
+
+function AddBlogContent() {
     const router = useRouter();
     const [saving, setSaving] = useState(false);
 
     const handleSubmit = async (formData: any) => {
         setSaving(true);
         try {
-            await blogService.release(formData);
+            // 使用 Server Action releaseBlog 创建新博客
+            await releaseBlog({
+                id: 0, // 对于新建，id 为 0，后端会创建新记录
+                ...formData
+            });
             router.push('/admin/blog');
             // 可以添加成功提示：创建博客成功！
         } catch (error) {
@@ -61,5 +67,17 @@ export default function AddBlogPage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function AddBlogPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+            </div>
+        }>
+            <AddBlogContent />
+        </Suspense>
     );
 }

@@ -9,6 +9,8 @@ export interface ProductSku {
     sku: string;
     color: string;
     stock: number;
+    lockedStock?: number;
+    availableStock?: number;
 }
 
 export interface ProductSpecification {
@@ -28,6 +30,7 @@ export interface ReleaseProductRequest {
     sourceTitle?: string;
     sourceVendor?: string;
     title?: string;
+    name?: string; // 商品名称
     description?: string;
     stock?: number;
     lockedStock?: number;
@@ -36,6 +39,8 @@ export interface ReleaseProductRequest {
     currentPrice?: number;
     originalPrice?: number;
     minOrder?: string;
+    boxContents?: string;
+    highlightData?: string;
 
     galleries?: Gallery[];
     specifications?: ProductSpecification[];
@@ -55,6 +60,7 @@ export interface AdminProductResponse {
     sourceTitle?: string;
     sourceVendor?: string;
     title?: string;
+    name?: string; // 商品名称
     description?: string;
     stock?: number;
     lockedStock?: number;
@@ -62,6 +68,8 @@ export interface AdminProductResponse {
     currentPrice?: number;
     originalPrice?: number;
     minOrder?: string;
+    boxContents?: string;
+    highlightData?: string;
 
     galleries?: Gallery[];
     specifications?: ProductSpecification[];

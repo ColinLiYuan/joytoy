@@ -1,9 +1,9 @@
-// /app/admin/products/route.ts
+// /app/admin/product/page.tsx
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
-import { productService } from '@/services/product-service'
+import { productService } from '@/services/productService'
 import { ProductResponse, ProductListResponse } from '@/types/product'
 import { VENDORS } from '@/lib/constants/product-options'
 
@@ -19,9 +19,12 @@ import {
     Info,
     ChevronLeft,
     ChevronRight,
-    Package
+    Package,
+    Eye
 } from 'lucide-react'
 import { getProductImageUrl } from '@/lib/image-utils';
+
+export const dynamic = 'force-dynamic';
 
 // 模拟分类数据
 const categories = ['情趣内衣', '震动棒', '飞机杯', '润滑液', 'SM道具', '延时喷剂']
@@ -62,14 +65,14 @@ export default function ProductList() {
                 statusParam = 'INACTIVE'
             }
 
-            // 调用产品服务获取数据，传递所有筛选条件
+            // 调用 Service 获取数据
             const result: ProductListResponse = await productService.adminList(
-                searchFilters.category || '', // category slug参数
-                pagination.currentPage, // page
-                12, // size
-                searchFilters.keyword || '', // 搜索关键词（产品名称）
-                statusParam || '', // 状态
-                searchFilters.vendor || '' // 供应商
+                searchFilters.category || '',
+                pagination.currentPage,
+                12,
+                searchFilters.keyword || '',
+                statusParam || '',
+                searchFilters.vendor || ''
             )
 
             setProducts(result.content || [])
@@ -330,6 +333,14 @@ export default function ProductList() {
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="flex items-center space-x-2">
+                                            {/* 查看商品 */}
+                                            <Link
+                                                href={`/admin/product/${product.id}`}
+                                                className="bg-green-100 hover:bg-green-200 text-green-700 p-2 rounded transition-colors"
+                                                title="查看商品"
+                                            >
+                                                <Eye className="h-4 w-4" />
+                                            </Link>
                                             {/* 完整编辑 */}
                                             <Link
                                                 href={`/admin/product/edit/${product.id}`}
@@ -470,4 +481,4 @@ export default function ProductList() {
             </div>
         </div>
     )
-}
+} 

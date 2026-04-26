@@ -30,13 +30,16 @@ export default function Navigation({ minimal = false, rootsData = [] }: Navigati
 
     const isCheckoutPage = pathname === '/checkout';
     const getCart = useCartStore(state => state.getCart);
-    const { isLoggedIn, openAuthModal, logout } = useAuth();
+    const { isLoggedIn, userInfo, openAuthModal, logout } = useAuth();
 
     useEffect(() => setIsMounted(true), []);
 
-    useEffect(() => {
-        if (isLoggedIn) getCart();
-    }, [isLoggedIn, getCart]);
+    // ✅ 购物车获取由 cart-sync.tsx 统一管理，这里不再重复调用
+    // useEffect(() => {
+    //     if (isLoggedIn) {
+    //         getCart().catch(console.error);
+    //     }
+    // }, [isLoggedIn, getCart]);
 
     useEffect(() => {
         document.body.style.overflow = isMobileNavOpen ? 'hidden' : 'unset';
@@ -44,7 +47,10 @@ export default function Navigation({ minimal = false, rootsData = [] }: Navigati
     }, [isMobileNavOpen]);
 
     const toggleCart = async () => {
-        if (!isCartOpen && isLoggedIn) await getCart();
+        // ✅ 打开购物车时始终刷新数据（确保最新）
+        if (!isCartOpen) {
+            await getCart().catch(console.error);
+        }
         setIsCartOpen(!isCartOpen);
     };
 
@@ -102,6 +108,7 @@ export default function Navigation({ minimal = false, rootsData = [] }: Navigati
                         <div className="flex items-center gap-1 sm:gap-2">
                             <UserActions
                                 isLoggedIn={isLoggedIn}
+                                userInfo={userInfo}
                                 onCartClick={toggleCart}
                                 onWishlistClick={(e) => {
                                     e.preventDefault();

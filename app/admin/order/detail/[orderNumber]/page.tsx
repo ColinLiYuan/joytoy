@@ -1,21 +1,24 @@
 'use client'
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { orderService } from '@/services/orderService';
+import { orderService, OrderStatusLog, AffiliateCommissionLog } from '@/services/orderService';
 import { OrderResponse } from '@/types/order';
 import { getProductImageUrl } from '@/lib/image-utils';
 import {
     ChevronLeft, Package, Truck, CreditCard, User,
-    MapPin, Mail, Phone, Loader2, Calendar, Hash
+    MapPin, Mail, Phone, Loader2, Calendar, Hash, Clock, History, DollarSign, TrendingUp, TrendingDown
 } from 'lucide-react';
 
-export default function OrderDetailPage() {
+function OrderDetailContent() {
     // 💡 因为你的文件夹叫 [orderNumber]，这里 params.orderNumber 才有值
     const params = useParams();
     const router = useRouter();
     const [order, setOrder] = useState<OrderResponse | null>(null);
+    const [statusLogs, setStatusLogs] = useState<OrderStatusLog[]>([]);
+    const [commissionLogs, setCommissionLogs] = useState<AffiliateCommissionLog[]>([]);
     const [loading, setLoading] = useState(true);
+    const [logsLoading, setLogsLoading] = useState(false);
 
     useEffect(() => {
         const fetchDetail = async () => {
@@ -29,13 +32,23 @@ export default function OrderDetailPage() {
 
             try {
                 // 调用 service 获取数据
-                const data = await orderService.getOrder(orderNo);
+                const data = await orderService.getAdminOrderDetail(orderNo);
                 console.log('Fetched Detail:', data);
                 setOrder(data);
+                
+                // 获取状态历史和佣金日志
+                setLogsLoading(true);
+                const [statusLogsData, commissionLogsData] = await Promise.all([
+                    orderService.getOrderStatusLogs(orderNo),
+                    orderService.getOrderCommissionLogs(orderNo)
+                ]);
+                setStatusLogs(statusLogsData);
+                setCommissionLogs(commissionLogsData);
             } catch (err) {
                 console.error('获取详情失败:', err);
             } finally {
                 setLoading(false);
+                setLogsLoading(false);
             }
         };
 
@@ -166,9 +179,176 @@ export default function OrderDetailPage() {
                                 </div>
                             </div>
                         </div>
+
+                        {/* 订单状态历史 */}
+                        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+                            <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center gap-2">
+                                <History size={18} className="text-gray-400" />
+                                <h3 className="font-bold text-gray-900">状态变更历史</h3>
+                            </div>
+                            <div className="p-6">
+                                {logsLoading ? (
+                                    <div className="flex items-center justify-center py-4">
+                                        <Loader2 className="animate-spin text-gray-400" size={20} />
+                                    </div>
+                                ) : statusLogs.length === 0 ? (
+                                    <p className="text-sm text-gray-400 text-center py-4">暂无状态变更记录</p>
+                                ) : (
+                                    <div className="space-y-4">
+                                        {statusLogs.map((log) => (
+                                            <div key={log.id} className="relative pl-6 pb-4 border-l-2 border-gray-200 last:border-l-0 last:pb-0">
+                                                {/* 时间点 */}
+                                                <div className="absolute left-[-9px] top-0 w-4 h-4 rounded-full bg-gray-900 border-2 border-white"></div>
+                                                
+                                                {/* 时间 */}
+                                                <div className="flex items-center gap-1 text-xs text-gray-400 mb-1">
+                                                    <Clock size={12} />
+                                                    {new Date(log.createdAt).toLocaleString('zh-CN')}
+                                                </div>
+                                                
+                                                {/* 状态变化 */}
+                                                <div className="flex items-center gap-2 text-sm mb-1">
+                                                    {log.oldStatus && (
+                                                        <span className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded text-[10px] font-medium">
+                                                            {log.oldStatus}
+                                                        </span>
+                                                    )}
+                                                    <span className="text-gray-400">→</span>
+                                                    <span className="px-2 py-0.5 bg-black text-white rounded text-[10px] font-medium">
+                                                        {log.newStatus}
+                                                    </span>
+                                                </div>
+                                                
+                                                {/* 操作人和原因 */}
+                                                <div className="text-xs text-gray-500 space-y-0.5">
+                                                    {log.changedBy && (
+                                                        <p>操作人: <span className="font-medium text-gray-700">{log.changedBy}</span></p>
+                                                    )}
+                                                    {log.reason && (() => {
+                                                        // 根据目标状态智能显示原因和物流单号
+                                                        const trackingNumber = (() => {
+                                                            if (log.newStatus === 'SHIPPED' && log.reason.startsWith('物流单号:')) {
+                                                                return log.reason.replace('物流单号:', '').trim();
+                                                            }
+                                                            return null;
+                                                        })();
+                                                        
+                                                        const displayReason = (() => {
+                                                            // 如果有物流单号且不是发货操作，过滤掉（错误的记录）
+                                                            if (log.newStatus !== 'SHIPPED' && log.reason.startsWith('物流单号:')) {
+                                                                return null;
+                                                            }
+                                                            // 如果是发货操作，且reason只是物流单号，不显示原因（只显示物流单号）
+                                                            if (log.newStatus === 'SHIPPED' && trackingNumber) {
+                                                                return null;
+                                                            }
+                                                            return log.reason || null;
+                                                        })();
+                                                        
+                                                        return (
+                                                            <>
+                                                                {displayReason && (
+                                                                    <p>原因: <span className="text-gray-600">{displayReason}</span></p>
+                                                                )}
+                                                                {trackingNumber && (
+                                                                    <p>物流单号: <span className="text-blue-600 font-medium">{trackingNumber}</span></p>
+                                                                )}
+                                                            </>
+                                                        );
+                                                    })()}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* 佣金流水日志 */}
+                        {order?.affiliateCode && (
+                            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+                                <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center gap-2">
+                                    <DollarSign size={18} className="text-gray-400" />
+                                    <h3 className="font-bold text-gray-900">佣金流水记录</h3>
+                                </div>
+                                <div className="p-6">
+                                    {logsLoading ? (
+                                        <div className="flex items-center justify-center py-4">
+                                            <Loader2 className="animate-spin text-gray-400" size={20} />
+                                        </div>
+                                    ) : commissionLogs.length === 0 ? (
+                                        <p className="text-sm text-gray-400 text-center py-4">暂无佣金流水记录</p>
+                                    ) : (
+                                        <div className="space-y-3">
+                                            {commissionLogs.map((log) => (
+                                                <div key={log.id} className="border border-gray-100 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                                                    {/* 时间和类型 */}
+                                                    <div className="flex items-center justify-between mb-2">
+                                                        <div className="flex items-center gap-1 text-xs text-gray-400">
+                                                            <Clock size={12} />
+                                                            {new Date(log.createdAt).toLocaleString('zh-CN')}
+                                                        </div>
+                                                        <span className={`px-2 py-0.5 rounded text-[10px] font-medium ${
+                                                            log.changeType === 'EARN' 
+                                                                ? 'bg-green-100 text-green-700' 
+                                                                : log.changeType === 'REFUND_DEDUCT'
+                                                                    ? 'bg-red-100 text-red-700'
+                                                                    : 'bg-gray-100 text-gray-600'
+                                                        }`}>
+                                                            {log.changeType === 'EARN' ? '获得佣金' : 
+                                                             log.changeType === 'REFUND_DEDUCT' ? '退款扣减' : log.changeType}
+                                                        </span>
+                                                    </div>
+                                                    
+                                                    {/* 金额信息 */}
+                                                    <div className="flex items-center gap-3 mb-2">
+                                                        <div className="flex items-center gap-1">
+                                                            {log.commissionAmount >= 0 ? (
+                                                                <TrendingUp size={14} className="text-green-600" />
+                                                            ) : (
+                                                                <TrendingDown size={14} className="text-red-600" />
+                                                            )}
+                                                            <span className={`text-sm font-bold ${
+                                                                log.commissionAmount >= 0 ? 'text-green-600' : 'text-red-600'
+                                                            }`}>
+                                                                {log.commissionAmount >= 0 ? '+' : ''}${Math.abs(log.commissionAmount).toFixed(2)}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    {/* 余额变化 */}
+                                                    <div className="text-xs text-gray-500 space-y-1">
+                                                        <p>余额: <span className="font-medium">${log.balanceBefore.toFixed(2)}</span> → <span className="font-medium">${log.balanceAfter.toFixed(2)}</span></p>
+                                                        <p>累计收益: <span className="font-medium">${log.totalEarnedBefore.toFixed(2)}</span> → <span className="font-medium">${log.totalEarnedAfter.toFixed(2)}</span></p>
+                                                        {log.description && (
+                                                            <p className="text-gray-600 mt-1">{log.description}</p>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function OrderDetailPage() {
+    return (
+        <Suspense fallback={
+            <div className="flex h-screen items-center justify-center bg-gray-50">
+                <div className="text-center">
+                    <Loader2 className="animate-spin text-gray-400 mx-auto mb-2" size={32} />
+                    <p className="text-sm text-gray-500">正在加载订单详情...</p>
+                </div>
+            </div>
+        }>
+            <OrderDetailContent />
+        </Suspense>
     );
 }

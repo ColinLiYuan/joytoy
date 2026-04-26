@@ -76,7 +76,7 @@ export default function CategoriesSection() {
                             */}
                             <div className="relative w-full aspect-[4/5] bg-[#F5F5F7] overflow-hidden">
                                 <Image
-                                    src={getProductImageUrl('', cat.image)}
+                                    src={getProductImageUrl(undefined, cat.image)}
                                     alt={cat.alt}
                                     fill
                                     sizes="(max-width: 768px) 100vw, 50vw"

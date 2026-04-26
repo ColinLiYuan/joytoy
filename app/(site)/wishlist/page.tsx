@@ -10,6 +10,7 @@ import SimpleProductGrid from '@/components/product/simple-product-grid';
 import { useAuth } from '@/contexts/authContext';
 import { useRouter } from 'next/navigation';
 import { ProductResponse } from '@/types/product';
+import { SITE_CONFIG } from '@/lib/constants/site-config';
 
 // ✅ 修复：更精确的数据映射
 const convertToProductResponse = (wishlistItem: WishlistResponse): ProductResponse => {
@@ -44,13 +45,28 @@ export default function WishlistPage() {
     const [wishlistItems, setWishlistItems] = useState<WishlistResponse[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
-    const { isLoggedIn, isClient } = useAuth();
+    const [isAuthRequired, setIsAuthRequired] = useState(false);
+    const { isLoggedIn, isClient, openAuthModal } = useAuth();
     const router = useRouter();
 
     const fetchWishlist = async () => {
         try {
             setIsLoading(true);
-            const items = await wishlistService.getWishlist();
+            setError('');
+            setIsAuthRequired(false);
+            const items = await wishlistService.getWishlist()
+                        
+            // 调试：查看原始数据
+            console.log('[WishlistPage] Raw items from service:', items)
+            console.log('[WishlistPage] First item detail:', items?.[0])
+                        
+            // 如果返回 null，说明 session 过期
+            if (items === null) {
+                setIsAuthRequired(true);
+                setWishlistItems([]);
+                return;
+            }
+            
             setWishlistItems(Array.isArray(items) ? items : []);
         } catch (err: any) {
             console.error('Failed to load wishlist:', err);
@@ -69,6 +85,11 @@ export default function WishlistPage() {
             fetchWishlist();
         }
     }, [isClient, isLoggedIn]);
+
+    const handleLoginSuccess = () => {
+        setIsAuthRequired(false);
+        fetchWishlist();
+    };
 
     const handleWishlistUpdate = () => {
         fetchWishlist();
@@ -108,7 +129,7 @@ export default function WishlistPage() {
                                     <Heart size={24} fill="currentColor" />
                                 </div>
                                 <h1 className="text-3xl md:text-4xl font-bold text-gray-900 font-['Playfair_Display']">
-                                    My Wishlist
+                                    {SITE_CONFIG.pages.wishlist.title.split('|')[0].trim()}
                                 </h1>
                             </div>
                             <p className="text-gray-500">
@@ -124,13 +145,27 @@ export default function WishlistPage() {
                         <p className="text-red-500 mb-4">{error}</p>
                         <button onClick={fetchWishlist} className="underline text-gray-900 font-medium">Try refreshing</button>
                     </div>
+                ) : isAuthRequired ? (
+                    <div className="text-center py-24 bg-gray-50 rounded-3xl border border-dashed border-gray-200">
+                        <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm">
+                            <Heart className="w-10 h-10 text-gray-300" />
+                        </div>
+                        <h2 className="text-2xl font-bold text-gray-900 mb-3">Please Login</h2>
+                        <p className="text-gray-500 mb-8">You need to login to view your wishlist</p>
+                        <button
+                            onClick={() => openAuthModal('login', { onSuccess: handleLoginSuccess })}
+                            className="inline-flex items-center bg-black text-white px-8 py-3 rounded-full font-bold hover:bg-gray-900 transition-all hover:-translate-y-1 shadow-lg"
+                        >
+                            Login to Continue
+                        </button>
+                    </div>
                 ) : products.length === 0 ? (
                     <div className="text-center py-24 bg-gray-50 rounded-3xl border border-dashed border-gray-200">
                         <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm">
                             <Heart className="w-10 h-10 text-gray-300" />
                         </div>
-                        <h2 className="text-2xl font-bold text-gray-900 mb-3">Your wishlist is empty</h2>
-                        <p className="text-gray-500 mb-8">Start adding products you love.</p>
+                        <h2 className="text-2xl font-bold text-gray-900 mb-3">{SITE_CONFIG.pages.wishlist.emptyTitle}</h2>
+                        <p className="text-gray-500 mb-8">{SITE_CONFIG.pages.wishlist.emptyDescription}</p>
                         <Link
                             href="/collections/all"
                             className="inline-flex items-center bg-black text-white px-8 py-3 rounded-full font-bold hover:bg-gray-900 transition-all hover:-translate-y-1 shadow-lg"

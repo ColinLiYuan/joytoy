@@ -174,6 +174,8 @@ export default function BlogForm({
 
         try {
             setUploadingImage(true);
+            
+            // 直接调用 Service 的 uploadImage 方法
             const result = await blogService.uploadImage(file);
 
             // 获取完整 URL (用于 Markdown 预览)
@@ -185,7 +187,7 @@ export default function BlogForm({
                 const newContent = formData.content + `\n${imageMarkdown}\n`;
                 handleChange('content', newContent);
             } else if (uploadTarget === 'COVER') {
-                // 封面：修改这里！只填入后端返回的原始路径/文件名 (不带前缀)
+                // 封面：只填入后端返回的原始路径/文件名 (不带前缀)
                 handleChange('coverImage', result.url);
             }
 

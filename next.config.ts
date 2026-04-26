@@ -1,11 +1,16 @@
-/** @type {import('next').NextConfig} */
-const nextConfig = {
-    output: 'standalone',
+import type { NextConfig } from "next";
 
+// 后端 API 地址（从环境变量读取，用于 Next.js 代理配置）
+// 优先使用 NEXT_PUBLIC_BACKEND_BASE_URL（客户端可用）
+const backendUrl = process.env.NEXT_PUBLIC_BACKEND_BASE_URL || process.env.BACKEND_BASE_URL || 'http://localhost:9356';
+
+const nextConfig: NextConfig = {
+    output: 'standalone',
+    
     // 禁用源映射以减少内存使用
     productionBrowserSourceMaps: false,
 
-    // 开启 React 严格模式（建议开启，有助于发现潜在 Bug）
+    // 开启 React 严格模式
     reactStrictMode: true,
 
     // 优化构建：生产环境移除 console
@@ -13,41 +18,69 @@ const nextConfig = {
         removeConsole: process.env.NODE_ENV === 'production',
     },
 
-    // ✅ 核心修改区域：图片优化策略
+    // ✅ SEO 优化：生成静态页面时预渲染关键路径
+    experimental: {
+        ppr: false,
+        staleTimes: {
+            dynamic: 30,
+            static: 300,
+        },
+        serverActions: {
+            bodySizeLimit: '10mb',
+        },
+    },
+
+    // ✅ 图片优化策略
     images: {
-        // 1. 强制缓存时间：设置为 1 年 (秒)。
-        // 这样 Vercel 优化过一次图片后，一年内都不会再重新消耗额度去生成同一张图。
         minimumCacheTTL: 31536000,
-
-        // 2. 精简生成的尺寸：
-        // 默认 Next.js 会生成 8-10 种尺寸。减少尺寸变种能显著降低额度消耗。
-        // 这里只保留了最常用的手机、平板、桌面尺寸。
         deviceSizes: [360, 640, 750, 1080, 1920],
-        imageSizes: [16, 32, 48, 64, 96, 128], // 用于头像或小图标
-
-        // 3. 允许的域名
+        imageSizes: [16, 32, 48, 64, 96, 128],
+        
+        // ✅ 允许的域名
         remotePatterns: [
             {
                 protocol: 'https',
                 hostname: 'mythtoy.com',
+                pathname: '/**',
             },
             {
                 protocol: 'https',
-                hostname: '*.r2.dev', // ✅ 优化：使用通配符匹配所有 R2 子域名，以后新增桶不用改配置
+                hostname: 'pub-c128c2f5caa744afbeb49b9904451478.r2.dev',
+                pathname: '/**',
+            },
+            {
+                protocol: 'https',
+                hostname: 'pub-e5d14c6d386c4d90979458082617517a.r2.dev',
+                pathname: '/**',
             },
         ],
-
+        
+        // ✅ 添加 quality 配置
+        qualities: [75, 90],
+        
         formats: ['image/webp', 'image/avif'],
-
-        // 开发环境禁用优化，省电脑资源；生产环境开启
         unoptimized: process.env.NODE_ENV === 'development',
     },
 
-    // 调试日志 (可选)：开发时可以看到 fetch 的缓存情况
+    // 调试日志
     logging: {
         fetches: {
             fullUrl: true,
         },
+    },
+
+    async headers() {
+        return [
+            {
+                source: '/:path*',
+                headers: [
+                    {
+                        key: 'x-next-cache-tags',
+                        value: 'dynamic',
+                    },
+                ],
+            },
+        ];
     },
 
     async redirects() {
@@ -70,8 +103,21 @@ const nextConfig = {
         ];
     },
 
+    async rewrites() {
+        return [
+            {
+                source: '/api/backend/:path*',
+                destination: `${backendUrl}/api/V1/:path*`,
+            },
+            {
+                source: '/api/admin/:path*',
+                destination: `${backendUrl}/api/admin/:path*`,
+            },
+        ];
+    },
+
     poweredByHeader: false,
     compress: true,
-}
+};
 
-module.exports = nextConfig
+export default nextConfig;

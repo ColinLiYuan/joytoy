@@ -1,10 +1,12 @@
-// app/admin/blog/route.ts
+// app/admin/blog/page.tsx
 'use client';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { blogService } from '@/services/blogService';
-import { AdminBlogResponse, AdminBlogListResponse } from '@/types/admin/adminBlog'
+import { AdminBlogResponse, AdminBlogListResponse } from '@/types/blog'
 import { Eye, Edit, Plus, ExternalLink } from 'lucide-react';
+
+export const dynamic = 'force-dynamic';
 
 // 获取图片前缀环境变量
 const CDN_URL = process.env.NEXT_PUBLIC_IMAGE_UPLOAD_PATH || '';

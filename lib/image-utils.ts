@@ -39,8 +39,8 @@ export const getProductImageUrl = (baseUrl: string | undefined, imagePath: strin
     }
 
     // 使用环境变量中的配置
-    // 如果提供了 baseUrl，使用它；否则使用环境变量中的 CDN URL
-    const effectiveBaseUrl = baseUrl || envData.imageUploadPath;
+    // 如果提供了 baseUrl 且不为空字符串，使用它；否则使用环境变量中的 CDN URL
+    const effectiveBaseUrl = (baseUrl && baseUrl !== '') ? baseUrl : envData.imageUploadPath;
 
     // 清理路径中的多余斜杠
     const cleanBaseUrl = effectiveBaseUrl.replace(/\/+$/, '');
@@ -50,13 +50,5 @@ export const getProductImageUrl = (baseUrl: string | undefined, imagePath: strin
     const fullUrl = `${cleanBaseUrl}/${cleanImagePath}`;
     const url = getSafeImageUrl(fullUrl);
 
-    if (process.env.NODE_ENV === 'development') {
-        // console.log('getProductImageUrl called with:', {
-        //     baseUrl,
-        //     imagePath,
-        //     effectiveBaseUrl,
-        //     result: url
-        // });
-    }
     return url;
 };

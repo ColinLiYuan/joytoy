@@ -1,9 +1,7 @@
-// app/blog/[slug]/route.ts
+// app/blog/[slug]/page.tsx
 import { Metadata } from 'next';
-import { notFound } from 'next/navigation';
-import { blogServiceServer } from '@/services/servers/blog-service-server';
-import BlogContent from './blog-content';
-import Breadcrumb, { BreadcrumbItem } from '@/components/common/breadcrumb';
+import { blogService } from '@/services/blogService';
+import BlogDetailClient from './BlogDetailClient';
 
 interface PageProps {
     params: Promise<{
@@ -11,12 +9,12 @@ interface PageProps {
     }>;
 }
 
-// ✅ SEO: Dynamic Metadata
+// ✅ SEO: Dynamic Metadata (必须保持服务端)
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
     const resolvedParams = await params;
 
     try {
-        const blog = await blogServiceServer.getBySlug(resolvedParams.slug);
+        const blog = await blogService.getBySlug(resolvedParams.slug);
         return {
             title: `${blog.title} | MythToy Blog`,
             description: blog.summary || blog.content.substring(0, 155),
@@ -30,7 +28,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
                 authors: [blog.author || 'MythToy'],
             },
             alternates: {
-                canonical: `/blog/${blog.slug}`,
+                canonical: `https://mythtoy.com/blog/${blog.slug}`,
             },
         };
     } catch (error) {
@@ -41,32 +39,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     }
 }
 
-export default async function BlogDetailPage({ params }: PageProps) {
-    const resolvedParams = await params;
-
-    try {
-        const blog = await blogServiceServer.getBySlug(resolvedParams.slug);
-
-        // ✅ Breadcrumb Data
-        const breadcrumbs: BreadcrumbItem[] = [
-            { name: 'Home', path: '/' },
-            { name: 'Blog', path: '/blog' },
-            { name: blog.title, path: null } // Current page
-        ];
-
-        return (
-            <div className="min-h-screen bg-white w-full overflow-x-hidden">
-                {/* Breadcrumb Container */}
-                <div className="container mx-auto px-4 max-w-4xl py-6">
-                    <Breadcrumb items={breadcrumbs} showLastItem={false} />
-                </div>
-
-                {/* Content Component */}
-                <BlogContent blog={blog} />
-            </div>
-        );
-    } catch (error) {
-        console.error('Error fetching blog:', error);
-        notFound();
-    }
+// ✅ 主体内容使用客户端组件
+export default function BlogDetailPage() {
+    return <BlogDetailClient />;
 }

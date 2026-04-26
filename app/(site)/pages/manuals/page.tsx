@@ -1,18 +1,20 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Search, FileText, Download, ArrowRight, BookOpen, AlertCircle, Loader2 } from 'lucide-react';
+import { Search, FileText, Download, ArrowRight, BookOpen, AlertCircle, Loader2, Gift } from 'lucide-react';
 import { MANUALS_DATA } from '@/lib/constants/manuals-data';
 import { getProductImageUrl } from '@/lib/image-utils';
-import { useToast } from '@/contexts/toastContext'; // ✅ 1. 引入 Toast
+import { useToast } from '@/contexts/toastContext';
+import { useAuth } from '@/contexts/authContext';
 
 const ITEMS_PER_PAGE = 12;
 
 export default function ManualsPage() {
     const [searchQuery, setSearchQuery] = useState('');
     const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
+    const { isLoggedIn } = useAuth();
 
-    // ✅ 2. 新增：记录当前正在检查哪个 ID 的文件 (用于显示转圈圈)
+    // ✅ 记录当前正在检查哪个 ID 的文件 (用于显示转圈圈)
     const [checkingId, setCheckingId] = useState<string | null>(null);
     const { showToast } = useToast();
 
@@ -88,6 +90,37 @@ export default function ManualsPage() {
 
             {/* Grid Section */}
             <div className="container mx-auto px-4 max-w-6xl mt-16">
+                {/* ✅ 优惠码模块 - 仅对已登录用户显示 */}
+                {isLoggedIn && (
+                    <div className="mb-12 bg-gradient-to-r from-indigo-50 via-purple-50 to-pink-50 rounded-2xl border border-indigo-100 p-8 md:p-10 text-center relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-100 rounded-full blur-3xl opacity-50 -translate-y-1/2 translate-x-1/2"></div>
+                        <div className="absolute bottom-0 left-0 w-32 h-32 bg-pink-100 rounded-full blur-3xl opacity-50 translate-y-1/2 -translate-x-1/2"></div>
+                        
+                        <div className="relative z-10">
+                            <div className="inline-flex items-center gap-2 bg-white text-indigo-600 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider mb-4 shadow-sm">
+                                <Gift size={16} />
+                                Exclusive Offer
+                            </div>
+                            <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3 font-['Playfair_Display']">
+                                Thank You for Being a Valued Customer
+                            </h2>
+                            <p className="text-gray-600 mb-6 max-w-xl mx-auto">
+                                As a token of our appreciation, here's an exclusive discount code just for you.
+                            </p>
+                            
+                            <div className="inline-flex items-center gap-4 bg-white border-2 border-dashed border-indigo-300 rounded-xl px-6 py-4 shadow-sm hover:border-indigo-400 transition-colors cursor-pointer"
+                                 onClick={() => {
+                                     navigator.clipboard.writeText('THANKYOU20');
+                                     showToast('success', 'Copied!', 'Discount code copied to clipboard');
+                                 }}
+                            >
+                                <span className="text-3xl font-bold text-indigo-600 font-mono tracking-wider">THANKYOU20</span>
+                                <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">Click to copy</span>
+                            </div>
+                            <p className="text-xs text-gray-500 mt-3">20% off your next purchase • Valid for all products</p>
+                        </div>
+                    </div>
+                )}
 
                 {filteredManuals.length === 0 && (
                     <div className="text-center py-20 bg-white rounded-3xl border border-gray-100 shadow-sm">
@@ -104,7 +137,7 @@ export default function ManualsPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {visibleManuals.map((item) => {
-                        const imageUrl = item.image ? getProductImageUrl('', item.image) : null;
+                        const imageUrl = item.image ? getProductImageUrl(undefined, item.image) : null;
                         // ✅ 判断当前项是否正在检查中
                         const isCheckingThis = checkingId === item.id;
 
@@ -195,4 +228,4 @@ export default function ManualsPage() {
             </div>
         </div>
     );
-}
+}export const dynamic = 'force-dynamic'; 

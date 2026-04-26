@@ -11,6 +11,8 @@ import {
     Package, Truck, CheckCircle, Clock, Search,
     ArrowRight, AlertCircle, ShoppingBag, XCircle, CreditCard, ChevronRight, RefreshCw, Archive
 } from 'lucide-react';
+import { SITE_CONFIG } from '@/lib/constants/site-config';
+import { useAuth } from '@/contexts/authContext';
 
 // ✅ 严格按照后端枚举映射状态
 const getStatusConfig = (status: string) => {
@@ -53,18 +55,39 @@ export default function OrdersPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [error, setError] = useState<string>('');
+    const [isAuthRequired, setIsAuthRequired] = useState(false);
+    const { isLoggedIn, isClient, openAuthModal } = useAuth();
 
     useEffect(() => {
-        fetchOrders();
-    }, []);
+        console.log('[OrdersPage] Component mounted, fetching orders...');
+        if (isClient) {
+            if (!isLoggedIn) {
+                setIsLoading(false);
+                return;
+            }
+            fetchOrders();
+        }
+    }, [isClient, isLoggedIn]);
 
     const fetchOrders = async () => {
+        console.log('[OrdersPage] fetchOrders called');
         try {
             setIsLoading(true);
-            const userId = getUserId();
-            if (!userId) { setOrders([]); return; }
-            const data = await orderService.getUserOrders(userId, 20);
-            console.log('user orders: ', data)
+            setError('');
+            setIsAuthRequired(false);
+            
+            console.log('[OrdersPage] Calling orderService.getUserOrders()...');
+            // ✅ 直接调用接口，让后端根据 Token 判断
+            const data = await orderService.getUserOrders(0, 20);
+            console.log('[OrdersPage] Got response from orderService:', data)
+            
+            // 如果返回 null，说明 session 过期或未登录
+            if (data === null) {
+                setIsAuthRequired(true);
+                setOrders([]);
+                return;
+            }
+            
             setOrders(Array.isArray(data) ? data : []);
         } catch (error) {
             console.error(error);
@@ -72,6 +95,11 @@ export default function OrdersPage() {
         } finally {
             setIsLoading(false);
         }
+    };
+
+    const handleLoginSuccess = () => {
+        setIsAuthRequired(false);
+        fetchOrders();
     };
 
     const filteredOrders = orders.filter(order =>
@@ -112,7 +140,7 @@ export default function OrdersPage() {
                 {/* Header */}
                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
                     <div>
-                        <h1 className="text-3xl font-bold text-gray-900 font-['Playfair_Display']">My Orders</h1>
+                        <h1 className="text-3xl font-bold text-gray-900 font-['Playfair_Display']">{SITE_CONFIG.pages.orders.title.split('|')[0].trim()}</h1>
                         <p className="text-gray-500 text-sm mt-1">Track past purchases and returns</p>
                     </div>
                     <div className="relative w-full md:w-72">
@@ -134,13 +162,27 @@ export default function OrdersPage() {
                 )}
 
                 {/* Empty State */}
-                {filteredOrders.length === 0 && !isLoading ? (
+                {isAuthRequired ? (
                     <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-gray-200">
                         <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
                             <ShoppingBag className="w-8 h-8 text-gray-300" />
                         </div>
-                        <h3 className="text-lg font-bold text-gray-900 mb-1">No orders yet</h3>
-                        <p className="text-gray-500 text-sm mb-6">Discover something new today</p>
+                        <h3 className="text-lg font-bold text-gray-900 mb-1">Please Login</h3>
+                        <p className="text-gray-500 text-sm mb-6">You need to login to view your orders</p>
+                        <button
+                            onClick={() => openAuthModal('login', { onSuccess: handleLoginSuccess })}
+                            className="inline-block bg-black text-white px-8 py-3 rounded-lg text-sm font-bold shadow-lg hover:bg-gray-800 transition-all hover:-translate-y-0.5"
+                        >
+                            Login to Continue
+                        </button>
+                    </div>
+                ) : filteredOrders.length === 0 && !isLoading ? (
+                    <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-gray-200">
+                        <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <ShoppingBag className="w-8 h-8 text-gray-300" />
+                        </div>
+                        <h3 className="text-lg font-bold text-gray-900 mb-1">{SITE_CONFIG.pages.orders.emptyTitle}</h3>
+                        <p className="text-gray-500 text-sm mb-6">{SITE_CONFIG.pages.orders.emptyDescription}</p>
                         <Link href="/collections/all" className="inline-block bg-black text-white px-8 py-3 rounded-lg text-sm font-bold shadow-lg hover:bg-gray-800 transition-all hover:-translate-y-0.5">
                             Start Shopping
                         </Link>

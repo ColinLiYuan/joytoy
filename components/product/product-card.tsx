@@ -6,7 +6,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import Image from 'next/image';
 import { ProductResponse, ProductSku } from '@/types/product';
 import { getProductImageUrl } from '@/lib/image-utils';
-import { wishlistService } from '@/services/wishlistService';
+import { addToWishlist, removeFromWishlist } from '@/app/actions/wishlist';
 import { useAuth } from '@/contexts/authContext';
 import { useToast } from '@/contexts/toastContext';
 import { useCartStore } from '@/stores/useCartStore';
@@ -103,21 +103,45 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
         try {
             if (!userInfo) return;
             if (newState) {
-                await wishlistService.addItemToWishlist({
+                // 传递完整的产品信息
+                const success = await addToWishlist({
                     productId: product.id,
+                    slug: product.slug,
                     productTitle: product.title,
                     image: product.image,
                     currentPrice: product.currentPrice,
-                    slug: product.slug,
-                    badge: product.badge
+                    originalPrice: product.originalPrice,
+                    badge: product.badge,
                 });
+                
+                // 如果返回 false，说明 session 过期，需要登录
+                if (!success) {
+                    setIsFavorited(!newState); // 回滚 UI 状态
+                    openAuthModal('login', { onSuccess: executeToggleFavorite });
+                    return;
+                }
+                
+                // 更新 localStorage 中的最近浏览记录
+                updateRecentlyViewedFavorite(product.id, true);
             } else {
-                await wishlistService.removeItemFromWishlist({ productId: product.id });
+                const success = await removeFromWishlist(product.id);
+                
+                // 如果返回 false，说明 session 过期，需要登录
+                if (!success) {
+                    setIsFavorited(!newState); // 回滚 UI 状态
+                    openAuthModal('login', { onSuccess: executeToggleFavorite });
+                    return;
+                }
+                
+                // 更新 localStorage 中的最近浏览记录
+                updateRecentlyViewedFavorite(product.id, false);
             }
             onWishlistUpdate?.();
         } catch (error) {
+            // 只有真正的错误才会走到这里，静默回滚 UI
             setIsFavorited(!newState);
-            showToast('error', 'Error', 'Failed to update wishlist');
+            console.error('Wishlist toggle error:', error);
+            showToast('error', 'Oops!', 'Something went wrong. Please try again.');
         } finally {
             setIsLoading(false);
         }
@@ -125,7 +149,28 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
 
     const isOnSale = product.originalPrice > product.currentPrice;
 
+    // 更新最近浏览记录中的收藏状态
+    const updateRecentlyViewedFavorite = (productId: number, favorited: boolean) => {
+        try {
+            const stored = localStorage.getItem('recently_viewed');
+            if (!stored) return;
+            
+            const viewed: ProductResponse[] = JSON.parse(stored);
+            const updated = viewed.map(p => 
+                p.id === productId ? { ...p, favorited } : p
+            );
+            
+            localStorage.setItem('recently_viewed', JSON.stringify(updated));
+        } catch (e) {
+            console.error('Failed to update recently viewed favorite status:', e);
+        }
+    };
+
     const renderTitle = (fullTitle: string) => {
+        if (!fullTitle) {
+            return <span className="font-medium text-gray-900 line-clamp-2 leading-snug">Untitled Product</span>;
+        }
+        
         if (fullTitle.includes('|')) {
             const [name, desc] = fullTitle.split('|');
             return (
@@ -147,7 +192,7 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
                 <div className="absolute inset-0 flex items-center justify-center">
                     <Image
                         src={mainImage}
-                        alt={product.title}
+                        alt={product.title || 'Product image'}
                         width={400}
                         height={400}
                         className="p-6 object-contain w-full h-full group-hover:scale-105 transition-transform duration-500 mix-blend-multiply"

@@ -1,5 +1,6 @@
 'use client';
 
+import { Suspense } from 'react';
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { Loader2, ShoppingBag, Tag, User } from 'lucide-react';
@@ -16,7 +17,9 @@ import { CheckoutValidateRequest, CouponResponse } from '@/types/checkout';
 import { affiliateService } from '@/services/affiliateService';
 import { checkoutService } from '@/services/checkoutService';
 
-export default function CheckoutPage() {
+export const dynamic = 'force-dynamic';
+
+function CheckoutContent() {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(true);
     const [isCreatingOrder, setIsCreatingOrder] = useState(false);
@@ -25,6 +28,8 @@ export default function CheckoutPage() {
     const [couponCode, setCouponCode] = useState('');
     const [appliedCoupon, setAppliedCoupon] = useState<CouponResponse | null>(null);
     const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
+    const [isPaid, setIsPaid] = useState(false); // 新增:跟踪支付状态
+    const [hasSubmitted, setHasSubmitted] = useState(false); // 新增:防止重复提交
 
     // ✅ 账单地址相关状态
     const [isBillingSameAsShipping, setIsBillingSameAsShipping] = useState(true);
@@ -65,10 +70,10 @@ export default function CheckoutPage() {
                 productName: item.productName,
                 quantity: item.quantity,
                 unitPrice: item.unitPrice,
-                productSku: item.productSku,
+                productSku: item.productSku,  // ✅ SKU Code,后端会通过它查询完整的SKU信息
                 productImage: item.productImage,
                 color: item.color || 'Default',
-                skuId: item.itemId
+                bundleId: item.bundleId || undefined  // ✅ 传递套装ID
             })));
         }
     }, [cart?.items]);
@@ -94,16 +99,27 @@ export default function CheckoutPage() {
         if (!trimmedCode) return;
         const formData = getShippingFormData();
         const emailToValidate = isLoggedIn ? getUserEmail() : formData.shippingAddress.email;
-        if (!emailToValidate) {
-            showToast('error', 'Email Required', 'Please enter your email first.');
+        
+        // 优化:邮箱格式验证
+        if (!emailToValidate || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailToValidate)) {
+            showToast('error', 'Invalid Email', 'Please enter a valid email address.');
             return;
         }
+        
         setIsApplyingCoupon(true);
         try {
             const validateRequest: CheckoutValidateRequest = { code: trimmedCode, email: emailToValidate };
             const couponResponse: CouponResponse = await checkoutService.validateCoupon(validateRequest);
             setAppliedCoupon(couponResponse);
-            showToast('success', 'Coupon Applied', couponResponse.description);
+            
+            // ✅ Show coupon applicable range notice
+            let successMessage = couponResponse.description;
+            if (couponResponse.applicableProductNames) {
+                const products = couponResponse.applicableProductNames.split(',').map(p => p.trim());
+                successMessage += ` (Applicable to: ${products.join(', ')})`;
+            }
+            
+            showToast('success', 'Coupon Applied', successMessage);
         } catch (error: any) {
             showToast('error', 'Invalid Coupon', error.message || 'The coupon code is invalid.');
             setCouponCode('');
@@ -113,29 +129,40 @@ export default function CheckoutPage() {
     };
 
     const handleProceedToPayment = async () => {
+        // Prevent duplicate submission
+        if (isCreatingOrder || hasSubmitted) {
+            console.warn('⚠️ Order creation already in progress');
+            return;
+        }
+        
         const userId = getUserId();
-        const cartId = getCartId();
+        const cartId = cart?.id || getCartId();  // ✅ 优先从cart对象获取id，降级使用localStorage
         const formData = getShippingFormData();
         const addr = formData.shippingAddress;
-
-        // console.log('addr: ', addr)
-
-        // 校验收货地址
+    
+        // Email format validation
+        const emailToUse = isLoggedIn ? (addr.email || getUserEmail()) : addr.email;
+        if (!emailToUse || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailToUse)) {
+            showToast('error', 'Invalid Email', 'Please enter a valid email address.');
+            return;
+        }
+    
+        // Validation already done in shipping.tsx, only check result here
         if (!addr.firstName || !addr.addressLine1 || !addr.city || !addr.zipCode || !addr.country) {
             showToast('error', 'Incomplete Address', 'Please fill in all required shipping fields.');
             return;
         }
-
-        // 校验账单地址（如果取消勾选相同）
+    
+        // Validate billing address (if not same as shipping)
         if (!isBillingSameAsShipping) {
             if (!billingAddress.firstName || !billingAddress.addressLine1 || !billingAddress.city || !billingAddress.country) {
                 showToast('error', 'Incomplete Billing', 'Please fill in required billing fields.');
                 return;
             }
         }
-
-        const emailToUse = isLoggedIn ? (addr.email || getUserEmail()) : addr.email;
+    
         setIsCreatingOrder(true);
+        setHasSubmitted(true); // 标记已提交
 
         const shippingAddressData = {
             firstName: addr.firstName,
@@ -191,16 +218,33 @@ export default function CheckoutPage() {
 
         try {
             const result = await orderService.createOrder(orderData);
+            
+            // ✅ Save order info, but don't clear cart immediately
             localStorage.setItem('currentOrder', JSON.stringify({
                 ...result,
                 items: orderItems,
                 shippingAddress: shippingAddressData,
                 billingAddress: billingAddressData,
             }));
-            useCartStore.getState().clearCart();
-            router.push(`/payment?orderNumber=${result.orderNumber.replace(/^#/, '')}`);
+                        
+            // ✅ Redirect to payment page (guest mode needs to pass email)
+            const emailParam = !userId ? `&email=${encodeURIComponent(emailToUse)}` : '';
+            router.push(`/payment?orderNumber=${result.orderNumber.replace(/^#/, '')}${emailParam}`);
         } catch (error: any) {
-            showToast('error', 'Order Failed', error.message || 'Could not create order');
+            console.error('❌ Order creation failed:', error);
+            
+            // Detailed error handling
+            let errorMessage = 'Could not create order';
+            if (error.message?.includes('inventory') || error.message?.includes('stock')) {
+                errorMessage = 'Some items are out of stock. Please update your cart.';
+            } else if (error.message?.includes('coupon') || error.message?.includes('discount')) {
+                errorMessage = 'Coupon is invalid or expired. Please remove it and try again.';
+            } else if (error.message?.includes('email')) {
+                errorMessage = 'Please check your email address.';
+            }
+            
+            showToast('error', 'Order Failed', errorMessage);
+            setHasSubmitted(false); // 允许重试
         } finally {
             setIsCreatingOrder(false);
         }
@@ -270,5 +314,17 @@ export default function CheckoutPage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function CheckoutPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center">
+                <Loader2 className="w-10 h-10 animate-spin text-black" />
+            </div>
+        }>
+            <CheckoutContent />
+        </Suspense>
     );
 }

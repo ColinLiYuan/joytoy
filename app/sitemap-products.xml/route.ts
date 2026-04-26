@@ -55,6 +55,7 @@ export async function GET() {
   ${products.map(product => `
   <url>
     <loc>${baseUrl}/toys${product.slug}</loc>
+    <lastmod>${product.updatedAt || new Date().toISOString()}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>

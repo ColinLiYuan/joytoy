@@ -8,8 +8,10 @@ import { ProductResponse, ProductSku, HighlightData } from '@/types/product';
 import { useToast } from '@/contexts/toastContext';
 import { useAuth } from '@/contexts/authContext';
 import { useCartStore } from '@/stores/useCartStore';
-import { wishlistService } from '@/services/wishlistService';
-import { productService } from '@/services/product-service';
+import { addToWishlist, removeFromWishlist } from '@/app/actions/wishlist';
+import { productService } from '@/services/productService';
+import { bundleService } from '@/services/bundleService';
+import { ProductBundle } from '@/types/bundle';
 import { joinWaitlist } from '@/app/actions/waitlist'; // ✅ Import the new action
 import { getProductImageUrl } from '@/lib/image-utils';
 import { Z_INDEX } from '@/lib/constants/z-index';
@@ -19,6 +21,7 @@ import Breadcrumb from '@/components/common/breadcrumb';
 import ProductBadge from '@/components/product/product-badge';
 import ProductReviews from '@/components/product/reviews/product-reviews';
 import FAQSection from '@/components/common/faq-section';
+import BundleUpsell from '@/components/common/bundle-upsell';
 
 import {
     ShoppingBag, ShieldCheck, Package, Truck, ChevronDown, ChevronUp, Star, Heart,
@@ -196,11 +199,12 @@ export default function ProductDetailClient({
     const [addingToCart, setAddingToCart] = useState(false);
     const [buyingNow, setBuyingNow] = useState(false);
     const [selectedSku, setSelectedSku] = useState<ProductSku | null>(null);
-    const [isFavorited, setIsFavorited] = useState(product.favorited || false);
+    const [isFavorited, setIsFavorited] = useState(false);
     const [isWishlistLoading, setIsWishlistLoading] = useState(false);
     const [activeAccordion, setActiveAccordion] = useState<string | null>('details');
     const [relatedProducts, setRelatedProducts] = useState<ProductResponse[]>([]);
     const [recentlyViewed, setRecentlyViewed] = useState<ProductResponse[]>([]);
+    const [bundleRecommendations, setBundleRecommendations] = useState<ProductBundle[]>([]);
 
     const { showToast } = useToast();
     const { openAuthModal, isLoggedIn } = useAuth();
@@ -215,6 +219,33 @@ export default function ProductDetailClient({
     const isLowStock = isProductActive && selectedSku && currentStock > 0 && currentStock < 5;
     // Logic: Can purchase only if active AND has stock
     const canPurchase = isProductActive && selectedSku && currentStock > 0;
+
+    // ✅ 初始化时从后端数据或主动查询获取收藏状态
+    useEffect(() => {
+        const initFavoriteStatus = async () => {
+            // 如果后端已经返回了 favorited=true，直接使用
+            if (product.favorited === true) {
+                setIsFavorited(true);
+                return;
+            }
+            
+            // 否则在客户端主动查询心愿单
+            if (isLoggedIn && product.id) {
+                try {
+                    const { wishlistService } = await import('@/services/wishlistService');
+                    const wishlist = await wishlistService.getWishlist();
+                    if (wishlist) {
+                        const isInWishlist = wishlist.some(item => item.productId === product.id);
+                        setIsFavorited(isInWishlist);
+                    }
+                } catch (error) {
+                    console.error('[ProductDetail] Failed to check wishlist status:', error);
+                }
+            }
+        };
+        
+        initFavoriteStatus();
+    }, [product.favorited, product.id, isLoggedIn]);
 
     const manualUrl = useMemo(() => {
         const baseTitle = product.title.split('|')[0].trim();
@@ -256,6 +287,20 @@ export default function ProductDetailClient({
         fetchRelated();
     }, [product.slug]);
 
+    // 加载套装推荐
+    useEffect(() => {
+        const fetchBundleRecommendations = async () => {
+            try {
+                const bundles = await bundleService.getSuggestBundles([product.id]);
+                console.log('📦 [产品详情页] 获取到套装推荐:', bundles);
+                setBundleRecommendations(bundles || []);
+            } catch (error) {
+                console.error('Failed to fetch bundle recommendations:', error);
+            }
+        };
+        fetchBundleRecommendations();
+    }, [product.id]);
+
     useEffect(() => {
         try {
             const stored = localStorage.getItem('recently_viewed');
@@ -270,6 +315,26 @@ export default function ProductDetailClient({
     const getMappedColor = (color: string) => colorMap[color.toLowerCase().trim()] || color;
     const isOnSale = product.originalPrice > product.currentPrice;
 
+    // 更新最近浏览记录中的收藏状态
+    const updateRecentlyViewedFavorite = (productId: number, favorited: boolean) => {
+        try {
+            const stored = localStorage.getItem('recently_viewed');
+            if (!stored) return;
+            
+            const viewed: ProductResponse[] = JSON.parse(stored);
+            const updated = viewed.map(p => 
+                p.id === productId ? { ...p, favorited } : p
+            );
+            
+            localStorage.setItem('recently_viewed', JSON.stringify(updated));
+            
+            // 同时更新显示的状态
+            setRecentlyViewed(updated.filter(p => p.id !== product.id).slice(0, 4));
+        } catch (e) {
+            console.error('Failed to update recently viewed favorite status:', e);
+        }
+    };
+
     const handleToggleFavorite = async () => {
         if (!isLoggedIn) { openAuthModal('login', { onSuccess: executeToggleFavorite }); return; }
         executeToggleFavorite();
@@ -282,20 +347,41 @@ export default function ProductDetailClient({
         setIsFavorited(newState);
         try {
             if (newState) {
-                await wishlistService.addItemToWishlist({
+                // 传递完整的产品信息
+                const success = await addToWishlist({
                     productId: product.id,
+                    slug: product.slug,
                     productTitle: product.title,
                     image: product.image,
                     currentPrice: product.currentPrice,
-                    slug: product.slug,
-                    badge: product.badge
+                    originalPrice: product.originalPrice,
+                    badge: product.badge,
                 });
-                showToast('success', 'Saved', 'Added to your wishlist');
+                if (success) {
+                    showToast('success', 'Saved', 'Added to your wishlist');
+                    // 更新 localStorage 中的最近浏览记录
+                    updateRecentlyViewedFavorite(product.id, true);
+                } else {
+                    setIsFavorited(!newState);
+                    showToast('error', 'Login Required', 'Please login to add items to wishlist');
+                }
             } else {
-                await wishlistService.removeItemFromWishlist({ productId: product.id });
-                showToast('success', 'Removed', 'Removed from wishlist');
+                const success = await removeFromWishlist(product.id);
+                if (success) {
+                    showToast('success', 'Removed', 'Removed from wishlist');
+                    // 更新 localStorage 中的最近浏览记录
+                    updateRecentlyViewedFavorite(product.id, false);
+                } else {
+                    setIsFavorited(!newState);
+                    showToast('error', 'Login Required', 'Please login to manage wishlist');
+                }
             }
-        } catch (error) { setIsFavorited(!newState); showToast('error', 'Error', 'Failed to update wishlist'); } finally { setIsWishlistLoading(false); }
+        } catch (error) { 
+            setIsFavorited(!newState); 
+            showToast('error', 'Error', 'Failed to update wishlist'); 
+        } finally { 
+            setIsWishlistLoading(false); 
+        }
     };
 
     const performAddToCart = async () => {
@@ -311,7 +397,7 @@ export default function ProductDetailClient({
                 productTitle: product.title,
                 productName: product.name,
                 productSku: selectedSku.sku,
-                productImage: getProductImageUrl('', product.image),
+                productImage: getProductImageUrl(undefined, product.image),
                 unitPrice: product.currentPrice,
                 quantity: 1,
                 color: selectedSku.color,
@@ -328,7 +414,27 @@ export default function ProductDetailClient({
         waitlistRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     };
 
-    const toggleAccordion = (id: string) => setActiveAccordion(activeAccordion === id ? null : id);
+    const toggleAccordion = (id: string) => {
+        const isActive = activeAccordion === id;
+        setActiveAccordion(isActive ? null : id);
+        
+        // 如果是展开操作，滚动到对应位置
+        if (!isActive) {
+            setTimeout(() => {
+                const element = document.getElementById(`accordion-${id}`);
+                if (element) {
+                    const headerOffset = 100; // 预留顶部空间
+                    const elementPosition = element.getBoundingClientRect().top;
+                    const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+                    
+                    window.scrollTo({
+                        top: offsetPosition,
+                        behavior: 'smooth'
+                    });
+                }
+            }, 100); // 等待动画开始后再滚动
+        }
+    };
 
     const renderDetailTitle = (fullTitle: string) => {
         if (fullTitle.includes('|')) {
@@ -506,6 +612,11 @@ export default function ProductDetailClient({
                             <span className="flex items-center gap-2"><ShieldCheck size={16} /> Body-Safe</span>
                             <span className="flex items-center gap-2"><Package size={16} /> Plain Box</span>
                         </div>
+
+                        {/* 套装推荐 */}
+                        {bundleRecommendations.length > 0 && (
+                            <BundleUpsell bundles={bundleRecommendations} />
+                        )}
                     </div>
                 </div>
             </div>
@@ -515,7 +626,7 @@ export default function ProductDetailClient({
                     <div className="absolute inset-0 bg-black/40 z-10 pointer-events-none" />
                     <div className="relative w-full h-[500px] md:h-[700px]">
                         <Image
-                            src={getProductImageUrl('', highlightData.image)}
+                            src={getProductImageUrl(undefined, highlightData.image)}
                             alt={highlightData.title}
                             fill
                             className="object-cover transition-transform duration-1000 group-hover:scale-105"
@@ -579,7 +690,7 @@ export default function ProductDetailClient({
                                 {highlightData?.imageBox ? (
                                     <div className="relative w-full aspect-square max-w-[280px]">
                                         <Image
-                                            src={getProductImageUrl('', highlightData.imageBox)}
+                                            src={getProductImageUrl(undefined, highlightData.imageBox)}
                                             alt="What's included"
                                             fill
                                             className="object-contain"
@@ -620,7 +731,7 @@ export default function ProductDetailClient({
                                 {activeAccordion === 'details' ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
                             </button>
                             {activeAccordion === 'details' && (
-                                <div className="pb-8 animate-fadeIn">
+                                <div id="accordion-details" className="pb-8 animate-fadeIn">
                                     <div data-color-mode="light" className="markdown-story">
                                         <MDViewer
                                             source={description}
@@ -646,7 +757,7 @@ export default function ProductDetailClient({
                                 {activeAccordion === 'specs' ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
                             </button>
                             {activeAccordion === 'specs' && (
-                                <div className="pb-8 animate-fadeIn">
+                                <div id="accordion-specs" className="pb-8 animate-fadeIn">
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-12">
                                         {specifications.map((spec, idx) => {
                                             const displayLabel = SPEC_LABEL_MAP[spec.specKey] || spec.specKey.replace(/_/g, ' ');
@@ -673,7 +784,7 @@ export default function ProductDetailClient({
                             {activeAccordion === 'manual' ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
                         </button>
                         {activeAccordion === 'manual' && (
-                            <div className="pb-8 animate-fadeIn">
+                            <div id="accordion-manual" className="pb-8 animate-fadeIn">
                                 <p className="text-gray-600 text-sm mb-6 leading-relaxed">
                                     Download the complete guide for usage, charging, and safety instructions.
                                 </p>
@@ -696,7 +807,7 @@ export default function ProductDetailClient({
                             {activeAccordion === 'shipping' ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
                         </button>
                         {activeAccordion === 'shipping' && (
-                            <div className="pb-8 text-gray-600 text-sm leading-relaxed animate-fadeIn">
+                            <div id="accordion-shipping" className="pb-8 text-gray-600 text-sm leading-relaxed animate-fadeIn">
                                 <p className="mb-4">We offer free discreet shipping on orders over $49. All packages are unbranded for your privacy.</p>
                                 <p>If you are not satisfied with your purchase, you may return unopened items within 30 days. Due to the intimate nature of our products, opened items cannot be returned unless defective.</p>
                             </div>
@@ -730,7 +841,7 @@ export default function ProductDetailClient({
 
                     <div className="relative w-full h-[500px] md:h-[800px]">
                         <Image
-                            src={getProductImageUrl('', highlightData.imageTail)}
+                            src={getProductImageUrl(undefined, highlightData.imageTail)}
                             alt="Unboxing Ritual"
                             fill
                             className="object-cover transition-transform duration-[3000ms] ease-out group-hover:scale-110"

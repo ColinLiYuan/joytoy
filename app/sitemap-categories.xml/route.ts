@@ -1,7 +1,7 @@
 // app/sitemap-categories.xml
 
 import { NextResponse } from 'next/server'
-import { categoryService } from '@/services/category-service';
+import { categoryService } from '@/services/categoryService';
 import {CategoryResponse} from "@/types/category";
 
 interface CategoryPath {
@@ -36,6 +36,7 @@ export async function GET() {
   ${categoryPaths.map(category => `
   <url>
     <loc>${baseUrl}${category.loc}</loc>
+    <lastmod>${new Date().toISOString()}</lastmod>
     <changefreq>${category.changefreq || 'weekly'}</changefreq>
     <priority>${category.priority || 0.8}</priority>
   </url>

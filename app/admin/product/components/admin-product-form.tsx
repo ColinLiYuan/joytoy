@@ -1,23 +1,24 @@
 // /app/admin/products/components/admin-product-form.tsx
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 
 // 组件引用
 import AdminProductFormHeader from './admin-product-form-header';
-import SlugGenerator from './admin-product-slug-generator';
 import AdminProductBasicInfo from './admin-product-basic-info';
 import Specifications from './admin-product-specifications';
 import Features from './admin-product-features';
 import ImageUpload from './admin-product-gallery';
-import AdminProductCategory from './admin-product-category';
 import AdminPublishActions from './admin-publish-actions';
 import ProductSkus from './admin-product-skus';
+import AdminProductHighlight from './admin-product-highlight';
+import AdminProductCategoryUrl from './admin-product-category-url';
 
 // 服务引用
-import { categoryService } from '@/services/category-service';
-import { productService } from '@/services/product-service';
+import { categoryService } from '@/services/categoryService';
+import { productService } from '@/services/productService';
+import { releaseAdminProduct } from '@/app/actions/product';
 
 // 类型引用
 import { RootResponse } from '@/types/category';
@@ -30,7 +31,7 @@ interface Category {
     categoryList?: Category[];
 }
 
-export default function AdminProductForm() {
+function AdminProductFormContent() {
     const router = useRouter();
     const params = useParams();
     const productId = params.id as string;
@@ -40,6 +41,7 @@ export default function AdminProductForm() {
         id: undefined,
         slug: '',
         title: '',
+        name: '',
         originalPrice: 0,
         currentPrice: 0,
         minOrder: '1',
@@ -47,13 +49,22 @@ export default function AdminProductForm() {
         image: '',
         baseUrl: '',
         stock: 0,
+        lockedStock: 0,
         status: 'DRAFT',
         galleries: [],
         specifications: [],
         features: [],
         colors: [],
         categories: [],
-        productSkus: []
+        productSkus: [],
+        badge: '',
+        brand: '',
+        alt: '',
+        sourceTitle: '',
+        sourceVendor: '',
+        purchasePrice: 0,
+        highlightData: '',
+        boxContents: ''
     });
 
     const [roots, setRoots] = useState<Category[]>([]);
@@ -124,8 +135,10 @@ export default function AdminProductForm() {
             sourceTitle: product.sourceTitle,
             sourceVendor: product.sourceVendor,
             title: product.title,
+            name: product.name,
             description: product.description,
             stock: product.stock || 0,
+            lockedStock: product.lockedStock || 0,
             purchasePrice: product.purchasePrice,
             currentPrice: product.currentPrice,
             originalPrice: product.originalPrice,
@@ -138,7 +151,9 @@ export default function AdminProductForm() {
             colors: product.colors || [],
             categories: product.categories || [],
             features: product.features || [],
-            productSkus: product.productSkus || []
+            productSkus: product.productSkus || [],
+            highlightData: product.highlightData,
+            boxContents: product.boxContents
         };
     };
 
@@ -193,7 +208,7 @@ export default function AdminProductForm() {
 
             // 2. 提交API
             // console.log('Submitting Product:', submitData);
-            await productService.adminRelease(submitData);
+            await releaseAdminProduct(submitData);
 
             // 3. 成功反馈
             alert(productId ? '产品更新成功！' : '产品发布成功！');
@@ -213,13 +228,36 @@ export default function AdminProductForm() {
 
     const navigationSections = [
         { id: 'basic', label: '基本信息', icon: '📝' },
-        { id: 'slug', label: 'URL设置', icon: '🔗' },
-        { id: 'category', label: '分类设置', icon: '📂' },
+        { id: 'category_url', label: '分类与URL', icon: '🔗' },
         { id: 'images', label: '图片管理', icon: '🖼️' },
         { id: 'specs', label: '产品规格', icon: '📊' },
         { id: 'features', label: '产品特点', icon: '⭐' },
+        { id: 'highlight', label: '亮点与包装', icon: '✨' },
         { id: 'sku', label: 'SKU管理', icon: '🏷️' }
     ];
+
+    // 计算各区块完成状态
+    const sectionStatus = {
+        basic: product.title && product.sourceVendor && (product.currentPrice || 0) > 0 && (product.originalPrice || 0) > 0,
+        category_url: product.slug && product.slug.length > 0 && product.categories && product.categories.length > 0,
+        images: product.image && product.image.length > 0,
+        specs: true, // 可选
+        features: true, // 可选
+        highlight: true, // 可选
+        sku: product.colors && product.colors.length > 0 && product.productSkus && product.productSkus.length > 0
+    };
+
+    const getSectionIcon = (sectionId: string) => {
+        if (sectionStatus[sectionId as keyof typeof sectionStatus]) {
+            return '✅';
+        }
+        // 检查是否必填
+        const required = ['basic', 'category_url', 'images', 'sku'];
+        if (required.includes(sectionId)) {
+            return '⚠️';
+        }
+        return navigationSections.find(s => s.id === sectionId)?.icon || '';
+    };
 
     if (loading) {
         return (
@@ -256,8 +294,8 @@ export default function AdminProductForm() {
                                         }`}
                                         onClick={() => setActiveSection(section.id)}
                                     >
-                                        <span className="mr-3">{section.icon}</span>
-                                        {section.label}
+                                        <span className="mr-2">{getSectionIcon(section.id)}</span>
+                                        <span className="flex-1 text-left">{section.label}</span>
                                     </button>
                                 ))}
                             </nav>
@@ -274,18 +312,9 @@ export default function AdminProductForm() {
                             />
                         </div>
 
-                        {/* Slug URL 设置 */}
-                        <div className={activeSection === 'slug' ? 'block animate-fadeIn' : 'hidden'}>
-                            <SlugGenerator
-                                product={product}
-                                roots={roots}
-                                updateProduct={updateProduct}
-                            />
-                        </div>
-
-                        {/* 分类设置 */}
-                        <div className={activeSection === 'category' ? 'block animate-fadeIn' : 'hidden'}>
-                            <AdminProductCategory
+                        {/* 分类与URL */}
+                        <div className={activeSection === 'category_url' ? 'block animate-fadeIn' : 'hidden'}>
+                            <AdminProductCategoryUrl
                                 product={product}
                                 roots={roots}
                                 updateProduct={updateProduct}
@@ -311,6 +340,14 @@ export default function AdminProductForm() {
                         {/* 产品特点 */}
                         <div className={activeSection === 'features' ? 'block animate-fadeIn' : 'hidden'}>
                             <Features
+                                product={product}
+                                updateProduct={updateProduct}
+                            />
+                        </div>
+
+                        {/* 产品亮点与包装 */}
+                        <div className={activeSection === 'highlight' ? 'block animate-fadeIn' : 'hidden'}>
+                            <AdminProductHighlight
                                 product={product}
                                 updateProduct={updateProduct}
                             />
@@ -386,5 +423,20 @@ export default function AdminProductForm() {
                 </div>
             </form>
         </div>
+    );
+}
+
+export default function AdminProductForm() {
+    return (
+        <Suspense fallback={
+            <div className="container mx-auto px-4 py-8">
+                <div className="flex flex-col justify-center items-center h-64">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mb-4"></div>
+                    <span className="text-gray-600">正在加载表单...</span>
+                </div>
+            </div>
+        }>
+            <AdminProductFormContent />
+        </Suspense>
     );
 }

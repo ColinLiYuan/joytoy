@@ -24,6 +24,11 @@ export interface LoginResponse {
     emailVerified: boolean;
     cartId: number;
     lastLoginAt?: string;
+    
+    // ✅ 新增权限字段
+    role?: 'CUSTOMER' | 'ADMIN' | 'SUPER_ADMIN';
+    isAdmin?: boolean;
+    isAffiliate?: boolean;
 }
 
 export interface RegisterRequest {

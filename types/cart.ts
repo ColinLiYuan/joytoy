@@ -15,9 +15,12 @@ export interface AddToCartRequest {
 }
 
 export interface CartResponse {
-    cartId: number;
+    id: number;  // Cart的主键
     cartToken?: string;
     userId?: number | null;
+    userName?: string;  // 新增：用户名
+    userEmail?: string;  // 新增：用户邮箱
+    itemCount?: number;  // 新增：商品数量（去重后的SKU数）
     sessionId?: string | null;
     status?: string;
     totalItems: number;
@@ -33,10 +36,13 @@ export interface CartResponse {
 export interface CartItem {
     itemId: number;
     productId: number;
+    bundleId?: number; // 所属套装ID标记
+    bundleItems?: string; // 套装商品快照（JSON数组）
     productSlug: string;
     productTitle: string;
     productName: string;
     productSku: string;
+    skuId?: number;  // SKU表ID,用于订单创建
     productImage: string;
     unitPrice: number;
     quantity: number;
@@ -47,4 +53,17 @@ export interface CartItem {
     weight?: string;
     color?: string;
     addedAt?: string;
+    
+    // ✅ 新增：商品类型标识（用于判断是套装还是单品）
+    isBundle?: boolean; // 是否为套装商品
+}
+
+// 套装商品快照接口
+export interface BundleItemSnapshot {
+    productId: number;
+    productName: string;
+    productImage: string;
+    productSku: string;
+    color?: string;
+    quantity: number;
 }

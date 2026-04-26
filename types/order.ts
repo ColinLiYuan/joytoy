@@ -40,6 +40,7 @@ export interface OrderResponse {
     discountAmount: number;
     finalAmount: number;
     createdAt: string;
+    completedAt?: string;
     paymentMethod: string;
     shippingMethod: string;
     shippingAddress: AddressRequest;
@@ -98,12 +99,12 @@ export interface OrderItemRequest {
     productId: number;
     productTitle: string;
     productName: string;
-    productSku: string;
+    productSku: string;  // SKU Code,后端会通过它查询完整的SKU信息
     productImage?: string;
     quantity: number;
     unitPrice: number;
     color: string;
-    skuId?: number;
+    bundleId?: number;  // 套装ID，用于标记该商品属于哪个套装
 }
 
 export interface LogisticsCheckpoint {
@@ -119,4 +120,10 @@ export interface LogisticsInfo {
     originCountry?: string;
     destinationCountry?: string;
     checkpoints: LogisticsCheckpoint[];
+}
+
+export interface OrderPaymentResult {
+    success: boolean;
+    message: string;
+    orderNumber: string;
 }

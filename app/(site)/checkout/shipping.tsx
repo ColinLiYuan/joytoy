@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { AddressRequest } from '@/types/order';
-import { COUNTRY_DATA, PROVINCE_DATA, POSTAL_CODE_REGEX } from '@/lib/constants/country-data';
+import { COUNTRY_DATA, PROVINCE_DATA, POSTAL_CODE_REGEX, PHONE_FORMAT_HINTS } from '@/lib/constants/country-data';
 import { Loader2, ArrowRight, Check } from 'lucide-react';
 
 interface ShippingFormProps {
@@ -83,7 +83,7 @@ export default function ShippingForm({
         if (validateForm()) {
             onProceedToPayment();
         } else {
-            // 自动滚动到第一个错误
+            // Auto scroll to first error
             setTimeout(() => {
                 const firstError = document.querySelector('.text-red-500');
                 firstError?.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -91,7 +91,7 @@ export default function ShippingForm({
         }
     };
 
-    // 公共错误提示组件
+    // Common error message component
     const ErrorMsg = ({ name }: { name: string }) => (
         errors[name] ? <p className="text-red-500 text-xs mt-1 ml-1">{errors[name]}</p> : null
     );
@@ -146,7 +146,20 @@ export default function ShippingForm({
                         <ErrorMsg name="email" />
                     </div>
                     <div className="md:col-span-2">
-                        <input type="tel" placeholder="Phone Number" value={shippingAddress.phone || ''} onChange={(e) => updateShippingAddress('phone', e.target.value)} className={inputClass(errors.phone)} />
+                        <div className="relative">
+                            <input 
+                                type="tel" 
+                                placeholder={PHONE_FORMAT_HINTS[shippingAddress.country] || "Phone Number"} 
+                                value={shippingAddress.phone || ''} 
+                                onChange={(e) => updateShippingAddress('phone', e.target.value)} 
+                                className={inputClass(errors.phone)} 
+                            />
+                            {shippingAddress.country && PHONE_FORMAT_HINTS[shippingAddress.country] && (
+                                <p className="text-[10px] text-gray-400 mt-1 ml-1">
+                                    Format: {PHONE_FORMAT_HINTS[shippingAddress.country]}
+                                </p>
+                            )}
+                        </div>
                         <ErrorMsg name="phone" />
                     </div>
                 </div>

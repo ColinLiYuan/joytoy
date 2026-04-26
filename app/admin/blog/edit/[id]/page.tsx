@@ -1,12 +1,14 @@
 // app/admin/blog/edit/[id]/route.ts
 'use client';
-import { useState, useEffect } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { blogService } from '@/services/blogService';
+import { releaseBlog } from '@/app/actions/blog';
 import BlogForm from '../../components/admin-blog-form';
 import { ChevronLeft } from 'lucide-react'; // 图标优化
-export default function EditBlogPage() {
+
+function EditBlogContent() {
     const params = useParams();
     const router = useRouter();
     const blogId = parseInt(params.id as string);
@@ -44,7 +46,8 @@ export default function EditBlogPage() {
     const handleSubmit = async (formData: any) => {
         setSaving(true);
         try {
-            await blogService.release({
+            // 使用 Server Action releaseBlog 更新博客
+            await releaseBlog({
                 id: blogId,
                 ...formData
             });
@@ -98,5 +101,17 @@ export default function EditBlogPage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function EditBlogPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+            </div>
+        }>
+            <EditBlogContent />
+        </Suspense>
     );
 }

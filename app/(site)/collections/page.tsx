@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import Image from 'next/image'; // ✅ 恢复引用
 import { RootResponse } from '@/types/category';
-import { categoryService } from '@/services/category-service';
+import { categoryService } from '@/services/categoryService';
 import { ArrowRight, Sparkles } from 'lucide-react';
 import { Metadata } from 'next';
 import { getProductImageUrl } from '@/lib/image-utils'; // ✅ 引入工具函数
@@ -106,7 +106,7 @@ export default async function CollectionPage() {
                                     // ✅ 处理图片逻辑
                                     // 假设字段名为 subcategory.image
                                     const hasImage = !!subcategory.image;
-                                    const imageUrl = getProductImageUrl('', subcategory.image);
+                                    const imageUrl = getProductImageUrl(undefined, subcategory.image);
 
                                     return (
                                         <Link

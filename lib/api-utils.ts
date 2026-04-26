@@ -26,7 +26,7 @@ class ApiError extends Error {
 /**
  * 刷新 Token 的独立逻辑
  */
-async function refreshAccessToken(): Promise<string | null> {
+export async function refreshAccessToken(): Promise<string | null> {
     try {
         const refreshToken = await getRefreshToken();
 
@@ -52,13 +52,22 @@ async function refreshAccessToken(): Promise<string | null> {
         const data = await response.json();
 
         if (data.success && data.data) {
-            const { accessToken, refreshToken: newRefresh } = data.data;
+            const { accessToken, refreshToken: newRefresh, expiresIn, refreshExpiresIn } = data.data;
 
-            // ✅ 核心修复：直接使用 setTokens 统一更新 Cookie 和 LocalStorage
-            // 如果后端没返回新的 refresh token，就沿用旧的
-            setTokens(accessToken, newRefresh || refreshToken);
+            // 客户端：更新 token
+            if (typeof window !== 'undefined') {
+                // 客户端：使用 setTokens 更新 Cookie 和 LocalStorage（使用后端返回的过期时间）
+                setTokens(accessToken, newRefresh || refreshToken, expiresIn, refreshExpiresIn);
+            } else {
+                // 服务端：更新内存缓存
+                console.log('[API-UTILS] Server-side token refresh, updating cache...');
+                const tokenUtils = await import('@/lib/token-utils');
+                tokenUtils.serverTokenCache = accessToken;
+                tokenUtils.serverTokenExpiry = Math.floor(Date.now() / 1000) + (expiresIn - 300); // 提前5分钟过期
+                console.log('[API-UTILS] Server token cache updated:', !!tokenUtils.serverTokenCache);
+            }
 
-            // console.log('Token refreshed successfully: ', accessToken);
+            console.log('Token refreshed successfully');
             return accessToken;
         }
         return null;
@@ -80,13 +89,29 @@ export async function proxyRequest(
         retry = 0,
         headers = {},
         _isRetry = false,
+        method = 'GET',
         ...fetchOptions
     } = options;
 
-    const url = `${BACKEND_CONFIG.baseURL}${endpoint}`;
+    // 🔧 关键修复：判断是 Next.js API Route 还是后端接口
+    // - 如果 endpoint 以 /api/site/ 开头，说明是 Next.js API Route，使用相对路径
+    // - 否则，认为是后端接口，拼接 BACKEND_CONFIG.baseURL
+    const isNextJsRoute = endpoint.startsWith('/api/site/');
+    const url = isNextJsRoute ? endpoint : `${BACKEND_CONFIG.baseURL}${endpoint}`;
 
-    // 1. 获取 Token (Async)
-    const token = await getToken();
+    // 1. 获取 Token (Async) - 只有在没有手动传递 Authorization 时才获取
+    let token: string | undefined;
+    const hasCustomAuth = headers && (headers as Record<string, string>)['Authorization'];
+    
+    console.log('[PROXY REQUEST] Endpoint:', endpoint);
+    console.log('[PROXY REQUEST] Has custom auth:', !!hasCustomAuth);
+    
+    if (!hasCustomAuth) {
+        token = await getToken();
+        console.log('[PROXY REQUEST] Auto-fetched token:', token ? 'YES' : 'NO');
+    } else {
+        console.log('[PROXY REQUEST] Using custom auth header');
+    }
 
     // 2. 构造 Header
     const authHeaders: Record<string, string> = {};
@@ -94,51 +119,84 @@ export async function proxyRequest(
         authHeaders['Authorization'] = `Bearer ${token}`;
     }
 
+    // 🔧 重要：不要包含 BACKEND_CONFIG.defaultHeaders 中的 Authorization
+    // 因为它可能是空字符串，会覆盖后面传递的 Token
     const requestHeaders = {
-        ...BACKEND_CONFIG.defaultHeaders,
-        ...authHeaders,
-        ...headers,
+        'Content-Type': 'application/json', // 只保留 Content-Type
+        ...authHeaders,                     // 自动获取的 Token
+        ...headers,                         // 手动传递的 Token（优先级最高）
     };
+    
+    console.log('[PROXY REQUEST] Final headers:', {
+        hasAuth: !!(requestHeaders as Record<string, string>)['Authorization'],
+        authPreview: (requestHeaders as Record<string, string>)['Authorization'] ? `${(requestHeaders as Record<string, string>)['Authorization'].substring(0, 30)}...` : 'none'
+    });
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeout);
 
     try {
-        const response = await fetch(url, {
+        const fetchConfig: RequestInit = {
             ...fetchOptions,
+            method,
             headers: requestHeaders,
             signal: controller.signal,
-        });
+        };
+        
+        // 🔧 Critical: include credentials (cookies) when calling Next.js API Routes
+        // Without this, HttpOnly cookies won't be sent
+        if (isNextJsRoute) {
+            fetchConfig.credentials = 'include';
+        }
+        
+        const response = await fetch(url, fetchConfig);
 
         clearTimeout(timeoutId);
 
-        // 3. 拦截 401 并重试
+        // 3. 拦截 401，先尝试刷新 Token
         if (response.status === 401 && !_isRetry) {
-            console.warn('401 Unauthorized, attempting refresh...');
-
-            // 尝试刷新
+            console.warn('401 Unauthorized, token expired.');
+            
+            // 尝试刷新 Token（客户端和服务端都尝试）
+            console.log('Attempting token refresh...');
+            
             const newToken = await refreshAccessToken();
-
+            
             if (newToken) {
-                console.log('Retrying original request with new token...');
-
-                // ✅ 递归调用，并强制覆盖 Authorization Header
+                // 刷新成功，使用新 Token 重试请求
+                console.log('Token refreshed successfully, retrying request...');
                 return proxyRequest(endpoint, {
                     ...options,
-                    headers: {
-                        ...headers,
-                        'Authorization': `Bearer ${newToken}`
-                    },
-                    _isRetry: true // 标记防止死循环
+                    _isRetry: true,
                 });
-            } else {
-                console.error('Refresh failed, logging out.');
-                clearTokens();
-                // 可选：触发页面跳转
-                if (typeof window !== 'undefined') {
-                    window.location.href = '/';
-                }
             }
+            
+            // 刷新失败，处理不同端的情况
+            console.warn('Token refresh failed, clearing tokens...');
+            
+            if (typeof window !== 'undefined') {
+                // 客户端：只清除 Access Token，保留 Refresh Token
+                localStorage.removeItem('accessToken');
+                // 不删除 refreshToken，让它继续保留
+                
+                // 触发自定义事件，通知全局显示登录框
+                window.dispatchEvent(new CustomEvent('auth:tokenExpired', {
+                    detail: { message: 'Your session has expired. Please login again.' }
+                }));
+            } else {
+                // 服务端：刷新失败，返回 401 给客户端处理
+                console.log('Server-side token refresh failed, forwarding 401 to client...');
+            }
+            
+            // 返回一个特殊响应，让业务层停止处理
+            return new Response(JSON.stringify({
+                success: false,
+                message: 'Session expired, please login again',
+                errorType: 'auth'
+            }), {
+                status: 401,
+                headers: { 'Content-Type': 'application/json' }
+            });
         }
 
         return response;
@@ -194,7 +252,17 @@ export async function handleApiResponse<T>(
         const responseClone = response.clone();
         const responseText = await responseClone.text();
 
-        if (!responseText.trim()) {
+        // 🔍 调试日志：记录原始响应
+        console.log('[API-UTILS] Raw response:', {
+            url: response.url,
+            status: response.status,
+            ok: response.ok,
+            textLength: responseText?.length || 0,
+            first100Chars: responseText?.substring(0, 100)
+        });
+
+        // 处理空响应
+        if (!responseText || !responseText.trim()) {
             return {
                 success: response.ok,
                 message: response.ok ? undefined : 'Empty response body',
@@ -205,8 +273,31 @@ export async function handleApiResponse<T>(
 
         let data: any;
         try {
-            data = JSON.parse(responseText);
+            // 尝试清理响应文本（移除可能的 BOM 或空白）
+            const cleanedText = responseText.trim().replace(/^\uFEFF/, '');
+            
+            // 如果清理后为空，视为空响应
+            if (!cleanedText) {
+                console.warn('[API-UTILS] Empty response after cleaning:', {
+                    url: response.url,
+                    status: response.status
+                });
+                return {
+                    success: response.ok,
+                    message: response.ok ? undefined : 'Empty response body',
+                    status: response.status,
+                    errorType: 'http' as ApiErrorType
+                };
+            }
+            
+            data = JSON.parse(cleanedText);
         } catch (parseError) {
+            console.error('[API-UTILS] JSON parse failed:', {
+                url: response.url,
+                status: response.status,
+                rawText: responseText.substring(0, 200),
+                error: parseError instanceof Error ? parseError.message : String(parseError)
+            });
             return {
                 success: false,
                 message: 'Failed to parse response as JSON',
@@ -217,6 +308,42 @@ export async function handleApiResponse<T>(
 
         const backendResponse: BackendApiResponse<T> = data;
         const errorType = getErrorType(response.status, backendResponse);
+
+        // 🔍 检测后端返回的认证错误（HTTP 200 但 success: false 且 message 包含认证关键词）
+        if (!backendResponse.success && backendResponse.message) {
+            const msg = backendResponse.message.toLowerCase();
+            const isAuthError = msg.includes('请先登录') || 
+                               msg.includes('登录') || 
+                               msg.includes('authenticate') || 
+                               msg.includes('login') || 
+                               msg.includes('authentication required') ||
+                               msg.includes('unauthorized');
+            
+            if (isAuthError && typeof window !== 'undefined') {
+                console.log('[API-UTILS] Backend returned auth error:', backendResponse.message);
+                
+                // 🔧 关键修复：先尝试刷新 Token
+                const newToken = await refreshAccessToken();
+                
+                if (newToken) {
+                    console.log('[API-UTILS] Token refreshed successfully');
+                    // 注意：这里无法直接重试，因为已经解析完响应了
+                    // 刷新成功后，下次请求会自动使用新 Token
+                } else {
+                    // 刷新失败，只清除 Access Token，保留 Refresh Token
+                    console.warn('[API-UTILS] Token refresh failed, clearing access token only...');
+                    if (typeof window !== 'undefined') {
+                        localStorage.removeItem('accessToken');
+                        // 不删除 refreshToken，让它继续保留
+                    }
+                    
+                    // 触发自定义事件，通知全局显示登录框
+                    window.dispatchEvent(new CustomEvent('auth:tokenExpired', {
+                        detail: { message: backendResponse.message }
+                    }));
+                }
+            }
+        }
 
         if (!response.ok || !backendResponse.success) {
             return {

@@ -9,7 +9,7 @@ import { Z_INDEX } from '@/lib/constants/z-index';
 import { getProductImageUrl } from '@/lib/image-utils';
 import { ProductResponse } from '@/types/product';
 // ✅ 直接引入你提供的客户端 Service
-import { productService } from '@/services/product-service';
+import { productService } from '@/services/productService';
 
 // 热门搜索词
 const TRENDING = ["Rabbit", "Wand", "Onyx", "Swan", "G-Spot", "Muse"];
@@ -153,7 +153,7 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
                                 >
                                     <div className="w-14 h-14 relative rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
                                         <Image
-                                            src={getProductImageUrl('', product.image)}
+                                            src={getProductImageUrl(undefined, product.image)}
                                             alt={product.title}
                                             fill
                                             className="object-cover"

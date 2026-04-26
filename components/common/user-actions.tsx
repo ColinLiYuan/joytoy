@@ -1,14 +1,18 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { User, ShoppingBag, Heart, Search, LogOut, Package, Settings } from 'lucide-react';
 import { useCartStore } from '@/stores/useCartStore';
 import { useState, useEffect, useRef } from 'react';
 import { Z_INDEX } from '@/lib/constants/z-index';
 import SearchModal from '@/components/navigation/search-modal';
+import { LoginResponse } from '@/types/auth';
+import { wishlistService } from '@/services/wishlistService';
 
 interface UserActionsProps {
     isLoggedIn: boolean;
+    userInfo: LoginResponse | null;
     onCartClick: () => void;
     onWishlistClick: (e: React.MouseEvent) => void;
     onAuthModalOpen: () => void;
@@ -17,6 +21,7 @@ interface UserActionsProps {
 
 export default function UserActions({
                                         isLoggedIn,
+                                        userInfo,
                                         onCartClick,
                                         onWishlistClick,
                                         onAuthModalOpen,
@@ -28,6 +33,41 @@ export default function UserActions({
 
     const userMenuRef = useRef<HTMLDivElement>(null);
     const totalItems = useCartStore(state => state.totalItems);
+    const pathname = usePathname();
+    const isWishlistPage = pathname === '/wishlist';
+
+    // 获取用户首字母（优化：对于中文名称，优先使用英文首字母）
+    const getUserInitials = () => {
+        if (!userInfo) return 'U';
+        
+        // 优先使用 displayName
+        if (userInfo.displayName) {
+            const firstChar = userInfo.displayName.charAt(0);
+            // 如果是中文（Unicode 范围），尝试使用 email 前缀
+            if (/^[\u4e00-\u9fa5]/.test(firstChar)) {
+                return userInfo.email?.charAt(0).toUpperCase() || 'U';
+            }
+            return firstChar.toUpperCase();
+        }
+        
+        const firstInitial = userInfo.firstName?.charAt(0) || '';
+        const lastInitial = userInfo.lastName?.charAt(0) || '';
+        
+        return (firstInitial + lastInitial).toUpperCase() || 'U';
+    };
+
+    // 获取用户显示名称
+    const getUserDisplayName = () => {
+        if (!userInfo) return 'Account';
+        
+        if (userInfo.displayName) return userInfo.displayName;
+        if (userInfo.firstName && userInfo.lastName) return `${userInfo.firstName} ${userInfo.lastName}`;
+        if (userInfo.firstName) return userInfo.firstName;
+        if (userInfo.lastName) return userInfo.lastName;
+        
+        // 如果都没有，显示邮箱前缀
+        return userInfo.email?.split('@')[0] || 'Account';
+    };
 
     useEffect(() => setIsMounted(true), []);
 
@@ -56,13 +96,17 @@ export default function UserActions({
 
             {/* 2. Wishlist Button */}
             <button
-                className="w-10 h-10 flex items-center justify-center text-gray-700 hover:text-pink-600 rounded-full hover:bg-pink-50 transition-all duration-200"
+                className={`w-10 h-10 flex items-center justify-center rounded-full transition-all duration-300 ${
+                    isWishlistPage 
+                        ? 'text-pink-600 bg-pink-50' 
+                        : 'text-gray-700 hover:text-pink-600 hover:bg-pink-50/50'
+                }`}
                 onClick={isLoggedIn ? undefined : onWishlistClick}
                 aria-label="Wishlist"
             >
                 {isLoggedIn ? (
                     <Link href="/wishlist" className="flex items-center justify-center w-full h-full">
-                        <Heart size={22} strokeWidth={1.5} />
+                        <Heart size={22} strokeWidth={isWishlistPage ? 2.5 : 1.5} fill={isWishlistPage ? "currentColor" : "none"} />
                     </Link>
                 ) : (
                     <Heart size={22} strokeWidth={1.5} />
@@ -87,11 +131,21 @@ export default function UserActions({
             <div className="relative" ref={userMenuRef}>
                 {/* Avatar Button */}
                 <button
-                    className={`w-10 h-10 flex items-center justify-center rounded-full transition-all duration-200 border ${isUserMenuOpen ? 'bg-black text-white border-black' : 'border-transparent text-gray-700 hover:text-black hover:bg-gray-100'}`}
+                    className={`w-10 h-10 flex items-center justify-center rounded-full transition-all duration-200 border ${
+                        isUserMenuOpen 
+                            ? 'bg-black text-white border-black' 
+                            : isLoggedIn 
+                                ? 'bg-gray-900 text-white border-gray-900 shadow-md hover:shadow-lg' 
+                                : 'border-transparent text-gray-700 hover:text-black hover:bg-gray-100'
+                    }`}
                     onClick={() => isLoggedIn ? setIsUserMenuOpen(!isUserMenuOpen) : onAuthModalOpen()}
                     aria-label="Account"
                 >
-                    <User size={22} strokeWidth={1.5} />
+                    {isLoggedIn ? (
+                        <span className="text-sm font-bold">{getUserInitials()}</span>
+                    ) : (
+                        <User size={22} strokeWidth={1.5} />
+                    )}
                 </button>
 
                 {/* Dropdown Menu (Absolute Position) */}
@@ -114,8 +168,20 @@ export default function UserActions({
                         <div className="absolute -top-1.5 right-3.5 w-3 h-3 bg-white border-t border-l border-gray-100 transform rotate-45"></div>
 
                         <div className="relative bg-white rounded-xl overflow-hidden">
-                            <div className="px-5 py-3 border-b border-gray-50 bg-gray-50/50">
-                                <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Account</p>
+                            {/* 用户信息头部 */}
+                            <div className="px-5 py-4 border-b border-gray-50 bg-gray-50/50">
+                                <div className="flex items-center gap-3">
+                                    {/* 头像 */}
+                                    <div className="w-10 h-10 bg-gray-900 rounded-full flex items-center justify-center flex-shrink-0 shadow-sm">
+                                        <span className="text-sm font-bold text-white">{getUserInitials()}</span>
+                                    </div>
+                                    {/* 只显示邮箱 */}
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-xs text-gray-500 truncate">
+                                            {userInfo?.email}
+                                        </p>
+                                    </div>
+                                </div>
                             </div>
 
                             <div className="py-1">

@@ -97,4 +97,4 @@ export default function ShippingPolicy() {
             </div>
         </div>
     );
-}
+}export const dynamic = 'force-dynamic'; 

@@ -1,11 +1,13 @@
 // app/toys/[...slug]/route.ts
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { productServiceServer } from '@/services/servers/product-service-server';
+import { cookies } from 'next/headers';
+import { productService } from '@/services/productService';
 import { ProductResponse } from '@/types/product';
 import ProductDetailClient from './ProductDetailClient';
 import { getProductImageUrl } from '@/lib/image-utils';
 import { colorMap } from '@/lib/constants/color-map';
+import { BACKEND_CONFIG } from '@/lib/api-config';
 
 interface PageProps {
     params: Promise<{
@@ -17,15 +19,34 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     const resolvedParams = await params;
     const slug = Array.isArray(resolvedParams.slug) ? `/${resolvedParams.slug.join('/')}` : `/${resolvedParams.slug}`;
     try {
-        const product = await productServiceServer.getProductBySlug(slug);
-        // console.log('product: ', product)
+        // ✅ 从 Cookie 读取 Token（服务端）
+        const cookieStore = await cookies();
+        const accessToken = cookieStore.get('accessToken')?.value;
+        
+        // ✅ 手动构建请求，带上 Token
+        const url = `${BACKEND_CONFIG.baseURL}/api/V1/product?slug=${encodeURIComponent(slug)}`;
+        const headers: Record<string, string> = {
+            'Content-Type': 'application/json',
+        };
+        if (accessToken) {
+            headers['Authorization'] = `Bearer ${accessToken}`;
+        }
+        
+        const response = await fetch(url, { headers });
+        const result = await response.json();
+        
+        if (!result?.success) {
+            return { title: 'Product Not Found', description: 'The product does not exist.' };
+        }
+        
+        const product = result.data;
         const canonicalUrl = `https://mythtoy.com/toys${slug}`;
-        const imageUrl = getProductImageUrl('', product.image);
+        const imageUrl = getProductImageUrl(undefined, product.image);
         // 去除 Markdown 符号，只取纯文本作为描述，避免 Schema 报错
         const cleanDescription = product.description?.replace(/[#*`]/g, '').substring(0, 160) || `Buy ${product.title}`;
 
         return {
-            title: `${product.title} - MythToy`, // 稍微修正了品牌名空格
+            title: `${product.title} - MythToy`,
             description: cleanDescription,
             alternates: { canonical: canonicalUrl },
             openGraph: {
@@ -75,7 +96,25 @@ export default async function ProductDetail({ params }: PageProps) {
     let product: ProductResponse | null = null;
 
     try {
-        product = await productServiceServer.getProductBySlug(slug);
+        // ✅ 从 Cookie 读取 Token（服务端）
+        const cookieStore = await cookies();
+        const accessToken = cookieStore.get('accessToken')?.value;
+        
+        // ✅ 手动构建请求，带上 Token
+        const url = `${BACKEND_CONFIG.baseURL}/api/V1/product?slug=${encodeURIComponent(slug)}`;
+        const headers: Record<string, string> = {
+            'Content-Type': 'application/json',
+        };
+        if (accessToken) {
+            headers['Authorization'] = `Bearer ${accessToken}`;
+        }
+        
+        const response = await fetch(url, { headers });
+        const result = await response.json();
+        
+        if (result?.success) {
+            product = result.data;
+        }
     } catch (err) {
         console.error('Error fetching product:', err);
     }
@@ -83,8 +122,8 @@ export default async function ProductDetail({ params }: PageProps) {
     if (!product) notFound();
 
     // --- 🔥 核心修改：构建 Product Schema JSON-LD ---
-    const productImageUrl = getProductImageUrl('', product.image);
-    const galleryUrls = product.galleries?.map(g => getProductImageUrl('', g.url)) || [];
+    const productImageUrl = getProductImageUrl(undefined, product.image);
+    const galleryUrls = product.galleries?.map(g => getProductImageUrl(undefined, g.url)) || [];
     const allImages = [productImageUrl, ...galleryUrls];
 
     // 简单的 Markdown 清理，确保 JSON 不会坏掉
@@ -92,63 +131,82 @@ export default async function ProductDetail({ params }: PageProps) {
         ? product.description.replace(/['"]/g, '').replace(/[#*`_]/g, '').substring(0, 200) + '...'
         : product.title;
 
-    const jsonLd = {
-        '@context': 'https://schema.org',
-        '@type': 'Product',
-        name: product.title,
-        image: allImages,
-        description: schemaDescription,
-        sku: product.sku || 'DEFAULT_SKU',
-        brand: {
-            '@type': 'Brand',
-            name: product.brand || 'MythToy', // 如果数据库没填品牌，默认 MythToy
-        },
-        offers: {
-            '@type': 'Offer',
-            url: `https://mythtoy.com/toys${slug}`,
-            priceCurrency: 'USD',
-            price: product.currentPrice,
-            priceValidUntil: '2026-12-31', // 给一个未来的日期，防止警告
-            itemCondition: 'https://schema.org/NewCondition',
-            availability: (product.status === 'ACTIVE' && product.stock > 0)
-                ? 'https://schema.org/InStock'
-                : 'https://schema.org/OutOfStock',
-        },
-        // 只有当有评分时才添加 aggregateRating
-        ...(product.rating ? {
-            aggregateRating: {
-                '@type': 'AggregateRating',
-                ratingValue: product.rating,
-                // ⚠️ 注意：如果你的 API 还没返回 reviewCount，这里临时写死 5 或者 10 用于测试星星效果
-                // 长期必须让后端返回真实数量
-                reviewCount: product.reviewCount || 5
-            }
-        } : {})
-    };
-    // ------------------------------------------------
-
     const breadcrumbs = generateBreadcrumbPaths(
         Array.isArray(resolvedParams.slug) ? resolvedParams.slug : [resolvedParams.slug],
         product
     );
 
+    // ------------------------------------------------
+    // JSON-LD Structured Data
+    // ------------------------------------------------
+    const jsonLd = {
+        '@context': 'https://schema.org',
+        '@graph': [
+            {
+                '@type': 'Product',
+                name: product.title,
+                image: allImages,
+                description: schemaDescription,
+                sku: product.sku || 'DEFAULT_SKU',
+                brand: {
+                    '@type': 'Brand',
+                    name: product.brand || 'MythToy',
+                },
+                offers: {
+                    '@type': 'Offer',
+                    url: `https://mythtoy.com/toys${slug}`,
+                    priceCurrency: 'USD',
+                    price: product.currentPrice,
+                    priceValidUntil: '2026-12-31',
+                    itemCondition: 'https://schema.org/NewCondition',
+                    availability: (product.status === 'ACTIVE' && product.stock > 0)
+                        ? 'https://schema.org/InStock'
+                        : 'https://schema.org/OutOfStock',
+                },
+                ...(product.rating ? {
+                    aggregateRating: {
+                        '@type': 'AggregateRating',
+                        ratingValue: product.rating,
+                        reviewCount: product.reviewCount || 5
+                    }
+                } : {})
+            },
+            {
+                '@type': 'BreadcrumbList',
+                itemListElement: breadcrumbs.map((crumb, index) => ({
+                    '@type': 'ListItem',
+                    position: index + 1,
+                    name: crumb.name,
+                    item: crumb.path ? `https://mythtoy.com${crumb.path}` : undefined
+                }))
+            }
+        ]
+    };
+
     // ... 这一块处理 galleryImages 的逻辑保持不变 ...
-    const getGalleryItems = () => {
+    const getGalleryItems = (): Array<{ url: string; alt: string; type: 'image' | 'video'; poster: string }> => {
         if (!product) return [];
-        const hasGallery = !!(product.galleries && product.galleries.length > 0);
-        return hasGallery ?
-            product.galleries!.map(gallery => ({
-                url: getProductImageUrl('', gallery.url),
+        
+        // 始终将主图作为第一张图片
+        const items: Array<{ url: string; alt: string; type: 'image' | 'video'; poster: string }> = [{
+            url: getProductImageUrl(undefined, product.image),
+            alt: product.title,
+            type: 'image',
+            poster: ''
+        }];
+        
+        // 如果有额外的 galleries，追加到后面
+        if (product.galleries && product.galleries.length > 0) {
+            const galleryItems = product.galleries.map(gallery => ({
+                url: getProductImageUrl(undefined, gallery.url),
                 alt: gallery.alt || product.title,
-                type: gallery.type,
-                poster: getProductImageUrl('', gallery.poster)
-            })) :
-            [{
-                url: getProductImageUrl('', product.image),
-                alt: product.title,
-                type: 'image',
-                poster: getProductImageUrl('', '')
-            }];
+                type: (gallery.type as 'image' | 'video') || 'image',
+                poster: getProductImageUrl(undefined, gallery.poster)
+            }));
+            items.push(...galleryItems);
+        }
+        
+        return items;
     };
 
     const galleryItems = getGalleryItems();
