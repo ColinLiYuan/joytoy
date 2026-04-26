@@ -113,10 +113,16 @@ const nextConfig: NextConfig = {
 
     async rewrites() {
         return [
+            // 用户端 API 代理（解决 Mixed Content 问题）
+            {
+                source: '/api/V1/:path*',
+                destination: `${backendUrl}/api/V1/:path*`,
+            },
             {
                 source: '/api/backend/:path*',
                 destination: `${backendUrl}/api/V1/:path*`,
             },
+            // 管理端 API 代理
             {
                 source: '/api/admin/:path*',
                 destination: `${backendUrl}/api/admin/:path*`,

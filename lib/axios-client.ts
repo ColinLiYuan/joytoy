@@ -9,7 +9,7 @@ const axiosBaseURL = isProduction ? '' : BACKEND_CONFIG.baseURL;
 
 // 创建 Axios 实例
 const axiosClient = axios.create({
-    baseURL: axiosBaseURL, // 生产环境为空，使用相对路径
+    baseURL: axiosBaseURL, // 生产环境: 空字符串（相对路径）, 开发环境: http://localhost:9356
     timeout: 30000,
     headers: {
         'Content-Type': 'application/json',
