@@ -3,14 +3,20 @@ import axios from 'axios';
 import { BACKEND_CONFIG } from '@/lib/api-config';
 import { setCookie, removeCookie } from '@/lib/cookie-utils';
 
-// 创建 Axios 实例 - 直接调用后端 API
+// 🔧 修复 Mixed Content 问题：生产环境使用相对路径（走 Vercel rewrites 代理）
+const isProduction = process.env.NODE_ENV === 'production';
+const axiosBaseURL = isProduction ? '' : BACKEND_CONFIG.baseURL;
+
+// 创建 Axios 实例
 const axiosClient = axios.create({
-    baseURL: BACKEND_CONFIG.baseURL, // 直接指向后端
+    baseURL: axiosBaseURL, // 生产环境: 空字符串（相对路径）, 开发环境: http://localhost:9356
     timeout: 30000,
     headers: {
         'Content-Type': 'application/json',
     },
 });
+
+console.log('[AxiosClient] baseURL:', axiosBaseURL, '| isProduction:', isProduction);
 
 // 请求拦截器
 axiosClient.interceptors.request.use(
@@ -166,7 +172,7 @@ axiosClient.interceptors.response.use(
                 
                 // ✅ 创建一个新的 axios 实例，避免触发拦截器造成死循环
                 const refreshAxios = axios.create({
-                    baseURL: BACKEND_CONFIG.baseURL,
+                    baseURL: axiosBaseURL, // 使用相同的 baseURL
                     timeout: 30000,
                     headers: {
                         'Content-Type': 'application/json',

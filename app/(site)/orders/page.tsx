@@ -60,8 +60,14 @@ export default function OrdersPage() {
 
     useEffect(() => {
         console.log('[OrdersPage] Component mounted, fetching orders...');
-        fetchOrders();
-    }, []);
+        if (isClient) {
+            if (!isLoggedIn) {
+                setIsLoading(false);
+                return;
+            }
+            fetchOrders();
+        }
+    }, [isClient, isLoggedIn]);
 
     const fetchOrders = async () => {
         console.log('[OrdersPage] fetchOrders called');

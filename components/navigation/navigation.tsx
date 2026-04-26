@@ -47,8 +47,8 @@ export default function Navigation({ minimal = false, rootsData = [] }: Navigati
     }, [isMobileNavOpen]);
 
     const toggleCart = async () => {
-        // ✅ 打开购物车时刷新数据（确保最新）
-        if (!isCartOpen && isLoggedIn) {
+        // ✅ 打开购物车时始终刷新数据（确保最新）
+        if (!isCartOpen) {
             await getCart().catch(console.error);
         }
         setIsCartOpen(!isCartOpen);

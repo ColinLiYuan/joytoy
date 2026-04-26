@@ -269,12 +269,12 @@ export default function Wholesale() {
                                         </div>
                                         <div>
                                             <p className="text-xs text-gray-400 uppercase font-bold">Sales Manager</p>
-                                            <p className="font-medium">Colin Li</p>
+                                            <p className="font-medium">Maya</p>
                                         </div>
                                     </div>
                                     <div className="w-full h-px bg-white/10"></div>
                                     <div className="space-y-2 text-sm text-gray-300">
-                                        <p>📧 wholesale@mythtoy.com</p>
+                                        <p>📧 maya@mythtoy.com</p>
                                     </div>
                                 </div>
                             </div>

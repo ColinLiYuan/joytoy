@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { Wallet, Clock, CheckCircle, AlertCircle, ChevronLeft, ChevronRight, Loader2, X, DollarSign } from 'lucide-react'
 import { getAllPayouts, approvePayout, rejectPayout } from '@/app/actions/admin'
 import { PayoutResponse } from '@/types/affiliate'
-import Cookies from 'js-cookie'
+import { getToken, ensureFreshToken } from '@/lib/token-utils'
 import { BACKEND_CONFIG } from '@/lib/api-config'
 
 export default function AdminPayoutsPage() {
@@ -66,15 +66,22 @@ export default function AdminPayoutsPage() {
         try {
             setManualSubmitting(true)
             
-            // 获取 token
-            const token = Cookies.get('accessToken')
+            // 确保 Token 是新鲜的（如果快过期会自动刷新）
+            const token = await ensureFreshToken(300) // 提前 5 分钟刷新
+            
+            console.log('[Manual Payout] Token exists:', !!token)
+            console.log('[Manual Payout] Token length:', token?.length || 0)
+            console.log('[Manual Payout] Token preview:', token ? token.substring(0, 20) + '...' : 'none')
             
             if (!token) {
                 alert('未登录或登录已过期')
                 return
             }
             
-            const response = await fetch(`${BACKEND_CONFIG.baseURL}/api/admin/V1/affiliate/${manualAffiliateId.toUpperCase()}/manual-payout`, {
+            const url = `${BACKEND_CONFIG.baseURL}/api/admin/V1/affiliate/${manualAffiliateId.toUpperCase()}/manual-payout`
+            console.log('[Manual Payout] Request URL:', url)
+            
+            const response = await fetch(url, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -88,7 +95,10 @@ export default function AdminPayoutsPage() {
                 })
             })
             
+            console.log('[Manual Payout] Response status:', response.status)
+            
             const data = await response.json()
+            console.log('[Manual Payout] Response data:', data)
             
             if (!data.success) {
                 throw new Error(data.message || '手动提现失败')

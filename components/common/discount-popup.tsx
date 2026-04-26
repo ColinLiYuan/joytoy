@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { X, Gift, Mail, CheckCircle2, Loader2 } from 'lucide-react';
 import { Z_INDEX } from '@/lib/constants/z-index';
 import { useToast } from '@/contexts/toastContext';
-import { subscribeToNewsletter } from '@/app/actions/subscribe-email';
+import { subscribeToNewsletter } from '@/app/actions/email';
 import { useAuth } from '@/contexts/authContext';
 import { affiliateService } from '@/services/affiliateService';
 import { usePathname } from 'next/navigation';

@@ -16,8 +16,10 @@ interface AffiliateUser {
     affiliateCodes: string[];  // Promo code list
     totalClicks: number;
     totalOrders: number;
+    conversionRate: number;    // 转化率 (%)
     totalEarnings: number;      // Total accumulated earnings (settled)
     currentBalance: number;     // Current balance (pending payout)
+    totalPaid: number;          // 累计已支付
     status: 'ACTIVE' | 'SUSPENDED' | 'PENDING';
     createdAt: string | null;
     updatedAt: string | null;

@@ -1,7 +1,16 @@
 import type { NextConfig } from "next";
 
 // 后端 API 地址（从环境变量读取，用于 Next.js 代理配置）
-const backendUrl = process.env.BACKEND_BASE_URL || 'http://localhost:9356';
+// 优先使用 NEXT_PUBLIC_BACKEND_BASE_URL（客户端可用）
+const backendUrl = process.env.NEXT_PUBLIC_BACKEND_BASE_URL || process.env.BACKEND_BASE_URL || 'http://localhost:9356';
+
+// 🔍 构建时输出环境变量（调试用）
+console.log('\n🔧 [Build Time] Environment Variables:');
+console.log('  NEXT_PUBLIC_BACKEND_BASE_URL:', process.env.NEXT_PUBLIC_BACKEND_BASE_URL);
+console.log('  BACKEND_BASE_URL:', process.env.BACKEND_BASE_URL);
+console.log('  Resolved backendUrl:', backendUrl);
+console.log('  NODE_ENV:', process.env.NODE_ENV);
+console.log('');
 
 const nextConfig: NextConfig = {
     output: 'standalone',
@@ -104,13 +113,24 @@ const nextConfig: NextConfig = {
 
     async rewrites() {
         return [
+            // 用户端 API 代理（解决 Mixed Content 问题）
+            {
+                source: '/api/V1/:path*',
+                destination: `${backendUrl}/api/V1/:path*`,
+            },
             {
                 source: '/api/backend/:path*',
                 destination: `${backendUrl}/api/V1/:path*`,
             },
+            // 管理端 API 代理
             {
                 source: '/api/admin/:path*',
                 destination: `${backendUrl}/api/admin/:path*`,
+            },
+            // 联盟 API 代理（解决 Mixed Content 问题）
+            {
+                source: '/api/V1/affiliate/:path*',
+                destination: `${backendUrl}/api/V1/affiliate/:path*`,
             },
         ];
     },

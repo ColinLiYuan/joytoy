@@ -98,9 +98,6 @@ const gonePaths = new Set([
     '/blog/why-do-men-sleep-after-sex',
     // 下架产品
     '/toys/female-sex-toys/clit-vibrators/rose-licking-vibrator',
-    // 下架分类
-    '/collections/male-sex-toys/manual-strokers',
-    '/collections/best-sellers',
     // 下架产品（404列表）
     '/toys/female-sex-toys/clit-vibrators/vibrator-g-sucking-usb-szm',
     '/toys/female-sex-toys/clit-vibrators/squirrel-auto-suction-vibes',
@@ -114,37 +111,22 @@ const gonePaths = new Set([
 // 3. 定义 410 前缀匹配规则
 const gonePrefixes = [
     '/collections/vibrators',
-    '/sex-toys',
+    // '/sex-toys',  // 临时注释，可能导致重定向循环
     '/products'
 ];
 
 export async function middleware(request: NextRequest) {
     const { pathname, searchParams } = request.nextUrl;
     
-    // 🛑 核心修复：开发环境/本地访问直接跳过所有重定向，防止 SSL 错误
-    const hostname = request.nextUrl.hostname;
-    const isLocal = hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '0.0.0.0';
-    
-    if (!isLocal) {
-        const protocol = request.headers.get('x-forwarded-proto') || 'https';
-        const host = request.headers.get('host') || '';
-        
-        // 1. 强制 HTTPS
-        if (protocol === 'http') {
-            const url = request.nextUrl.clone();
-            url.protocol = 'https:';
-            return NextResponse.redirect(url, { status: 301 });
-        }
-        
-        // 2. 强制非 www
-        if (host.startsWith('www.')) {
-            const url = request.nextUrl.clone();
-            url.host = host.replace('www.', '');
-            return NextResponse.redirect(url, { status: 301 });
-        }
+    // 0. 跳过 API 路由和静态资源
+    if (pathname.startsWith('/api/') || pathname.startsWith('/_next/')) {
+        return NextResponse.next();
     }
+    
+    // 注意：www 重定向由 Vercel 自动处理，不需要在 middleware 中处理
+    // 避免与 Vercel 的域名配置冲突
 
-    // --- 1. 移除 ?page=0 参数 ---
+    // 1. 移除 ?page=0 参数
     if (searchParams.get('page') === '0') {
         const url = request.nextUrl.clone();
         searchParams.delete('page');
@@ -152,20 +134,18 @@ export async function middleware(request: NextRequest) {
         return NextResponse.redirect(url, { status: 301 });
     }
 
-    // --- 2. 优先处理 301 重定向 (Redirects) ---
-    // 如果这个路径在映射表里，直接跳走
+    // 2. 处理 301 重定向
     if (redirectMap[pathname]) {
         const destination = new URL(redirectMap[pathname], request.url);
         return NextResponse.redirect(destination, { status: 301 });
     }
 
-    // --- 处理 410 删除 (Gone) ---
-    // 精确匹配
+    // 3. 处理 410 删除 - 精确匹配
     if (gonePaths.has(pathname)) {
         return new Response('Gone', { status: 410, headers: { 'Content-Type': 'text/plain' } });
     }
 
-    // 前缀匹配
+    // 4. 处理 410 删除 - 前缀匹配
     for (const prefix of gonePrefixes) {
         if (pathname.startsWith(prefix)) {
             return new Response('Gone', { status: 410, headers: { 'Content-Type': 'text/plain' } });

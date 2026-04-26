@@ -74,7 +74,7 @@ function AffiliateDetailContent() {
                 const member = listData.content.find((m) => m.id.toString() === affiliateId);
                 if (member) {
                     // 将 AffiliateUser 转换为 AffiliateDetail
-                    setDetail(member as AffiliateDetail);
+                    setDetail(member as unknown as AffiliateDetail);
                 }
             }
         } catch (error) {

@@ -414,7 +414,27 @@ export default function ProductDetailClient({
         waitlistRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     };
 
-    const toggleAccordion = (id: string) => setActiveAccordion(activeAccordion === id ? null : id);
+    const toggleAccordion = (id: string) => {
+        const isActive = activeAccordion === id;
+        setActiveAccordion(isActive ? null : id);
+        
+        // 如果是展开操作，滚动到对应位置
+        if (!isActive) {
+            setTimeout(() => {
+                const element = document.getElementById(`accordion-${id}`);
+                if (element) {
+                    const headerOffset = 100; // 预留顶部空间
+                    const elementPosition = element.getBoundingClientRect().top;
+                    const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+                    
+                    window.scrollTo({
+                        top: offsetPosition,
+                        behavior: 'smooth'
+                    });
+                }
+            }, 100); // 等待动画开始后再滚动
+        }
+    };
 
     const renderDetailTitle = (fullTitle: string) => {
         if (fullTitle.includes('|')) {
@@ -711,7 +731,7 @@ export default function ProductDetailClient({
                                 {activeAccordion === 'details' ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
                             </button>
                             {activeAccordion === 'details' && (
-                                <div className="pb-8 animate-fadeIn">
+                                <div id="accordion-details" className="pb-8 animate-fadeIn">
                                     <div data-color-mode="light" className="markdown-story">
                                         <MDViewer
                                             source={description}
@@ -737,7 +757,7 @@ export default function ProductDetailClient({
                                 {activeAccordion === 'specs' ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
                             </button>
                             {activeAccordion === 'specs' && (
-                                <div className="pb-8 animate-fadeIn">
+                                <div id="accordion-specs" className="pb-8 animate-fadeIn">
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-12">
                                         {specifications.map((spec, idx) => {
                                             const displayLabel = SPEC_LABEL_MAP[spec.specKey] || spec.specKey.replace(/_/g, ' ');
@@ -764,7 +784,7 @@ export default function ProductDetailClient({
                             {activeAccordion === 'manual' ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
                         </button>
                         {activeAccordion === 'manual' && (
-                            <div className="pb-8 animate-fadeIn">
+                            <div id="accordion-manual" className="pb-8 animate-fadeIn">
                                 <p className="text-gray-600 text-sm mb-6 leading-relaxed">
                                     Download the complete guide for usage, charging, and safety instructions.
                                 </p>
@@ -787,7 +807,7 @@ export default function ProductDetailClient({
                             {activeAccordion === 'shipping' ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
                         </button>
                         {activeAccordion === 'shipping' && (
-                            <div className="pb-8 text-gray-600 text-sm leading-relaxed animate-fadeIn">
+                            <div id="accordion-shipping" className="pb-8 text-gray-600 text-sm leading-relaxed animate-fadeIn">
                                 <p className="mb-4">We offer free discreet shipping on orders over $49. All packages are unbranded for your privacy.</p>
                                 <p>If you are not satisfied with your purchase, you may return unopened items within 30 days. Due to the intimate nature of our products, opened items cannot be returned unless defective.</p>
                             </div>

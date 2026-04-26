@@ -170,7 +170,9 @@ class OrderService {
             const url = `/api/admin/V1/order/list?${queryParams.toString()}`;
             console.log('[OrderService] Fetching admin orders from:', url);
             
-            const response = await axiosClient.get(url);
+            // 添加时间戳参数，避免浏览器缓存
+            const cacheBusterUrl = `${url}${url.includes('?') ? '&' : '?'}_t=${Date.now()}`;
+            const response = await axiosClient.get(cacheBusterUrl);
             console.log('[OrderService] Admin orders response:', response.data);
 
             if (response.data?.success) {

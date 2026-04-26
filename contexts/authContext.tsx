@@ -127,16 +127,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             const { clearCart } = useCartStore.getState();
             clearCart();
                 
-            // 显示提示
+            // Show notification
             setTimeout(() => {
                 showToast('info', 'Session Expired', 'Your session has expired. Please login again.');
             }, 0);
                 
-            // 直接弹出登录框
+            // Directly show login modal
             setAuthModalMode('login');
             setIsAuthModalOpen(true);
                 
-            // 500ms 后重置标志,允许下次处理
+            // Reset flag after 500ms to allow next handling
             setTimeout(() => {
                 isHandlingTokenExpiredRef.current = false;
             }, 500);
@@ -181,7 +181,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 currentTime: new Date().toISOString()
             });
 
-            // 使用后端返回的过期时间设置 Cookie
+            // Set Cookie with backend-returned expiration time
             setTokens(
                 loginResponse.accessToken, 
                 loginResponse.refreshToken,
@@ -196,28 +196,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
             showToast('success', 'Welcome Back', 'Successfully logged in');
 
-            // ✅ 优先检查 URL 中的 redirect 参数
+            // Check redirect parameter in URL first
             if (typeof window !== 'undefined') {
                 const urlParams = new URLSearchParams(window.location.search);
                 const redirect = urlParams.get('redirect');
                 
                 if (redirect) {
-                    // 有 redirect 参数，先关闭弹窗，再等待 Cookie 写入后跳转
+                    // Has redirect param: close modal first, then wait for cookie to be written before redirecting
                     closeAuthModal();
                     setTimeout(() => {
                         window.location.href = redirect;
-                    }, 300); // 等待 300ms 确保 Cookie 写入和弹窗关闭动画完成
+                    }, 300); // Wait 300ms to ensure cookie is written and modal close animation completes
                     return loginResponse;
                 }
             }
 
             if (loginResponse.affiliateId) {
-                // 如果有联盟ID，直接跳转到联盟专用看板
+                // If has affiliate ID, redirect to affiliate dashboard directly
                 setTimeout(() => {
                     window.location.href = '/affiliate';
                 }, 100);
             } else {
-                // 普通用户流程 - 先执行成功回调，然后关闭模态框
+                // Regular user flow - execute success callback first, then close modal
                 if (onSuccessCallbackRef.current) {
                     onSuccessCallbackRef.current();
                     onSuccessCallbackRef.current = null;

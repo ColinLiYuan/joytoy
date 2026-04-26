@@ -52,12 +52,42 @@ export async function getUserCart() {
         }
 
         const apiResponse = await response.json()
-        console.log('[Cart Action] Get cart success:', apiResponse)
+        console.log('[Cart Action] Get cart full response:', JSON.stringify(apiResponse, null, 2))
 
         if (!apiResponse.success) {
             throw new Error(apiResponse.message || 'Failed to fetch cart')
         }
 
+        // 如果已登录（有 accessToken）但返回游客购物车（没有 userId），说明 Token 可能过期了
+        const { getAccessToken, refreshAccessToken } = await import('@/lib/server-token-utils')
+        const accessToken = await getAccessToken()
+        
+        if (accessToken && !apiResponse.data?.userId) {
+            console.log('[Cart Action] Detected: logged in but got guest cart, refreshing token...')
+            // 主动刷新 Token
+            const newToken = await refreshAccessToken()
+            
+            if (newToken) {
+                console.log('[Cart Action] Token refreshed, retrying cart fetch...')
+                // 用新 Token 重试
+                const retriedResponse = await fetch(`${API_PATHS.CART_GET}`, {
+                    cache: 'no-store',
+                    headers: { 
+                        'Authorization': `Bearer ${newToken}`,
+                        'Content-Type': 'application/json',
+                        'X-Session-Id': sessionId,
+                    },
+                })
+                
+                if (retriedResponse.ok) {
+                    const retriedData = await retriedResponse.json()
+                    console.log('[Cart Action] Retried cart fetch success:', retriedData)
+                    return retriedData.data
+                }
+            }
+        }
+
+        console.log('[Cart Action] Returning cart data:', apiResponse.data)
         return apiResponse.data
     } catch (error) {
         console.error('[Cart Action] getUserCart exception:', error)

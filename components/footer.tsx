@@ -6,7 +6,7 @@ import { Instagram, Mail, Loader2, CreditCard, CheckCircle2, Copy, Facebook } fr
 import Link from 'next/link';
 import { useState } from 'react';
 import { useToast } from '@/contexts/toastContext';
-import { subscribeToNewsletter } from '@/app/actions/subscribe-email';
+import { subscribeToNewsletter } from '@/app/actions/email';
 
 // 自定义 X (Twitter) 图标
 const XIcon = ({ className }: { className?: string }) => (

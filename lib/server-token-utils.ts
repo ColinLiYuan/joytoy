@@ -15,7 +15,7 @@ export async function getAccessToken(): Promise<string | undefined> {
 /**
  * 刷新 Token
  */
-async function refreshAccessToken(): Promise<string | null> {
+export async function refreshAccessToken(): Promise<string | null> {
     try {
         const cookieStore = await cookies()
         const refreshToken = cookieStore.get('refreshToken')?.value

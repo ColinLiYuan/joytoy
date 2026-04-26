@@ -1,7 +1,6 @@
 'use server'
 
-import { cookies } from 'next/headers'
-import { BACKEND_CONFIG } from '@/lib/api-config'
+import { fetchWithAuth, fetchWithAuthGet, fetchWithAuthPost } from '@/lib/server-auth'
 import { PageResponse } from '@/types/api'
 import { PayoutResponse } from '@/types/affiliate'
 
@@ -86,100 +85,20 @@ export interface AdminCommissionLogsPageResponse {
 }
 
 // ==================== 公共工具函数 ====================
-
-/**
- * 服务端刷新 Token
- */
-async function refreshServerToken(): Promise<string | null> {
-    const cookieStore = await cookies()
-    const refreshToken = cookieStore.get('refreshToken')?.value
-
-    if (!refreshToken) {
-        console.warn('[Admin Action] No refresh token found')
-        return null
-    }
-
-    try {
-        const url = `${BACKEND_CONFIG.baseURL}/api/V1/users/refresh`
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ refreshToken })
-        })
-
-        if (!response.ok) return null
-
-        const data = await response.json()
-
-        if (data.success && data.data) {
-            const { accessToken, refreshToken: newRefresh } = data.data
-
-            cookieStore.set('accessToken', accessToken, {
-                httpOnly: true,
-                secure: process.env.NODE_ENV === 'production',
-                sameSite: 'lax',
-                path: '/',
-                maxAge: 30 * 60
-            })
-
-            if (newRefresh) {
-                cookieStore.set('refreshToken', newRefresh, {
-                    httpOnly: true,
-                    secure: process.env.NODE_ENV === 'production',
-                    sameSite: 'lax',
-                    path: '/',
-                    maxAge: 7 * 24 * 60 * 60
-                })
-            }
-
-            return accessToken
-        }
-        return null
-    } catch (e) {
-        console.error('[Admin Action] Refresh error:', e)
-        return null
-    }
-}
+// 已迁移到 lib/server-auth.ts
 
 // ==================== 仪表盘 (Dashboard) Actions ====================
 
-export async function getDashboardStats(retry = false): Promise<DashboardStats> {
-    let token = (await cookies()).get('accessToken')?.value
-
-    if (!token) throw new Error('未登录或登录已过期')
+export async function getDashboardStats(): Promise<DashboardStats> {
+    const { BACKEND_CONFIG } = await import('@/lib/api-config')
 
     try {
         // 并行获取所有统计数据
         const [ordersRes, productsRes, usersRes] = await Promise.all([
-            fetch(`${BACKEND_CONFIG.baseURL}/api/admin/V1/order/list?page=0&size=1000`, {
-                cache: 'no-store',
-                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
-            }),
-            fetch(`${BACKEND_CONFIG.baseURL}/api/admin/V1/product/list?page=0&size=1000`, {
-                cache: 'no-store',
-                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
-            }),
-            fetch(`${BACKEND_CONFIG.baseURL}/api/admin/V1/user/list?page=0&size=1000`, {
-                cache: 'no-store',
-                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
-            })
+            fetchWithAuthGet(`${BACKEND_CONFIG.baseURL}/api/admin/V1/order/list?page=0&size=1000`),
+            fetchWithAuthGet(`${BACKEND_CONFIG.baseURL}/api/admin/V1/product/list?page=0&size=1000`),
+            fetchWithAuthGet(`${BACKEND_CONFIG.baseURL}/api/admin/V1/user/list?page=0&size=1000`)
         ])
-
-        if (ordersRes.status === 401 && !retry) {
-            const newToken = await refreshServerToken()
-            if (newToken) return getDashboardStats(true)
-            // ✅ Token 刷新失败，返回默认值而不是抛出错误
-            return {
-                todaySales: 0,
-                totalOrders: 0,
-                totalProducts: 0,
-                totalUsers: 0,
-                salesChange: '+0%',
-                ordersChange: '+0%',
-                productsChange: '+0%',
-                usersChange: '+0%'
-            }
-        }
 
         const ordersData = await ordersRes.json()
         const productsData = await productsRes.json()
@@ -211,27 +130,25 @@ export async function getDashboardStats(retry = false): Promise<DashboardStats> 
         }
     } catch (error) {
         console.error('Error fetching dashboard stats:', error)
-        throw error
+        // ✅ 返回默认值而不是抛出错误
+        return {
+            todaySales: 0,
+            totalOrders: 0,
+            totalProducts: 0,
+            totalUsers: 0,
+            salesChange: '+0%',
+            ordersChange: '+0%',
+            productsChange: '+0%',
+            usersChange: '+0%'
+        }
     }
 }
 
-export async function getRecentOrders(limit: number = 5, retry = false): Promise<RecentOrder[]> {
-    let token = (await cookies()).get('accessToken')?.value
-
-    if (!token) throw new Error('未登录或登录已过期')
+export async function getRecentOrders(limit: number = 5): Promise<RecentOrder[]> {
+    const { BACKEND_CONFIG } = await import('@/lib/api-config')
 
     try {
-        const response = await fetch(`${BACKEND_CONFIG.baseURL}/api/admin/V1/order/list?page=0&size=${limit}`, {
-            cache: 'no-store',
-            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
-        })
-
-        if (response.status === 401 && !retry) {
-            const newToken = await refreshServerToken()
-            if (newToken) return getRecentOrders(limit, true)
-            // ✅ Token 刷新失败，返回空数组
-            return []
-        }
+        const response = await fetchWithAuthGet(`${BACKEND_CONFIG.baseURL}/api/admin/V1/order/list?page=0&size=${limit}`)
 
         if (!response.ok) return []
 
@@ -253,35 +170,11 @@ export async function getRecentOrders(limit: number = 5, retry = false): Promise
 
 // ==================== 联盟管理 (Affiliate) Actions ====================
 
-export async function getAdminAffiliateStats(retry = false): Promise<AffiliateStats> {
-    let token = (await cookies()).get('accessToken')?.value
-
-    if (!token) throw new Error('未登录或登录已过期')
+export async function getAdminAffiliateStats(): Promise<AffiliateStats> {
+    const { BACKEND_CONFIG } = await import('@/lib/api-config')
 
     try {
-        const response = await fetch(`${BACKEND_CONFIG.baseURL}/api/admin/V1/affiliate/stats`, {
-            method: 'GET',
-            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-            cache: 'no-store',
-        })
-
-        if (response.status === 401 && !retry) {
-            const newToken = await refreshServerToken()
-            if (newToken) return getAdminAffiliateStats(true)
-            // ✅ Token 刷新失败，返回默认值
-            return {
-                totalAffiliates: 0,
-                activeAffiliates: 0,
-                totalCommission: 0,
-                totalClicks: 0,
-                totalConversions: 0,
-                conversionRate: 0,
-                settledAmount: 0,
-                pendingAmount: 0,
-                currentBalance: 0,
-                totalPaid: 0
-            }
-        }
+        const response = await fetchWithAuthGet(`${BACKEND_CONFIG.baseURL}/api/admin/V1/affiliate/stats`)
 
         if (!response.ok) throw new Error(`获取统计数据失败: ${response.status}`)
 
@@ -291,36 +184,35 @@ export async function getAdminAffiliateStats(retry = false): Promise<AffiliateSt
         return data.data
     } catch (error) {
         console.error('获取联盟统计数据失败:', error)
-        throw error
+        // 返回默认值
+        return {
+            totalAffiliates: 0,
+            activeAffiliates: 0,
+            totalCommission: 0,
+            totalClicks: 0,
+            totalConversions: 0,
+            conversionRate: 0,
+            settledAmount: 0,
+            pendingAmount: 0,
+            currentBalance: 0,
+            totalPaid: 0
+        }
     }
 }
 
-export async function getAdminAffiliateList(params: { page: number; size: number }, retry = false): Promise<{
+export async function getAdminAffiliateList(params: { page: number; size: number }): Promise<{
     content: AffiliateUser[];
     totalPages: number;
     totalElements: number;
 }> {
-    let token = (await cookies()).get('accessToken')?.value
-
-    if (!token) throw new Error('未登录或登录已过期')
+    const { BACKEND_CONFIG } = await import('@/lib/api-config')
 
     try {
         const url = new URL(`${BACKEND_CONFIG.baseURL}/api/admin/V1/affiliate/list`)
         url.searchParams.append('page', params.page.toString())
         url.searchParams.append('size', params.size.toString())
 
-        const response = await fetch(url.toString(), {
-            method: 'GET',
-            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-            cache: 'no-store',
-        })
-
-        if (response.status === 401 && !retry) {
-            const newToken = await refreshServerToken()
-            if (newToken) return getAdminAffiliateList(params, true)
-            // ✅ Token 刷新失败，返回空列表
-            return { content: [], totalPages: 0, totalElements: 0 }
-        }
+        const response = await fetchWithAuthGet(url.toString())
 
         if (!response.ok) throw new Error(`获取联盟列表失败: ${response.status}`)
 
@@ -330,43 +222,22 @@ export async function getAdminAffiliateList(params: { page: number; size: number
         return data.data
     } catch (error) {
         console.error('获取联盟列表失败:', error)
-        throw error
+        // 返回空列表
+        return { content: [], totalPages: 0, totalElements: 0 }
     }
 }
 
 export async function getAdminAffiliateCommissionLogs(
     affiliateId: string,
     page: number = 0,
-    size: number = 20,
-    retry = false
+    size: number = 20
 ): Promise<AdminCommissionLogsPageResponse> {
-    let token = (await cookies()).get('accessToken')?.value
-
-    if (!token) throw new Error('未登录或登录已过期')
+    const { BACKEND_CONFIG } = await import('@/lib/api-config')
 
     try {
         const url = `${BACKEND_CONFIG.baseURL}/api/admin/V1/affiliate/${affiliateId}/commission-logs?page=${page}&size=${size}`
         
-        const response = await fetch(url, {
-            method: 'GET',
-            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-            cache: 'no-store',
-        })
-
-        if (response.status === 401 && !retry) {
-            const newToken = await refreshServerToken()
-            if (newToken) return getAdminAffiliateCommissionLogs(affiliateId, page, size, true)
-            // ✅ Token 刷新失败，返回空列表
-            return {
-                content: [],
-                currentPage: page,
-                pageSize: size,
-                totalElements: 0,
-                totalPages: 0,
-                hasNext: false,
-                hasPrevious: false
-            }
-        }
+        const response = await fetchWithAuthGet(url)
 
         if (!response.ok) throw new Error(`获取联盟成员佣金日志失败: ${response.status}`)
 
@@ -384,25 +255,27 @@ export async function getAdminAffiliateCommissionLogs(
         }
     } catch (error) {
         console.error('[Admin Affiliate Commission Logs] Error:', error)
-        throw error
+        // 返回空列表
+        return {
+            content: [],
+            currentPage: page,
+            pageSize: size,
+            totalElements: 0,
+            totalPages: 0,
+            hasNext: false,
+            hasPrevious: false
+        }
     }
 }
 
 export async function getAllPayouts(page: number = 0, size: number = 20): Promise<PageResponse<PayoutResponse>> {
-    try {
-        const cookieStore = await cookies()
-        const token = cookieStore.get('accessToken')?.value
-        
-        if (!token) throw new Error('Unauthorized - No token provided')
+    const { BACKEND_CONFIG } = await import('@/lib/api-config')
 
+    try {
         const queryParams = new URLSearchParams({ page: page.toString(), size: size.toString() })
         const url = `${BACKEND_CONFIG.baseURL}/api/admin/V1/affiliate/payouts?${queryParams.toString()}`
         
-        const response = await fetch(url, {
-            method: 'GET',
-            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-            cache: 'no-store',
-        })
+        const response = await fetchWithAuthGet(url)
 
         if (!response.ok) throw new Error(`Failed to fetch payouts: ${response.status}`)
 
@@ -417,19 +290,12 @@ export async function getAllPayouts(page: number = 0, size: number = 20): Promis
 }
 
 export async function approvePayout(payoutId: number, transactionId?: string, adminNote?: string): Promise<PayoutResponse> {
-    try {
-        const cookieStore = await cookies()
-        const token = cookieStore.get('accessToken')?.value
-        
-        if (!token) throw new Error('Unauthorized - No token provided')
+    const { BACKEND_CONFIG } = await import('@/lib/api-config')
 
+    try {
         const url = `${BACKEND_CONFIG.baseURL}/api/admin/V1/affiliate/payouts/${payoutId}/approve`
         
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ transactionId, adminNote }),
-        })
+        const response = await fetchWithAuthPost(url, { transactionId, adminNote })
 
         if (!response.ok) throw new Error(`Failed to approve payout: ${response.status}`)
 
@@ -444,19 +310,12 @@ export async function approvePayout(payoutId: number, transactionId?: string, ad
 }
 
 export async function rejectPayout(payoutId: number, adminNote: string): Promise<PayoutResponse> {
-    try {
-        const cookieStore = await cookies()
-        const token = cookieStore.get('accessToken')?.value
-        
-        if (!token) throw new Error('Unauthorized - No token provided')
+    const { BACKEND_CONFIG } = await import('@/lib/api-config')
 
+    try {
         const url = `${BACKEND_CONFIG.baseURL}/api/admin/V1/affiliate/payouts/${payoutId}/reject`
         
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ adminNote }),
-        })
+        const response = await fetchWithAuthPost(url, { adminNote })
 
         if (!response.ok) throw new Error(`Failed to reject payout: ${response.status}`)
 

@@ -39,6 +39,8 @@ export interface ProductBundleItem {
     quantity: number;
     unitPrice?: number;  // 兼容字段
     skuId?: number;
+    skuCode?: string;  // SKU 编码
+    color?: string;  // 颜色
     isOptional?: boolean;
     sortOrder?: number;
 }

@@ -77,8 +77,8 @@ export default function BundleUpsell({ bundles }: BundleUpsellProps) {
                                 {/* 商品横向滚动列表 */}
                                 {bundle.items && bundle.items.length > 0 && (
                                     <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
-                                        {bundle.items.map((item) => (
-                                            <div key={item.productId} className="flex-shrink-0 flex flex-col items-center gap-2">
+                                        {bundle.items.map((item, index) => (
+                                            <div key={`${item.productId}-${index}`} className="flex-shrink-0 flex flex-col items-center gap-2">
                                                 <div className="w-24 h-24 bg-gray-50 rounded-xl overflow-hidden border border-gray-200 shadow-sm">
                                                     {item.productImage ? (
                                                         <Image 
@@ -95,6 +95,9 @@ export default function BundleUpsell({ bundles }: BundleUpsellProps) {
                                                     )}
                                                 </div>
                                                 <span className="text-xs text-gray-700 font-medium text-center max-w-[100px] truncate">{item.productName}</span>
+                                                {item.color && (
+                                                    <span className="text-xs text-gray-500 text-center">{item.color}</span>
+                                                )}
                                             </div>
                                         ))}
                                     </div>

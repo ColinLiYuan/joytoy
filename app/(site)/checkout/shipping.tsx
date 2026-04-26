@@ -83,7 +83,7 @@ export default function ShippingForm({
         if (validateForm()) {
             onProceedToPayment();
         } else {
-            // 自动滚动到第一个错误
+            // Auto scroll to first error
             setTimeout(() => {
                 const firstError = document.querySelector('.text-red-500');
                 firstError?.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -91,7 +91,7 @@ export default function ShippingForm({
         }
     };
 
-    // 公共错误提示组件
+    // Common error message component
     const ErrorMsg = ({ name }: { name: string }) => (
         errors[name] ? <p className="text-red-500 text-xs mt-1 ml-1">{errors[name]}</p> : null
     );

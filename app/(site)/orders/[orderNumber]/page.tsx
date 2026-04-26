@@ -84,7 +84,7 @@ function OrderDetailsContent({ params }: { params: Promise<{ orderNumber: string
                 console.log('[Order Detail] Error message:', error.message);
                 
                 // 检测是否是认证错误
-                if (error.message?.includes('请先登录') || error.message?.includes('login') || error.response?.status === 401) {
+                if (error.message?.includes('请先登录') || error.message?.includes('Please login') || error.message?.includes('login') || error.response?.status === 401) {
                     console.log('[Order Detail] Auth error detected, trying localStorage...');
                     
                     // ✅ 尝试从 localStorage 恢复

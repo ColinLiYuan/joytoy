@@ -1,4 +1,13 @@
 // lib/constants/env-data.ts
+
+// 🔍 运行时输出环境变量（调试用）
+console.log('\n🌐 [Runtime] Environment Variables:');
+console.log('  NEXT_PUBLIC_BACKEND_BASE_URL:', process.env.NEXT_PUBLIC_BACKEND_BASE_URL);
+console.log('  NEXT_PUBLIC_IMAGE_BASE_URL:', process.env.NEXT_PUBLIC_IMAGE_BASE_URL);
+console.log('  NEXT_PUBLIC_IMAGE_UPLOAD_PATH:', process.env.NEXT_PUBLIC_IMAGE_UPLOAD_PATH);
+console.log('  NODE_ENV:', process.env.NODE_ENV);
+console.log('');
+
 export const envData = {
     imageBaseUrl: process.env.NEXT_PUBLIC_IMAGE_BASE_URL || 'https://mythtoy.com',
     imageUploadPath: process.env.NEXT_PUBLIC_IMAGE_UPLOAD_PATH || 'https://pub-c128c2f5caa744afbeb49b9904451478.r2.dev',

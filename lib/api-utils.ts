@@ -94,9 +94,9 @@ export async function proxyRequest(
     } = options;
 
     // 🔧 关键修复：判断是 Next.js API Route 还是后端接口
-    // - 如果 endpoint 以 /api/site/ 开头，说明是 Next.js API Route，使用相对路径
+    // - 如果 endpoint 以 /api/site/ 或 /api/V1/affiliate 开头，说明是 Next.js API Route，使用相对路径
     // - 否则，认为是后端接口，拼接 BACKEND_CONFIG.baseURL
-    const isNextJsRoute = endpoint.startsWith('/api/site/');
+    const isNextJsRoute = endpoint.startsWith('/api/site/') || endpoint.startsWith('/api/V1/affiliate');
     const url = isNextJsRoute ? endpoint : `${BACKEND_CONFIG.baseURL}${endpoint}`;
 
     // 1. 获取 Token (Async) - 只有在没有手动传递 Authorization 时才获取

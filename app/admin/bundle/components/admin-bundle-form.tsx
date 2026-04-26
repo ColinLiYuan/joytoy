@@ -88,11 +88,10 @@ export default function AdminBundleForm({ initialData }: AdminBundleFormProps) {
         return ((originalPrice - formData.bundlePrice) / originalPrice)
     }, [originalPrice, formData.bundlePrice])
 
-    // 过滤可选商品（排除已选中的）
+    // 所有商品都可选（允许重复选择）
     const availableProducts = useMemo(() => {
-        const selectedIds = new Set(formData.items.map(item => item.productId))
-        return products.filter(p => !selectedIds.has(p.id))
-    }, [products, formData.items])
+        return products
+    }, [products])
 
     // 搜索过滤
     const filteredProducts = useMemo(() => {

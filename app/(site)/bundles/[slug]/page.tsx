@@ -50,9 +50,9 @@ export default function BundleDetailPage() {
             await bundleService.addToCart(bundle.id, 1, cart.id)
             // 刷新购物车
             await getCart()
-            alert('套装已成功加入购物袋！')
+            alert('Bundle has been added to your bag!')
         } catch (error: any) {
-            alert(error.message || '加入购物袋失败')
+            alert(error.message || 'Failed to add bundle to bag')
         } finally {
             setAdding(false)
         }

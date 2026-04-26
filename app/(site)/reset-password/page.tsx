@@ -33,7 +33,7 @@ function ResetPasswordForm() {
         try {
             await resetPasswordAction(token, password);
             setIsSuccess(true);
-            // 3秒后自动返回首页并弹出登录框
+            // Redirect to home page after 3 seconds
             setTimeout(() => {
                 router.push('/');
             }, 3000);

@@ -112,11 +112,11 @@ function CheckoutContent() {
             const couponResponse: CouponResponse = await checkoutService.validateCoupon(validateRequest);
             setAppliedCoupon(couponResponse);
             
-            // ✅ 显示优惠券适用范围提示
+            // ✅ Show coupon applicable range notice
             let successMessage = couponResponse.description;
             if (couponResponse.applicableProductNames) {
                 const products = couponResponse.applicableProductNames.split(',').map(p => p.trim());
-                successMessage += ` (仅适用于: ${products.join(', ')})`;
+                successMessage += ` (Applicable to: ${products.join(', ')})`;
             }
             
             showToast('success', 'Coupon Applied', successMessage);
@@ -129,7 +129,7 @@ function CheckoutContent() {
     };
 
     const handleProceedToPayment = async () => {
-        // 优化:防止重复提交
+        // Prevent duplicate submission
         if (isCreatingOrder || hasSubmitted) {
             console.warn('⚠️ Order creation already in progress');
             return;
@@ -140,20 +140,20 @@ function CheckoutContent() {
         const formData = getShippingFormData();
         const addr = formData.shippingAddress;
     
-        // 优化:邮箱格式验证
+        // Email format validation
         const emailToUse = isLoggedIn ? (addr.email || getUserEmail()) : addr.email;
         if (!emailToUse || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailToUse)) {
             showToast('error', 'Invalid Email', 'Please enter a valid email address.');
             return;
         }
     
-        // 优化:统一在 shipping.tsx 中验证,这里只检查返回结果
+        // Validation already done in shipping.tsx, only check result here
         if (!addr.firstName || !addr.addressLine1 || !addr.city || !addr.zipCode || !addr.country) {
             showToast('error', 'Incomplete Address', 'Please fill in all required shipping fields.');
             return;
         }
     
-        // 校验账单地址(如果取消勾选相同)
+        // Validate billing address (if not same as shipping)
         if (!isBillingSameAsShipping) {
             if (!billingAddress.firstName || !billingAddress.addressLine1 || !billingAddress.city || !billingAddress.country) {
                 showToast('error', 'Incomplete Billing', 'Please fill in required billing fields.');
@@ -219,20 +219,21 @@ function CheckoutContent() {
         try {
             const result = await orderService.createOrder(orderData);
             
-            // 优化:保存订单信息,但不立即清空购物车
+            // ✅ Save order info, but don't clear cart immediately
             localStorage.setItem('currentOrder', JSON.stringify({
                 ...result,
                 items: orderItems,
                 shippingAddress: shippingAddressData,
                 billingAddress: billingAddressData,
             }));
-            
-            // 跳转到支付页面
-            router.push(`/payment?orderNumber=${result.orderNumber.replace(/^#/, '')}`);
+                        
+            // ✅ Redirect to payment page (guest mode needs to pass email)
+            const emailParam = !userId ? `&email=${encodeURIComponent(emailToUse)}` : '';
+            router.push(`/payment?orderNumber=${result.orderNumber.replace(/^#/, '')}${emailParam}`);
         } catch (error: any) {
             console.error('❌ Order creation failed:', error);
             
-            // 优化:详细的错误处理
+            // Detailed error handling
             let errorMessage = 'Could not create order';
             if (error.message?.includes('inventory') || error.message?.includes('stock')) {
                 errorMessage = 'Some items are out of stock. Please update your cart.';

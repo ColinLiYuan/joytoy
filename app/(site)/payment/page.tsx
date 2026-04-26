@@ -28,6 +28,7 @@ function PaymentContent() {
     const searchParams = useSearchParams();
     const rawOrderNumber = searchParams.get('orderNumber');
     const orderNumber = rawOrderNumber ? rawOrderNumber.replace(/^#/, '') : null;
+    const guestEmail = searchParams.get('email'); // ✅ 从 URL 获取游客邮箱
 
     const { isLoggedIn } = useAuth();
     const { clearCart } = useCartStore();
@@ -38,7 +39,7 @@ function PaymentContent() {
     const [orderData, setOrderData] = useState<any>(null);
     const [errorMessage, setErrorMessage] = useState('');
     const [isMounted, setIsMounted] = useState(false);
-    const [paymentStatus, setPaymentStatus] = useState<'idle' | 'processing' | 'success' | 'error'>('idle'); // ✅ 初始状态改为 'idle'
+    const [paymentStatus, setPaymentStatus] = useState<'idle' | 'processing' | 'success' | 'error'>('idle' as const); // ✅ 初始状态改为 'idle'
     const [isCheckingStatus, setIsCheckingStatus] = useState(false); // ✅ 检查订单状态中
     const [recentPaymentAttempt, setRecentPaymentAttempt] = useState(false); // ✅ 检测近期支付尝试
 
@@ -77,7 +78,7 @@ function PaymentContent() {
             try {
                 let data = null;
                 
-                // ✅ 先尝试从 localStorage 获取（游客模式）
+                // ✅ 优先从 localStorage 获取（游客模式）
                 const savedOrder = localStorage.getItem('currentOrder');
                 if (savedOrder) {
                     const parsed = JSON.parse(savedOrder);
@@ -87,35 +88,60 @@ function PaymentContent() {
                     }
                 }
                 
-                // ✅ 如果 localStorage 没有或订单号不匹配，调用 API
-                if (!data) {
-                    console.log('[Payment] Fetching order from API...');
+                // ✅ 如果 localStorage 没有且用户已登录，调用 API
+                if (!data && isLoggedIn) {
+                    console.log('[Payment] Fetching order from API (logged in)...');
                     data = await orderService.getOrder(orderNumber);
                 }
                 
-                if (data) {
-                    setOrderData(data);
-                    
-                    // ✅ 检查订单状态：如果已支付，自动跳转
-                    if (data.status === 'PAID') {
-                        console.log('✅ 订单已支付，跳转到确认页面');
-                        if (isLoggedIn) {
-                            router.push(`/orders/${orderNumber}?payment_success=1`);
-                        } else {
-                            router.push(`/order-confirmation?orderNumber=${orderNumber}`);
-                        }
-                        return;
+                // ✅ 如果还是没找到数据，但 URL 中有邮箱（游客通过邮件链接访问）
+                if (!data && !isLoggedIn && guestEmail) {
+                    console.log('[Payment] Guest mode with email param, calling /guest-query API...');
+                    // 使用 /api/V1/order/guest-query 接口（支持 orderNumber + email 查询）
+                    const response = await fetch(`/api/backend/order/guest-query?orderNumber=${encodeURIComponent(orderNumber)}&email=${encodeURIComponent(guestEmail)}`, {
+                        headers: {}, // ✅ 确保不携带任何 Token
+                    });
+                    const result = await response.json();
+                    console.log('[Payment] /guest-query API response:', result);
+                    if (result.success) {
+                        data = result.data;
+                    } else {
+                        console.error('[Payment] /guest-query API error:', result.message);
                     }
-                    
-                    // ✅ 检查订单状态：如果已取消或过期，阻止支付
-                    if (data.status === 'CANCELLED' || data.status === 'EXPIRED') {
-                        console.log('❌ 订单已取消或过期:', data.status);
-                        setErrorMessage(`This order has been ${data.status.toLowerCase()}. Please create a new order.`);
+                }
+                
+                // ✅ 如果还是没找到数据
+                if (!data) {
+                    if (isLoggedIn) {
+                        throw new Error('Order not found');
+                    } else {
+                        // 游客模式，localStorage 没有数据且 URL 没有邮箱
+                        console.log('[Payment] Guest mode, no order data. Please access from confirmation email link.');
+                        setErrorMessage('Order data not found. Please access this page from your order confirmation email.');
                         setIsLoading(false);
                         return;
                     }
-                } else {
-                    throw new Error('Order not found');
+                }
+                
+                setOrderData(data);
+                
+                // ✅ 检查订单状态：如果已支付，自动跳转
+                if (data.status === 'PAID') {
+                    console.log('✅ 订单已支付，跳转到确认页面');
+                    if (isLoggedIn) {
+                        router.push(`/orders/${orderNumber}?payment_success=1`);
+                    } else {
+                        router.push(`/order-confirmation?orderNumber=${orderNumber}`);
+                    }
+                    return;
+                }
+                
+                // ✅ 检查订单状态：如果已取消或过期，阻止支付
+                if (data.status === 'CANCELLED' || data.status === 'EXPIRED') {
+                    console.log('❌ 订单已取消或过期:', data.status);
+                    setErrorMessage(`This order has been ${data.status.toLowerCase()}. Please create a new order.`);
+                    setIsLoading(false);
+                    return;
                 }
             } catch (error: any) {
                 console.error('[Payment] Failed to load order:', error);
@@ -139,7 +165,7 @@ function PaymentContent() {
             }
         };
         fetchOrder();
-    }, [orderNumber, isMounted]);
+    }, [orderNumber, isMounted, isLoggedIn, guestEmail]);
 
     // --- 核心：成功处理逻辑 ---
     const handlePaymentSuccess = async () => {
@@ -168,31 +194,57 @@ function PaymentContent() {
             console.log('[Payment] 调用后端创建 PayPal 订单...');
             
             // ✅ 调用前检查并刷新 Token（提前 5 分钟）
-            const { ensureFreshToken } = await import('@/lib/token-utils');
+            const { ensureFreshToken, getToken } = await import('@/lib/token-utils');
             await ensureFreshToken(300);
+            
+            // ✅ 获取 Token（游客模式可能为 null）
+            const token = await getToken();
+            
+            // ✅ 构建请求头（游客模式下不添加 Authorization）
+            const headers: Record<string, string> = {
+                'Content-Type': 'application/json',
+            };
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+            
+            // ✅ 构建请求体（游客模式必须传递 guestEmail）
+            const body: any = {};
+            if (!token) {
+                // 游客模式：尝试从多个位置获取邮箱
+                const guestEmail = orderData?.guestEmail 
+                    || orderData?.shippingAddress?.email 
+                    || orderData?.billingAddress?.email;
+                
+                if (guestEmail) {
+                    body.guestEmail = guestEmail;
+                    console.log('[Payment] Guest mode, adding guestEmail:', guestEmail);
+                } else {
+                    console.error('[Payment] Guest mode but no email found in order data!');
+                }
+            }
             
             // ✅ 使用 /api/backend 前缀，让 Next.js rewrite 代理到后端
             const response = await fetch(`/api/backend/order/${orderNumber}/paypal/create`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-                },
+                headers,
+                body: JSON.stringify(body),
             });
             
             const result = await response.json();
+            console.log('[Payment] Backend response:', result);
             
             if (!result.success) {
-                throw new Error(result.message || '创建 PayPal 订单失败');
+                throw new Error(result.message || 'Failed to create PayPal order');
             }
             
             const paypalOrderId = result.data;
-            console.log('[Payment] 后端返回 PayPal Order ID:', paypalOrderId);
+            console.log('[Payment] Backend returned PayPal Order ID:', paypalOrderId);
             
             // ✅ 返回后端生成的 PayPal Order ID
             return paypalOrderId;
         } catch (error) {
-            console.error('[Payment] 创建 PayPal 订单失败:', error);
+            console.error('[Payment] Failed to create PayPal order:', error);
             throw error;
         }
     };
@@ -253,24 +305,24 @@ function PaymentContent() {
             setIsCheckingStatus(true);
             setErrorMessage('');
             
-            console.log('🔍 检查订单状态:', orderNumber);
+            console.log('🔍 Checking order status:', orderNumber);
             const order = await orderService.getOrder(orderNumber!);
             
             if (order.status === 'PAID') {
-                // ✅ 订单已支付成功，即使之前超时也走成功流程
-                console.log('✅ 订单已支付成功，跳转确认页面');
+                // ✅ Order has been paid successfully, proceed with success flow even if timed out before
+                console.log('✅ Order paid successfully, redirecting to confirmation page');
                 await handlePaymentSuccess();
             } else if (order.status === 'PENDING') {
-                // ✅ 订单仍未支付，提示用户可以重试
+                // ✅ Order still pending, user can retry
                 setErrorMessage('Order is still pending. You can try to pay again or contact support.');
                 setPaymentStatus('error');
             } else {
-                // ✅ 订单状态异常（已取消、已过期等）
+                // ✅ Order status abnormal (cancelled, expired, etc.)
                 setErrorMessage(`Order status: ${order.status}. Please contact support for assistance.`);
                 setPaymentStatus('error');
             }
         } catch (error: any) {
-            console.error('检查订单状态失败:', error);
+            console.error('Failed to check order status:', error);
             setErrorMessage('Failed to check order status. Please refresh the page or contact support.');
             setPaymentStatus('error');
         } finally {
@@ -375,28 +427,35 @@ function PaymentContent() {
                             <div className="space-y-8">
                                 <div className="relative z-0 min-h-[150px] w-full animate-in fade-in slide-in-from-bottom-2 duration-300">
                                     {paymentStatus === 'processing' ? (
-                                        <div className="flex flex-col items-center justify-center py-12">
-                                            <Loader2 className="w-10 h-10 animate-spin text-indigo-600 mb-4" />
-                                            <p className="text-sm font-bold text-gray-900 mb-1">Verifying Payment...</p>
-                                            <p className="text-xs text-gray-500 text-center max-w-[250px]">
-                                                This usually takes a few seconds. Please don't close this page.
-                                            </p>
+                                        <div className="relative">
+                                            {/* ✅ 遮罩层：防止重复点击 */}
+                                            <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-10 rounded-xl" />
+                                            <div className="flex flex-col items-center justify-center py-12 relative z-20">
+                                                <Loader2 className="w-10 h-10 animate-spin text-indigo-600 mb-4" />
+                                                <p className="text-sm font-bold text-gray-900 mb-1">Verifying Payment...</p>
+                                                <p className="text-xs text-gray-500 text-center max-w-[250px]">
+                                                    This usually takes a few seconds. Please don't close this page.
+                                                </p>
+                                            </div>
                                         </div>
                                     ) : paypalClientId ? (
-                                        <PayPalScriptProvider options={{
-                                            clientId: paypalClientId,
-                                            currency: "USD",
-                                            intent: "capture",
-                                            components: "buttons",
-                                            "disable-funding": "paylater,credit"
-                                        }}>
-                                            <PayPalButtons
-                                                style={{ layout: "vertical", shape: "rect", borderRadius: 12, height: 48 }}
-                                                className="w-full"
-                                                createOrder={createPayPalOrder}
-                                                onApprove={onPayPalApprove}
-                                            />
-                                        </PayPalScriptProvider>
+                                        <div className={(paymentStatus as string) === 'processing' ? 'pointer-events-none opacity-50' : ''}>
+                                            <PayPalScriptProvider options={{
+                                                clientId: paypalClientId,
+                                                currency: "USD",
+                                                intent: "capture",
+                                                components: "buttons",
+                                                "disable-funding": "paylater,credit"
+                                            }}>
+                                                <PayPalButtons
+                                                    style={{ layout: "vertical", shape: "rect", borderRadius: 12, height: 48 }}
+                                                    className="w-full"
+                                                    createOrder={createPayPalOrder}
+                                                    onApprove={onPayPalApprove}
+                                                    disabled={(paymentStatus as string) === 'processing'} // ✅ 禁用按钮
+                                                />
+                                            </PayPalScriptProvider>
+                                        </div>
                                     ) : (
                                         <div className="text-red-500 text-center text-sm">PayPal Configuration Missing</div>
                                     )}
@@ -430,7 +489,8 @@ function PaymentContent() {
                         <div className="text-center mt-8">
                             <button
                                 onClick={() => router.back()}
-                                className="inline-flex items-center gap-1 text-sm text-gray-400 hover:text-gray-900 transition-all font-medium"
+                                disabled={(paymentStatus as string) === 'processing'} // ✅ 支付处理时禁用返回
+                                className="inline-flex items-center gap-1 text-sm text-gray-400 hover:text-gray-900 transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 <ChevronLeft size={14} /> Back to order details
                             </button>

@@ -348,17 +348,25 @@ export default function OrderPage() {
                                 <td className="px-6 py-4">
                                     {order.affiliatePayoutStatus ? (
                                         <span className={`px-3 py-1 text-[10px] font-bold rounded-full border ${
-                                            order.affiliatePayoutStatus === 'PAID' 
+                                            order.affiliatePayoutStatus?.toUpperCase() === 'PAID' 
                                                 ? 'bg-green-100 text-green-700 border-green-200' 
-                                                : order.affiliatePayoutStatus === 'PENDING'
-                                                    ? 'bg-yellow-100 text-yellow-700 border-yellow-200'
-                                                    : 'bg-gray-100 text-gray-600 border-gray-200'
+                                                : order.affiliatePayoutStatus?.toUpperCase() === 'CALCULATED'
+                                                    ? 'bg-blue-100 text-blue-700 border-blue-200'
+                                                    : order.affiliatePayoutStatus?.toUpperCase() === 'PENDING'
+                                                        ? 'bg-yellow-100 text-yellow-700 border-yellow-200'
+                                                        : order.affiliatePayoutStatus?.toUpperCase() === 'REFUNDED'
+                                                            ? 'bg-red-100 text-red-700 border-red-200'
+                                                            : 'bg-gray-100 text-gray-600 border-gray-200'
                                         }`}>
-                                            {order.affiliatePayoutStatus === 'PAID' 
+                                            {order.affiliatePayoutStatus?.toUpperCase() === 'PAID' 
                                                 ? '已结算' 
-                                                : order.affiliatePayoutStatus === 'PENDING' 
-                                                    ? '待结算' 
-                                                    : order.affiliatePayoutStatus}
+                                                : order.affiliatePayoutStatus?.toUpperCase() === 'CALCULATED'
+                                                    ? '已计算'
+                                                    : order.affiliatePayoutStatus?.toUpperCase() === 'PENDING' 
+                                                        ? '待结算' 
+                                                        : order.affiliatePayoutStatus?.toUpperCase() === 'REFUNDED'
+                                                            ? '已退款'
+                                                            : order.affiliatePayoutStatus}
                                         </span>
                                     ) : (
                                         <span className="text-xs text-gray-400">-</span>
@@ -402,7 +410,7 @@ export default function OrderPage() {
                                         {order.status === 'DELIVERED' && (
                                             <button onClick={() => handleUpdateStatus(order.orderNumber)} className="p-2 text-green-600 hover:bg-green-50 rounded-lg" title="标记已完成"><CheckCircle className="h-5 w-5" /></button>
                                         )}
-                                        {order.status === 'COMPLETED' && order.affiliateId && (order.commissionAmount || 0) > 0 && order.affiliatePayoutStatus?.toUpperCase() === 'PENDING' && (
+                                        {order.status === 'COMPLETED' && order.affiliateId && (order.commissionAmount || 0) > 0 && order.affiliatePayoutStatus?.toUpperCase() === 'CALCULATED' && (
                                             <button 
                                                 onClick={() => handleSettleCommission(order)} 
                                                 disabled={settlingOrderId === order.id}

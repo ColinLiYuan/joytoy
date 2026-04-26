@@ -19,6 +19,9 @@ export function CartSync() {
             getCart()
                 .then(result => {
                     console.log('[CartSync] Cart fetched successfully:', result);
+                    if (!result?.id) {
+                        console.warn('[CartSync] WARNING: Cart fetched but has no ID!');
+                    }
                 })
                 .catch(error => {
                     console.error('[CartSync] Failed to fetch cart:', error);
@@ -27,6 +30,14 @@ export function CartSync() {
             console.log('[CartSync] Cart already initialized, skipping');
         }
     }, [getCart, isLoggedIn]);
+
+    // ✅ 登录状态变化时，主动刷新购物车
+    useEffect(() => {
+        if (isLoggedIn && cart?.id) {
+            console.log('[CartSync] User logged in, refreshing cart...');
+            getCart().catch(console.error);
+        }
+    }, [isLoggedIn]);
 
     return null; // 这个组件不渲染任何内容，只负责副作用
 }
