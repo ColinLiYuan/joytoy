@@ -410,7 +410,7 @@ export default function OrderPage() {
                                         {order.status === 'DELIVERED' && (
                                             <button onClick={() => handleUpdateStatus(order.orderNumber)} className="p-2 text-green-600 hover:bg-green-50 rounded-lg" title="标记已完成"><CheckCircle className="h-5 w-5" /></button>
                                         )}
-                                        {order.status === 'COMPLETED' && order.affiliateId && (order.commissionAmount || 0) > 0 && order.affiliatePayoutStatus?.toUpperCase() === 'CALCULATED' && (
+                                        {order.status === 'COMPLETED' && order.affiliateId && (order.commissionAmount || 0) > 0 && order.affiliatePayoutStatus?.toUpperCase() === 'PENDING' && (
                                             <button 
                                                 onClick={() => handleSettleCommission(order)} 
                                                 disabled={settlingOrderId === order.id}

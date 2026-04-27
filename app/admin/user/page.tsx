@@ -46,7 +46,8 @@ export default function AdminUserListPage() {
                 currentPage,
                 10,
                 keyword || undefined,
-                status || undefined
+                status || undefined,
+                'lastLoginAt'  // 按登录时间排序
             );
             setUsers(data.content);
             setTotalPages(data.totalPages);

@@ -3,20 +3,20 @@ import axios from 'axios';
 import { BACKEND_CONFIG } from '@/lib/api-config';
 import { setCookie, removeCookie } from '@/lib/cookie-utils';
 
-// 🔧 修复 Mixed Content 问题：生产环境使用相对路径（走 Vercel rewrites 代理）
-const isProduction = process.env.NODE_ENV === 'production';
-const axiosBaseURL = isProduction ? '' : BACKEND_CONFIG.baseURL;
+// 🔧 统一使用相对路径，走 Next.js rewrites 代理（解决跨域和 Mixed Content 问题）
+// 本地开发和生产环境都使用相对路径
+const axiosBaseURL = '';
 
 // 创建 Axios 实例
 const axiosClient = axios.create({
-    baseURL: axiosBaseURL, // 生产环境: 空字符串（相对路径）, 开发环境: http://localhost:9356
+    baseURL: axiosBaseURL, // 使用相对路径，走 Next.js rewrites 代理
     timeout: 30000,
     headers: {
         'Content-Type': 'application/json',
     },
 });
 
-console.log('[AxiosClient] baseURL:', axiosBaseURL, '| isProduction:', isProduction);
+console.log('[AxiosClient] baseURL:', axiosBaseURL);
 
 // 请求拦截器
 axiosClient.interceptors.request.use(
@@ -241,20 +241,19 @@ axiosClient.interceptors.response.use(
                     throw new Error('Invalid refresh response');
                 }
             } catch (refreshError: any) {
-                // 区分"没有 Refresh Token"和"刷新失败"两种情况
+                // 区分“没有 Refresh Token”和“刷新失败”两种情况
                 // ✅ 静默处理，不打印日志（这是正常的用户未登录状态）
-                            
+                                        
                 processQueue(refreshError, null);
-                            
-                // 清除本地 Token
+                                        
+                // 清除本地 Token（不触发登录框，让 AuthGuard 统一处理）
                 if (typeof window !== 'undefined') {
                     removeCookie('accessToken');
                     removeCookie('refreshToken');
+                    localStorage.removeItem('accessToken');
+                    localStorage.removeItem('refreshToken');
                                 
-                    // ✅ 触发统一的 Token 过期事件，自动弹出登录框
-                    window.dispatchEvent(new CustomEvent('auth:tokenExpired', {
-                        detail: { message: 'Session expired, please login again' }
-                    }));
+                    console.log('[AxiosClient] Tokens cleared, AuthGuard will handle login modal');
                 }
             } finally {
                 isRefreshing = false;

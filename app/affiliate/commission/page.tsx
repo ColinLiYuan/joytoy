@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react'
 import {
     DollarSign,
     TrendingUp,
+    TrendingDown,
     Clock,
     ChevronLeft,
     ChevronRight,
@@ -171,8 +172,27 @@ export default function CommissionHistoryPage() {
  * 佣金日志项组件
  */
 function CommissionLogItem({ log }: { log: CommissionLogResponse }) {
-    const isEarn = log.changeType === 'EARN';
-    const isRefund = log.changeType === 'REFUND_DEDUCT';
+    // 判断是收入还是扣款
+    const isIncrease = log.changeType === 'EARN' || log.changeType === 'SETTLEMENT';
+    const isDecrease = log.changeType === 'REFUND_DEDUCT' || log.changeType === 'MANUAL_ADJUST' || log.changeType === 'PAYOUT';
+    
+    // 判断类型显示
+    const getTypeLabel = () => {
+        switch (log.changeType) {
+            case 'EARN': return 'Commission Earned';
+            case 'SETTLEMENT': return 'Manual Settlement';
+            case 'REFUND_DEDUCT': return 'Refund Deduction';
+            case 'MANUAL_ADJUST': return 'Admin Adjustment';
+            case 'PAYOUT': return 'Payout';
+            default: return log.changeType;
+        }
+    };
+    
+    const getTypeColor = () => {
+        if (isIncrease) return 'bg-green-100 text-green-700';
+        if (isDecrease) return 'bg-red-100 text-red-700';
+        return 'bg-gray-100 text-gray-600';
+    };
     
     return (
         <div className="border border-gray-100 rounded-xl p-4 hover:bg-gray-50 transition-colors">
@@ -188,31 +208,29 @@ function CommissionLogItem({ log }: { log: CommissionLogResponse }) {
                         minute: '2-digit'
                     })}
                 </div>
-                <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide ${
-                    isEarn 
-                        ? 'bg-green-100 text-green-700' 
-                        : isRefund
-                            ? 'bg-red-100 text-red-700'
-                            : 'bg-gray-100 text-gray-600'
-                }`}>
-                    {isEarn ? 'Earned' : isRefund ? 'Refunded' : log.changeType}
+                <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide ${getTypeColor()}`}>
+                    {getTypeLabel()}
                 </span>
             </div>
             
             {/* 订单号 */}
             <div className="mb-3">
                 <span className="text-xs text-gray-500 font-medium">Order: </span>
-                <span className="text-xs font-mono font-bold text-gray-900">#{log.orderNumber}</span>
+                <span className="text-xs font-mono font-bold text-gray-900">#{log.orderNumber || 'N/A'}</span>
             </div>
             
             {/* 金额信息 */}
             <div className="flex items-center gap-4 mb-3">
                 <div className="flex items-center gap-1.5">
-                    <TrendingUp size={14} className={isEarn ? 'text-green-600' : 'text-red-600'} />
+                    {isIncrease ? (
+                        <TrendingUp size={14} className="text-green-600" />
+                    ) : (
+                        <TrendingDown size={14} className="text-red-600" />
+                    )}
                     <span className={`text-sm font-black ${
-                        isEarn ? 'text-green-600' : 'text-red-600'
+                        isIncrease ? 'text-green-600' : 'text-red-600'
                     }`}>
-                        {isEarn ? '+' : '-'}${Math.abs(log.commissionAmount).toFixed(2)}
+                        {isIncrease ? '+' : '-'}${Math.abs(log.commissionAmount).toFixed(2)}
                     </span>
                 </div>
             </div>

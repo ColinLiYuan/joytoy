@@ -55,12 +55,12 @@ export default function AffiliatePayoutsPage() {
         
         const amount = parseFloat(requestAmount)
         if (!amount || amount < 50) {
-            alert('Minimum withdrawal amount is $50')
+            alert('Minimum withdrawal amount is $50.00')
             return
         }
 
         if (!paypalEmail) {
-            alert('Please enter your PayPal email')
+            alert('Please enter your PayPal email address')
             return
         }
 
@@ -71,7 +71,7 @@ export default function AffiliatePayoutsPage() {
                 paypalEmail
             })
             
-            alert('Payout request submitted, waiting for admin approval!')
+            alert('Payout request submitted successfully! Waiting for admin approval.')
             setShowRequestModal(false)
             setRequestAmount('')
             setPaypalEmail('')
@@ -80,16 +80,17 @@ export default function AffiliatePayoutsPage() {
             console.error('Payout failed:', error)
             
             // Extract error message from backend response
-            let errorMsg = 'Payout request failed, please try again later'
+            let errorMsg = 'Payout request failed. Please try again later.'
             if (error?.message) {
                 // 处理各种错误格式
                 if (error.message.includes('insufficient') || error.message.includes('余额不足')) {
-                    errorMsg = 'Insufficient balance, available amount is less than $' + amount
+                    errorMsg = 'Insufficient balance. Your current balance is less than the requested amount.'
                 } else if (error.message.includes('not logged in') || error.message.includes('未登录')) {
-                    errorMsg = 'Please login first to request payout'
+                    errorMsg = 'Please login first to request payout.'
                 } else if (error.message.includes('affiliate member') || error.message.includes('联盟成员')) {
-                    errorMsg = 'Current account is not an affiliate member, cannot request payout'
+                    errorMsg = 'Your account is not an affiliate member. Cannot request payout.'
                 } else if (error.message.includes('payout failed') || error.message.includes('提现失败')) {
+                    // 提取后端返回的英文错误信息
                     errorMsg = error.message.replace('提现失败: ', '').replace('payout failed: ', '')
                 } else {
                     errorMsg = error.message

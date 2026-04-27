@@ -18,7 +18,7 @@ class UserService {
             const queryParams = new URLSearchParams({
                 page: page.toString(),
                 size: size.toString(),
-                sortBy: sortBy || 'createdAt'
+                sortBy: sortBy || 'lastLoginAt'  // 默认按登录时间排序（后端默认降序）
             });
 
             if (keyword) {

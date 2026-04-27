@@ -3,7 +3,7 @@
 
 import { useState } from 'react'
 import { useAuth } from '@/contexts/authContext'
-import { Link as LinkIcon, Copy, Info, MousePointerClick, Calendar, BarChart3, AlertCircle } from 'lucide-react'
+import { Link as LinkIcon, Copy, Info, MousePointerClick, Calendar, BarChart3, AlertCircle, Tag } from 'lucide-react'
 
 export default function AffiliateLinksPage() {
     // 从你的 authContext 拿到用户信息和客户端状态
@@ -18,6 +18,11 @@ export default function AffiliateLinksPage() {
     const affiliateId = (userInfo?.affiliateId || "PENDING").toUpperCase();
 
     const defaultLink = `${baseUrl}?aff=${affiliateId}`;
+
+    // 专属优惠码（待后端实现后替换）
+    // TODO: 从后端获取专属优惠码
+    const exclusiveCoupon = affiliateId !== 'PENDING' ? `${affiliateId}10` : 'N/A';
+    const [copiedCoupon, setCopiedCoupon] = useState(false);
 
     const copyToClipboard = (text: string) => {
         navigator.clipboard.writeText(text);
@@ -68,6 +73,47 @@ export default function AffiliateLinksPage() {
                     </div>
                 </div>
                 <div className="absolute -right-20 -top-20 w-64 h-64 bg-indigo-600/20 rounded-full blur-3xl"></div>
+            </div>
+
+            {/* Exclusive Coupon Code Card */}
+            <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 p-8 rounded-2xl shadow-sm">
+                <div className="flex items-start gap-4">
+                    <div className="bg-amber-100 p-3 rounded-xl shrink-0">
+                        <Tag className="h-6 w-6 text-amber-600" />
+                    </div>
+                    <div className="flex-1">
+                        <h2 className="text-xl font-bold text-gray-900 mb-2">Your Exclusive Coupon Code</h2>
+                        <p className="text-sm text-gray-600 mb-4">
+                            Share this code with your followers to give them an extra <span className="font-bold text-amber-700">10% discount</span> on their first purchase.
+                        </p>
+                        
+                        <div className="flex flex-col sm:flex-row items-center gap-4">
+                            <div className="flex-1 w-full bg-white border-2 border-dashed border-amber-300 rounded-xl px-6 py-4 text-center">
+                                <code className="text-2xl font-black tracking-wider text-amber-700">
+                                    {isClient ? exclusiveCoupon : 'Loading...'}
+                                </code>
+                            </div>
+                            <button
+                                onClick={() => {
+                                    navigator.clipboard.writeText(exclusiveCoupon);
+                                    setCopiedCoupon(true);
+                                    setTimeout(() => setCopiedCoupon(false), 2000);
+                                }}
+                                disabled={exclusiveCoupon === 'N/A'}
+                                className="w-full sm:w-auto bg-amber-600 hover:bg-amber-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-6 py-4 rounded-xl font-bold transition-all flex items-center justify-center gap-2 shrink-0"
+                            >
+                                {copiedCoupon ? 'COPIED!' : <><Copy className="h-4 w-4" /> COPY CODE</>}
+                            </button>
+                        </div>
+
+                        {exclusiveCoupon === 'N/A' && (
+                            <div className="mt-4 flex items-center gap-2 text-sm text-amber-800 bg-amber-100/50 px-4 py-2 rounded-lg">
+                                <AlertCircle className="h-4 w-4" />
+                                <span>Your affiliate account is pending approval. Coupon code will be available once approved.</span>
+                            </div>
+                        )}
+                    </div>
+                </div>
             </div>
 
             {/* Parameters Guide */}

@@ -178,17 +178,22 @@ export default function BlogForm({
             // 直接调用 Service 的 uploadImage 方法
             const result = await blogService.uploadImage(file);
 
-            // 获取完整 URL (用于 Markdown 预览)
-            const fullImageUrl = getImageUrl(result.url);
+            // 后端返回的路径格式：myth/blog/image/xxx.jpg (相对路径)
+            const backendPath = result.url;
+            
+            // 获取完整 URL (用于 Markdown 编辑器预览)
+            const fullImageUrl = getImageUrl(backendPath);
 
             if (uploadTarget === 'CONTENT') {
-                // 编辑器插图：必须使用完整 URL，否则编辑器里看不到图
+                // 编辑器插图：使用完整 URL 让编辑器可以预览
                 const imageMarkdown = `![${file.name}](${fullImageUrl})`;
                 const newContent = formData.content + `\n${imageMarkdown}\n`;
                 handleChange('content', newContent);
+                alert('图片上传成功！已插入到文章末尾。');
             } else if (uploadTarget === 'COVER') {
-                // 封面：只填入后端返回的原始路径/文件名 (不带前缀)
-                handleChange('coverImage', result.url);
+                // 封面：使用后端返回的原始路径（相对路径）
+                handleChange('coverImage', backendPath);
+                alert('封面图片上传成功！');
             }
 
         } catch (error) {

@@ -353,7 +353,9 @@ class ProductService {
     async getHeroProducts(): Promise<ProductResponse[]> {
         try {
             const url = `/api/V1/product/hero`;
+            console.log('[ProductService] getHeroProducts - Calling:', url);
             const response = await axiosClient.get(url);
+            console.log('[ProductService] getHeroProducts - Response:', response.data);
 
             if (response.data?.success) {
                 return response.data.data || [];

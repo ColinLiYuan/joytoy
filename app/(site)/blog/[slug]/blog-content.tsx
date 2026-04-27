@@ -11,6 +11,32 @@ import { getProductImageUrl } from '@/lib/image-utils';
 // ✅ 引入刚才写的配置
 import { getAuthor, MARKETING_CONFIG } from '@/lib/constants/authors';
 
+// 获取图片 CDN 前缀
+const CDN_URL = process.env.NEXT_PUBLIC_IMAGE_UPLOAD_PATH || '';
+
+/**
+ * 处理 Markdown 中的图片路径
+ * 将相对路径 (myth/blog/xxx.jpg) 拼接为完整 URL
+ */
+const processMarkdownImages = (content: string): string => {
+    if (!content) return '';
+    
+    // 匹配 Markdown 图片语法: ![alt](path)
+    return content.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (match, alt, path) => {
+        // 如果已经是完整 URL，不处理
+        if (path.startsWith('http://') || path.startsWith('https://')) {
+            return match;
+        }
+        
+        // 拼接 CDN URL
+        const cleanPath = path.startsWith('/') ? path.slice(1) : path;
+        const cleanCdn = CDN_URL.endsWith('/') ? CDN_URL.slice(0, -1) : CDN_URL;
+        const fullUrl = `${cleanCdn}/${cleanPath}`;
+        
+        return `![${alt}](${fullUrl})`;
+    });
+};
+
 const MDViewer = dynamic(
     () => import('@uiw/react-md-editor').then((mod) => mod.default.Markdown),
     {
@@ -118,7 +144,7 @@ export default function BlogContent({ blog }: BlogContentProps) {
             <div className="container mx-auto px-4 max-w-3xl">
                 <div className="prose prose-lg md:prose-xl prose-stone max-w-none font-serif leading-relaxed">
                     <MDViewer
-                        source={blog.content || ''}
+                        source={processMarkdownImages(blog.content || '')}
                         style={{ backgroundColor: 'transparent', fontFamily: 'var(--font-inter)' }}
                     />
                 </div>

@@ -48,7 +48,8 @@ export default function BlogManagementPage() {
             const response: AdminBlogListResponse = await blogService.adminList(
                 pagination.currentPage,
                 pagination.pageSize,
-                statusFilter !== 'ALL' ? statusFilter : undefined
+                statusFilter !== 'ALL' ? statusFilter : undefined,
+                'createdAt'  // 按创建时间排序
             );
 
             setBlogs(response.content);

@@ -111,7 +111,7 @@ const gonePaths = new Set([
 // 3. 定义 410 前缀匹配规则
 const gonePrefixes = [
     '/collections/vibrators',
-    // '/sex-toys',  // 临时注释，可能导致重定向循环
+    '/sex-toys',  // 临时注释，可能导致重定向循环
     '/products'
 ];
 
