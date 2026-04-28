@@ -171,7 +171,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const login = useCallback(async (loginRequest: LoginRequest): Promise<LoginResponse> => {
         try {
-            const loginResponse = await loginUser(loginRequest);
+            const result = await loginUser(loginRequest);
+
+            // ✅ 检查 Server Action 返回的结果
+            if (!result.success) {
+                // 登录失败，显示错误提示
+                const errorMsg = result.error || 'Login failed. Please check your credentials.';
+                console.error('[AuthContext] Login failed:', errorMsg);
+                showToast('error', 'Login Failed', errorMsg);
+                throw new Error(errorMsg);
+            }
+
+            const loginResponse = result.data;
 
             console.log('[AuthContext] Login response from backend:', {
                 expiresIn: loginResponse.expiresIn,
@@ -228,6 +239,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             return loginResponse;
         } catch (error: any) {
             console.error('Login failed in Context:', error);
+            
+            // ✅ 认证错误已经在上面显示了 Toast，这里只需要重新抛出
+            // 让 auth-modal 知道失败即可
             throw error;
         }
     }, [showToast, closeAuthModal]);

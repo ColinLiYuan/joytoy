@@ -13,25 +13,51 @@ const API_PATHS = {
 
 /**
  * 用户登录
+ * @returns 成功时返回 { success: true, data: LoginResponse }，失败时返回 { success: false, error: string }
  */
 export async function loginUser(request: LoginRequest) {
-    const response = await fetch(API_PATHS.AUTH_LOGIN, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(request),
-    })
+    try {
+        const response = await fetch(API_PATHS.AUTH_LOGIN, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(request),
+        })
 
-    if (!response.ok) {
-        throw new Error(`Login failed: ${response.status}`)
+        // 尝试解析响应（无论成功失败都可能是 JSON）
+        let apiResponse: any;
+        try {
+            apiResponse = await response.json();
+        } catch (e) {
+            // 如果不是 JSON，说明服务器返回了 HTML 错误页面
+            return {
+                success: false,
+                error: '服务器响应格式错误，请稍后重试'
+            };
+        }
+
+        // 检查业务逻辑错误（HTTP 200 但 success: false）
+        if (!apiResponse.success) {
+            const errorMsg = apiResponse.message || 'Login failed. Please check your credentials.';
+            console.error('[loginUser] Login failed:', errorMsg);
+            return {
+                success: false,
+                error: errorMsg
+            };
+        }
+
+        return {
+            success: true,
+            data: apiResponse.data
+        };
+    } catch (error: any) {
+        // 捕获所有异常，返回错误对象
+        const errorMsg = error?.message || 'Login failed. Please try again.';
+        console.error('[loginUser] Exception caught:', errorMsg);
+        return {
+            success: false,
+            error: errorMsg
+        };
     }
-
-    const apiResponse = await response.json()
-
-    if (!apiResponse.success) {
-        throw new Error(apiResponse.message || 'Login failed. Please check your credentials.')
-    }
-
-    return apiResponse.data
 }
 
 /**
