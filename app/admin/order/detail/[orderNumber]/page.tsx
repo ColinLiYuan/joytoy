@@ -98,91 +98,91 @@ function OrderDetailContent() {
                     </div>
                 </div>
 
-                {/* ✅ 订单进度时间线 */}
-                <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
-                    <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center gap-2">
-                        <Clock3 size={18} className="text-gray-400" />
-                        <h2 className="font-bold text-gray-900">订单进度</h2>
-                    </div>
-                    <div className="p-6">
-                        <div className="relative">
-                            {/* 时间线主轴 */}
-                            <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-gray-200"></div>
-                            
-                            {/* 时间节点 */}
-                            <div className="space-y-6">
-                                {/* 1. 订单创建 */}
-                                <TimelineItem
-                                    icon={Clock}
-                                    title="订单创建"
-                                    date={order.createdAt}
-                                    description={`订单号: ${order.orderNumber}`}
-                                    isActive={true}
-                                />
-
-                                {/* 2. 支付完成 */}
-                                {order.status !== 'PENDING' && order.status !== 'CANCELLED' && order.status !== 'EXPIRED' && (
-                                    <TimelineItem
-                                        icon={CreditCard}
-                                        title="支付完成"
-                                        date={order.createdAt}
-                                        description={`支付方式: ${order.paymentMethod ? (order.paymentMethod === 'PAYPAL' ? 'PayPal' : '信用卡') : 'N/A'}`}
-                                        isActive={true}
-                                    />
-                                )}
-
-                                {/* 3. 已发货 */}
-                                {order.status === 'SHIPPED' || order.status === 'DELIVERED' || order.status === 'COMPLETED' && order.trackingNumber && (
-                                    <TimelineItem
-                                        icon={Truck}
-                                        title="已发货"
-                                        date={order.createdAt}
-                                        description={`物流单号: ${order.trackingNumber}`}
-                                        isActive={true}
-                                    />
-                                )}
-
-                                {/* 4. 已送达 */}
-                                {(order.status === 'DELIVERED' || order.status === 'COMPLETED') && (
-                                    <TimelineItem
-                                        icon={Check}
-                                        title="已送达"
-                                        date={order.completedAt || order.createdAt}
-                                        description="包裹已送达"
-                                        isActive={true}
-                                    />
-                                )}
-
-                                {/* 5. 已完成 */}
-                                {order.status === 'COMPLETED' && (
-                                    <TimelineItem
-                                        icon={CheckCircle2}
-                                        title="订单完成"
-                                        date={order.completedAt || order.createdAt}
-                                        description="订单已完成"
-                                        isActive={true}
-                                    />
-                                )}
-
-                                {/* 已取消 */}
-                                {order.status === 'CANCELLED' && (
-                                    <TimelineItem
-                                        icon={XCircle}
-                                        title="订单取消"
-                                        date={order.createdAt}
-                                        description="订单已取消"
-                                        isActive={false}
-                                        isCancelled={true}
-                                    />
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* 主栏：商品和费用 */}
                     <div className="lg:col-span-2 space-y-6">
+                        {/* ✅ 订单进度时间线 */}
+                        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+                            <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center gap-2">
+                                <Clock3 size={18} className="text-gray-400" />
+                                <h2 className="font-bold text-gray-900">订单进度</h2>
+                            </div>
+                            <div className="p-6">
+                                <div className="relative">
+                                    {/* 时间线主轴 */}
+                                    <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-gray-200"></div>
+                                    
+                                    {/* 时间节点 */}
+                                    <div className="space-y-6">
+                                        {/* 1. 订单创建 */}
+                                        <TimelineItem
+                                            icon={Clock}
+                                            title="订单创建"
+                                            date={order.createdAt}
+                                            description={`订单号: ${order.orderNumber}`}
+                                            isActive={true}
+                                        />
+
+                                        {/* 2. 支付完成 */}
+                                        {order.status !== 'PENDING' && order.status !== 'CANCELLED' && order.status !== 'EXPIRED' && (
+                                            <TimelineItem
+                                                icon={CreditCard}
+                                                title="支付完成"
+                                                date={order.createdAt}
+                                                description={`支付方式: ${order.paymentMethod ? (order.paymentMethod === 'PAYPAL' ? 'PayPal' : '信用卡') : 'N/A'}`}
+                                                isActive={true}
+                                            />
+                                        )}
+
+                                        {/* 3. 已发货 */}
+                                        {order.status === 'SHIPPED' || order.status === 'DELIVERED' || order.status === 'COMPLETED' && order.trackingNumber && (
+                                            <TimelineItem
+                                                icon={Truck}
+                                                title="已发货"
+                                                date={order.createdAt}
+                                                description={`物流单号: ${order.trackingNumber}`}
+                                                isActive={true}
+                                            />
+                                        )}
+
+                                        {/* 4. 已送达 */}
+                                        {(order.status === 'DELIVERED' || order.status === 'COMPLETED') && (
+                                            <TimelineItem
+                                                icon={Check}
+                                                title="已送达"
+                                                date={order.completedAt || order.createdAt}
+                                                description="包裹已送达"
+                                                isActive={true}
+                                            />
+                                        )}
+
+                                        {/* 5. 已完成 */}
+                                        {order.status === 'COMPLETED' && (
+                                            <TimelineItem
+                                                icon={CheckCircle2}
+                                                title="订单完成"
+                                                date={order.completedAt || order.createdAt}
+                                                description="订单已完成"
+                                                isActive={true}
+                                            />
+                                        )}
+
+                                        {/* 已取消 */}
+                                        {order.status === 'CANCELLED' && (
+                                            <TimelineItem
+                                                icon={XCircle}
+                                                title="订单取消"
+                                                date={order.createdAt}
+                                                description="订单已取消"
+                                                isActive={false}
+                                                isCancelled={true}
+                                            />
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
                             <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center gap-2">
                                 <Package size={18} className="text-gray-400" />
