@@ -84,6 +84,42 @@ export interface AdminCommissionLogsPageResponse {
     hasPrevious: boolean
 }
 
+// ==================== 联盟活动类型定义 ====================
+
+export interface AffiliateActivityResponse {
+    id: number
+    affiliateId: string
+    activityType: string
+    activityTypeName: string
+    description: string
+    trackingNumber: string
+    linkUrl: string
+    platform: string
+    followerCount: number
+    engagementRate: number
+    expectedPublishDate: string
+    actualPublishDate: string
+    status: string
+    adminNotes: string
+    createdAt: string
+    updatedAt: string
+}
+
+export interface AffiliateActivityRequest {
+    affiliateId?: string
+    activityType?: string
+    description?: string
+    trackingNumber?: string
+    linkUrl?: string
+    platform?: string
+    followerCount?: number
+    engagementRate?: number
+    expectedPublishDate?: string
+    actualPublishDate?: string
+    status?: string
+    adminNotes?: string
+}
+
 // ==================== 公共工具函数 ====================
 // 已迁移到 lib/server-auth.ts
 
@@ -325,6 +361,136 @@ export async function rejectPayout(payoutId: number, adminNote: string): Promise
         return apiResponse.data
     } catch (error) {
         console.error('[Admin Reject Payout] Error:', error)
+        throw error
+    }
+}
+
+// ==================== 联盟活动管理 Actions ====================
+
+/**
+ * 获取联盟客活动列表
+ */
+export async function getAdminAffiliateActivities(
+    affiliateId: string,
+    page: number = 0,
+    size: number = 20
+): Promise<PageResponse<AffiliateActivityResponse>> {
+    const { BACKEND_CONFIG } = await import('@/lib/api-config')
+
+    try {
+        // 首先获取详情，详情中包含活动列表
+        const url = `${BACKEND_CONFIG.baseURL}/api/admin/V1/affiliate/${affiliateId}/detail`
+        const response = await fetchWithAuthGet(url)
+
+        if (!response.ok) throw new Error(`获取联盟客详情失败: ${response.status}`)
+
+        const data = await response.json()
+        if (!data.success) throw new Error(data.message || '获取联盟客详情失败')
+
+        // 从详情中提取活动列表，并手动分页
+        const activities = data.data.activities || []
+        const start = page * size
+        const end = start + size
+        const paginatedActivities = activities.slice(start, end)
+
+        return {
+            content: paginatedActivities,
+            currentPage: page,
+            pageSize: size,
+            totalElements: activities.length,
+            totalPages: Math.ceil(activities.length / size),
+            hasNext: end < activities.length,
+            hasPrevious: page > 0
+        }
+    } catch (error) {
+        console.error('[Admin Affiliate Activities] Error:', error)
+        return {
+            content: [],
+            currentPage: page,
+            pageSize: size,
+            totalElements: 0,
+            totalPages: 0,
+            hasNext: false,
+            hasPrevious: false
+        }
+    }
+}
+
+/**
+ * 创建联盟客活动
+ */
+export async function createAffiliateActivity(
+    affiliateId: string,
+    request: AffiliateActivityRequest
+): Promise<AffiliateActivityResponse> {
+    const { BACKEND_CONFIG } = await import('@/lib/api-config')
+
+    try {
+        const url = `${BACKEND_CONFIG.baseURL}/api/admin/V1/affiliate/${affiliateId}/activities`
+        const response = await fetchWithAuthPost(url, request)
+
+        if (!response.ok) throw new Error(`创建活动失败: ${response.status}`)
+
+        const data = await response.json()
+        if (!data.success) throw new Error(data.message || '创建活动失败')
+
+        return data.data
+    } catch (error) {
+        console.error('[Admin Create Activity] Error:', error)
+        throw error
+    }
+}
+
+/**
+ * 更新联盟客活动
+ */
+export async function updateAffiliateActivity(
+    activityId: number,
+    request: AffiliateActivityRequest
+): Promise<AffiliateActivityResponse> {
+    const { BACKEND_CONFIG } = await import('@/lib/api-config')
+
+    try {
+        const url = `${BACKEND_CONFIG.baseURL}/api/admin/V1/affiliate/activities/${activityId}`
+        
+        const response = await fetchWithAuth(url, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(request)
+        })
+
+        if (!response.ok) throw new Error(`更新活动失败: ${response.status}`)
+
+        const data = await response.json()
+        if (!data.success) throw new Error(data.message || '更新活动失败')
+
+        return data.data
+    } catch (error) {
+        console.error('[Admin Update Activity] Error:', error)
+        throw error
+    }
+}
+
+/**
+ * 删除联盟客活动
+ */
+export async function deleteAffiliateActivity(activityId: number): Promise<void> {
+    const { BACKEND_CONFIG } = await import('@/lib/api-config')
+
+    try {
+        const url = `${BACKEND_CONFIG.baseURL}/api/admin/V1/affiliate/activities/${activityId}`
+        const response = await fetchWithAuth(url, {
+            method: 'DELETE',
+        })
+
+        if (!response.ok) throw new Error(`删除活动失败: ${response.status}`)
+
+        const data = await response.json()
+        if (!data.success) throw new Error(data.message || '删除活动失败')
+    } catch (error) {
+        console.error('[Admin Delete Activity] Error:', error)
         throw error
     }
 }

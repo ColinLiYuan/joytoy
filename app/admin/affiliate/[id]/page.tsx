@@ -4,8 +4,8 @@
 import { Suspense } from 'react'
 import React, { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { ArrowLeft, MousePointerClick, ShoppingCart, DollarSign, TrendingUp, Clock, ChevronLeft, ChevronRight, Loader2, Wallet, CheckCircle, AlertCircle } from 'lucide-react'
-import { getAdminAffiliateCommissionLogs, AdminCommissionLogResponse, AdminCommissionLogsPageResponse, getAdminAffiliateList } from '@/app/actions/admin'
+import { ArrowLeft, MousePointerClick, ShoppingCart, DollarSign, TrendingUp, Clock, ChevronLeft, ChevronRight, Loader2, Wallet, CheckCircle, AlertCircle, Plus, Trash2, Edit, ExternalLink } from 'lucide-react'
+import { getAdminAffiliateCommissionLogs, AdminCommissionLogResponse, AdminCommissionLogsPageResponse, getAdminAffiliateList, getAdminAffiliateActivities, AffiliateActivityResponse, createAffiliateActivity, updateAffiliateActivity, deleteAffiliateActivity } from '@/app/actions/admin'
 
 interface AffiliateDetail {
     id: number;
@@ -39,6 +39,13 @@ function AffiliateDetailContent() {
     const [commissionLogs, setCommissionLogs] = useState<AdminCommissionLogsPageResponse | null>(null);
     const [logsLoading, setLogsLoading] = useState(false);
     const [currentPage, setCurrentPage] = useState(0);
+    
+    // 活动列表状态
+    const [activities, setActivities] = useState<AffiliateActivityResponse[]>([]);
+    const [activitiesLoading, setActivitiesLoading] = useState(false);
+    const [activityPage, setActivityPage] = useState(0);
+    const [showActivityModal, setShowActivityModal] = useState(false);
+    const [editingActivity, setEditingActivity] = useState<AffiliateActivityResponse | null>(null);
 
     useEffect(() => {
         fetchData();
@@ -48,8 +55,9 @@ function AffiliateDetailContent() {
     useEffect(() => {
         if (detail) {
             fetchCommissionLogs();
+            fetchActivities();
         }
-    }, [detail, currentPage]);
+    }, [detail, currentPage, activityPage]);
     
     const fetchCommissionLogs = async () => {
         setLogsLoading(true);
@@ -60,6 +68,56 @@ function AffiliateDetailContent() {
             console.error('Failed to load commission logs:', error);
         } finally {
             setLogsLoading(false);
+        }
+    };
+    
+    // 获取活动列表
+    const fetchActivities = async () => {
+        setActivitiesLoading(true);
+        try {
+            const result = await getAdminAffiliateActivities(detail!.affiliateId, activityPage, 10);
+            setActivities(result.content || []);
+        } catch (error) {
+            console.error('Failed to load activities:', error);
+        } finally {
+            setActivitiesLoading(false);
+        }
+    };
+    
+    // 创建活动
+    const handleCreateActivity = async (activityData: any) => {
+        try {
+            await createAffiliateActivity(detail!.affiliateId, activityData);
+            setShowActivityModal(false);
+            fetchActivities();
+        } catch (error) {
+            console.error('Failed to create activity:', error);
+            alert('创建活动失败');
+        }
+    };
+    
+    // 更新活动
+    const handleUpdateActivity = async (activityId: number, activityData: any) => {
+        try {
+            await updateAffiliateActivity(activityId, activityData);
+            setShowActivityModal(false);
+            setEditingActivity(null);
+            fetchActivities();
+        } catch (error) {
+            console.error('Failed to update activity:', error);
+            alert('更新活动失败');
+        }
+    };
+    
+    // 删除活动
+    const handleDeleteActivity = async (activityId: number) => {
+        if (!confirm('确定要删除这个活动吗？')) return;
+        try {
+            await deleteAffiliateActivity(activityId);
+            fetchActivities();
+        } catch (error) {
+            console.error('Failed to delete activity:', error);
+            alert('删除活动失败');
         }
     };
 
@@ -322,6 +380,70 @@ function AffiliateDetailContent() {
                     )}
                 </div>
             </div>
+            
+            {/* Activities Management */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        <TrendingUp className="h-5 w-5 text-gray-400" />
+                        <h3 className="text-lg font-semibold text-gray-900">活动管理</h3>
+                    </div>
+                    <button
+                        onClick={() => {
+                            setEditingActivity(null);
+                            setShowActivityModal(true);
+                        }}
+                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                    >
+                        <Plus size={16} />
+                        添加活动
+                    </button>
+                </div>
+                
+                <div className="p-6">
+                    {activitiesLoading ? (
+                        <div className="flex items-center justify-center py-12">
+                            <Loader2 className="animate-spin text-gray-400" size={24} />
+                        </div>
+                    ) : activities.length === 0 ? (
+                        <div className="py-12 text-center text-gray-400 text-sm">
+                            暂无活动记录
+                        </div>
+                    ) : (
+                        <div className="space-y-3">
+                            {activities.map((activity) => (
+                                <ActivityItem
+                                    key={activity.id}
+                                    activity={activity}
+                                    onEdit={() => {
+                                        setEditingActivity(activity);
+                                        setShowActivityModal(true);
+                                    }}
+                                    onDelete={() => handleDeleteActivity(activity.id)}
+                                />
+                            ))}
+                        </div>
+                    )}
+                </div>
+            </div>
+            
+            {/* Activity Modal */}
+            {showActivityModal && (
+                <ActivityModal
+                    activity={editingActivity}
+                    onClose={() => {
+                        setShowActivityModal(false);
+                        setEditingActivity(null);
+                    }}
+                    onSubmit={(data) => {
+                        if (editingActivity) {
+                            handleUpdateActivity(editingActivity.id, data);
+                        } else {
+                            handleCreateActivity(data);
+                        }
+                    }}
+                />
+            )}
         </div>
     );
 }
@@ -441,6 +563,243 @@ function CommissionLogItem({ log }: { log: AdminCommissionLogResponse }) {
                     <p className="text-xs text-gray-500">{log.description}</p>
                 </div>
             )}
+        </div>
+    );
+}
+
+/**
+ * Activity Item Component
+ */
+function ActivityItem({ 
+    activity, 
+    onEdit, 
+    onDelete 
+}: { 
+    activity: AffiliateActivityResponse
+    onEdit: () => void
+    onDelete: () => void
+}) {
+    return (
+        <div className="border border-gray-100 rounded-xl p-4 hover:bg-gray-50 transition-colors">
+            <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-3">
+                    <span className="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide bg-blue-100 text-blue-700">
+                        {activity.activityTypeName || activity.activityType}
+                    </span>
+                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide ${
+                        activity.status === 'COMPLETED' ? 'bg-green-100 text-green-700'
+                        : activity.status === 'IN_PROGRESS' ? 'bg-yellow-100 text-yellow-700'
+                        : 'bg-gray-100 text-gray-600'
+                    }`}>
+                        {activity.status}
+                    </span>
+                </div>
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={onEdit}
+                        className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                    >
+                        <Edit size={16} />
+                    </button>
+                    <button
+                        onClick={onDelete}
+                        className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                    >
+                        <Trash2 size={16} />
+                    </button>
+                </div>
+            </div>
+            
+            {activity.description && (
+                <p className="text-sm text-gray-700 mb-3">{activity.description}</p>
+            )}
+            
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                {activity.platform && (
+                    <div>
+                        <span className="text-gray-400">平台: </span>
+                        <span className="font-medium text-gray-700">{activity.platform}</span>
+                    </div>
+                )}
+                {activity.followerCount && (
+                    <div>
+                        <span className="text-gray-400">粉丝数: </span>
+                        <span className="font-medium text-gray-700">{activity.followerCount.toLocaleString()}</span>
+                    </div>
+                )}
+                {activity.linkUrl && (
+                    <div className="col-span-2">
+                        <span className="text-gray-400">链接: </span>
+                        <a href={activity.linkUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline inline-flex items-center gap-1">
+                            查看 <ExternalLink size={12} />
+                        </a>
+                    </div>
+                )}
+            </div>
+            
+            <div className="mt-3 pt-3 border-t border-gray-100 text-xs text-gray-400 flex items-center gap-1">
+                <Clock size={12} />
+                {new Date(activity.createdAt).toLocaleString('zh-CN', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                })}
+            </div>
+        </div>
+    );
+}
+
+/**
+ * Activity Modal Component
+ */
+function ActivityModal({
+    activity,
+    onClose,
+    onSubmit
+}: {
+    activity: AffiliateActivityResponse | null
+    onClose: () => void
+    onSubmit: (data: any) => void
+}) {
+    const [formData, setFormData] = useState({
+        activityType: activity?.activityType || '',
+        description: activity?.description || '',
+        platform: activity?.platform || '',
+        followerCount: activity?.followerCount || '',
+        engagementRate: activity?.engagementRate || '',
+        linkUrl: activity?.linkUrl || '',
+        trackingNumber: activity?.trackingNumber || '',
+        status: activity?.status || 'PENDING',
+        adminNotes: activity?.adminNotes || ''
+    });
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        onSubmit(formData);
+    };
+
+    return (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                    <h3 className="text-lg font-bold text-gray-900">
+                        {activity ? '编辑活动' : '添加活动'}
+                    </h3>
+                    <button
+                        onClick={onClose}
+                        className="text-gray-400 hover:text-gray-600"
+                    >
+                        ✕
+                    </button>
+                </div>
+                
+                <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                            活动类型 <span className="text-red-500">*</span>
+                        </label>
+                        <select
+                            value={formData.activityType}
+                            onChange={(e) => setFormData({ ...formData, activityType: e.target.value })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            required
+                        >
+                            <option value="">请选择活动类型</option>
+                            <option value="PRODUCT_SHIPMENT">产品发货</option>
+                            <option value="SOCIAL_POST">社交媒体帖子</option>
+                            <option value="BLOG_REVIEW">博客评论</option>
+                            <option value="VIDEO_REVIEW">视频评测</option>
+                            <option value="EMAIL_CAMPAIGN">邮件营销</option>
+                            <option value="OTHER">其他</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">活动描述</label>
+                        <textarea
+                            value={formData.description}
+                            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            rows={3}
+                        />
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">平台名称</label>
+                            <input
+                                type="text"
+                                value={formData.platform}
+                                onChange={(e) => setFormData({ ...formData, platform: e.target.value })}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                placeholder="e.g., TikTok, Instagram"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">粉丝数量</label>
+                            <input
+                                type="number"
+                                value={formData.followerCount}
+                                onChange={(e) => setFormData({ ...formData, followerCount: e.target.value })}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            />
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">相关链接</label>
+                        <input
+                            type="url"
+                            value={formData.linkUrl}
+                            onChange={(e) => setFormData({ ...formData, linkUrl: e.target.value })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="https://..."
+                        />
+                    </div>
+                    
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">状态</label>
+                        <select
+                            value={formData.status}
+                            onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        >
+                            <option value="PENDING">待处理</option>
+                            <option value="IN_PROGRESS">进行中</option>
+                            <option value="COMPLETED">已完成</option>
+                            <option value="CANCELLED">已取消</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">管理员备注</label>
+                        <textarea
+                            value={formData.adminNotes}
+                            onChange={(e) => setFormData({ ...formData, adminNotes: e.target.value })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            rows={2}
+                        />
+                    </div>
+                    
+                    <div className="flex gap-3 pt-4">
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                        >
+                            取消
+                        </button>
+                        <button
+                            type="submit"
+                            className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                        >
+                            {activity ? '更新' : '创建'}
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
     );
 }

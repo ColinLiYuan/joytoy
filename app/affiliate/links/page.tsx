@@ -1,14 +1,44 @@
 // app/affiliate/links/page.tsx
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/authContext'
-import { Link as LinkIcon, Copy, Info, MousePointerClick, Calendar, BarChart3, AlertCircle, Tag } from 'lucide-react'
+import { Link as LinkIcon, Copy, Info, MousePointerClick, Calendar, BarChart3, AlertCircle, Tag, Percent } from 'lucide-react'
+import { apiGet } from '@/lib/api-utils'
+import { SERVER_CONFIG } from '@/lib/api-config'
+
+interface Coupon {
+    id: number;
+    code: string;
+    type: string;  // PERCENTAGE 或 FIXED
+    value: number;
+    isActive: boolean;
+}
+
+interface AffiliateDetailResponse {
+    id: number;
+    affiliateId: string;
+    name: string;
+    email: string;
+    commissionRate: number;
+    paypalEmail: string;
+    totalEarned: number;
+    currentBalance: number;
+    totalPaid: number;
+    status: string;
+    createdAt: string;
+    updatedAt: string;
+    coupons: Coupon[];
+    activities: any[];
+}
 
 export default function AffiliateLinksPage() {
     // 从你的 authContext 拿到用户信息和客户端状态
     const { userInfo, isClient } = useAuth();
     const [copied, setCopied] = useState(false);
+    const [affiliateDetail, setAffiliateDetail] = useState<AffiliateDetailResponse | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [copiedCoupon, setCopiedCoupon] = useState<string | null>(null);
 
     const baseUrl = "https://mythtoy.com";
 
@@ -19,10 +49,35 @@ export default function AffiliateLinksPage() {
 
     const defaultLink = `${baseUrl}?aff=${affiliateId}`;
 
-    // 专属优惠码（待后端实现后替换）
-    // TODO: 从后端获取专属优惠码
-    const exclusiveCoupon = affiliateId !== 'PENDING' ? `${affiliateId}10` : 'N/A';
-    const [copiedCoupon, setCopiedCoupon] = useState(false);
+    // 从后端获取专属优惠码列表
+    const exclusiveCoupons = affiliateDetail?.coupons || [];
+
+    // 获取联盟客详情（使用 my-profile 接口）
+    useEffect(() => {
+        const fetchAffiliateDetail = async () => {
+            if (!userInfo?.affiliateId || !isClient) {
+                setLoading(false);
+                return;
+            }
+
+            try {
+                setLoading(true);
+                const result = await apiGet<AffiliateDetailResponse>(
+                    `${SERVER_CONFIG.apiRoutes.affiliate}/my-profile`
+                );
+                
+                if (result.success && result.data) {
+                    setAffiliateDetail(result.data);
+                }
+            } catch (error) {
+                console.error('Failed to fetch affiliate detail:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchAffiliateDetail();
+    }, [userInfo?.affiliateId, isClient]);
 
     const copyToClipboard = (text: string) => {
         navigator.clipboard.writeText(text);
@@ -37,6 +92,26 @@ export default function AffiliateLinksPage() {
                 <h1 className="text-3xl font-black tracking-tight text-gray-900 uppercase">Affiliate Links</h1>
                 <p className="text-gray-500 mt-2">Generate and manage your unique tracking links to earn commissions.</p>
             </div>
+
+            {/* Commission Rate Card */}
+            {!loading && affiliateDetail && (
+                <div className="bg-gradient-to-r from-emerald-50 to-green-50 border border-emerald-200 p-6 rounded-2xl shadow-sm">
+                    <div className="flex items-center gap-4">
+                        <div className="bg-emerald-100 p-3 rounded-xl shrink-0">
+                            <Percent className="h-6 w-6 text-emerald-600" />
+                        </div>
+                        <div className="flex-1">
+                            <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-1">Your Commission Rate</h2>
+                            <div className="text-3xl font-black text-emerald-700">
+                                {(affiliateDetail.commissionRate * 100).toFixed(0)}%
+                            </div>
+                            <p className="text-xs text-gray-600 mt-1">
+                                You earn this percentage on every qualifying sale through your links.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Main Link Card */}
             <div className="bg-slate-900 text-white p-8 rounded-3xl shadow-2xl relative overflow-hidden">
@@ -75,41 +150,54 @@ export default function AffiliateLinksPage() {
                 <div className="absolute -right-20 -top-20 w-64 h-64 bg-indigo-600/20 rounded-full blur-3xl"></div>
             </div>
 
-            {/* Exclusive Coupon Code Card */}
+            {/* Exclusive Coupon Codes Section */}
             <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 p-8 rounded-2xl shadow-sm">
                 <div className="flex items-start gap-4">
                     <div className="bg-amber-100 p-3 rounded-xl shrink-0">
                         <Tag className="h-6 w-6 text-amber-600" />
                     </div>
                     <div className="flex-1">
-                        <h2 className="text-xl font-bold text-gray-900 mb-2">Your Exclusive Coupon Code</h2>
+                        <h2 className="text-xl font-bold text-gray-900 mb-2">Your Exclusive Coupon Codes</h2>
                         <p className="text-sm text-gray-600 mb-4">
-                            Share this code with your followers to give them an extra <span className="font-bold text-amber-700">10% discount</span> on their first purchase.
+                            Share these codes with your followers to give them discounts on their purchases.
                         </p>
                         
-                        <div className="flex flex-col sm:flex-row items-center gap-4">
-                            <div className="flex-1 w-full bg-white border-2 border-dashed border-amber-300 rounded-xl px-6 py-4 text-center">
-                                <code className="text-2xl font-black tracking-wider text-amber-700">
-                                    {isClient ? exclusiveCoupon : 'Loading...'}
-                                </code>
+                        {loading ? (
+                            <div className="flex items-center gap-2 text-sm text-amber-800 bg-amber-100/50 px-4 py-2 rounded-lg">
+                                <AlertCircle className="h-4 w-4 animate-spin" />
+                                <span>Loading your coupon codes...</span>
                             </div>
-                            <button
-                                onClick={() => {
-                                    navigator.clipboard.writeText(exclusiveCoupon);
-                                    setCopiedCoupon(true);
-                                    setTimeout(() => setCopiedCoupon(false), 2000);
-                                }}
-                                disabled={exclusiveCoupon === 'N/A'}
-                                className="w-full sm:w-auto bg-amber-600 hover:bg-amber-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-6 py-4 rounded-xl font-bold transition-all flex items-center justify-center gap-2 shrink-0"
-                            >
-                                {copiedCoupon ? 'COPIED!' : <><Copy className="h-4 w-4" /> COPY CODE</>}
-                            </button>
-                        </div>
-
-                        {exclusiveCoupon === 'N/A' && (
-                            <div className="mt-4 flex items-center gap-2 text-sm text-amber-800 bg-amber-100/50 px-4 py-2 rounded-lg">
+                        ) : exclusiveCoupons.length > 0 ? (
+                            <div className="space-y-4">
+                                {exclusiveCoupons.map((coupon, index) => (
+                                    <div key={coupon.id} className="flex flex-col sm:flex-row items-center gap-4">
+                                        <div className="flex-1 w-full bg-white border-2 border-dashed border-amber-300 rounded-xl px-6 py-4 text-center">
+                                            <code className="text-xl font-black tracking-wider text-amber-700">
+                                                {coupon.code}
+                                            </code>
+                                            <div className="text-xs text-gray-500 mt-1">
+                                                {coupon.type === 'PERCENTAGE' 
+                                                    ? `${(coupon.value * 100).toFixed(0)}% off` 
+                                                    : `$${coupon.value.toFixed(2)} off`}
+                                            </div>
+                                        </div>
+                                        <button
+                                            onClick={() => {
+                                                navigator.clipboard.writeText(coupon.code);
+                                                setCopiedCoupon(coupon.code);
+                                                setTimeout(() => setCopiedCoupon(null), 2000);
+                                            }}
+                                            className="w-full sm:w-auto bg-amber-600 hover:bg-amber-700 text-white px-6 py-4 rounded-xl font-bold transition-all flex items-center justify-center gap-2 shrink-0"
+                                        >
+                                            {copiedCoupon === coupon.code ? 'COPIED!' : <><Copy className="h-4 w-4" /> COPY CODE</>}
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="flex items-center gap-2 text-sm text-amber-800 bg-amber-100/50 px-4 py-2 rounded-lg">
                                 <AlertCircle className="h-4 w-4" />
-                                <span>Your affiliate account is pending approval. Coupon code will be available once approved.</span>
+                                <span>{affiliateId === 'PENDING' ? 'Your affiliate account is pending approval. Coupon codes will be available once approved.' : 'No coupon codes available at the moment.'}</span>
                             </div>
                         )}
                     </div>
