@@ -155,30 +155,14 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
 }
 
-// JWT 解析工具函数（简单实现，不验证签名）
-function parseJwt(token: string): any {
-    try {
-        const base64Url = token.split('.')[1];
-        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-        const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-        }).join(''));
-        return JSON.parse(jsonPayload);
-    } catch (e) {
-        throw new Error('Invalid token');
-    }
-}
-
 // Config 主要是为了性能，让 Middleware 只在特定路径触发
-// 但如果你要拦截大量旧路径，与其写几百行 matcher，不如直接匹配所有非静态资源
 export const config = {
     matcher: [
         /*
          * 匹配所有请求路径，除了：
          * 1. /api/ (API 路由)
          * 2. /_next/ (Next.js 内部资源)
-         * 3. /_static (静态文件)
-         * 4. 各种图片/字体文件扩展名
+         * 3. 静态文件和图片
          */
         '/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
     ],
