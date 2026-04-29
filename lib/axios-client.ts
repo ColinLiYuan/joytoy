@@ -3,9 +3,9 @@ import axios from 'axios';
 import { BACKEND_CONFIG } from '@/lib/api-config';
 import { setCookie, removeCookie } from '@/lib/cookie-utils';
 
-// 🔧 统一使用相对路径，走 Next.js rewrites 代理（解决跨域和 Mixed Content 问题）
-// 本地开发和生产环境都使用相对路径
-const axiosBaseURL = '';
+// 🔧 Axios 客户端配置
+// 统一使用相对路径，走 Next.js rewrites 代理（解决跨域和 Mixed Content 问题）
+const axiosBaseURL = typeof window !== 'undefined' ? window.location.origin : '';
 
 // 创建 Axios 实例
 const axiosClient = axios.create({
