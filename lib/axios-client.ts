@@ -29,6 +29,11 @@ axiosClient.interceptors.request.use(
             config.baseURL = getAxiosBaseURL();
         }
         
+        // 如果 URL 以 / 开头且 baseURL 为空，手动拼接
+        if (config.url && config.url.startsWith('/') && !config.baseURL) {
+            config.url = `${window.location.origin}${config.url}`;
+        }
+        
         console.log('[AxiosClient] Request:', {
             url: config.url,
             baseURL: config.baseURL,
