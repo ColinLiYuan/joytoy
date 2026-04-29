@@ -32,6 +32,7 @@ export default function AdminBundleForm({ initialData }: AdminBundleFormProps) {
         description: '',
         coverImage: '',
         bundlePrice: 0,
+        stock: 999,
         items: [] as ProductBundleItem[]
     })
 
@@ -63,6 +64,7 @@ export default function AdminBundleForm({ initialData }: AdminBundleFormProps) {
                 description: initialData.description || '',
                 coverImage: initialData.coverImage,
                 bundlePrice: initialData.bundlePrice,
+                stock: initialData.stock || 999,
                 items: enrichedItems
             })
         }
@@ -183,7 +185,6 @@ export default function AdminBundleForm({ initialData }: AdminBundleFormProps) {
                 ...formData,
                 originalPrice,
                 discountRate,
-                stock: 999, // 套装库存暂时固定
                 isActive: true,
                 isFeatured: false,
                 sortOrder: 0,
@@ -284,6 +285,18 @@ export default function AdminBundleForm({ initialData }: AdminBundleFormProps) {
                             value={formData.slug} 
                             onChange={handleChange} 
                             placeholder="valentine-gift-box"
+                            className="w-full px-3 py-2 border rounded-lg" 
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">库存数量 *</label>
+                        <input 
+                            type="number"
+                            min="0"
+                            name="stock" 
+                            value={formData.stock} 
+                            onChange={handleChange} 
+                            placeholder="999"
                             className="w-full px-3 py-2 border rounded-lg" 
                         />
                     </div>
