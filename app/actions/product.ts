@@ -5,8 +5,8 @@ import { fetchWithAuth } from '@/lib/server-token-utils'
 import { ReleaseProductRequest } from '@/types/admin/adminProduct'
 
 const API_PATHS = {
-  PRODUCT_RELEASE: `${BACKEND_CONFIG.baseURL}/api/admin/V1/product/release`,
-  PRODUCT_UPLOAD: `${BACKEND_CONFIG.baseURL}/api/admin/V1/upload/myth/product/image`,
+  PRODUCT_RELEASE: `/api/admin/V1/product/release`,
+  PRODUCT_UPLOAD: `/api/admin/V1/upload/myth/product/image`,
 } as const
 
 interface UploadResult {

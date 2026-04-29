@@ -131,9 +131,9 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     try {
         // 并行获取所有统计数据
         const [ordersRes, productsRes, usersRes] = await Promise.all([
-            fetchWithAuthGet(`${BACKEND_CONFIG.baseURL}/api/admin/V1/order/list?page=0&size=1000`),
-            fetchWithAuthGet(`${BACKEND_CONFIG.baseURL}/api/admin/V1/product/list?page=0&size=1000`),
-            fetchWithAuthGet(`${BACKEND_CONFIG.baseURL}/api/admin/V1/user/list?page=0&size=1000`)
+            fetchWithAuthGet(`/api/admin/V1/order/list?page=0&size=1000`),
+            fetchWithAuthGet(`/api/admin/V1/product/list?page=0&size=1000`),
+            fetchWithAuthGet(`/api/admin/V1/user/list?page=0&size=1000`)
         ])
 
         const ordersData = await ordersRes.json()
@@ -184,7 +184,7 @@ export async function getRecentOrders(limit: number = 5): Promise<RecentOrder[]>
     const { BACKEND_CONFIG } = await import('@/lib/api-config')
 
     try {
-        const response = await fetchWithAuthGet(`${BACKEND_CONFIG.baseURL}/api/admin/V1/order/list?page=0&size=${limit}`)
+        const response = await fetchWithAuthGet(`/api/admin/V1/order/list?page=0&size=${limit}`)
 
         if (!response.ok) return []
 
@@ -210,7 +210,7 @@ export async function getAdminAffiliateStats(): Promise<AffiliateStats> {
     const { BACKEND_CONFIG } = await import('@/lib/api-config')
 
     try {
-        const response = await fetchWithAuthGet(`${BACKEND_CONFIG.baseURL}/api/admin/V1/affiliate/stats`)
+        const response = await fetchWithAuthGet(`/api/admin/V1/affiliate/stats`)
 
         if (!response.ok) throw new Error(`获取统计数据失败: ${response.status}`)
 
@@ -244,7 +244,7 @@ export async function getAdminAffiliateList(params: { page: number; size: number
     const { BACKEND_CONFIG } = await import('@/lib/api-config')
 
     try {
-        const url = new URL(`${BACKEND_CONFIG.baseURL}/api/admin/V1/affiliate/list`)
+        const url = new URL(`/api/admin/V1/affiliate/list`)
         url.searchParams.append('page', params.page.toString())
         url.searchParams.append('size', params.size.toString())
 
@@ -271,7 +271,7 @@ export async function getAdminAffiliateCommissionLogs(
     const { BACKEND_CONFIG } = await import('@/lib/api-config')
 
     try {
-        const url = `${BACKEND_CONFIG.baseURL}/api/admin/V1/affiliate/${affiliateId}/commission-logs?page=${page}&size=${size}`
+        const url = `/api/admin/V1/affiliate/${affiliateId}/commission-logs?page=${page}&size=${size}`
         
         const response = await fetchWithAuthGet(url)
 
@@ -309,7 +309,7 @@ export async function getAllPayouts(page: number = 0, size: number = 20): Promis
 
     try {
         const queryParams = new URLSearchParams({ page: page.toString(), size: size.toString() })
-        const url = `${BACKEND_CONFIG.baseURL}/api/admin/V1/affiliate/payouts?${queryParams.toString()}`
+        const url = `/api/admin/V1/affiliate/payouts?${queryParams.toString()}`
         
         const response = await fetchWithAuthGet(url)
 
@@ -329,7 +329,7 @@ export async function approvePayout(payoutId: number, transactionId?: string, ad
     const { BACKEND_CONFIG } = await import('@/lib/api-config')
 
     try {
-        const url = `${BACKEND_CONFIG.baseURL}/api/admin/V1/affiliate/payouts/${payoutId}/approve`
+        const url = `/api/admin/V1/affiliate/payouts/${payoutId}/approve`
         
         const response = await fetchWithAuthPost(url, { transactionId, adminNote })
 
@@ -349,7 +349,7 @@ export async function rejectPayout(payoutId: number, adminNote: string): Promise
     const { BACKEND_CONFIG } = await import('@/lib/api-config')
 
     try {
-        const url = `${BACKEND_CONFIG.baseURL}/api/admin/V1/affiliate/payouts/${payoutId}/reject`
+        const url = `/api/admin/V1/affiliate/payouts/${payoutId}/reject`
         
         const response = await fetchWithAuthPost(url, { adminNote })
 
@@ -379,7 +379,7 @@ export async function getAdminAffiliateActivities(
 
     try {
         // 首先获取详情，详情中包含活动列表
-        const url = `${BACKEND_CONFIG.baseURL}/api/admin/V1/affiliate/${affiliateId}/detail`
+        const url = `/api/admin/V1/affiliate/${affiliateId}/detail`
         const response = await fetchWithAuthGet(url)
 
         if (!response.ok) throw new Error(`获取联盟客详情失败: ${response.status}`)
@@ -426,7 +426,7 @@ export async function createAffiliateActivity(
     const { BACKEND_CONFIG } = await import('@/lib/api-config')
 
     try {
-        const url = `${BACKEND_CONFIG.baseURL}/api/admin/V1/affiliate/${affiliateId}/activities`
+        const url = `/api/admin/V1/affiliate/${affiliateId}/activities`
         const response = await fetchWithAuthPost(url, request)
 
         if (!response.ok) throw new Error(`创建活动失败: ${response.status}`)
@@ -451,7 +451,7 @@ export async function updateAffiliateActivity(
     const { BACKEND_CONFIG } = await import('@/lib/api-config')
 
     try {
-        const url = `${BACKEND_CONFIG.baseURL}/api/admin/V1/affiliate/activities/${activityId}`
+        const url = `/api/admin/V1/affiliate/activities/${activityId}`
         
         const response = await fetchWithAuth(url, {
             method: 'PUT',
@@ -480,7 +480,7 @@ export async function deleteAffiliateActivity(activityId: number): Promise<void>
     const { BACKEND_CONFIG } = await import('@/lib/api-config')
 
     try {
-        const url = `${BACKEND_CONFIG.baseURL}/api/admin/V1/affiliate/activities/${activityId}`
+        const url = `/api/admin/V1/affiliate/activities/${activityId}`
         const response = await fetchWithAuth(url, {
             method: 'DELETE',
         })

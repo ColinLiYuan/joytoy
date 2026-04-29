@@ -25,7 +25,7 @@ export async function refreshAccessToken(): Promise<string | null> {
             return null
         }
 
-        const response = await fetch(`${BACKEND_CONFIG.baseURL}/api/V1/users/refresh`, {
+        const response = await fetch(`/api/V1/users/refresh`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ refreshToken }),

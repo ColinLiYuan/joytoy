@@ -103,7 +103,7 @@ async function refreshServerToken(): Promise<string | null> {
     }
 
     try {
-        const url = `${BACKEND_CONFIG.baseURL}/api/V1/users/refresh`
+        const url = `/api/V1/users/refresh`
         const response = await fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -159,7 +159,7 @@ export async function getAffiliateCommissionLogs(
     if (!token) throw new Error('未登录或登录已过期')
 
     try {
-        const url = `${BACKEND_CONFIG.baseURL}/api/V1/affiliate/commission-logs?page=${page}&size=${size}`
+        const url = `/api/V1/affiliate/commission-logs?page=${page}&size=${size}`
         
         const response = await fetch(url, {
             method: 'GET',
@@ -208,7 +208,7 @@ export async function requestAffiliatePayout(request: PayoutRequest, retry = fal
     if (!token) throw new Error('未登录或登录已过期')
 
     try {
-        const url = `${BACKEND_CONFIG.baseURL}/api/V1/affiliate/payout/request`
+        const url = `/api/V1/affiliate/payout/request`
         
         const response = await fetch(url, {
             method: 'POST',
@@ -252,7 +252,7 @@ export async function getAdminAffiliateStats(retry = false): Promise<AffiliateSt
     if (!token) throw new Error('未登录或登录已过期')
 
     try {
-        const response = await fetch(`${BACKEND_CONFIG.baseURL}/api/admin/V1/affiliate/stats`, {
+        const response = await fetch(`/api/admin/V1/affiliate/stats`, {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -295,7 +295,7 @@ export async function getAdminAffiliateList(params: { page: number; size: number
     if (!token) throw new Error('未登录或登录已过期')
 
     try {
-        const url = new URL(`${BACKEND_CONFIG.baseURL}/api/admin/V1/affiliate/list`)
+        const url = new URL(`/api/admin/V1/affiliate/list`)
         url.searchParams.append('page', params.page.toString())
         url.searchParams.append('size', params.size.toString())
 
@@ -343,7 +343,7 @@ export async function getAdminAffiliateCommissionLogs(
     if (!token) throw new Error('未登录或登录已过期')
 
     try {
-        const url = `${BACKEND_CONFIG.baseURL}/api/admin/V1/affiliate/${affiliateId}/commission-logs?page=${page}&size=${size}`
+        const url = `/api/admin/V1/affiliate/${affiliateId}/commission-logs?page=${page}&size=${size}`
         
         const response = await fetch(url, {
             method: 'GET',
@@ -398,7 +398,7 @@ export async function getAllPayouts(page: number = 0, size: number = 20): Promis
             size: size.toString()
         })
 
-        const url = `${BACKEND_CONFIG.baseURL}/api/admin/V1/affiliate/payouts?${queryParams.toString()}`
+        const url = `/api/admin/V1/affiliate/payouts?${queryParams.toString()}`
         
         const response = await fetch(url, {
             method: 'GET',
@@ -434,7 +434,7 @@ export async function approvePayout(payoutId: number, transactionId?: string, ad
         
         if (!token) throw new Error('Unauthorized - No token provided')
 
-        const url = `${BACKEND_CONFIG.baseURL}/api/admin/V1/affiliate/payouts/${payoutId}/approve`
+        const url = `/api/admin/V1/affiliate/payouts/${payoutId}/approve`
         
         const response = await fetch(url, {
             method: 'POST',
@@ -470,7 +470,7 @@ export async function rejectPayout(payoutId: number, adminNote: string): Promise
         
         if (!token) throw new Error('Unauthorized - No token provided')
 
-        const url = `${BACKEND_CONFIG.baseURL}/api/admin/V1/affiliate/payouts/${payoutId}/reject`
+        const url = `/api/admin/V1/affiliate/payouts/${payoutId}/reject`
         
         const response = await fetch(url, {
             method: 'POST',

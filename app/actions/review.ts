@@ -6,11 +6,11 @@ import { ReviewListResponse } from '@/types/review'
 
 // API 路径常量
 const API_PATHS = {
-  REVIEW_LIST: `${BACKEND_CONFIG.baseURL}/api/V1/review/list`,
-  REVIEW_CREATE_AUTHENTICATED: `${BACKEND_CONFIG.baseURL}/api/V1/review/authenticated`,
-  REVIEW_CREATE_GUEST: `${BACKEND_CONFIG.baseURL}/api/V1/review/guest`,
-  ADMIN_REVIEW_LIST: `${BACKEND_CONFIG.baseURL}/api/admin/V1/review/list`,
-  ADMIN_REVIEW_AUDIT: `${BACKEND_CONFIG.baseURL}/api/admin/V1/review`,
+  REVIEW_LIST: `/api/V1/review/list`,
+  REVIEW_CREATE_AUTHENTICATED: `/api/V1/review/authenticated`,
+  REVIEW_CREATE_GUEST: `/api/V1/review/guest`,
+  ADMIN_REVIEW_LIST: `/api/admin/V1/review/list`,
+  ADMIN_REVIEW_AUDIT: `/api/admin/V1/review`,
 } as const
 
 // ==================== 用户端功能 ====================

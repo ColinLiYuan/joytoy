@@ -4,10 +4,10 @@ import { BACKEND_CONFIG } from '@/lib/api-config'
 import { fetchWithAuth } from '@/lib/server-token-utils'
 
 const API_PATHS = {
-  ORDER_CANCEL: (orderNumber: string) => `${BACKEND_CONFIG.baseURL}/api/admin/V1/order/${orderNumber}/cancel`,
-  ORDER_REFUND: (orderNumber: string) => `${BACKEND_CONFIG.baseURL}/api/admin/V1/order/${orderNumber}/refund`,
-  ORDER_SETTLE_COMMISSION: (orderNumber: string) => `${BACKEND_CONFIG.baseURL}/api/admin/V1/order/${orderNumber}/commission/settle`,
-  ORDER_UPDATE_STATUS: (orderNumber: string) => `${BACKEND_CONFIG.baseURL}/api/admin/V1/order/${orderNumber}/status`,
+  ORDER_CANCEL: (orderNumber: string) => `/api/admin/V1/order/${orderNumber}/cancel`,
+  ORDER_REFUND: (orderNumber: string) => `/api/admin/V1/order/${orderNumber}/refund`,
+  ORDER_SETTLE_COMMISSION: (orderNumber: string) => `/api/admin/V1/order/${orderNumber}/commission/settle`,
+  ORDER_UPDATE_STATUS: (orderNumber: string) => `/api/admin/V1/order/${orderNumber}/status`,
 } as const
 
 /**

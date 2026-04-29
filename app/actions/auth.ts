@@ -5,10 +5,10 @@ import { fetchWithAuth } from '@/lib/server-token-utils'
 import { LoginRequest, RegisterRequest } from '@/types/auth'
 
 const API_PATHS = {
-  AUTH_LOGIN: `${BACKEND_CONFIG.baseURL}/api/V1/users/login`,
-  AUTH_REGISTER: `${BACKEND_CONFIG.baseURL}/api/V1/users/register`,
-  AUTH_FORGOT_PASSWORD: `${BACKEND_CONFIG.baseURL}/api/V1/users/forgot-password`,
-  AUTH_RESET_PASSWORD: `${BACKEND_CONFIG.baseURL}/api/V1/users/reset-password`,
+  AUTH_LOGIN: `/api/V1/users/login`,
+  AUTH_REGISTER: `/api/V1/users/register`,
+  AUTH_FORGOT_PASSWORD: `/api/V1/users/forgot-password`,
+  AUTH_RESET_PASSWORD: `/api/V1/users/reset-password`,
 } as const
 
 /**

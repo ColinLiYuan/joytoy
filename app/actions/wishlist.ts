@@ -4,7 +4,7 @@ import { BACKEND_CONFIG } from '@/lib/api-config'
 import { fetchWithAuth } from '@/lib/server-token-utils'
 import { WishlistRequest } from '@/types/wishlist'
 
-const WISHLIST_URL = `${BACKEND_CONFIG.baseURL}/api/V1/wishlist`
+const WISHLIST_URL = `/api/V1/wishlist`
 
 export async function addToWishlist(wishlistData: WishlistRequest): Promise<boolean> {
     try {

@@ -117,7 +117,7 @@ class BundleService {
      */
     async getBundles(page: number = 0, size: number = 12): Promise<BundleListResponse> {
         try {
-            const url = `${BACKEND_CONFIG.baseURL}/api/site/bundles?page=${page}&size=${size}`;
+            const url = `/api/V1/bundles?page=${page}&size=${size}`;
             const response = await axiosClient.get(url);
 
             if (response.data?.success) {
@@ -136,7 +136,7 @@ class BundleService {
      */
     async getBySlug(slug: string): Promise<ProductBundle> {
         try {
-            const url = `${BACKEND_CONFIG.baseURL}/api/site/bundles/${slug}`;
+            const url = `/api/V1/bundles/${slug}`;
             const response = await axiosClient.get(url);
 
             if (response.data?.success) {
@@ -155,7 +155,7 @@ class BundleService {
      */
     async getFeaturedBundles(): Promise<ProductBundle[]> {
         try {
-            const url = `${BACKEND_CONFIG.baseURL}/api/site/bundles/featured`;
+            const url = `/api/V1/bundles/featured`;
             const response = await axiosClient.get(url);
 
             if (response.data?.success) {
@@ -175,7 +175,7 @@ class BundleService {
      */
     async addToCart(bundleId: number, quantity: number = 1, cartId: number): Promise<any> {
         try {
-            const url = `${BACKEND_CONFIG.baseURL}/api/site/bundles/${bundleId}/add-to-cart`;
+            const url = `/api/V1/bundles/${bundleId}/add-to-cart`;
             const response = await axiosClient.post(url, null, {
                 params: { quantity, cartId }
             });
@@ -193,12 +193,12 @@ class BundleService {
 
     /**
      * 根据商品ID推荐套装
-     * 调用后端 /api/site/bundles/suggest?productIds=1,2,3
+     * 调用后端 /api/V1/bundles/suggest?productIds=1,2,3
      */
     async getSuggestBundles(productIds: number[]): Promise<ProductBundle[]> {
         try {
             const ids = productIds.join(',');
-            const url = `${BACKEND_CONFIG.baseURL}/api/site/bundles/suggest?productIds=${ids}`;
+            const url = `/api/V1/bundles/suggest?productIds=${ids}`;
             const response = await axiosClient.get(url);
 
             if (response.data?.success) {

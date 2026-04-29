@@ -5,8 +5,8 @@ import { fetchWithAuth } from '@/lib/server-token-utils'
 import { ReleaseBlogRequest } from '@/types/blog'
 
 const API_PATHS = {
-  BLOG_RELEASE: `${BACKEND_CONFIG.baseURL}/api/admin/V1/blog/release`,
-  BLOG_UPLOAD: `${BACKEND_CONFIG.baseURL}/api/admin/V1/upload/myth/blog/image`,
+  BLOG_RELEASE: `/api/admin/V1/blog/release`,
+  BLOG_UPLOAD: `/api/admin/V1/upload/myth/blog/image`,
 } as const
 
 // ==================== 博客写操作 (Server Action) ====================

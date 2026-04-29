@@ -97,19 +97,19 @@ export async function getUserCart() {
 
 const API_PATHS = {
   // 用户端购物车操作
-  CART_GET: `${BACKEND_CONFIG.baseURL}/api/V1/cart`,
-  CART_ADD: `${BACKEND_CONFIG.baseURL}/api/V1/cart`,
+  CART_GET: `/api/V1/cart`,
+  CART_ADD: `/api/V1/cart`,
   CART_UPDATE: (itemId: number, quantity: number) => 
-    `${BACKEND_CONFIG.baseURL}/api/V1/cart?itemId=${itemId}&quantity=${quantity}`,
-  CART_REMOVE: (itemId: number) => `${BACKEND_CONFIG.baseURL}/api/V1/cart/${itemId}`,
+    `/api/V1/cart?itemId=${itemId}&quantity=${quantity}`,
+  CART_REMOVE: (itemId: number) => `/api/V1/cart/${itemId}`,
   
   // 管理员购物车操作
-  CART_CLEAR: (cartId: number) => `${BACKEND_CONFIG.baseURL}/api/admin/V1/cart/${cartId}/clear`,
-  CART_ABANDON: (cartId: number) => `${BACKEND_CONFIG.baseURL}/api/admin/V1/cart/${cartId}/abandon`,
-  CART_CLEANUP_EXPIRED: `${BACKEND_CONFIG.baseURL}/api/admin/V1/cart/cleanup/expired`,
-  CART_ITEM_REMOVE: (itemId: number) => `${BACKEND_CONFIG.baseURL}/api/admin/V1/cart/item/${itemId}`,
+  CART_CLEAR: (cartId: number) => `/api/admin/V1/cart/${cartId}/clear`,
+  CART_ABANDON: (cartId: number) => `/api/admin/V1/cart/${cartId}/abandon`,
+  CART_CLEANUP_EXPIRED: `/api/admin/V1/cart/cleanup/expired`,
+  CART_ITEM_REMOVE: (itemId: number) => `/api/admin/V1/cart/item/${itemId}`,
   CART_ITEM_UPDATE_QUANTITY: (itemId: number, quantity: number) => 
-    `${BACKEND_CONFIG.baseURL}/api/admin/V1/cart/item/${itemId}/quantity?quantity=${quantity}`,
+    `/api/admin/V1/cart/item/${itemId}/quantity?quantity=${quantity}`,
 } as const
 
 /**
