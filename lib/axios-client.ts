@@ -3,18 +3,12 @@ import axios from 'axios';
 import { BACKEND_CONFIG } from '@/lib/api-config';
 import { setCookie, removeCookie } from '@/lib/cookie-utils';
 
-// 🔧 Axios 客户端配置
-// 浏览器环境：使用当前域名作为 baseURL，让相对路径能正确解析
-// 服务端环境：使用空字符串走 Next.js rewrites
-const getAxiosBaseURL = () => {
-    if (typeof window !== 'undefined') {
-        return window.location.origin;
-    }
-    return '';
-};
+// 🔧 直接使用环境变量配置的后端地址作为 baseURL
+const axiosBaseURL = process.env.NEXT_PUBLIC_BACKEND_BASE_URL || 'http://localhost:9356';
 
-// 创建 Axios 实例（不设置 baseURL，在拦截器中动态添加）
+// 创建 Axios 实例
 const axiosClient = axios.create({
+    baseURL: axiosBaseURL,
     timeout: 30000,
     headers: {
         'Content-Type': 'application/json',
@@ -185,7 +179,7 @@ axiosClient.interceptors.response.use(
                 
                 // ✅ 创建一个新的 axios 实例，避免触发拦截器造成死循环
                 const refreshAxios = axios.create({
-                    baseURL: getAxiosBaseURL(), // 使用相同的 baseURL
+                    baseURL: axiosBaseURL,
                     timeout: 30000,
                     headers: {
                         'Content-Type': 'application/json',
