@@ -20,7 +20,7 @@ export default function DiscountPopup() {
 
     const POPUP_COOKIE_NAME = 'discount_popup_shown';
     const POPUP_SUPPRESS_FOREVER = 'discount_popup_suppress_forever';
-    const DISCOUNT_CODE = 'MYTH10';
+    const DISCOUNT_CODE = 'MYTH15';
 
     // 检查是否应该显示弹窗
     useEffect(() => {
@@ -181,7 +181,7 @@ export default function DiscountPopup() {
                                 </div>
 
                                 <p className="text-sm text-gray-500">
-                                    Use this code at checkout for <span className="font-bold text-indigo-600">10% OFF</span>
+                                    Use this code at checkout for <span className="font-bold text-indigo-600">15% OFF</span>
                                 </p>
                                 <p className="text-xs text-gray-400 mt-2">Code also sent to your email.</p>
                             </div>
@@ -192,7 +192,7 @@ export default function DiscountPopup() {
                                     <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
                                         <Gift className="text-indigo-600" size={32} />
                                     </div>
-                                    <h2 className="text-2xl font-bold text-gray-900 mb-2">Get 10% Off</h2>
+                                    <h2 className="text-2xl font-bold text-gray-900 mb-2">Get 15% Off</h2>
                                     <p className="text-gray-600">
                                         Subscribe to our newsletter and unlock your exclusive discount code!
                                     </p>

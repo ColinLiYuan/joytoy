@@ -68,8 +68,8 @@ export const AUTHORS_DATA: Record<string, AuthorProfile> = {
 
 // 营销配置
 export const MARKETING_CONFIG = {
-    defaultDiscountCode: 'MYTH10',
-    newsletterTitle: 'Unlock 10% Off',
+    defaultDiscountCode: 'MYTH15',
+    newsletterTitle: 'Unlock 15% Off',
     newsletterSubtitle: 'Join our discreet community for exclusive offers and wellness tips.',
 };
 

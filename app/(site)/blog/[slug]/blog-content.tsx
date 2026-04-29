@@ -200,7 +200,7 @@ export default function BlogContent({ blog }: BlogContentProps) {
                             <Mail size={12} /> The Inner Circle
                         </div>
                         <h2 className="text-3xl md:text-5xl font-serif text-white mb-6">
-                            Unlock <span className="italic text-[#C5A059]">10% Off</span>
+                            Unlock <span className="italic text-[#C5A059]">15% Off</span>
                         </h2>
 
                         {successCode ? (

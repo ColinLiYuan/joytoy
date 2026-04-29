@@ -31,7 +31,7 @@ export default function Footer() {
         const result = await subscribeToNewsletter(formData);
 
         if (result.success) {
-            setSuccessCode(result.code || 'MYTH10');
+            setSuccessCode(result.code || 'MYTH15');
             showToast('success', 'Welcome!', 'Discount code unlocked!');
         } else {
             showToast('error', 'Error', 'Failed to subscribe. Please try again.');
@@ -100,7 +100,7 @@ export default function Footer() {
 
                     {/* Subscribe Section */}
                     <div id="footer-subscribe" className="footer-section">
-                        <h3 className="text-lg font-bold text-white mb-6 font-['Playfair_Display']">Get 10% Off</h3>
+                        <h3 className="text-lg font-bold text-white mb-6 font-['Playfair_Display']">Get 15% Off</h3>
 
                         {successCode ? (
                             // 订阅成功状态 (深色背景适配)
