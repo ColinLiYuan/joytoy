@@ -2,7 +2,9 @@
 // 服务端 Token 工具 - 供 Server Action 和 generateMetadata 使用
 
 import { cookies } from 'next/headers'
-import { BACKEND_CONFIG } from './api-config'
+
+// ✅ 服务端专用后端地址（不能带 NEXT_PUBLIC_）
+const BACKEND_URL = process.env.BACKEND_BASE_URL || 'http://localhost:9356';
 
 /**
  * 从 Cookie 获取 Access Token
@@ -25,7 +27,8 @@ export async function refreshAccessToken(): Promise<string | null> {
             return null
         }
 
-        const response = await fetch(`/api/V1/users/refresh`, {
+        // ✅ 服务端 fetch 必须使用完整 URL
+        const response = await fetch(`${BACKEND_URL}/api/V1/users/refresh`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ refreshToken }),
@@ -89,10 +92,16 @@ export async function fetchWithAuth(
     url: string,
     options: RequestInit = {}
 ): Promise<Response> {
+    // ✅ Node.js fetch 不支持相对路径，必须拼接完整 URL
+    let fullUrl = url;
+    if (url.startsWith('/')) {
+        fullUrl = `${BACKEND_URL}${url}`;
+    }
+
     const token = await getAccessToken()
     
     console.log('[Server Token] fetchWithAuth called:', {
-        url: url.substring(0, 100),
+        url: fullUrl.substring(0, 100),
         hasToken: !!token,
         tokenLength: token?.length || 0
     })
@@ -108,7 +117,7 @@ export async function fetchWithAuth(
         headers.set('Content-Type', 'application/json')
     }
 
-    let response = await fetch(url, {
+    let response = await fetch(fullUrl, {
         ...options,
         headers,
     })
@@ -124,7 +133,7 @@ export async function fetchWithAuth(
             headers.set('X-Retry-After-Refresh', 'true')
             
             console.log('[Server Token] Retrying with new token...')
-            response = await fetch(url, {
+            response = await fetch(fullUrl, {
                 ...options,
                 headers,
             })
