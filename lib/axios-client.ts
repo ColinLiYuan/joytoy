@@ -4,8 +4,9 @@ import { BACKEND_CONFIG } from '@/lib/api-config';
 import { setCookie, removeCookie } from '@/lib/cookie-utils';
 
 // 🔧 Axios 客户端配置
-// 统一使用空 baseURL，让 Axios 直接使用相对路径走 Next.js rewrites 代理
-const axiosBaseURL = '';
+// 浏览器环境：使用当前域名作为 baseURL，让相对路径能正确解析
+// 服务端环境：使用空字符串走 Next.js rewrites
+const axiosBaseURL = typeof window !== 'undefined' ? window.location.origin : '';
 
 // 创建 Axios 实例
 const axiosClient = axios.create({
