@@ -6,22 +6,29 @@ import { setCookie, removeCookie } from '@/lib/cookie-utils';
 // 🔧 Axios 客户端配置
 // 浏览器环境：使用当前域名作为 baseURL，让相对路径能正确解析
 // 服务端环境：使用空字符串走 Next.js rewrites
-const axiosBaseURL = typeof window !== 'undefined' ? window.location.origin : '';
+const getAxiosBaseURL = () => {
+    if (typeof window !== 'undefined') {
+        return window.location.origin;
+    }
+    return '';
+};
 
-// 创建 Axios 实例
+// 创建 Axios 实例（不设置 baseURL，在拦截器中动态添加）
 const axiosClient = axios.create({
-    baseURL: axiosBaseURL, // 使用相对路径，走 Next.js rewrites 代理
     timeout: 30000,
     headers: {
         'Content-Type': 'application/json',
     },
 });
 
-console.log('[AxiosClient] baseURL:', axiosBaseURL);
-
 // 请求拦截器
 axiosClient.interceptors.request.use(
     (config) => {
+        // 动态设置 baseURL
+        if (!config.baseURL) {
+            config.baseURL = getAxiosBaseURL();
+        }
+        
         console.log('[AxiosClient] Request:', {
             url: config.url,
             baseURL: config.baseURL,
@@ -173,7 +180,7 @@ axiosClient.interceptors.response.use(
                 
                 // ✅ 创建一个新的 axios 实例，避免触发拦截器造成死循环
                 const refreshAxios = axios.create({
-                    baseURL: axiosBaseURL, // 使用相同的 baseURL
+                    baseURL: getAxiosBaseURL(), // 使用相同的 baseURL
                     timeout: 30000,
                     headers: {
                         'Content-Type': 'application/json',
