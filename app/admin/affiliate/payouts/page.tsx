@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { Wallet, Clock, CheckCircle, AlertCircle, ChevronLeft, ChevronRight, Loader2, X, DollarSign } from 'lucide-react'
-import { getAllPayouts, approvePayout, rejectPayout } from '@/app/actions/admin'
+import { affiliateService } from '@/services/affiliateService'
+import { approvePayout, rejectPayout } from '@/app/actions/admin'
 import { PayoutResponse } from '@/types/affiliate'
 import { getToken, ensureFreshToken } from '@/lib/token-utils'
 import { BACKEND_CONFIG } from '@/lib/api-config'
@@ -38,7 +39,7 @@ export default function AdminPayoutsPage() {
     const fetchPayouts = async () => {
         try {
             setLoading(true)
-            const data = await getAllPayouts(currentPage, 20)
+            const data = await affiliateService.getAllPayouts(currentPage, 20)
             setPayouts(data.content || [])
             setTotalPages(data.totalPages || 1)
             setTotalElements(data.totalElements || 0)

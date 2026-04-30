@@ -3,8 +3,11 @@ import axios from 'axios';
 import { BACKEND_CONFIG } from '@/lib/api-config';
 import { setCookie, removeCookie } from '@/lib/cookie-utils';
 
-// 🔧 直接使用环境变量配置的后端地址作为 baseURL
-const axiosBaseURL = process.env.NEXT_PUBLIC_BACKEND_BASE_URL || 'http://localhost:9356';
+// 🔧 客户端必须使用相对路径，让请求通过 Next.js 代理（解决 Mixed Content 问题）
+// 服务端可以使用环境变量直连后端
+const axiosBaseURL = typeof window === 'undefined' 
+    ? (process.env.NEXT_PUBLIC_BACKEND_BASE_URL || 'http://localhost:9356')
+    : ''; // 客户端使用空字符串，走相对路径 /api/V1/...
 
 // 创建 Axios 实例
 const axiosClient = axios.create({

@@ -4,7 +4,7 @@
 import React, { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Users, MousePointerClick, DollarSign, TrendingUp, Calendar, Search, Filter, Wallet, Clock, CheckCircle, AlertCircle } from 'lucide-react'
-import { getAdminAffiliateStats, getAdminAffiliateList } from '@/app/actions/admin'
+import { affiliateService } from '@/services/affiliateService'
 
 interface AffiliateUser {
     id: number;
@@ -54,11 +54,11 @@ export default function AdminAffiliatePage() {
             setLoading(true);
             
             // Fetch stats data
-            const statsData = await getAdminAffiliateStats();
+            const statsData = await affiliateService.getAdminStats();
             setStats(statsData);
 
             // Fetch affiliate member list
-            const listData = await getAdminAffiliateList({ page: 0, size: 100 });
+            const listData = await affiliateService.getAdminList({ page: 0, size: 100 });
             setAffiliates(listData.content || []);
         } catch (error) {
             console.error('Failed to fetch affiliate data:', error);

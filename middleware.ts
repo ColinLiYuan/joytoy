@@ -84,7 +84,6 @@ const gonePaths = new Set([
     '/female-sex-toys/rabbit-vibrators/mythtoy-jade-rabbit-heated',
     '/male-sex-toys/pussy-masturbators/realistic-pocket-pussy-dream',
     '/female-sex-toys/bullet-vibrators/dart-precision-bullet',
-    '/pages/return-refund',
     '/female-sex-toys/bullet-vibrators/matte-red-lipstick-bullet-vibes',
     '/sex-toys/butt-plugs/medal-butt-plug-ht019',
     '/toys/male-sex-toys/male-masturbators/auto-suction-masturbator-fire',

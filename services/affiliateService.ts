@@ -1,4 +1,5 @@
 // services/affiliateService.ts
+import axiosClient from '@/lib/axios-client';
 import Cookies from 'js-cookie';
 import { AffiliateClickLog, AffDashboardResponse, AffiliateTracking, PayoutRequest, PayoutResponse } from '@/types/affiliate';
 import { OrderListResponse } from '@/types/order';
@@ -76,6 +77,7 @@ export class AffiliateService {
 
     private async logClick(data: AffiliateClickLog): Promise<void> {
         try {
+            console.log('[AffiliateService] Logging click:', data);
             await apiPost(`${SERVER_CONFIG.apiRoutes.affiliate}/click`, data);
         } catch (error) {
             // 仅仅是记录点击，即使报错也不要干扰用户正常访问
@@ -163,6 +165,203 @@ export class AffiliateService {
         }
 
         return result.data as PageResponse<PayoutResponse>;
+    }
+
+    // ==================== 管理端查询方法 ====================
+
+    /**
+     * 获取联盟统计数据（管理端）
+     */
+    async getAdminStats(): Promise<{
+        totalAffiliates: number;
+        activeAffiliates: number;
+        totalClicks: number;
+        totalConversions: number;
+        totalCommission: number;
+        conversionRate: number;
+        settledAmount: number;
+        pendingAmount: number;
+        currentBalance: number;
+        totalPaid: number;
+    }> {
+        try {
+            const url = '/api/admin/V1/affiliate/stats';
+            console.log('[AffiliateService] Fetching admin stats:', url);
+            
+            const response = await axiosClient.get(url);
+
+            if (response.data?.success) {
+                return response.data.data;
+            }
+
+            throw new Error(response.data?.message || 'Failed to fetch admin stats');
+        } catch (error) {
+            console.error('❌ [AffiliateService] Get admin stats failed:', error);
+            // 返回默认值
+            return {
+                totalAffiliates: 0,
+                activeAffiliates: 0,
+                totalClicks: 0,
+                totalConversions: 0,
+                totalCommission: 0,
+                conversionRate: 0,
+                settledAmount: 0,
+                pendingAmount: 0,
+                currentBalance: 0,
+                totalPaid: 0
+            };
+        }
+    }
+
+    /**
+     * 获取联盟成员列表（管理端）
+     */
+    async getAdminList(params: {
+        page?: number;
+        size?: number;
+    } = {}): Promise<{
+        content: any[];
+        totalPages: number;
+        totalElements: number;
+    }> {
+        try {
+            const { page = 0, size = 20 } = params;
+            const url = `/api/admin/V1/affiliate/list?page=${page}&size=${size}`;
+            
+            console.log('[AffiliateService] Fetching admin affiliate list:', url);
+            
+            const response = await axiosClient.get(url);
+
+            if (response.data?.success) {
+                return response.data.data;
+            }
+
+            throw new Error(response.data?.message || 'Failed to fetch admin affiliate list');
+        } catch (error) {
+            console.error('❌ [AffiliateService] Get admin affiliate list failed:', error);
+            return { content: [], totalPages: 0, totalElements: 0 };
+        }
+    }
+
+    /**
+     * 获取联盟成员佣金日志（管理端）
+     */
+    async getAdminCommissionLogs(
+        affiliateId: string,
+        page: number = 0,
+        size: number = 20
+    ): Promise<{
+        content: any[];
+        currentPage: number;
+        pageSize: number;
+        totalElements: number;
+        totalPages: number;
+        hasNext: boolean;
+        hasPrevious: boolean;
+    }> {
+        try {
+            const url = `/api/admin/V1/affiliate/${affiliateId}/commission-logs?page=${page}&size=${size}`;
+            
+            console.log('[AffiliateService] Fetching admin commission logs:', url);
+            
+            const response = await axiosClient.get(url);
+
+            if (response.data?.success) {
+                return response.data.data || {
+                    content: [],
+                    currentPage: page,
+                    pageSize: size,
+                    totalElements: 0,
+                    totalPages: 0,
+                    hasNext: false,
+                    hasPrevious: false
+                };
+            }
+
+            throw new Error(response.data?.message || 'Failed to fetch commission logs');
+        } catch (error) {
+            console.error('❌ [AffiliateService] Get admin commission logs failed:', error);
+            return {
+                content: [],
+                currentPage: page,
+                pageSize: size,
+                totalElements: 0,
+                totalPages: 0,
+                hasNext: false,
+                hasPrevious: false
+            };
+        }
+    }
+
+    /**
+     * 获取所有提现记录（管理端）
+     */
+    async getAllPayouts(page: number = 0, size: number = 20): Promise<PageResponse<PayoutResponse>> {
+        try {
+            const url = `/api/admin/V1/affiliate/payouts?page=${page}&size=${size}`;
+            
+            console.log('[AffiliateService] Fetching all payouts:', url);
+            
+            const response = await axiosClient.get(url);
+
+            if (response.data?.success) {
+                return response.data.data;
+            }
+
+            throw new Error(response.data?.message || 'Failed to fetch payouts');
+        } catch (error) {
+            console.error('❌ [AffiliateService] Get all payouts failed:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * 获取联盟客活动列表（管理端）
+     */
+    async getAdminActivities(
+        affiliateId: string,
+        page: number = 0,
+        size: number = 20
+    ): Promise<PageResponse<any>> {
+        try {
+            // 首先获取详情，详情中包含活动列表
+            const url = `/api/admin/V1/affiliate/${affiliateId}/detail`;
+            
+            console.log('[AffiliateService] Fetching admin affiliate detail:', url);
+            
+            const response = await axiosClient.get(url);
+
+            if (response.data?.success) {
+                // 从详情中提取活动列表，并手动分页
+                const activities = response.data.data.activities || [];
+                const start = page * size;
+                const end = start + size;
+                const paginatedActivities = activities.slice(start, end);
+
+                return {
+                    content: paginatedActivities,
+                    currentPage: page,
+                    pageSize: size,
+                    totalElements: activities.length,
+                    totalPages: Math.ceil(activities.length / size),
+                    hasNext: end < activities.length,
+                    hasPrevious: page > 0
+                };
+            }
+
+            throw new Error(response.data?.message || 'Failed to fetch affiliate detail');
+        } catch (error) {
+            console.error('[AffiliateService] Get admin activities failed:', error);
+            return {
+                content: [],
+                currentPage: page,
+                pageSize: size,
+                totalElements: 0,
+                totalPages: 0,
+                hasNext: false,
+                hasPrevious: false
+            };
+        }
     }
 }
 

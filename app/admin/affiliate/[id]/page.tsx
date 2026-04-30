@@ -5,7 +5,8 @@ import { Suspense } from 'react'
 import React, { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { ArrowLeft, MousePointerClick, ShoppingCart, DollarSign, TrendingUp, Clock, ChevronLeft, ChevronRight, Loader2, Wallet, CheckCircle, AlertCircle, Plus, Trash2, Edit, ExternalLink } from 'lucide-react'
-import { getAdminAffiliateCommissionLogs, AdminCommissionLogResponse, AdminCommissionLogsPageResponse, getAdminAffiliateList, getAdminAffiliateActivities, AffiliateActivityResponse, createAffiliateActivity, updateAffiliateActivity, deleteAffiliateActivity } from '@/app/actions/admin'
+import { affiliateService } from '@/services/affiliateService'
+import { AffiliateActivityResponse, createAffiliateActivity, updateAffiliateActivity, deleteAffiliateActivity } from '@/app/actions/admin'
 
 interface AffiliateDetail {
     id: number;
@@ -36,7 +37,7 @@ function AffiliateDetailContent() {
     const [loading, setLoading] = useState(true);
     
     // 佣金日志状态
-    const [commissionLogs, setCommissionLogs] = useState<AdminCommissionLogsPageResponse | null>(null);
+    const [commissionLogs, setCommissionLogs] = useState<any | null>(null);
     const [logsLoading, setLogsLoading] = useState(false);
     const [currentPage, setCurrentPage] = useState(0);
     
@@ -62,7 +63,7 @@ function AffiliateDetailContent() {
     const fetchCommissionLogs = async () => {
         setLogsLoading(true);
         try {
-            const logs = await getAdminAffiliateCommissionLogs(detail!.affiliateId, currentPage, 10);
+            const logs = await affiliateService.getAdminCommissionLogs(detail!.affiliateId, currentPage, 10);
             setCommissionLogs(logs);
         } catch (error) {
             console.error('Failed to load commission logs:', error);
@@ -75,7 +76,7 @@ function AffiliateDetailContent() {
     const fetchActivities = async () => {
         setActivitiesLoading(true);
         try {
-            const result = await getAdminAffiliateActivities(detail!.affiliateId, activityPage, 10);
+            const result = await affiliateService.getAdminActivities(detail!.affiliateId, activityPage, 10);
             setActivities(result.content || []);
         } catch (error) {
             console.error('Failed to load activities:', error);
@@ -126,7 +127,7 @@ function AffiliateDetailContent() {
             setLoading(true);
             
             // Fetch member detail (find from list)
-            const listData = await getAdminAffiliateList({ page: 0, size: 100 });
+            const listData = await affiliateService.getAdminList({ page: 0, size: 100 });
             
             if (listData.content) {
                 const member = listData.content.find((m) => m.id.toString() === affiliateId);
@@ -347,7 +348,7 @@ function AffiliateDetailContent() {
                     ) : (
                         <>
                             <div className="space-y-3">
-                                {commissionLogs.content.map((log) => (
+                                {commissionLogs.content.map((log: any) => (
                                     <CommissionLogItem key={log.id} log={log} />
                                 ))}
                             </div>
@@ -484,7 +485,7 @@ function InfoRow({ label, value }: { label: string; value: string }) {
 /**
  * Commission Log Item Component
  */
-function CommissionLogItem({ log }: { log: AdminCommissionLogResponse }) {
+function CommissionLogItem({ log }: { log: any }) {
     const isEarn = log.changeType === 'EARN';
     const isRefund = log.changeType === 'REFUND_DEDUCT';
     
