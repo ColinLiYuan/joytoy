@@ -14,6 +14,12 @@ const CHANGE_TYPE_COLORS: Record<string, string> = {
   RESTOCK: 'bg-green-100 text-green-800',
   REFUND: 'bg-purple-100 text-purple-800',
   ADJUSTMENT: 'bg-gray-100 text-gray-800',
+  PURCHASE_IN: 'bg-indigo-100 text-indigo-800',
+  PURCHASE_RETURN: 'bg-orange-100 text-orange-800',
+  SAMPLE_OUT: 'bg-pink-100 text-pink-800',
+  SYNC_TO_SALE: 'bg-cyan-100 text-cyan-800',
+  PRE_SALE: 'bg-violet-100 text-violet-800',
+  INVENTORY_CHECK: 'bg-teal-100 text-teal-800',
 };
 
 export default function InventoryLogPage() {
@@ -93,14 +99,16 @@ export default function InventoryLogPage() {
   };
 
   const getStockChangeIcon = (changeType: string) => {
-    if (['LOCK', 'CONSUME'].includes(changeType)) {
+    const type = changeType?.toUpperCase();
+    if (['LOCK', 'CONSUME', 'PURCHASE_RETURN', 'SAMPLE_OUT'].includes(type || '')) {
       return <ArrowDownRight className="w-4 h-4" />;
     }
     return <ArrowUpRight className="w-4 h-4" />;
   };
 
   const getStockChangeColor = (changeType: string) => {
-    if (['LOCK', 'CONSUME'].includes(changeType)) {
+    const type = changeType?.toUpperCase();
+    if (['LOCK', 'CONSUME', 'PURCHASE_RETURN', 'SAMPLE_OUT'].includes(type || '')) {
       return 'text-red-600';
     }
     return 'text-green-600';
@@ -114,7 +122,7 @@ export default function InventoryLogPage() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 tracking-tight">库存流水</h1>
-              <p className="mt-2 text-sm text-gray-600">查看商品和套装的库存变化记录</p>
+              <p className="mt-2 text-sm text-gray-600">查看所有库存变动记录（销售、采购、调整等）</p>
             </div>
             <button
               onClick={fetchLogs}
@@ -149,6 +157,12 @@ export default function InventoryLogPage() {
                 <option value="RESTOCK">补货</option>
                 <option value="REFUND">退款恢复</option>
                 <option value="ADJUSTMENT">库存调整</option>
+                <option value="PURCHASE_IN">采购入库</option>
+                <option value="PURCHASE_RETURN">采购退回</option>
+                <option value="SAMPLE_OUT">样品发出</option>
+                <option value="SYNC_TO_SALE">同步到销售</option>
+                <option value="PRE_SALE">预售设置</option>
+                <option value="INVENTORY_CHECK">库存盘点</option>
               </select>
             </div>
 
@@ -226,7 +240,7 @@ export default function InventoryLogPage() {
                     订单号
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
-                    操作人
+                    采购单号
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
                     原因
@@ -257,9 +271,9 @@ export default function InventoryLogPage() {
                   logs.map((log) => (
                     <tr key={log.id} className="hover:bg-gray-50 transition-colors">
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold ${CHANGE_TYPE_COLORS[log.changeType] || 'bg-gray-100 text-gray-800'}`}>
+                        <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold ${CHANGE_TYPE_COLORS[log.changeType?.toUpperCase() || ''] || 'bg-gray-100 text-gray-800'}`}>
                           {getStockChangeIcon(log.changeType)}
-                          {log.changeTypeDesc}
+                          {log.changeTypeDesc || log.changeType?.toUpperCase() || '未知'}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -313,7 +327,11 @@ export default function InventoryLogPage() {
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm text-gray-600">{log.operatedBy || '-'}</span>
+                        {log.purchaseOrderNo ? (
+                          <span className="text-sm font-mono text-green-600">{log.purchaseOrderNo}</span>
+                        ) : (
+                          <span className="text-sm text-gray-500">-</span>
+                        )}
                       </td>
                       <td className="px-6 py-4">
                         <span className="text-sm text-gray-600 line-clamp-2">{log.reason || '-'}</span>

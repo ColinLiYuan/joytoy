@@ -149,7 +149,10 @@ axiosClient.interceptors.response.use(
                 return new Promise((resolve, reject) => {
                     failedQueue.push({ resolve, reject });
                 })
-                    .then(() => {
+                    .then((token) => {
+                        // 刷新成功后，标记为已重试，避免再次触发 401 流程
+                        originalRequest._retry = true;
+                        originalRequest.headers.Authorization = `Bearer ${token}`;
                         return axiosClient(originalRequest);
                     })
                     .catch((err) => {

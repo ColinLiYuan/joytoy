@@ -7,7 +7,7 @@ export interface InventoryLogResponse {
   bundleId?: number;
   bundleName?: string;
   skuCode?: string;
-  changeType: string; // LOCK/RELEASE/CONSUME/RESTOCK/REFUND/ADJUSTMENT
+  changeType: string; // LOCK/RELEASE/CONSUME/RESTOCK/REFUND/ADJUSTMENT/PURCHASE_IN/PURCHASE_RETURN/SAMPLE_OUT/SYNC_TO_SALE/PRE_SALE/INVENTORY_CHECK
   changeTypeDesc: string; // 中文描述
   quantity?: number; // 变化数量（后端可能返回null）
   beforeStock?: number; // 变化前可用库存（后端可能返回null）
@@ -16,6 +16,7 @@ export interface InventoryLogResponse {
   afterLockedStock?: number; // 变化后锁定库存（后端可能返回null）
   orderId?: number;
   orderNumber?: string;
+  purchaseOrderNo?: string; // 采购单号
   operatedBy?: string;
   reason?: string;
   createdAt: string;
