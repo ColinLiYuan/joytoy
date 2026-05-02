@@ -80,15 +80,15 @@ export default function DiscountPopup() {
             }
         }
 
-        console.log('[DiscountPopup] Will show popup in 2 seconds...');
-        // 延迟2秒后显示弹窗，提升用户体验
+        console.log('[DiscountPopup] Will show popup in 10 seconds...');
+        // 延迟10秒后显示弹窗，提升用户体验
         const timer = setTimeout(() => {
             console.log('[DiscountPopup] Showing popup now!');
             setIsOpen(true);
             // 记录显示时间
             localStorage.setItem(POPUP_COOKIE_NAME, Date.now().toString());
             console.log('[DiscountPopup] Set discount_popup_shown to:', Date.now());
-        }, 2000);
+        }, 10000);
 
         return () => clearTimeout(timer);
     }, [pathname, userInfo]);
