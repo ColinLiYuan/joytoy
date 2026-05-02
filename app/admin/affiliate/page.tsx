@@ -3,7 +3,7 @@
 
 import React, { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Users, MousePointerClick, DollarSign, TrendingUp, Calendar, Search, Filter, Wallet, Clock, CheckCircle, AlertCircle } from 'lucide-react'
+import { Users, MousePointerClick, DollarSign, TrendingUp, Calendar, Search, Filter, Wallet, Clock, CheckCircle, AlertCircle, Package, Video, FileText } from 'lucide-react'
 import { affiliateService } from '@/services/affiliateService'
 
 interface AffiliateUser {
@@ -32,6 +32,9 @@ interface AffiliateStats {
     totalConversions: number;
     totalCommission: number;
     conversionRate: number;
+    totalShipments: number;        // ✅ 新增：发货数
+    totalVideoReviews: number;     // ✅ 新增：视频评测数
+    totalBlogReviews: number;      // ✅ 新增：博客评测数
     settledAmount: number;       // Settled amount (over 30 days)
     pendingAmount: number;       // Pending amount (within 30 days)
     currentBalance: number;      // Current total balance
@@ -135,6 +138,46 @@ export default function AdminAffiliatePage() {
                             icon={DollarSign}
                             color="orange"
                         />
+                    </div>
+
+                    {/* ✅ 新增：活动统计 */}
+                    <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+                        <div className="flex items-center gap-2 mb-6">
+                            <Calendar className="h-5 w-5 text-gray-400" />
+                            <h3 className="font-bold text-gray-900">活动统计</h3>
+                        </div>
+                        <div className="grid grid-cols-3 gap-6">
+                            <div className="space-y-2">
+                                <div className="flex items-center gap-2">
+                                    <Package className="h-4 w-4 text-blue-500" />
+                                    <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">发货数</span>
+                                </div>
+                                <div className="text-2xl font-black text-gray-900">
+                                    {stats.totalShipments?.toLocaleString() || '0'}
+                                </div>
+                                <div className="text-xs text-gray-400">累计发货次数</div>
+                            </div>
+                            <div className="space-y-2">
+                                <div className="flex items-center gap-2">
+                                    <Video className="h-4 w-4 text-pink-500" />
+                                    <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">视频评测</span>
+                                </div>
+                                <div className="text-2xl font-black text-gray-900">
+                                    {stats.totalVideoReviews?.toLocaleString() || '0'}
+                                </div>
+                                <div className="text-xs text-gray-400">视频评测数量</div>
+                            </div>
+                            <div className="space-y-2">
+                                <div className="flex items-center gap-2">
+                                    <FileText className="h-4 w-4 text-indigo-500" />
+                                    <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">博客评测</span>
+                                </div>
+                                <div className="text-2xl font-black text-gray-900">
+                                    {stats.totalBlogReviews?.toLocaleString() || '0'}
+                                </div>
+                                <div className="text-xs text-gray-400">博客评测数量</div>
+                            </div>
+                        </div>
                     </div>
 
                     {/* Financial Overview */}

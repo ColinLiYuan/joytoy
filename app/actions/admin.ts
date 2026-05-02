@@ -1,8 +1,15 @@
 'use server'
 
-import { fetchWithAuth, fetchWithAuthGet, fetchWithAuthPost } from '@/lib/server-auth'
+import { fetchWithAuth, getAccessToken } from '@/lib/server-token-utils'
 import { PageResponse } from '@/types/api'
 import { PayoutResponse } from '@/types/affiliate'
+
+// 兼容旧的 API，封装 fetchWithAuthGet 和 fetchWithAuthPost
+const fetchWithAuthGet = (url: string) => fetchWithAuth(url, { method: 'GET', cache: 'no-store' })
+const fetchWithAuthPost = (url: string, body: any) => fetchWithAuth(url, {
+    method: 'POST',
+    body: JSON.stringify(body)
+})
 
 // ==================== 类型定义 ====================
 
@@ -11,6 +18,10 @@ export interface DashboardStats {
     totalOrders: number
     totalProducts: number
     totalUsers: number
+    cancelledOrders: number
+    refundedOrders: number
+    cancelledAmount: number
+    refundedAmount: number
     salesChange: string
     ordersChange: string
     productsChange: string
@@ -51,10 +62,13 @@ interface AffiliateStats {
     totalConversions: number;
     totalCommission: number;
     conversionRate: number;
-    settledAmount: number;       // Settled amount (over 30 days)
-    pendingAmount: number;       // Pending amount (within 30 days)
-    currentBalance: number;      // Current total balance
-    totalPaid: number;           // Total paid amount
+    totalShipments: number;        // ✅ 新增：发货数
+    totalVideoReviews: number;     // ✅ 新增：视频评测数
+    totalBlogReviews: number;      // ✅ 新增：博客评测数
+    settledAmount: number;         // Settled amount (over 30 days)
+    pendingAmount: number;         // Pending amount (within 30 days)
+    currentBalance: number;        // Current total balance
+    totalPaid: number;             // Total paid amount
 }
 
 export interface AdminCommissionLogResponse {
@@ -121,7 +135,7 @@ export interface AffiliateActivityRequest {
 }
 
 // ==================== 公共工具函数 ====================
-// 已迁移到 lib/server-auth.ts
+// 已迁移到 lib/server-token-utils.ts
 
 // ==================== 仪表盘 (Dashboard) Actions ====================
 
@@ -153,12 +167,22 @@ export async function getDashboardStats(): Promise<DashboardStats> {
         })
         
         const todaySales = todayOrders.reduce((sum: number, order: any) => sum + (order.totalAmount || 0), 0)
+        
+        // 计算取消和退款订单统计
+        const cancelledOrders = orders.filter((o: any) => o.status === 'CANCELLED')
+        const refundedOrders = orders.filter((o: any) => o.status === 'REFUNDED')
+        const cancelledAmount = cancelledOrders.reduce((sum: number, o: any) => sum + (o.totalAmount || 0), 0)
+        const refundedAmount = refundedOrders.reduce((sum: number, o: any) => sum + (o.totalAmount || 0), 0)
 
         return {
             todaySales,
             totalOrders: orders.length,
             totalProducts: products.length,
             totalUsers: users.length,
+            cancelledOrders: cancelledOrders.length,
+            refundedOrders: refundedOrders.length,
+            cancelledAmount,
+            refundedAmount,
             salesChange: '+12%',
             ordersChange: '+8%',
             productsChange: '+3%',
@@ -172,6 +196,10 @@ export async function getDashboardStats(): Promise<DashboardStats> {
             totalOrders: 0,
             totalProducts: 0,
             totalUsers: 0,
+            cancelledOrders: 0,
+            refundedOrders: 0,
+            cancelledAmount: 0,
+            refundedAmount: 0,
             salesChange: '+0%',
             ordersChange: '+0%',
             productsChange: '+0%',
@@ -228,6 +256,9 @@ export async function getAdminAffiliateStats(): Promise<AffiliateStats> {
             totalClicks: 0,
             totalConversions: 0,
             conversionRate: 0,
+            totalShipments: 0,        // ✅ 新增默认值
+            totalVideoReviews: 0,     // ✅ 新增默认值
+            totalBlogReviews: 0,      // ✅ 新增默认值
             settledAmount: 0,
             pendingAmount: 0,
             currentBalance: 0,

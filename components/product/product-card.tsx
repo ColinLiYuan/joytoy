@@ -33,6 +33,9 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
     const addItemToCart = useCartStore(state => state.addItemToCart);
 
     const mainImage = useMemo(() => getProductImageUrl('', product.image), [product.image]);
+    
+    // 判断是否为白底图片（文件名包含 'full' 表示彩色底，需要撑满显示）
+    const isFullBackgroundImage = product.image?.toLowerCase().includes('full');
 
     const getAvailableStock = useCallback((sku: ProductSku | null | undefined): number => {
         if (!sku) return 0;
@@ -195,7 +198,7 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
                         alt={product.title || 'Product image'}
                         width={400}
                         height={400}
-                        className="p-6 object-contain w-full h-full group-hover:scale-105 transition-transform duration-500 mix-blend-multiply"
+                        className={`${isFullBackgroundImage ? 'object-cover' : 'p-6 object-contain mix-blend-multiply'} w-full h-full group-hover:scale-105 transition-transform duration-500`}
                         placeholder="blur"
                         blurDataURL={BLUR_DATA_URL}
                     />

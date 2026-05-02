@@ -22,8 +22,19 @@ class ReviewService {
             throw new Error(response.data?.message || 'Failed to fetch reviews')
         } catch (error: any) {
             console.error('❌ Get reviews failed:', error)
-            console.error('❌ Error response:', error.response?.data)
-            console.error('❌ Error status:', error.response?.status)
+            // 区分 HTTP 错误和网络错误
+            if (error.response) {
+                // HTTP 错误（后端返回了错误响应）
+                console.error('❌ HTTP Error - Status:', error.response.status)
+                console.error('❌ HTTP Error - Data:', error.response.data)
+            } else if (error.request) {
+                // 网络错误（请求发出去了，但没收到响应）
+                console.error('❌ Network Error - Message:', error.message)
+                console.error('❌ Network Error - Request:', error.request)
+            } else {
+                // 其他错误（请求配置阶段出错）
+                console.error('❌ Setup Error - Message:', error.message)
+            }
             throw error
         }
     }

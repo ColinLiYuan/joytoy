@@ -17,9 +17,8 @@ const API_PATHS = {
  */
 export async function loginUser(request: LoginRequest) {
     try {
-        const response = await fetch(API_PATHS.AUTH_LOGIN, {
+        const response = await fetchWithAuth(API_PATHS.AUTH_LOGIN, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(request),
         })
 
@@ -64,9 +63,8 @@ export async function loginUser(request: LoginRequest) {
  * 用户注册
  */
 export async function registerUser(request: RegisterRequest) {
-    const response = await fetch(API_PATHS.AUTH_REGISTER, {
+    const response = await fetchWithAuth(API_PATHS.AUTH_REGISTER, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(request),
     })
 
@@ -87,9 +85,8 @@ export async function registerUser(request: RegisterRequest) {
  * 忘记密码 - 发送重置邮件
  */
 export async function forgotPassword(email: string) {
-    const response = await fetch(API_PATHS.AUTH_FORGOT_PASSWORD, {
+    const response = await fetchWithAuth(API_PATHS.AUTH_FORGOT_PASSWORD, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
     })
 
@@ -108,9 +105,8 @@ export async function forgotPassword(email: string) {
  * 重置密码
  */
 export async function resetPassword(token: string, password: string) {
-    const response = await fetch(API_PATHS.AUTH_RESET_PASSWORD, {
+    const response = await fetchWithAuth(API_PATHS.AUTH_RESET_PASSWORD, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token, password }),
     })
 

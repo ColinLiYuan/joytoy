@@ -11,8 +11,7 @@ import {
     RotateCcw
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import axiosClient from '@/lib/axios-client'
-import { BACKEND_CONFIG } from '@/lib/api-config'
+import { getDashboardStats, getRecentOrders } from '@/app/actions/admin'
 
 export const dynamic = 'force-dynamic';
 
@@ -26,57 +25,12 @@ export default function AdminDashboard() {
             try {
                 setLoading(true)
                 
-                // ✅ 并行获取所有统计数据（直连后端）
-                const [ordersRes, productsRes, usersRes] = await Promise.all([
-                    axiosClient.get('/api/admin/V1/order/list?page=0&size=1000'),
-                    axiosClient.get('/api/admin/V1/product/list?page=0&size=1000'),
-                    axiosClient.get('/api/admin/V1/users/list?page=0&size=1000') // ✅ 修正：users 复数
-                ])
+                // ✅ 使用 Server Action 获取数据（避免 Token 竞态问题）
+                const dashboardStats = await getDashboardStats()
+                const recentOrdersData = await getRecentOrders(5)
                 
-                const orders = ordersRes.data?.data?.content || []
-                const products = productsRes.data?.data?.content || []
-                const users = usersRes.data?.data?.content || []
-                
-                const today = new Date()
-                today.setHours(0, 0, 0, 0)
-                
-                const todayOrders = orders.filter((order: any) => {
-                    const orderDate = new Date(order.createdAt)
-                    return orderDate >= today
-                })
-                
-                const todaySales = todayOrders.reduce((sum: number, order: any) => sum + (order.totalAmount || 0), 0)
-                
-                // 计算统计数据
-                const cancelledOrders = orders.filter((o: any) => o.status === 'CANCELLED')
-                const refundedOrders = orders.filter((o: any) => o.status === 'REFUNDED')
-                
-                setStats({
-                    todaySales,
-                    totalOrders: orders.length,
-                    totalProducts: products.length,
-                    totalUsers: users.length,
-                    cancelledOrders: cancelledOrders.length,
-                    refundedOrders: refundedOrders.length,
-                    cancelledAmount: cancelledOrders.reduce((sum: number, o: any) => sum + (o.totalAmount || 0), 0),
-                    refundedAmount: refundedOrders.reduce((sum: number, o: any) => sum + (o.totalAmount || 0), 0),
-                    salesChange: '+12%',
-                    ordersChange: '+8%',
-                    productsChange: '+3%',
-                    usersChange: '+5%'
-                })
-                
-                // 获取最近订单
-                const recentOrdersRes = await axiosClient.get('/api/admin/V1/order/list?page=0&size=5')
-                const recentOrdersData = recentOrdersRes.data?.data?.content || []
-                
-                setRecentOrders(recentOrdersData.map((order: any) => ({
-                    id: `#${order.orderNumber || order.id}`,
-                    customer: `${order.customerFirstName || ''} ${order.customerLastName || ''}`.trim() || '未知客户',
-                    amount: order.totalAmount || 0,
-                    status: order.status || '待处理',
-                    date: order.createdAt ? new Date(order.createdAt).toLocaleDateString('zh-CN') : '-'
-                })))
+                setStats(dashboardStats)
+                setRecentOrders(recentOrdersData)
             } catch (error) {
                 console.error('Failed to fetch dashboard data:', error)
             } finally {

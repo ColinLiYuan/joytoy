@@ -179,6 +179,9 @@ export class AffiliateService {
         totalConversions: number;
         totalCommission: number;
         conversionRate: number;
+        totalShipments: number;        // ✅ 新增：发货数
+        totalVideoReviews: number;     // ✅ 新增：视频评测数
+        totalBlogReviews: number;      // ✅ 新增：博客评测数
         settledAmount: number;
         pendingAmount: number;
         currentBalance: number;
@@ -205,6 +208,9 @@ export class AffiliateService {
                 totalConversions: 0,
                 totalCommission: 0,
                 conversionRate: 0,
+                totalShipments: 0,        // ✅ 新增默认值
+                totalVideoReviews: 0,     // ✅ 新增默认值
+                totalBlogReviews: 0,      // ✅ 新增默认值
                 settledAmount: 0,
                 pendingAmount: 0,
                 currentBalance: 0,
