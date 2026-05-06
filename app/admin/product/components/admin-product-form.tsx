@@ -60,9 +60,6 @@ function AdminProductFormContent() {
         badge: '',
         brand: '',
         alt: '',
-        sourceTitle: '',
-        sourceVendor: '',
-        purchasePrice: 0,
         highlightData: '',
         boxContents: ''
     });
@@ -132,14 +129,11 @@ function AdminProductFormContent() {
             image: product.image,
             alt: product.alt || product.title,
             slug: product.slug,
-            sourceTitle: product.sourceTitle,
-            sourceVendor: product.sourceVendor,
             title: product.title,
             name: product.name,
             description: product.description,
             stock: product.stock || 0,
             lockedStock: product.lockedStock || 0,
-            purchasePrice: product.purchasePrice,
             currentPrice: product.currentPrice,
             originalPrice: product.originalPrice,
             minOrder: product.minOrder?.toString(),
@@ -161,7 +155,6 @@ function AdminProductFormContent() {
     const validateForm = (data: ReleaseProductRequest): string | null => {
         if (!data.title?.trim()) return "错误：产品标题不能为空";
         if (!data.slug?.trim()) return "错误：请生成产品 URL (Slug)";
-        if (!data.sourceVendor?.trim()) return "错误：请选择供应商";
 
         if (!data.currentPrice || data.currentPrice <= 0) return "错误：当前价格必须大于 0";
         if (!data.originalPrice || data.originalPrice <= 0) return "错误：原始价格必须大于 0";
@@ -238,7 +231,7 @@ function AdminProductFormContent() {
 
     // 计算各区块完成状态
     const sectionStatus = {
-        basic: product.title && product.sourceVendor && (product.currentPrice || 0) > 0 && (product.originalPrice || 0) > 0,
+        basic: product.title && (product.currentPrice || 0) > 0 && (product.originalPrice || 0) > 0,
         category_url: product.slug && product.slug.length > 0 && product.categories && product.categories.length > 0,
         images: product.image && product.image.length > 0,
         specs: true, // 可选

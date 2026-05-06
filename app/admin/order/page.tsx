@@ -14,13 +14,12 @@ import {
     Package,
     PackageCheck,
     Loader2,
-    ChevronLeft,
-    ChevronRight,
     RotateCcw,
     XCircle,
     DollarSign,
     CheckCircle
 } from 'lucide-react'
+import Pagination from '@/components/common/pagination'
 
 // 定义所有状态
 const statuses: (OrderStatus | 'ALL')[] = [
@@ -46,11 +45,13 @@ export default function OrderPage() {
     const [orders, setOrders] = useState<OrderResponse[]>([])
     const [loading, setLoading] = useState(true)
 
-    // 初始化默认过滤“全部订单”状态
+    // 初始化默认过滤"全部订单"状态
     const [activeStatus, setActiveStatus] = useState<OrderStatus | 'ALL'>('ALL')
     const [searchQuery, setSearchQuery] = useState('')
+    const [emailQuery, setEmailQuery] = useState('')
     const [page, setPage] = useState(0)
     const [totalPages, setTotalPages] = useState(0)
+    const [totalElements, setTotalElements] = useState(0)
 
     // 发货弹窗状态
     const [isShipModalOpen, setIsShipModalOpen] = useState(false)
@@ -78,18 +79,20 @@ export default function OrderPage() {
         try {
             const data = await orderService.adminList({
                 page,
-                size: 7,
+                size: 15,
                 status: activeStatus === 'ALL' ? undefined : activeStatus,
-                orderNumber: searchQuery
+                orderNumber: searchQuery,
+                guestEmail: emailQuery
             })
             setOrders(data.content)
             setTotalPages(data.totalPages)
+            setTotalElements(data.totalElements)
         } catch (error) {
             console.error('Fetch orders failed:', error)
         } finally {
             setLoading(false)
         }
-    }, [page, activeStatus, searchQuery])
+    }, [page, activeStatus, searchQuery, emailQuery])
 
     useEffect(() => {
         fetchOrders()
@@ -231,15 +234,27 @@ export default function OrderPage() {
                         ))}
                     </div>
 
-                    <div className="relative">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                        <input
-                            type="text"
-                            placeholder="输入订单号搜索..."
-                            className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-900 focus:bg-white outline-none transition-all"
-                            value={searchQuery}
-                            onChange={(e) => { setSearchQuery(e.target.value); setPage(0); }}
-                        />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="relative">
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                            <input
+                                type="text"
+                                placeholder="输入订单号搜索..."
+                                className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-900 focus:bg-white outline-none transition-all"
+                                value={searchQuery}
+                                onChange={(e) => { setSearchQuery(e.target.value); setPage(0); }}
+                            />
+                        </div>
+                        <div className="relative">
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                            <input
+                                type="email"
+                                placeholder="输入邮箱搜索..."
+                                className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-900 focus:bg-white outline-none transition-all"
+                                value={emailQuery}
+                                onChange={(e) => { setEmailQuery(e.target.value); setPage(0); }}
+                            />
+                        </div>
                     </div>
                 </div>
 
@@ -430,27 +445,12 @@ export default function OrderPage() {
 
                     {/* 分页控制 */}
                     {!loading && totalPages > 1 && (
-                        <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
-                            <p className="text-sm text-gray-500">
-                                第 <span className="font-medium">{page + 1}</span> 页 / 共 <span className="font-medium">{totalPages}</span> 页
-                            </p>
-                            <div className="flex space-x-2">
-                                <button
-                                    disabled={page === 0}
-                                    onClick={() => setPage(prev => prev - 1)}
-                                    className="p-2 rounded border bg-white hover:bg-gray-50 disabled:opacity-50 transition-colors"
-                                >
-                                    <ChevronLeft size={18} />
-                                </button>
-                                <button
-                                    disabled={page >= totalPages - 1}
-                                    onClick={() => setPage(prev => prev + 1)}
-                                    className="p-2 rounded border bg-white hover:bg-gray-50 disabled:opacity-50 transition-colors"
-                                >
-                                    <ChevronRight size={18} />
-                                </button>
-                            </div>
-                        </div>
+                        <Pagination
+                            currentPage={page}
+                            totalPages={totalPages}
+                            totalElements={totalElements}
+                            onPageChange={setPage}
+                        />
                     )}
                 </div>
             </div>

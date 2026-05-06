@@ -1,9 +1,8 @@
 // /app/admin/products/components/admin-product-basic-info.tsx
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import dynamic from 'next/dynamic';
-import { VENDORS } from '@/lib/constants/product-options';
 import { COLOR_SYSTEM } from '@/lib/constants/color-config';
 
 // 动态导入 MD 编辑器
@@ -19,16 +18,7 @@ interface BasicInfoProps {
 
 export default function AdminProductBasicInfo({ product, updateProduct }: BasicInfoProps) {
     const [customColor, setCustomColor] = useState('');
-    const [showSuggestedPrice, setShowSuggestedPrice] = useState(false);
 
-    // 当采购价变化时，自动计算建议售价
-    useEffect(() => {
-        if (product.purchasePrice && product.purchasePrice > 0) {
-            setShowSuggestedPrice(true);
-        } else {
-            setShowSuggestedPrice(false);
-        }
-    }, [product.purchasePrice]);
 
     const handleInputChange = (field: string, value: any) => {
         updateProduct({ [field]: value });
@@ -83,38 +73,9 @@ export default function AdminProductBasicInfo({ product, updateProduct }: BasicI
                 <h3 className="text-lg font-semibold">基本信息</h3>
             </div>
             <div className="p-6 space-y-6">
-                {/* 第一行：供应商、源标题、标题 */}
+                {/* 第一行：标题 */}
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-                    <div className="md:col-span-3">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            供应商 <span className="text-red-500">*</span>
-                        </label>
-                        <select
-                            value={product.sourceVendor || ''}
-                            onChange={(e) => handleInputChange('sourceVendor', e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
-                        >
-                            <option value="">请选择供应商</option>
-                            {VENDORS.map((vendor) => (
-                                <option key={vendor} value={vendor}>{vendor}</option>
-                            ))}
-                        </select>
-                    </div>
-
-                    <div className="md:col-span-4">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            源标题 (内部参考)
-                        </label>
-                        <input
-                            type="text"
-                            value={product.sourceTitle || ''}
-                            onChange={(e) => handleInputChange('sourceTitle', e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
-                            placeholder="工厂原始标题..."
-                        />
-                    </div>
-
-                    <div className="md:col-span-5">
+                    <div className="md:col-span-12">
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                             展示标题 <span className="text-red-500">*</span>
                         </label>
@@ -169,60 +130,29 @@ export default function AdminProductBasicInfo({ product, updateProduct }: BasicI
                 </div>
 
                 {/* 价格与库存 */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">采购价 (USD)</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">原价 (USD) <span className="text-red-500">*</span></label>
                         <input
                             type="number"
                             step="0.01"
-                            value={product.purchasePrice || ''}
-                            onChange={(e) => handleInputChange('purchasePrice', parseFloat(e.target.value))}
+                            value={product.originalPrice || ''}
+                            onChange={(e) => handleInputChange('originalPrice', parseFloat(e.target.value))}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                            placeholder="输入采购价"
+                            placeholder="输入原价"
                         />
                     </div>
-                    {showSuggestedPrice && product.purchasePrice && (
-                        <div className="md:col-span-3 grid grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">原价 (USD) <span className="text-red-500">*</span></label>
-                                <input
-                                    type="number"
-                                    step="0.01"
-                                    value={product.originalPrice || ''}
-                                    onChange={(e) => handleInputChange('originalPrice', parseFloat(e.target.value))}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                                    placeholder="输入原价"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">现价 (USD) <span className="text-red-500">*</span></label>
-                                <div className="flex gap-2">
-                                    <input
-                                        type="number"
-                                        step="0.01"
-                                        value={product.currentPrice || ''}
-                                        onChange={(e) => handleInputChange('currentPrice', parseFloat(e.target.value))}
-                                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm font-semibold text-blue-600"
-                                        placeholder="输入现价"
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            // 建议售价 = 采购价 * 3.5 (考虑运费、利润等)
-                                            const suggested = Math.round(product.purchasePrice! * 3.5 * 100) / 100;
-                                            handleInputChange('currentPrice', suggested);
-                                            handleInputChange('originalPrice', Math.round(suggested * 1.3 * 100) / 100);
-                                        }}
-                                        className="px-3 py-2 bg-green-100 text-green-700 text-xs font-medium rounded-md hover:bg-green-200 whitespace-nowrap"
-                                        title="根据采购价自动计算"
-                                    >
-                                        💡 建议售价
-                                    </button>
-                                </div>
-                                <p className="text-xs text-gray-500 mt-1">采购价 × 3.5 ≈ ${Math.round(product.purchasePrice * 3.5 * 100) / 100}</p>
-                            </div>
-                        </div>
-                    )}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">现价 (USD) <span className="text-red-500">*</span></label>
+                        <input
+                            type="number"
+                            step="0.01"
+                            value={product.currentPrice || ''}
+                            onChange={(e) => handleInputChange('currentPrice', parseFloat(e.target.value))}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm font-semibold text-blue-600"
+                            placeholder="输入现价"
+                        />
+                    </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">总库存</label>
                         <input

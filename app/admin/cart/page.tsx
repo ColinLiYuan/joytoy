@@ -37,6 +37,7 @@ export default function AdminCartPage() {
     const [totalPages, setTotalPages] = useState(0)
     const [searchQuery, setSearchQuery] = useState('')
     const [activeStatus, setActiveStatus] = useState<string>('ALL')
+    const [isGuestFilter, setIsGuestFilter] = useState<boolean | undefined>(undefined)
     const [statistics, setStatistics] = useState<CartStatistics | null>(null)
     
     // 详情弹窗
@@ -54,6 +55,7 @@ export default function AdminCartPage() {
                 page,
                 size: 10,
                 status: activeStatus === 'ALL' ? undefined : activeStatus,
+                isGuest: isGuestFilter
             })
             setCarts(data.content)
             setTotalPages(data.totalPages)
@@ -62,7 +64,7 @@ export default function AdminCartPage() {
         } finally {
             setLoading(false)
         }
-    }, [page, activeStatus])
+    }, [page, activeStatus, isGuestFilter])
 
     // 获取统计数据
     const fetchStatistics = useCallback(async () => {
@@ -221,6 +223,43 @@ export default function AdminCartPage() {
                         ))}
                     </div>
 
+                    {/* 游客购物车筛选 */}
+                    <div className="flex items-center gap-4">
+                        <span className="text-sm text-gray-600 font-medium">购物车类型：</span>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => { setIsGuestFilter(undefined); setPage(0); }}
+                                className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                                    isGuestFilter === undefined
+                                        ? 'bg-gray-900 text-white'
+                                        : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200'
+                                }`}
+                            >
+                                全部
+                            </button>
+                            <button
+                                onClick={() => { setIsGuestFilter(true); setPage(0); }}
+                                className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                                    isGuestFilter === true
+                                        ? 'bg-gray-900 text-white'
+                                        : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200'
+                                }`}
+                            >
+                                仅游客
+                            </button>
+                            <button
+                                onClick={() => { setIsGuestFilter(false); setPage(0); }}
+                                className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                                    isGuestFilter === false
+                                        ? 'bg-gray-900 text-white'
+                                        : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200'
+                                }`}
+                            >
+                                仅注册用户
+                            </button>
+                        </div>
+                    </div>
+
                     <div className="relative">
                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                         <input
@@ -264,7 +303,22 @@ export default function AdminCartPage() {
                             <tr key={cart.id} className="hover:bg-gray-50/50 transition-colors">
                                 <td className="px-6 py-4">
                                     <div className="font-mono text-sm font-bold text-gray-900">#{cart.id}</div>
-                                    <div className="text-xs text-gray-400 mt-1">Token: {cart.cartToken?.substring(0, 12)}...</div>
+                                    <div 
+                                        className="text-xs text-gray-400 mt-1 cursor-help" 
+                                        title={cart.cartToken}
+                                    >
+                                        Token: {cart.cartToken?.substring(0, 12)}...
+                                    </div>
+                                    {cart.createdAt && (
+                                        <div className="text-xs text-gray-500 mt-1">
+                                            创建: {new Date(cart.createdAt).toLocaleString()}
+                                        </div>
+                                    )}
+                                    {cart.expiresAt && (
+                                        <div className="text-xs text-orange-500 mt-1">
+                                            过期: {new Date(cart.expiresAt).toLocaleString()}
+                                        </div>
+                                    )}
                                 </td>
                                 <td className="px-6 py-4">
                                     <div className="text-sm font-medium text-gray-900">{cart.userName}</div>

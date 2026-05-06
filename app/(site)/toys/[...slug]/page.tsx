@@ -187,26 +187,18 @@ export default async function ProductDetail({ params }: PageProps) {
     const getGalleryItems = (): Array<{ url: string; alt: string; type: 'image' | 'video'; poster: string }> => {
         if (!product) return [];
         
-        // 始终将主图作为第一张图片
-        const items: Array<{ url: string; alt: string; type: 'image' | 'video'; poster: string }> = [{
-            url: getProductImageUrl(undefined, product.image),
-            alt: product.title,
-            type: 'image',
-            poster: ''
-        }];
-        
-        // 如果有额外的 galleries，追加到后面
+        // 直接使用 galleries 作为相册，不再单独添加主图
         if (product.galleries && product.galleries.length > 0) {
-            const galleryItems = product.galleries.map(gallery => ({
+            return product.galleries.map(gallery => ({
                 url: getProductImageUrl(undefined, gallery.url),
                 alt: gallery.alt || product.title,
                 type: (gallery.type as 'image' | 'video') || 'image',
                 poster: getProductImageUrl(undefined, gallery.poster)
             }));
-            items.push(...galleryItems);
         }
         
-        return items;
+        // 如果没有 galleries，返回空数组
+        return [];
     };
 
     const galleryItems = getGalleryItems();

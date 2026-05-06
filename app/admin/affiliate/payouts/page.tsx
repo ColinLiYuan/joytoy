@@ -352,27 +352,12 @@ export default function AdminPayoutsPage() {
 
                             {/* Pagination */}
                             {totalPages > 1 && (
-                                <div className="mt-6 pt-6 border-t border-gray-100 flex items-center justify-between">
-                                    <p className="text-xs text-gray-500">
-                                        Page {currentPage + 1} of {totalPages}
-                                    </p>
-                                    <div className="flex space-x-2">
-                                        <button
-                                            disabled={currentPage === 0}
-                                            onClick={() => setCurrentPage(p => p - 1)}
-                                            className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                                        >
-                                            <ChevronLeft size={16} />
-                                        </button>
-                                        <button
-                                            disabled={currentPage >= totalPages - 1}
-                                            onClick={() => setCurrentPage(p => p + 1)}
-                                            className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                                        >
-                                            <ChevronRight size={16} />
-                                        </button>
-                                    </div>
-                                </div>
+                                <Pagination
+                                    currentPage={currentPage}
+                                    totalPages={totalPages}
+                                    totalElements={totalElements}
+                                    onPageChange={setCurrentPage}
+                                />
                             )}
                         </>
                     )}

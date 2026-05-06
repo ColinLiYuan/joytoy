@@ -17,9 +17,25 @@ const API_PATHS = {
  */
 export async function loginUser(request: LoginRequest) {
     try {
+        // ✅ 从 Cookie 获取 sessionId（如果存在）
+        const { cookies } = await import('next/headers');
+        const cookieStore = await cookies();
+        const sessionId = cookieStore.get('sessionId')?.value;
+
+        console.log('[loginUser] Session ID from cookie:', sessionId ? `${sessionId.substring(0, 12)}...` : 'none');
+
+        const headers: Record<string, string> = {
+            'Content-Type': 'application/json',
+        };
+        
+        if (sessionId) {
+            headers['X-Session-Id'] = sessionId;
+        }
+
         const response = await fetchWithAuth(API_PATHS.AUTH_LOGIN, {
             method: 'POST',
             body: JSON.stringify(request),
+            headers,
         })
 
         // 尝试解析响应（无论成功失败都可能是 JSON）

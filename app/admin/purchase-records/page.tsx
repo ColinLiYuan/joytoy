@@ -22,7 +22,6 @@ const STATUS_COLORS: Record<string, string> = {
 export default function PurchaseRecordPage() {
   const [records, setRecords] = useState<PurchaseRecordResponse[]>([]);
   const [loading, setLoading] = useState(true);
-  const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
   
@@ -479,18 +478,12 @@ export default function PurchaseRecordPage() {
 
           {/* Pagination */}
           {!loading && records.length > 0 && (
-            <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
-              <div className="flex items-center justify-between">
-                <div className="text-sm text-gray-700">
-                  共 <span className="font-semibold">{totalElements}</span> 条记录，
-                  第 <span className="font-semibold">{currentPage + 1}</span> / {totalPages} 页
-                </div>
-                <Pagination
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                />
-              </div>
-            </div>
+            <Pagination
+              currentPage={filters.page}
+              totalPages={totalPages}
+              totalElements={totalElements}
+              onPageChange={(page) => setFilters(prev => ({ ...prev, page }))}
+            />
           )}
         </div>
       </div>

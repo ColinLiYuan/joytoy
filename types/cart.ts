@@ -31,6 +31,7 @@ export interface CartResponse {
     items: CartItem[];
     createdAt?: string;
     updatedAt?: string;
+    expiresAt?: string;  // 新增：过期时间
 }
 
 export interface CartItem {

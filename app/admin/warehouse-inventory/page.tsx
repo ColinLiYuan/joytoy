@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { warehouseInventoryService } from '@/services/warehouseInventoryService';
-import { WarehouseInventoryResponse, WarehouseInventoryQueryRequest, SyncInventoryRequest, AdjustInventoryRequest, SetPreSaleRequest } from '@/types/admin/warehouseInventory';
+import { WarehouseInventoryResponse, WarehouseInventoryQueryRequest, SyncInventoryRequest, AdjustInventoryRequest, SetPreSaleRequest, StockType, STOCK_TYPE_MAP } from '@/types/admin/warehouseInventory';
 import { Package, RefreshCw, Search, Filter, Calendar, ArrowUpRight, Edit, Settings } from 'lucide-react';
 import Pagination from '@/components/common/pagination';
 
@@ -18,6 +18,7 @@ export default function WarehouseInventoryPage() {
     page: 0,
     size: 20,
     keyword: '',
+    stockType: undefined,
   });
 
   // 操作弹窗
@@ -49,7 +50,7 @@ export default function WarehouseInventoryPage() {
     }, 300);
     
     return () => clearTimeout(timer);
-  }, [filters.page, filters.size, filters.keyword]);
+  }, [filters.page, filters.size, filters.keyword, filters.stockType]);
 
   const handleFilterChange = (key: string, value: any) => {
     setFilters(prev => ({
@@ -68,6 +69,7 @@ export default function WarehouseInventoryPage() {
       page: 0,
       size: 20,
       keyword: '',
+      stockType: undefined,
     });
   };
 
@@ -165,7 +167,7 @@ export default function WarehouseInventoryPage() {
             <h2 className="text-lg font-semibold text-gray-900">筛选条件</h2>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {/* 关键词搜索 */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">关键词</label>
@@ -176,6 +178,43 @@ export default function WarehouseInventoryPage() {
                 placeholder="SKU编码、商品名称..."
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
               />
+            </div>
+            
+            {/* 库存类型筛选 */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">库存类型</label>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => handleFilterChange('stockType', undefined)}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors border ${
+                    !filters.stockType
+                      ? 'bg-indigo-600 text-white border-indigo-600'
+                      : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  全部
+                </button>
+                <button
+                  onClick={() => handleFilterChange('stockType', 'FOR_SALE' as any)}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors border ${
+                    filters.stockType === 'FOR_SALE'
+                      ? 'bg-green-600 text-white border-green-600'
+                      : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  在售
+                </button>
+                <button
+                  onClick={() => handleFilterChange('stockType', 'SAMPLE' as any)}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors border ${
+                    filters.stockType === 'SAMPLE'
+                      ? 'bg-purple-600 text-white border-purple-600'
+                      : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  样品
+                </button>
+              </div>
             </div>
           </div>
 
@@ -232,6 +271,9 @@ export default function WarehouseInventoryPage() {
                     商品
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                    库存类型
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
                     仓库库存
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
@@ -257,7 +299,7 @@ export default function WarehouseInventoryPage() {
               <tbody className="bg-white divide-y divide-gray-200">
                 {loading ? (
                   <tr>
-                    <td colSpan={8} className="px-6 py-12 text-center">
+                    <td colSpan={9} className="px-6 py-12 text-center">
                       <div className="flex items-center justify-center gap-2 text-gray-500">
                         <RefreshCw className="w-5 h-5 animate-spin" />
                         <span>加载中...</span>
@@ -266,7 +308,7 @@ export default function WarehouseInventoryPage() {
                   </tr>
                 ) : inventories.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="px-6 py-12 text-center text-gray-500">
+                    <td colSpan={9} className="px-6 py-12 text-center text-gray-500">
                       <Package className="w-12 h-12 mx-auto mb-4 text-gray-300" />
                       <p className="text-lg font-medium">暂无库存记录</p>
                     </td>
@@ -281,6 +323,21 @@ export default function WarehouseInventoryPage() {
                             <div className="text-xs text-gray-500 mt-1 font-mono">{inv.skuCode}</div>
                           )}
                         </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {inv.stockType ? (
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            inv.stockType === 'FOR_SALE' ? 'bg-green-100 text-green-800' :
+                            inv.stockType === 'SAMPLE' ? 'bg-purple-100 text-purple-800' :
+                            inv.stockType === 'ACTIVITY' ? 'bg-blue-100 text-blue-800' :
+                            inv.stockType === 'DEFECT' ? 'bg-red-100 text-red-800' :
+                            'bg-orange-100 text-orange-800'
+                          }`}>
+                            {STOCK_TYPE_MAP[inv.stockType]}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-gray-400">-</span>
+                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm space-y-1">
@@ -315,49 +372,53 @@ export default function WarehouseInventoryPage() {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <button
-                            onClick={() => {
-                              setSelectedInventory(inv);
-                              setSyncForm({ syncQuantity: inv.availableForSync || 0 });
-                              setShowSyncModal(true);
-                            }}
-                            className={`text-sm font-medium flex items-center gap-1 ${
-                              inv.availableForSync > 0 
-                                ? 'text-green-600 hover:text-green-900' 
-                                : 'text-gray-400 cursor-not-allowed'
-                            }`}
-                            title={inv.availableForSync <= 0 ? '没有可同步的库存' : '同步库存到商品'}
-                          >
-                            <ArrowUpRight className="w-4 h-4" />
-                            同步
-                          </button>
-                          <button
-                            onClick={() => {
-                              setSelectedInventory(inv);
-                              setAdjustForm({
-                                actualStock: inv.actualStock,
-                                reservedStock: inv.reservedStock
-                              });
-                              setShowAdjustModal(true);
-                            }}
-                            className="text-blue-600 hover:text-blue-900 text-sm font-medium flex items-center gap-1"
-                          >
-                            <Edit className="w-4 h-4" />
-                            调整
-                          </button>
-                          <button
-                            onClick={() => {
-                              setSelectedInventory(inv);
-                              setPreSaleForm({ preSaleQuantity: 0 });
-                              setShowPreSaleModal(true);
-                            }}
-                            className="text-purple-600 hover:text-purple-900 text-sm font-medium flex items-center gap-1"
-                          >
-                            <Settings className="w-4 h-4" />
-                            预售
-                          </button>
-                        </div>
+                        {inv.stockType !== 'SAMPLE' ? (
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              onClick={() => {
+                                setSelectedInventory(inv);
+                                setSyncForm({ syncQuantity: inv.availableForSync || 0 });
+                                setShowSyncModal(true);
+                              }}
+                              className={`text-sm font-medium flex items-center gap-1 ${
+                                inv.availableForSync > 0 
+                                  ? 'text-green-600 hover:text-green-900' 
+                                  : 'text-gray-400 cursor-not-allowed'
+                              }`}
+                              title={inv.availableForSync <= 0 ? '没有可同步的库存' : '同步库存到商品'}
+                            >
+                              <ArrowUpRight className="w-4 h-4" />
+                              同步
+                            </button>
+                            <button
+                              onClick={() => {
+                                setSelectedInventory(inv);
+                                setAdjustForm({
+                                  actualStock: inv.actualStock,
+                                  reservedStock: inv.reservedStock
+                                });
+                                setShowAdjustModal(true);
+                              }}
+                              className="text-blue-600 hover:text-blue-900 text-sm font-medium flex items-center gap-1"
+                            >
+                              <Edit className="w-4 h-4" />
+                              调整
+                            </button>
+                            <button
+                              onClick={() => {
+                                setSelectedInventory(inv);
+                                setPreSaleForm({ preSaleQuantity: 0 });
+                                setShowPreSaleModal(true);
+                              }}
+                              className="text-purple-600 hover:text-purple-900 text-sm font-medium flex items-center gap-1"
+                            >
+                              <Settings className="w-4 h-4" />
+                              预售
+                            </button>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-gray-400">样品不可操作</span>
+                        )}
                       </td>
                     </tr>
                   ))
@@ -368,18 +429,12 @@ export default function WarehouseInventoryPage() {
 
           {/* Pagination */}
           {!loading && inventories.length > 0 && (
-            <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
-              <div className="flex items-center justify-between">
-                <div className="text-sm text-gray-700">
-                  共 <span className="font-semibold">{totalElements}</span> 条记录，
-                  第 <span className="font-semibold">{currentPage + 1}</span> / {totalPages} 页
-                </div>
-                <Pagination
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                />
-              </div>
-            </div>
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalElements={totalElements}
+              onPageChange={setCurrentPage}
+            />
           )}
         </div>
       </div>

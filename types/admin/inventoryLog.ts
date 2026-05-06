@@ -26,6 +26,7 @@ export interface InventoryLogQueryRequest {
   page: number;
   size: number;
   productId?: number;
+  productName?: string; // 商品名称（模糊查询）
   bundleId?: number;
   orderId?: number;
   orderNumber?: string;

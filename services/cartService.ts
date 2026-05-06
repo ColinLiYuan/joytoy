@@ -55,6 +55,7 @@ class CartService {
         size?: number;
         status?: string;
         userId?: number;
+        isGuest?: boolean;
         sortBy?: string;
     } = {}): Promise<{ content: CartResponse[]; totalPages: number; totalElements: number }> {
         try {
@@ -63,6 +64,7 @@ class CartService {
                 size = 20,
                 status = '',
                 userId,
+                isGuest,
                 sortBy = 'createdAt'
             } = params;
 
@@ -73,6 +75,7 @@ class CartService {
 
             if (status) queryParams.append('status', status);
             if (userId) queryParams.append('userId', userId.toString());
+            if (isGuest !== undefined) queryParams.append('isGuest', isGuest.toString());
 
             const url = `/api/admin/V1/cart/list?${queryParams.toString()}`;
             

@@ -26,7 +26,6 @@ export default function InventoryLogPage() {
   const router = useRouter();
   const [logs, setLogs] = useState<InventoryLogResponse[]>([]);
   const [loading, setLoading] = useState(true);
-  const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
   
@@ -36,6 +35,7 @@ export default function InventoryLogPage() {
     size: 20,
     changeType: '',
     orderNumber: '',
+    productName: '',
     startTime: '',
     endTime: '',
   });
@@ -60,7 +60,7 @@ export default function InventoryLogPage() {
     }, 300); // 防抖 300ms
     
     return () => clearTimeout(timer);
-  }, [filters.page, filters.size, filters.changeType, filters.orderNumber, filters.startTime, filters.endTime]);
+  }, [filters.page, filters.size, filters.changeType, filters.orderNumber, filters.productName, filters.startTime, filters.endTime]);
 
   const handleFilterChange = (key: string, value: any) => {
     setFilters(prev => ({
@@ -81,6 +81,7 @@ export default function InventoryLogPage() {
       size: 20,
       changeType: '',
       orderNumber: '',
+      productName: '',
       startTime: '',
       endTime: '',
     });
@@ -174,6 +175,18 @@ export default function InventoryLogPage() {
                 value={filters.orderNumber}
                 onChange={(e) => handleFilterChange('orderNumber', e.target.value)}
                 placeholder="输入订单号搜索"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              />
+            </div>
+
+            {/* 商品名称 */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">商品名称</label>
+              <input
+                type="text"
+                value={filters.productName || ''}
+                onChange={(e) => handleFilterChange('productName', e.target.value)}
+                placeholder="输入商品名称搜索"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
               />
             </div>
@@ -351,18 +364,12 @@ export default function InventoryLogPage() {
 
           {/* Pagination */}
           {!loading && logs.length > 0 && (
-            <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
-              <div className="flex items-center justify-between">
-                <div className="text-sm text-gray-700">
-                  共 <span className="font-semibold">{totalElements}</span> 条记录，
-                  第 <span className="font-semibold">{currentPage + 1}</span> / {totalPages} 页
-                </div>
-                <Pagination
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                />
-              </div>
-            </div>
+            <Pagination
+              currentPage={filters.page}
+              totalPages={totalPages}
+              totalElements={totalElements}
+              onPageChange={(page) => setFilters(prev => ({ ...prev, page }))}
+            />
           )}
         </div>
       </div>

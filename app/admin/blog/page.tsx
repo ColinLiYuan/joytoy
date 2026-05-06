@@ -253,43 +253,12 @@ export default function BlogManagementPage() {
 
                     {/* 分页 */}
                     {pagination.totalPages > 1 && (
-                        <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
-                            <div className="flex-1 flex justify-between items-center">
-                                <div>
-                                    <p className="text-sm text-gray-700">
-                                        显示第 <span className="font-medium">{(pagination.currentPage * pagination.pageSize) + 1}</span> 到{' '}
-                                        <span className="font-medium">
-                  {Math.min((pagination.currentPage + 1) * pagination.pageSize, pagination.totalElements)}
-                </span> 条，共{' '}
-                                        <span className="font-medium">{pagination.totalElements}</span> 条结果
-                                    </p>
-                                </div>
-                                <div className="flex space-x-2">
-                                    <button
-                                        onClick={() => handlePageChange(pagination.currentPage - 1)}
-                                        disabled={!pagination.hasPrevious}
-                                        className={`px-3 py-2 rounded-md text-sm font-medium ${
-                                            pagination.hasPrevious
-                                                ? 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
-                                                : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                        }`}
-                                    >
-                                        上一页
-                                    </button>
-                                    <button
-                                        onClick={() => handlePageChange(pagination.currentPage + 1)}
-                                        disabled={!pagination.hasNext}
-                                        className={`px-3 py-2 rounded-md text-sm font-medium ${
-                                            pagination.hasNext
-                                                ? 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
-                                                : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                        }`}
-                                    >
-                                        下一页
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
+                        <Pagination
+                            currentPage={pagination.currentPage}
+                            totalPages={pagination.totalPages}
+                            totalElements={pagination.totalElements}
+                            onPageChange={handlePageChange}
+                        />
                     )}
 
                     {filteredBlogs.length === 0 && (

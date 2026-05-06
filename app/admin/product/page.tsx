@@ -5,23 +5,16 @@ import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { productService } from '@/services/productService'
 import { ProductResponse, ProductListResponse } from '@/types/product'
-import { VENDORS } from '@/lib/constants/product-options'
-
 import {
     Search,
     Plus,
     Edit,
-    Settings,
     Image as ImageIcon,
-    Tag,
-    Star,
-    Ruler,
-    Info,
-    ChevronLeft,
-    ChevronRight,
     Package,
     Eye
 } from 'lucide-react'
+import Pagination from '@/components/common/pagination'
+
 import { getProductImageUrl } from '@/lib/image-utils';
 
 export const dynamic = 'force-dynamic';
@@ -36,14 +29,12 @@ export default function ProductList() {
     const [filters, setFilters] = useState({
         keyword: '',
         category: '',
-        status: '',
-        vendor: ''
+        status: ''
     })
     const [searchFilters, setSearchFilters] = useState({
         keyword: '',
         category: '',
-        status: '',
-        vendor: ''
+        status: ''
     })
     const [pagination, setPagination] = useState({
         currentPage: 0,
@@ -71,8 +62,7 @@ export default function ProductList() {
                 pagination.currentPage,
                 12,
                 searchFilters.keyword || '',
-                statusParam || '',
-                searchFilters.vendor || ''
+                statusParam || ''
             )
 
             setProducts(result.content || [])
@@ -107,8 +97,7 @@ export default function ProductList() {
         const resetFilters = {
             keyword: '',
             category: '',
-            status: '',
-            vendor: ''
+            status: ''
         }
         setFilters(resetFilters)
         setSearchFilters(resetFilters)
@@ -213,18 +202,7 @@ export default function ProductList() {
                                 <option value="inactive">下架</option>
                             </select>
                         </div>
-                        <div className="md:col-span-3">
-                            <select
-                                value={filters.vendor}
-                                onChange={(e) => handleFilterChange('vendor', e.target.value)}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            >
-                                <option value="">所有供应商</option>
-                                {VENDORS.map((vendor) => (
-                                    <option key={vendor} value={vendor}>{vendor}</option>
-                                ))}
-                            </select>
-                        </div>
+
                         <div className="md:col-span-2 flex gap-2">
                             <button
                                 type="submit"
@@ -233,7 +211,7 @@ export default function ProductList() {
                                 <Search className="h-4 w-4 mr-1" />
                                 搜索
                             </button>
-                            {(searchFilters.keyword || searchFilters.category || searchFilters.status || searchFilters.vendor) && (
+                            {(searchFilters.keyword || searchFilters.category || searchFilters.status) && (
                                 <button
                                     type="button"
                                     onClick={handleResetFilters}
@@ -245,7 +223,7 @@ export default function ProductList() {
                         </div>
                     </form>
                     {/* 显示当前搜索条件 */}
-                    {(searchFilters.keyword || searchFilters.category || searchFilters.status || searchFilters.vendor) && (
+                    {(searchFilters.keyword || searchFilters.category || searchFilters.status) && (
                         <div className="mt-3 text-sm text-gray-500">
                             当前搜索：
                             {searchFilters.keyword && <span className="ml-2">名称包含：{searchFilters.keyword}</span>}
@@ -253,7 +231,6 @@ export default function ProductList() {
                             {searchFilters.status && (
                                 <span className="ml-2">状态：{searchFilters.status === 'active' ? '上架' : '下架'}</span>
                             )}
-                            {searchFilters.vendor && <span className="ml-2">供应商：{searchFilters.vendor}</span>}
                         </div>
                     )}
                 </div>
@@ -272,12 +249,11 @@ export default function ProductList() {
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider max-w-xs">
                                     标题
                                 </th>
-                                {/* 添加供应商列 */}
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    供应商
-                                </th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     分类
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    SKU信息
                                 </th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     价格
@@ -311,11 +287,6 @@ export default function ProductList() {
                                         </div>
                                     </td>
 
-                                    {/* 添加供应商列 */}
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        {product.sourceVendor || '-'}
-                                    </td>
-
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="flex flex-wrap gap-1 max-w-[200px]">
                                             {product.categories?.map((category, index) => (
@@ -327,6 +298,25 @@ export default function ProductList() {
                                                 </span>
                                             ))}
                                         </div>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        {product.productSkus && product.productSkus.length > 0 ? (
+                                            <div className="space-y-1">
+                                                {product.productSkus.map((sku, index) => (
+                                                    <div key={sku.id} className="flex items-center gap-2 text-xs">
+                                                        <span className="font-mono text-gray-600">{sku.sku}</span>
+                                                        <span className="text-gray-400">|</span>
+                                                        <span className="text-gray-700">{sku.color}</span>
+                                                        <span className="text-gray-400">|</span>
+                                                        <span className={`font-medium ${sku.stock > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                                            库存: {sku.stock}
+                                                        </span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <span className="text-sm text-gray-500">-</span>
+                                        )}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
                                         {formatPrice(product.currentPrice)}
@@ -349,55 +339,6 @@ export default function ProductList() {
                                             >
                                                 <Edit className="h-4 w-4" />
                                             </Link>
-
-                                            {/* 快速编辑下拉菜单 */}
-                                            <div className="relative group">
-                                                <button
-                                                    className="bg-gray-100 hover:bg-gray-200 text-gray-700 p-2 rounded transition-colors"
-                                                    title="快速编辑"
-                                                >
-                                                    <Settings className="h-4 w-4" />
-                                                </button>
-                                                <div className="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
-                                                    <div className="py-1">
-                                                        <Link
-                                                            href={`/admin/products/edit-basic/${product.id}`}
-                                                            className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                                                        >
-                                                            <Info className="h-4 w-4 mr-2 text-blue-500" />
-                                                            基本信息
-                                                        </Link>
-                                                        <Link
-                                                            href={`/admin/products/edit-specs/${product.id}`}
-                                                            className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                                                        >
-                                                            <Ruler className="h-4 w-4 mr-2 text-blue-400" />
-                                                            规格信息
-                                                        </Link>
-                                                        <Link
-                                                            href={`/admin/products/edit-images/${product.id}`}
-                                                            className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                                                        >
-                                                            <ImageIcon className="h-4 w-4 mr-2 text-yellow-500" />
-                                                            产品图片
-                                                        </Link>
-                                                        <Link
-                                                            href={`/admin/products/edit-features/${product.id}`}
-                                                            className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                                                        >
-                                                            <Star className="h-4 w-4 mr-2 text-green-500" />
-                                                            产品特点
-                                                        </Link>
-                                                        <Link
-                                                            href={`/admin/products/edit-categories/${product.id}`}
-                                                            className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                                                        >
-                                                            <Tag className="h-4 w-4 mr-2 text-gray-500" />
-                                                            分类设置
-                                                        </Link>
-                                                    </div>
-                                                </div>
-                                            </div>
                                         </div>
                                     </td>
                                 </tr>
@@ -406,7 +347,7 @@ export default function ProductList() {
                             {/* 空状态 */}
                             {products.length === 0 && !loading && (
                                 <tr>
-                                    <td colSpan={9} className="px-6 py-12 text-center">
+                                    <td colSpan={6} className="px-6 py-12 text-center">
                                         <div className="text-gray-400 mb-4">
                                             <Package className="h-12 w-12 mx-auto mb-2" />
                                             <p className="text-lg">暂无产品数据</p>
@@ -427,55 +368,12 @@ export default function ProductList() {
 
                     {/* 分页 */}
                     {pagination.totalPages > 1 && (
-                        <div className="px-6 py-4 border-t border-gray-200">
-                            <div className="flex items-center justify-between">
-                                <div className="text-sm text-gray-500">
-                                    第 {pagination.currentPage + 1} 页，共 {pagination.totalPages} 页，
-                                    总计 {pagination.totalElements} 条记录
-                                </div>
-                                <div className="flex space-x-2">
-                                    <button
-                                        disabled={pagination.currentPage === 0}
-                                        onClick={() => handlePageChange(pagination.currentPage - 1)}
-                                        className={`px-3 py-1 rounded ${
-                                            pagination.currentPage === 0
-                                                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                                : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors'
-                                        }`}
-                                    >
-                                        <ChevronLeft className="h-4 w-4 mr-1" />
-                                        上一页
-                                    </button>
-
-                                    {Array.from({ length: pagination.totalPages }, (_, i) => i).map((page) => (
-                                        <button
-                                            key={page}
-                                            onClick={() => handlePageChange(page)}
-                                            className={`px-3 py-1 rounded ${
-                                                page === pagination.currentPage
-                                                    ? 'bg-blue-600 text-white'
-                                                    : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors'
-                                            }`}
-                                        >
-                                            {page + 1}
-                                        </button>
-                                    ))}
-
-                                    <button
-                                        disabled={pagination.currentPage + 1 >= pagination.totalPages}
-                                        onClick={() => handlePageChange(pagination.currentPage + 1)}
-                                        className={`px-3 py-1 rounded ${
-                                            pagination.currentPage + 1 >= pagination.totalPages
-                                                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                                : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors'
-                                        }`}
-                                    >
-                                        下一页
-                                        <ChevronRight className="h-4 w-4 ml-1" />
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
+                        <Pagination
+                            currentPage={pagination.currentPage}
+                            totalPages={pagination.totalPages}
+                            totalElements={pagination.totalElements}
+                            onPageChange={handlePageChange}
+                        />
                     )}
                 </div>
             </div>

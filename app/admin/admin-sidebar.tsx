@@ -16,7 +16,8 @@ import {
     History,
     Tag,
     Truck,
-    Warehouse
+    Warehouse,
+    Layers
 } from 'lucide-react';
 
 interface SidebarContentProps {
@@ -36,6 +37,7 @@ function SidebarContent({ sidebarOpen, setSidebarOpen }: SidebarContentProps) {
         // 核心业务
         { name: '仪表盘', href: '/admin', icon: BarChart3 },
         { name: '商品管理', href: '/admin/product', icon: Package },
+        { name: '套装管理', href: '/admin/bundle', icon: Layers },
         { name: '订单管理', href: '/admin/order', icon: ShoppingCart },
         { name: '用户管理', href: '/admin/user', icon: Users },
         { name: '购物车管理', href: '/admin/cart', icon: CreditCard },

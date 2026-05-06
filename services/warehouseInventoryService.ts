@@ -21,6 +21,7 @@ export const warehouseInventoryService = {
     params.append('size', request.size.toString());
     
     if (request.keyword) params.append('keyword', request.keyword);
+    if (request.stockType) params.append('stockType', request.stockType);
     
     const url = `/api/admin/V1/warehouse-inventory?${params.toString()}`;
     
