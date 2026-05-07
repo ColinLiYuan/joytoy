@@ -24,9 +24,14 @@ export default function robots(): MetadataRoute.Robots {
                 '/admin/',
 
                 // --- 3. 技术路径 (Technical Paths) ---
-                '/api/',
-                // 注意：不要 Disallow /_next/static 或 /_next/image，
-                // Google 需要加载 JS/CSS/图片来渲染页面以判断移动端适配。
+                // 禁止敏感API（用户、订单、购物车等）
+                '/api/V1/users/',
+                '/api/V1/orders/',
+                '/api/V1/cart/',
+                '/api/V1/wishlist/',
+                '/api/V1/checkout/',
+                '/api/V1/payment/',
+                '/api/admin/',
                 '/_next/private/',
 
                 // --- 4. 搜索结果 (Search Results) ---

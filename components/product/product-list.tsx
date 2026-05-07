@@ -57,6 +57,13 @@ export default function ProductList({
     const [isMounted, setIsMounted] = useState(false);
     const router = useRouter();
 
+    const handlePageChange = (page: number) => {
+        const params = new URLSearchParams(window.location.search);
+        params.set('page', page.toString());
+        const newUrl = `${window.location.pathname}?${params.toString()}`;
+        router.push(newUrl, { scroll: false });
+    };
+
     // 本地筛选状态
     const [localFilters, setLocalFilters] = useState({
         priceRange: initialFilters.priceRange,
@@ -192,7 +199,7 @@ export default function ProductList({
                     <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-10 flex-1">
                         {products.map((product) => <ProductCard key={product.id} product={product} />)}
                     </div>
-                    {showPagination && <Pagination currentPage={currentPage} totalPages={totalPages} />}
+                    {showPagination && <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />}
                 </div>
             </div>
 

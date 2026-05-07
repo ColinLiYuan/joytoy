@@ -7,6 +7,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { ArrowLeft, MousePointerClick, ShoppingCart, DollarSign, TrendingUp, Clock, ChevronLeft, ChevronRight, Loader2, Wallet, CheckCircle, AlertCircle, Plus, Trash2, Edit, ExternalLink } from 'lucide-react'
 import { affiliateService } from '@/services/affiliateService'
 import { AffiliateActivityResponse, createAffiliateActivity, updateAffiliateActivity, deleteAffiliateActivity } from '@/app/actions/admin'
+import Pagination from '@/components/common/pagination'
 
 interface AffiliateDetail {
     id: number;

@@ -2,7 +2,8 @@
 'use client';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { blogService } from '@/services/blogService';
+import { blogService } from '@/services/blogService'
+import Pagination from '@/components/common/pagination';
 import { AdminBlogResponse, AdminBlogListResponse } from '@/types/blog'
 import { Eye, Edit, Plus, ExternalLink } from 'lucide-react';
 

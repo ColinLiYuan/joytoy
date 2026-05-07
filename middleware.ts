@@ -10,6 +10,8 @@ const redirectMap: Record<string, string> = {
     '/toys/female-sex-toys/clit-vibrators/rose-vibes-tongue': '/toys/female-sex-toys/clit-vibrators/rose-licking-vibrator',
     '/toys/sex-toys/butt-plugs/medal-butt-plug-ht019': '/toys/sex-toys/butt-plugs/gem-remote-metal-plug',
     '/collections/pussy-masturbators': '/male-sex-toys/manual-strokers',
+    '/female-sex-toys/bullet-vibrators/the-brush': 'https://www.mythtoy.com/toys/female-sex-toys/bullet-vibrators/the-brush',
+    '/female-sex-toys/bullet-vibrators/the-rouge-ii': 'https://www.mythtoy.com/toys/female-sex-toys/bullet-vibrators/the-rouge-ii',
 };
 
 // 2. 定义 410 删除规则 (Gone)
@@ -61,9 +63,7 @@ const gonePaths = new Set([
     '/collections/silicone-male-masturbator',
     '/collections/female',
     // 新增下架产品路径
-    '/female-sex-toys/bullet-vibrators/the-brush',
     '/sex-toys/butt-plugs/gem-remote-metal-plug',
-    '/female-sex-toys/bullet-vibrators/the-rouge-ii',
     '/lingerie/bodystockings/the-mesh',
     '/female-sex-toys/g-spot-vibrators/the-emerald',
     '/male-sex-toys/male-masturbators/the-shadow',
@@ -88,16 +88,7 @@ const gonePaths = new Set([
     '/sex-toys/butt-plugs/medal-butt-plug-ht019',
     '/toys/male-sex-toys/male-masturbators/auto-suction-masturbator-fire',
     '/collections/vibrator?page=0',
-    // 下架博客文章
-    '/blog/health-benefits-of-solo-play',
-    '/blog/stress-and-libido-connection',
-    '/blog/minimalist-bedroom-aesthetic-guide',
-    '/blog/science-of-afterglow-hormones',
-    '/blog/ultimate-toy-care-guide',
-    '/blog/why-do-men-sleep-after-sex',
     // 下架产品
-    '/toys/female-sex-toys/clit-vibrators/rose-licking-vibrator',
-    // 下架产品（404列表）
     '/toys/female-sex-toys/clit-vibrators/vibrator-g-sucking-usb-szm',
     '/toys/female-sex-toys/clit-vibrators/squirrel-auto-suction-vibes',
     '/toys/male-sex-toys/pussy-masturbators/silicone-life-like-pussy',

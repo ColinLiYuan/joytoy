@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { Wallet, Clock, CheckCircle, AlertCircle, ChevronLeft, ChevronRight, Loader2, X, DollarSign } from 'lucide-react'
 import { affiliateService } from '@/services/affiliateService'
+import Pagination from '@/components/common/pagination'
 import { approvePayout, rejectPayout } from '@/app/actions/admin'
 import { PayoutResponse } from '@/types/affiliate'
 import { getToken, ensureFreshToken } from '@/lib/token-utils'

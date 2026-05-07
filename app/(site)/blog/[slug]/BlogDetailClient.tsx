@@ -1,58 +1,27 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
-import { blogService } from '@/services/blogService';
 import BlogContent from './blog-content';
 import Breadcrumb, { BreadcrumbItem } from '@/components/common/breadcrumb';
 import { BlogResponse } from '@/types/site/blog';
 
-export default function BlogDetailClient() {
-    const params = useParams();
-    const slug = params.slug as string;
+interface BlogDetailClientProps {
+    initialBlog: BlogResponse | null;
+}
 
-    const [blog, setBlog] = useState<BlogResponse | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-
-    useEffect(() => {
-        const fetchBlog = async () => {
-            try {
-                setLoading(true);
-                const data = await blogService.getBySlug(slug);
-                setBlog(data);
-                setError(null);
-            } catch (err: any) {
-                console.error('Error fetching blog:', err);
-                setError(err.message || 'Failed to load blog');
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        if (slug) {
-            fetchBlog();
-        }
-    }, [slug]);
-
-    if (loading) {
-        return (
-            <div className="min-h-screen bg-white flex justify-center items-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black"></div>
-            </div>
-        );
-    }
-
-    if (error || !blog) {
+export default function BlogDetailClient({ initialBlog }: BlogDetailClientProps) {
+    // 如果服务端没有获取到数据，显示错误页面
+    if (!initialBlog) {
         return (
             <div className="min-h-screen bg-white flex justify-center items-center">
                 <div className="text-center p-8">
                     <h2 className="text-2xl font-serif mb-4 text-red-500">Article Not Found</h2>
-                    <p className="text-gray-500">{error || 'The requested article could not be found.'}</p>
+                    <p className="text-gray-500">The requested article could not be found.</p>
                 </div>
             </div>
         );
     }
+
+    const blog = initialBlog;
 
     const breadcrumbs: BreadcrumbItem[] = [
         { name: 'Home', path: '/' },
