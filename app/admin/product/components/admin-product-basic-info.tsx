@@ -4,6 +4,7 @@
 import { useState } from 'react';
 import dynamic from 'next/dynamic';
 import { COLOR_SYSTEM } from '@/lib/constants/color-config';
+import type { ProductSku } from '@/types/product';
 
 // 动态导入 MD 编辑器
 const MDEditor = dynamic(
@@ -157,7 +158,7 @@ export default function AdminProductBasicInfo({ product, updateProduct }: BasicI
                         <label className="block text-sm font-medium text-gray-700 mb-2">总库存</label>
                         <input
                             type="number"
-                            value={product.stock || ''}
+                            value={(product.productSkus || []).reduce((sum: number, sku: ProductSku) => sum + (sku.stock || 0), 0) || ''}
                             onChange={(e) => handleInputChange('stock', parseInt(e.target.value))}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm bg-gray-50"
                             readOnly

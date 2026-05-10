@@ -37,7 +37,6 @@ export default function PurchaseRecordPage() {
   // 操作弹窗
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showReceiveModal, setShowReceiveModal] = useState(false);
-  const [showReturnModal, setShowReturnModal] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState<PurchaseRecordResponse | null>(null);
   const [createForm, setCreateForm] = useState<PurchaseRecordRequest>({
@@ -50,7 +49,6 @@ export default function PurchaseRecordPage() {
     receivedQuantity: 0,
     warehouseLocation: '新塘',
   });
-  const [returnForm, setReturnForm] = useState<ReturnPurchaseRequest>({ returnQuantity: 0 });
   const [cancelReason, setCancelReason] = useState('');
 
   const fetchRecords = async () => {
@@ -156,22 +154,7 @@ export default function PurchaseRecordPage() {
     }
   };
 
-  // 退回采购
-  const handleReturn = async () => {
-    if (!selectedRecord || returnForm.returnQuantity <= 0) return;
-    
-    try {
-      await purchaseRecordService.returnPurchase(selectedRecord.id, returnForm);
-      setShowReturnModal(false);
-      setSelectedRecord(null);
-      setReturnForm({ returnQuantity: 0 });
-      fetchRecords();
-    } catch (error: any) {
-      console.error('Failed to return purchase:', error);
-      const errorMessage = error.response?.data?.message || error.message || '退回失败，请重试';
-      alert(errorMessage);
-    }
-  };
+
 
   // 取消采购
   const handleCancel = async () => {
@@ -432,41 +415,18 @@ export default function PurchaseRecordPage() {
                             </>
                           )}
                           {record.status === 'PARTIAL_RECEIVED' && (
-                            <>
-                              <button
-                                onClick={() => {
-                                  setSelectedRecord(record);
-                                  setShowReceiveModal(true);
-                                }}
-                                className="text-green-600 hover:text-green-900 text-sm font-medium flex items-center gap-1"
-                              >
-                                <Check className="w-4 h-4" />
-                                继续入库
-                              </button>
-                              <button
-                                onClick={() => {
-                                  setSelectedRecord(record);
-                                  setShowReturnModal(true);
-                                }}
-                                className="text-orange-600 hover:text-orange-900 text-sm font-medium flex items-center gap-1"
-                              >
-                                <ArrowDownRight className="w-4 h-4" />
-                                退回
-                              </button>
-                            </>
-                          )}
-                          {record.status === 'RECEIVED' && (
                             <button
                               onClick={() => {
                                 setSelectedRecord(record);
-                                setShowReturnModal(true);
+                                setShowReceiveModal(true);
                               }}
-                              className="text-orange-600 hover:text-orange-900 text-sm font-medium flex items-center gap-1"
+                              className="text-green-600 hover:text-green-900 text-sm font-medium flex items-center gap-1"
                             >
-                              <ArrowDownRight className="w-4 h-4" />
-                              退回
+                              <Check className="w-4 h-4" />
+                              继续入库
                             </button>
                           )}
+
                         </div>
                       </td>
                     </tr>
@@ -556,69 +516,7 @@ export default function PurchaseRecordPage() {
         </div>
       )}
 
-      {/* 退回弹窗 */}
-      {showReturnModal && selectedRecord && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-            <h3 className="text-lg font-bold text-gray-900 mb-4">退回采购</h3>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">采购单号</label>
-                <p className="text-sm text-gray-900 font-mono">{selectedRecord.purchaseNo}</p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">退回数量</label>
-                <input
-                  type="number"
-                  min="1"
-                  max={selectedRecord.netQuantity}
-                  value={returnForm.returnQuantity}
-                  onChange={(e) => setReturnForm({ ...returnForm, returnQuantity: parseInt(e.target.value) || 0 })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  最多可退回: {selectedRecord.netQuantity}
-                </p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">退回原因</label>
-                <input
-                  type="text"
-                  value={returnForm.reason || ''}
-                  onChange={(e) => setReturnForm({ ...returnForm, reason: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">备注</label>
-                <textarea
-                  value={returnForm.notes || ''}
-                  onChange={(e) => setReturnForm({ ...returnForm, notes: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                  rows={3}
-                />
-              </div>
-            </div>
-            <div className="flex gap-3 mt-6">
-              <button
-                onClick={handleReturn}
-                className="flex-1 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
-              >
-                确认退回
-              </button>
-              <button
-                onClick={() => {
-                  setShowReturnModal(false);
-                  setSelectedRecord(null);
-                }}
-                className="flex-1 px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                取消
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+
 
       {/* 取消弹窗 */}
       {showCancelModal && selectedRecord && (

@@ -139,37 +139,98 @@ export default async function ProductDetail({ params }: PageProps) {
     // ------------------------------------------------
     // JSON-LD Structured Data
     // ------------------------------------------------
+    // ✅ 基于 SKU 计算总可用库存（产品表的库存字段已删除）
+    const totalAvailableStock = (product.productSkus || []).reduce(
+        (sum, sku) => sum + ((sku.stock || 0) - (sku.lockedStock || 0)),
+        0
+    );
+
+    // ✅ 构建 SKU 变体列表
+    const skuOffers = (product.productSkus || []).map(sku => {
+        const skuStock = (sku.stock || 0) - (sku.lockedStock || 0);
+        return {
+            '@type': 'Offer',
+            url: `https://mythtoy.com/toys${slug}`,
+            priceCurrency: 'USD',
+            price: sku.price || product.currentPrice,
+            priceValidUntil: '2026-12-31',
+            itemCondition: 'https://schema.org/NewCondition',
+            availability: skuStock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+            sku: sku.sku || `${product.sku}-${sku.color}-${sku.size}`,
+            ...(sku.color && { color: sku.color }),
+            ...(sku.size && { size: sku.size }),
+        };
+    });
+
+    // ✅ 构建评论列表（最多5条）
+    const reviewElements: any[] = [];
+    if (product.reviews && product.reviews.length > 0) {
+        const displayReviews = product.reviews.slice(0, 5);
+        displayReviews.forEach((review, index) => {
+            reviewElements.push({
+                '@type': 'Review',
+                author: {
+                    '@type': 'Person',
+                    name: review.authorName || `User${index + 1}`,
+                },
+                datePublished: review.createdAt,
+                reviewBody: review.content?.substring(0, 200) || '',
+                reviewRating: {
+                    '@type': 'Rating',
+                    ratingValue: review.rating || 5,
+                },
+            });
+        });
+    }
+
     const jsonLd = {
         '@context': 'https://schema.org',
         '@graph': [
             {
                 '@type': 'Product',
                 name: product.title,
-                image: allImages,
+                image: allImages.map((img, index) => ({
+                    '@type': 'ImageObject',
+                    url: img,
+                    caption: `${product.title} - ${index === 0 ? 'main view' : `view ${index + 1}`}`,
+                })),
                 description: schemaDescription,
                 sku: product.sku || 'DEFAULT_SKU',
                 brand: {
                     '@type': 'Brand',
                     name: product.brand || 'MythToy',
                 },
+                // ✅ 使用 AggregateOffer 支持多变体
                 offers: {
-                    '@type': 'Offer',
-                    url: `https://mythtoy.com/toys${slug}`,
-                    priceCurrency: 'USD',
-                    price: product.currentPrice,
-                    priceValidUntil: '2026-12-31',
-                    itemCondition: 'https://schema.org/NewCondition',
-                    availability: (product.status === 'ACTIVE' && product.stock > 0)
-                        ? 'https://schema.org/InStock'
-                        : 'https://schema.org/OutOfStock',
+                    '@type': 'AggregateOffer',
+                    offers: skuOffers.length > 0 ? skuOffers : [{
+                        '@type': 'Offer',
+                        url: `https://mythtoy.com/toys${slug}`,
+                        priceCurrency: 'USD',
+                        price: product.currentPrice,
+                        priceValidUntil: '2026-12-31',
+                        itemCondition: 'https://schema.org/NewCondition',
+                        availability: (product.status === 'ACTIVE' && totalAvailableStock > 0)
+                            ? 'https://schema.org/InStock'
+                            : 'https://schema.org/OutOfStock',
+                    }],
                 },
-                ...(product.rating ? {
+                // ✅ 聚合评分（使用真实数据，不再硬编码）
+                ...(product.rating && {
                     aggregateRating: {
                         '@type': 'AggregateRating',
                         ratingValue: product.rating,
-                        reviewCount: product.reviewCount || 5
-                    }
-                } : {})
+                        reviewCount: product.reviewCount || 0,
+                        ...(product.reviewCount && product.reviewCount > 0 && {
+                            bestRating: '5',
+                            worstRating: '1',
+                        }),
+                    },
+                }),
+                // ✅ 添加评论详情
+                ...(reviewElements.length > 0 && {
+                    review: reviewElements,
+                }),
             },
             {
                 '@type': 'BreadcrumbList',
@@ -177,10 +238,10 @@ export default async function ProductDetail({ params }: PageProps) {
                     '@type': 'ListItem',
                     position: index + 1,
                     name: crumb.name,
-                    item: crumb.path ? `https://mythtoy.com${crumb.path}` : undefined
-                }))
-            }
-        ]
+                    item: crumb.path ? `https://mythtoy.com${crumb.path}` : undefined,
+                })),
+            },
+        ],
     };
 
     // ... 这一块处理 galleryImages 的逻辑保持不变 ...

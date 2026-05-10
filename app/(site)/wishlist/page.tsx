@@ -25,7 +25,6 @@ const convertToProductResponse = (wishlistItem: WishlistResponse): ProductRespon
         badge: wishlistItem.badge ?? '', // ✅ 恢复 Badge (HOT/NEW)
         minOrder: '1',  // 必需字段
         description: '', // 必需字段
-        stock: 0,       // 必需字段
         favorited: true,
         // ✅ 关键：构造一个有库存的 SKU，但用特殊颜色标记
         productSkus: [

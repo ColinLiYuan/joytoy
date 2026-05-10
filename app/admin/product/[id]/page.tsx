@@ -264,11 +264,11 @@ export default function AdminProductDetailPage() {
                                     </div>
                                     <div>
                                         <span className="text-xs text-gray-500 block mb-1">总库存</span>
-                                        <span className="text-lg font-bold text-gray-900">{product.stock}</span>
+                                        <span className="text-lg font-bold text-gray-900">{(product.productSkus || []).reduce((sum, sku) => sum + (sku.stock || 0), 0)}</span>
                                     </div>
                                     <div>
                                         <span className="text-xs text-gray-500 block mb-1">锁定库存</span>
-                                        <span className="text-sm font-medium text-gray-900">{product.lockedStock}</span>
+                                        <span className="text-sm font-medium text-gray-900">{(product.productSkus || []).reduce((sum, sku) => sum + (sku.lockedStock || 0), 0)}</span>
                                     </div>
                                 </div>
                             </div>

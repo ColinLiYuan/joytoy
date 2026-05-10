@@ -77,19 +77,43 @@ class CartService {
             if (userId) queryParams.append('userId', userId.toString());
             if (isGuest !== undefined) queryParams.append('isGuest', isGuest.toString());
 
-            const url = `/api/admin/V1/cart/list?${queryParams.toString()}`;
+            const url = `/api/admin/V1/cart/list?page=${page}&size=${size}&sortBy=${sortBy}${status ? `&status=${status}` : ''}${userId ? `&userId=${userId}` : ''}${isGuest !== undefined ? `&isGuest=${isGuest}` : ''}`;
             
             console.log('[CartService] Fetching admin cart list:', url);
             
-            const response = await axiosClient.get(url);
+            // 添加时间戳参数，避免浏览器缓存
+            const cacheBusterUrl = `${url}${url.includes('?') ? '&' : '?'}_t=${Date.now()}`;
+            const response = await axiosClient.get(cacheBusterUrl);
 
             if (response.data?.success) {
                 return response.data.data;
             }
 
             throw new Error(response.data?.message || 'Failed to fetch cart list');
-        } catch (error) {
-            console.error('Error fetching admin cart list:', error);
+        } catch (error: any) {
+            console.error('❌ [CartService] Error fetching admin cart list:', error);
+            
+            // 提供更详细的错误信息
+            if (error.response) {
+                console.error('[CartService] Error response status:', error.response.status);
+                console.error('[CartService] Error response data:', error.response.data);
+                
+                // 如果是 401，提示用户重新登录
+                if (error.response.status === 401) {
+                    throw new Error('认证失败，请重新登录');
+                }
+                
+                // 如果是 500，提示服务器错误
+                if (error.response.status === 500) {
+                    throw new Error('服务器内部错误，请稍后重试');
+                }
+            } else if (error.request) {
+                console.error('[CartService] No response received:', error.request);
+                throw new Error('无法连接到服务器，请检查网络连接');
+            } else {
+                console.error('[CartService] Error setting up request:', error.message);
+            }
+            
             throw error;
         }
     }

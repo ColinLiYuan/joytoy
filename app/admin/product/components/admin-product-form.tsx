@@ -132,8 +132,8 @@ function AdminProductFormContent() {
             title: product.title,
             name: product.name,
             description: product.description,
-            stock: product.stock || 0,
-            lockedStock: product.lockedStock || 0,
+            stock: (product.productSkus || []).reduce((sum, sku) => sum + (sku.stock || 0), 0) || 0,
+            lockedStock: (product.productSkus || []).reduce((sum, sku) => sum + (sku.lockedStock || 0), 0) || 0,
             currentPrice: product.currentPrice,
             originalPrice: product.originalPrice,
             minOrder: product.minOrder?.toString(),
@@ -380,10 +380,6 @@ function AdminProductFormContent() {
                                             {product.status === 'ACTIVE' ? '上架中' :
                                                 product.status === 'INACTIVE' ? '已下架' : '草稿'}
                                         </span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <span>总库存:</span>
-                                        <span className="font-medium text-gray-900">{product.stock || 0}</span>
                                     </div>
                                     <div className="flex justify-between">
                                         <span>当前售价:</span>

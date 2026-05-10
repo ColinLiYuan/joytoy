@@ -69,14 +69,10 @@ export async function getUserCart() {
             
             if (newToken) {
                 console.log('[Cart Action] Token refreshed, retrying cart fetch...')
-                // 用新 Token 重试
-                const retriedResponse = await fetch(`${API_PATHS.CART_GET}`, {
+                // ✅ 使用 fetchWithAuth 重试，而不是直接使用 fetch
+                const retriedResponse = await fetchWithAuth(API_PATHS.CART_GET, {
                     cache: 'no-store',
-                    headers: { 
-                        'Authorization': `Bearer ${newToken}`,
-                        'Content-Type': 'application/json',
-                        'X-Session-Id': sessionId,
-                    },
+                    headers: { 'X-Session-Id': sessionId },
                 })
                 
                 if (retriedResponse.ok) {

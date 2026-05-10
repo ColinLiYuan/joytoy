@@ -14,7 +14,7 @@ export let serverTokenExpiry: number | undefined;
 
 /**
  * 获取 Access Token
- * 策略：Server端优先使用缓存，然后读Cookie；Client端优先Cookie，没有则读LocalStorage
+ * 策略：Server端优先使用缓存，缓存过期则尝试刷新；Client端优先Cookie，没有则读LocalStorage
  */
 export const getToken = async (): Promise<string | undefined> => {
     // 服务端：优先使用缓存的token
@@ -31,11 +31,30 @@ export const getToken = async (): Promise<string | undefined> => {
         }
     }
     
+    // 服务端：缓存过期，尝试刷新token
+    if (!isBrowser && !serverTokenCache) {
+        console.log('[TokenUtils] Server token cache not available, attempting refresh');
+        const newToken = await refreshTokenIfNeeded();
+        if (newToken) {
+            console.log('[TokenUtils] Server token refreshed successfully');
+            return newToken;
+        }
+    }
+    
     // 1. 尝试从 Cookie 获取 (支持 Server & Client)
     const cookieToken = await getCookie(ACCESS_TOKEN_KEY);
     console.log('[TokenUtils] getToken - cookieToken exists:', !!cookieToken);
     console.log('[TokenUtils] getToken - cookieToken length:', cookieToken?.length || 0);
-    if (cookieToken) return cookieToken;
+    if (cookieToken) {
+        // 检查是否即将过期（提前30秒）
+        if (!isTokenExpired(cookieToken, 30)) {
+            return cookieToken;
+        }
+        // Token即将过期，尝试刷新
+        console.log('[TokenUtils] getToken - cookie token expired, refreshing...');
+        const refreshedToken = await refreshTokenIfNeeded();
+        return refreshedToken;
+    }
     // console.log('getToken cookieToken: ', cookieToken)
     // console.log('getToken storage: ', localStorage.getItem(ACCESS_TOKEN_KEY))
     // 2. 如果是客户端，尝试从 LocalStorage 兜底
@@ -102,52 +121,26 @@ export const setTokens = (
 ) => {
     if (!isBrowser) return;
 
-    // 🔍 打印后端返回的过期时间
-    console.log('[TokenUtils] setTokens - Backend response:', {
-        expiresIn,
-        refreshExpiresIn,
-        expiresInDays: expiresIn ? expiresIn / 60 / 60 / 24 : 'default',
-        refreshExpiresInDays: refreshExpiresIn ? refreshExpiresIn / 60 / 60 / 24 : 'default',
-        currentTime: new Date().toISOString(),
-        accessTokenLength: accessToken.length,
-        refreshTokenLength: refreshToken.length
-    });
-
     // 1. 写入 Cookie（使用后端返回的过期时间）
-    // ✅ 修复：使用 Date 对象精确设置过期时间，避免 js-cookie 小数天数问题
-    const accessExpiresAt = expiresIn ? new Date(Date.now() + expiresIn * 1000) : new Date(Date.now() + 30 * 60 * 1000); // 默认 30 分钟
-    const refreshExpiresAt = refreshExpiresIn ? new Date(Date.now() + refreshExpiresIn * 1000) : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 默认 7 天
+    const accessExpires = expiresIn ? expiresIn / 60 / 60 / 24 : 1 / 60 / 24; // 默认 1 分钟
+    const refreshExpires = refreshExpiresIn ? refreshExpiresIn / 60 / 60 / 24 : 7; // 默认 7 天
     
-    console.log('[TokenUtils] setTokens - Cookie expires calculated:', {
-        accessExpiresAt: accessExpiresAt.toISOString(),
-        refreshExpiresAt: refreshExpiresAt.toISOString(),
-        expiresInSeconds: expiresIn,
-        refreshExpiresInSeconds: refreshExpiresIn
+    setCookie(ACCESS_TOKEN_KEY, accessToken, {
+        expires: accessExpires,
+        path: '/',
+        sameSite: 'lax',
+        secure: process.env.NODE_ENV === 'production',
     });
-    
-    // 1. 写入 Cookie (原生 document.cookie，确保兼容性)
-    // ✅ 修复：绕过 js-cookie，直接设置 expires 属性，解决 Date 对象处理异常导致过期时间变 30 分钟的问题
-    
-    const accessExpiresUTC = accessExpiresAt.toUTCString();
-    const refreshExpiresUTC = refreshExpiresAt.toUTCString();
-    
-    // 构建 Cookie 字符串
-    const accessCookie = `${ACCESS_TOKEN_KEY}=${accessToken}; expires=${accessExpiresUTC}; path=/; SameSite=Lax${process.env.NODE_ENV === 'production' ? '; Secure' : ''}`;
-    const refreshCookie = `${REFRESH_TOKEN_KEY}=${refreshToken}; expires=${refreshExpiresUTC}; path=/; SameSite=Lax${process.env.NODE_ENV === 'production' ? '; Secure' : ''}`;
-    
-    document.cookie = accessCookie;
-    document.cookie = refreshCookie;
-    
-    console.log('[TokenUtils] setTokens - Native cookies set:', {
-        accessExpires: accessExpiresUTC,
-        refreshExpires: refreshExpiresUTC
+    setCookie(REFRESH_TOKEN_KEY, refreshToken, {
+        expires: refreshExpires,
+        path: '/',
+        sameSite: 'lax',
+        secure: process.env.NODE_ENV === 'production',
     });
 
     // 2. 写入 LocalStorage
     localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
     localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
-    
-    console.log('[TokenUtils] setTokens - Tokens saved successfully');
 };
 
 /**
@@ -189,15 +182,19 @@ export const clearTokens = async () => {
     window.dispatchEvent(new Event('storage'));
 };
 
-export const updateAccessToken = (newToken: string, expiresIn?: number): void => {
+export const updateAccessToken = (newToken: string): void => {
     if (!isBrowser) return;
 
     // 更新 localStorage
     localStorage.setItem(ACCESS_TOKEN_KEY, newToken);
 
-    // 更新 cookie（带过期时间，优先使用传入的 expiresIn，否则默认 30 分钟）
-    const expiresAt = expiresIn ? new Date(Date.now() + expiresIn * 1000) : new Date(Date.now() + 30 * 60 * 1000);
-    document.cookie = `${ACCESS_TOKEN_KEY}=${newToken}; expires=${expiresAt.toUTCString()}; path=/; SameSite=Lax${process.env.NODE_ENV === 'production' ? '; Secure' : ''}`;
+    // 更新 cookie（带过期时间）
+    setCookie(ACCESS_TOKEN_KEY, newToken, {
+        expires: 30 / 60 / 24, // 30分钟
+        path: '/',
+        sameSite: 'lax',
+        secure: process.env.NODE_ENV === 'production',
+    });
 };
 
 /**
@@ -241,21 +238,31 @@ export const isTokenExpired = (token: string, advanceSeconds: number = 30): bool
 };
 
 /**
+ * 确保 Token 是新鲜的（提前指定时间刷新）
+ * 用于关键操作前的预检查，如产品列表、支付等
+ * @param advanceSeconds 提前多少秒刷新（默认 30 秒）
+ * @returns 有效的 Access Token 或 undefined
+ */
+export const ensureFreshToken = async (advanceSeconds: number = 30): Promise<string | undefined> => {
+    const token = await getToken();
+    if (!token) return undefined;
+
+    // 检查是否即将过期（提前指定时间）
+    if (isTokenExpired(token, advanceSeconds)) {
+        // 需要刷新
+        return refreshTokenIfNeeded();
+    }
+
+    // 不需要刷新，直接返回
+    return token;
+};
+
+/**
  * 服务端 Token 刷新
  * 当 Token 过期时，使用 Refresh Token 获取新的 Access Token
  */
 export const refreshTokenIfNeeded = async (): Promise<string | undefined> => {
-    const token = await getToken();
-    if (!token) return undefined;
-
-    // 检查是否过期
-    if (!isTokenExpired(token)) {
-        return token; // 未过期，直接返回
-    }
-
-    console.log('[TokenUtils] Token expired, attempting refresh...');
-
-    // Token 已过期，尝试刷新
+    // ✅ 直接获取 refresh token，不再调用 getToken 避免递归
     const refreshToken = await getRefreshToken();
     if (!refreshToken) {
         console.warn('[TokenUtils] No refresh token available');
@@ -336,12 +343,19 @@ export const refreshTokenIfNeeded = async (): Promise<string | undefined> => {
                 
                 // 客户端：更新cookie
                 console.log('[TokenUtils] Updating tokens in client cookie');
-                const clientAccessExpiresAt = new Date(Date.now() + (expiresIn || 1800) * 1000);
-                const clientRefreshExpiresAt = new Date(Date.now() + (refreshExpiresIn || 7 * 24 * 60 * 60) * 1000);
-                
-                document.cookie = `${ACCESS_TOKEN_KEY}=${accessToken}; expires=${clientAccessExpiresAt.toUTCString()}; path=/; SameSite=Lax${process.env.NODE_ENV === 'production' ? '; Secure' : ''}`;
+                setCookie(ACCESS_TOKEN_KEY, accessToken, {
+                    expires: (expiresIn || 1800) / 60 / 60 / 24, // 转换为天
+                    path: '/',
+                    sameSite: 'lax',
+                    secure: process.env.NODE_ENV === 'production',
+                });
                 if (newRefreshToken) {
-                    document.cookie = `${REFRESH_TOKEN_KEY}=${newRefreshToken}; expires=${clientRefreshExpiresAt.toUTCString()}; path=/; SameSite=Lax${process.env.NODE_ENV === 'production' ? '; Secure' : ''}`;
+                    setCookie(REFRESH_TOKEN_KEY, newRefreshToken, {
+                        expires: (refreshExpiresIn || 7 * 24 * 60 * 60) / 60 / 60 / 24, // 转换为天
+                        path: '/',
+                        sameSite: 'lax',
+                        secure: process.env.NODE_ENV === 'production',
+                    });
                 }
             }
 
@@ -356,79 +370,6 @@ export const refreshTokenIfNeeded = async (): Promise<string | undefined> => {
         return undefined;
     } catch (error) {
         console.error('[TokenUtils] Token refresh error:', error);
-        return undefined;
-    }
-};
-
-/**
- * 客户端专用：检查 Token 是否快过期，如果是则主动刷新
- * 在调用需要登录的接口前调用此函数
- * @param advanceSeconds 提前多少秒刷新（默认 5 分钟 = 300 秒）
- * @returns 刷新后的 Token 或原 Token，如果未登录则返回 undefined
- */
-export const ensureFreshToken = async (advanceSeconds: number = 300): Promise<string | undefined> => {
-    // 只在客户端执行
-    if (!isBrowser) return undefined;
-
-    const token = await getToken();
-    if (!token) return undefined;
-
-    // 检查是否快过期（提前 5 分钟）
-    if (!isTokenExpired(token, advanceSeconds)) {
-        return token; // 还没快过期，直接返回
-    }
-
-    console.log('[TokenUtils] Token expiring soon, proactively refreshing...');
-
-    // Token 快过期，主动刷新
-    const refreshToken = await getRefreshToken();
-    if (!refreshToken) {
-        console.warn('[TokenUtils] No refresh token available');
-        return undefined;
-    }
-
-    try {
-        const { BACKEND_CONFIG } = await import('@/lib/api-config');
-        const refreshUrl = `${BACKEND_CONFIG.baseURL}/api/V1/users/refresh`;
-        
-        const response = await fetch(refreshUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ refreshToken }),
-        });
-
-        if (!response.ok) {
-            console.warn('[TokenUtils] Proactive refresh failed:', response.status);
-            return undefined;
-        }
-
-        const result = await response.json();
-        
-        if (result?.success && result?.data?.accessToken) {
-            const { accessToken, refreshToken: newRefreshToken, expiresIn, refreshExpiresIn } = result.data;
-
-            // 更新 localStorage
-            localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
-            if (newRefreshToken) {
-                localStorage.setItem(REFRESH_TOKEN_KEY, newRefreshToken);
-            }
-            
-            // 更新 Cookie (原生写入，确保兼容)
-            const accessExpiresAt = new Date(Date.now() + (expiresIn || 1800) * 1000);
-            const refreshExpiresAt = new Date(Date.now() + (refreshExpiresIn || 7 * 24 * 60 * 60) * 1000);
-            
-            document.cookie = `${ACCESS_TOKEN_KEY}=${accessToken}; expires=${accessExpiresAt.toUTCString()}; path=/; SameSite=Lax${process.env.NODE_ENV === 'production' ? '; Secure' : ''}`;
-            if (newRefreshToken) {
-                document.cookie = `${REFRESH_TOKEN_KEY}=${newRefreshToken}; expires=${refreshExpiresAt.toUTCString()}; path=/; SameSite=Lax${process.env.NODE_ENV === 'production' ? '; Secure' : ''}`;
-            }
-
-            console.log('[TokenUtils] Token proactively refreshed successfully');
-            return accessToken;
-        }
-
-        return undefined;
-    } catch (error) {
-        console.error('[TokenUtils] Proactive refresh error:', error);
         return undefined;
     }
 };

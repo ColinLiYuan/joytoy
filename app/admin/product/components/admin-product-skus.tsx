@@ -292,14 +292,14 @@ export default function ProductSkus({ product, updateProduct }: ProductSkusProps
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-xs font-medium text-gray-600 mb-1">库存数量</label>
+                                            <label className="block text-xs font-medium text-gray-600 mb-1">库存数量（只读）</label>
                                             <div className="flex gap-2">
                                                 <input
                                                     type="number"
                                                     min="0"
                                                     value={sku.stock || 0}
-                                                    onChange={(e) => updateSkuStock(sku.color, parseInt(e.target.value) || 0)}
-                                                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                    readOnly
+                                                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm bg-gray-50 cursor-not-allowed"
                                                 />
                                                 <button
                                                     type="button"

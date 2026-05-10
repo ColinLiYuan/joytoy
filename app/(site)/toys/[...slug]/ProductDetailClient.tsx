@@ -397,7 +397,7 @@ export default function ProductDetailClient({
                 productTitle: product.title,
                 productName: product.name,
                 productSku: selectedSku.sku,
-                productImage: getProductImageUrl(undefined, product.image),
+                productImage: product.image, // 只存相对路径，不拼接CDN前缀
                 unitPrice: product.currentPrice,
                 quantity: 1,
                 color: selectedSku.color,

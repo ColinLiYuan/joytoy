@@ -59,8 +59,10 @@ export default function AdminCartPage() {
             })
             setCarts(data.content)
             setTotalPages(data.totalPages)
-        } catch (error) {
+        } catch (error: any) {
             console.error('Fetch carts failed:', error)
+            // 显示错误提示给用户
+            alert(error.message || '获取购物车列表失败，请稍后重试')
         } finally {
             setLoading(false)
         }

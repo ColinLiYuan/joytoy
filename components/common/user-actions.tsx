@@ -36,6 +36,11 @@ export default function UserActions({
     const pathname = usePathname();
     const isWishlistPage = pathname === '/wishlist';
 
+    // ✅ 组件挂载时设置 isMounted（购物车由 CartSync 统一初始化）
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
+
     // 获取用户首字母（优化：对于中文名称，优先使用英文首字母）
     const getUserInitials = () => {
         if (!userInfo) return 'U';
@@ -68,8 +73,6 @@ export default function UserActions({
         // 如果都没有，显示邮箱前缀
         return userInfo.email?.split('@')[0] || 'Account';
     };
-
-    useEffect(() => setIsMounted(true), []);
 
     // 点击外部关闭菜单
     useEffect(() => {

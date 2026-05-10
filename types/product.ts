@@ -1,4 +1,5 @@
 // types/product.ts
+import { Review } from './review';
 
 export interface ProductResponse {
     id: number;
@@ -13,7 +14,6 @@ export interface ProductResponse {
     minOrder: string;
     description: string;
     image: string;
-    stock: number;
     galleries?: Array<{
         url: string;
         alt?: string;
@@ -39,6 +39,7 @@ export interface ProductResponse {
     rating?: number;
     reviewCount?: number;
     status?: string;
+    reviews?: Review[];
 }
 
 export interface ProductListResponse {
@@ -55,6 +56,8 @@ export interface ProductSku {
     id: number;
     sku: string;
     color: string;
+    size?: string;
+    price?: number;
     stock: number;
     lockedStock: number;
 }

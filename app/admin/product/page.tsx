@@ -353,7 +353,7 @@ export default function ProductList() {
                                             <p className="text-lg">暂无产品数据</p>
                                         </div>
                                         <Link
-                                            href="/admin/products/add"
+                                            href="/admin/product/add"
                                             className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg inline-flex items-center transition-colors"
                                         >
                                             <Plus className="h-4 w-4 mr-1" />

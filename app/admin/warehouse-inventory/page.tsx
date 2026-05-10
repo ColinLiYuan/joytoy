@@ -277,7 +277,7 @@ export default function WarehouseInventoryPage() {
                     仓库库存
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
-                    线上库存
+                    已同步库存
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
                     在途库存
