@@ -9,7 +9,7 @@ import ProductList from '@/components/product/product-list';
 import Breadcrumb, { BreadcrumbItem } from '@/components/common/breadcrumb';
 import CollectionHero from '@/components/collection/collection-hero';
 import FAQSection from '@/components/common/faq-section';
-import { ProductListResponse } from '@/types/product';
+import { ProductListResponse, ProductResponse } from '@/types/product';
 import { CategoryResponse, RootResponse } from '@/types/category';
 
 const ITEMS_PER_PAGE = 12;
@@ -95,7 +95,7 @@ export default function ProductListPage({ params }: { params: Promise<{ category
                     productService.getProductsByCategory(fullSlug, page, ITEMS_PER_PAGE, filters),
                     filterService.getFilters('colors'),
                     filterService.getFilters('features'),
-                    filterService.getFilters('materials'),
+                    filterService.getFilters('materials')
                 ]);
 
                 const roots = rootsResult.status === 'fulfilled' ? rootsResult.value : [];
@@ -129,7 +129,7 @@ export default function ProductListPage({ params }: { params: Promise<{ category
 
                 // 查找当前分类
                 let current: CategoryResponse | RootResponse | null = null;
-                let parent: RootResponse | null = null;
+    let parent: RootResponse | null = null;
 
                 if (roots.length > 0) {
                     const rootSlug = urlSegments[0];

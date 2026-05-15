@@ -4,10 +4,15 @@
 import { Suspense } from 'react'
 import React, { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { ArrowLeft, MousePointerClick, ShoppingCart, DollarSign, TrendingUp, Clock, ChevronLeft, ChevronRight, Loader2, Wallet, CheckCircle, AlertCircle, Plus, Trash2, Edit, ExternalLink } from 'lucide-react'
+import { ArrowLeft, MousePointerClick, ShoppingCart, DollarSign, TrendingUp, Clock, ChevronLeft, ChevronRight, Loader2, Wallet, CheckCircle, AlertCircle, Plus, Trash2, Edit, ExternalLink, Link as LinkIcon, LayoutTemplate, Activity } from 'lucide-react'
 import { affiliateService } from '@/services/affiliateService'
 import { AffiliateActivityResponse, createAffiliateActivity, updateAffiliateActivity, deleteAffiliateActivity } from '@/app/actions/admin'
 import Pagination from '@/components/common/pagination'
+import axiosClient from '@/lib/axios-client'
+import {
+  LineChart, Line, AreaChart, Area, BarChart, Bar,
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
+} from 'recharts'
 
 interface AffiliateDetail {
     id: number;
@@ -48,6 +53,11 @@ function AffiliateDetailContent() {
     const [activityPage, setActivityPage] = useState(0);
     const [showActivityModal, setShowActivityModal] = useState(false);
     const [editingActivity, setEditingActivity] = useState<AffiliateActivityResponse | null>(null);
+    
+    // 统计数据状态
+    const [detailStats, setDetailStats] = useState<any>(null);
+    const [statsLoading, setStatsLoading] = useState(false);
+    const [selectedDays, setSelectedDays] = useState<number>(7);
 
     useEffect(() => {
         fetchData();
@@ -58,8 +68,16 @@ function AffiliateDetailContent() {
         if (detail) {
             fetchCommissionLogs();
             fetchActivities();
+            fetchDetailStats();
         }
     }, [detail, currentPage, activityPage]);
+    
+    // 当时间选择变化时重新获取统计
+    useEffect(() => {
+        if (detail) {
+            fetchDetailStats();
+        }
+    }, [selectedDays]);
     
     const fetchCommissionLogs = async () => {
         setLogsLoading(true);
@@ -122,20 +140,50 @@ function AffiliateDetailContent() {
             alert('删除活动失败');
         }
     };
+    
+    // 获取详细统计数据
+    const fetchDetailStats = async () => {
+        setStatsLoading(true);
+        try {
+            const stats = await affiliateService.getAffiliateDetailStats(detail!.affiliateId, selectedDays);
+            setDetailStats(stats);
+        } catch (error) {
+            console.error('Failed to fetch detail stats:', error);
+        } finally {
+            setStatsLoading(false);
+        }
+    };
 
     const fetchData = async () => {
         try {
             setLoading(true);
             
-            // Fetch member detail (find from list)
-            const listData = await affiliateService.getAdminList({ page: 0, size: 100 });
+            // ✅ 使用详情接口获取数据（包含基础统计字段）
+            const url = `/api/admin/V1/affiliate/${affiliateId}/detail`;
+            const response = await axiosClient.get(url);
             
-            if (listData.content) {
-                const member = listData.content.find((m) => m.id.toString() === affiliateId);
-                if (member) {
-                    // 将 AffiliateUser 转换为 AffiliateDetail
-                    setDetail(member as unknown as AffiliateDetail);
-                }
+            if (response.data?.success) {
+                const detailData = response.data.data;
+                // 将后端返回的数据转换为前端需要的格式
+                setDetail({
+                    id: detailData.id,
+                    affiliateId: detailData.affiliateId,
+                    userId: null, // 详情接口可能没有userId
+                    userEmail: detailData.email,
+                    userName: detailData.name,
+                    commissionRate: detailData.commissionRate,
+                    affiliateCodes: detailData.affiliateCodes?.map((code: any) => code.code) || [],
+                    totalClicks: detailData.totalClicks || 0,
+                    totalOrders: detailData.totalOrders || 0,
+                    totalEarnings: detailData.totalEarned || 0,
+                    currentBalance: detailData.currentBalance || 0,
+                    settledAmount: 0, // 如果需要可以从后端获取
+                    pendingAmount: 0, // 如果需要可以从后端获取
+                    totalPaid: detailData.totalPaid || 0,
+                    status: detailData.status,
+                    createdAt: detailData.createdAt,
+                    updatedAt: detailData.updatedAt
+                });
             }
         } catch (error) {
             console.error('Failed to fetch affiliate detail:', error);
@@ -320,6 +368,187 @@ function AffiliateDetailContent() {
                     </div>
                 ) : (
                     <p className="text-sm text-gray-400">暂无推广码</p>
+                )}
+            </div>
+            
+            {/* Detailed Statistics */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-2">
+                        <Activity className="h-5 w-5 text-blue-600" />
+                        <h3 className="text-lg font-semibold text-gray-900">详细统计分析</h3>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        {[3, 7, 30, 90].map((days) => (
+                            <button
+                                key={days}
+                                onClick={() => setSelectedDays(days)}
+                                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                                    selectedDays === days
+                                        ? 'bg-blue-600 text-white'
+                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                }`}
+                            >
+                                {days === 3 ? '最近3天' : `最近${days}天`}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+                
+                {statsLoading ? (
+                    <div className="flex items-center justify-center py-12">
+                        <Loader2 className="animate-spin text-gray-400" size={24} />
+                    </div>
+                ) : detailStats ? (
+                    <div className="space-y-8">
+                        {/* 趋势图 */}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            {/* 点击与订单趋势 */}
+                            <div className="border border-gray-200 rounded-xl p-4">
+                                <h4 className="font-medium text-gray-900 mb-4">点击与订单趋势</h4>
+                                <ResponsiveContainer width="100%" height={250}>
+                                    <AreaChart data={detailStats.trendData.dates.map((date: string, index: number) => ({
+                                        date,
+                                        clicks: detailStats.trendData.clicks[index] || 0,
+                                        orders: detailStats.trendData.orders[index] || 0
+                                    }))}>
+                                        <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                                        <XAxis dataKey="date" stroke="#9CA3AF" fontSize={10} />
+                                        <YAxis stroke="#9CA3AF" fontSize={10} />
+                                        <Tooltip
+                                            contentStyle={{
+                                                backgroundColor: 'white',
+                                                border: '1px solid #e5e7eb',
+                                                borderRadius: '8px'
+                                            }}
+                                        />
+                                        <Legend />
+                                        <Area
+                                            type="monotone"
+                                            dataKey="clicks"
+                                            stroke="#3B82F6"
+                                            fill="#3B82F6"
+                                            fillOpacity={0.1}
+                                            name="点击数"
+                                        />
+                                        <Area
+                                            type="monotone"
+                                            dataKey="orders"
+                                            stroke="#10B981"
+                                            fill="#10B981"
+                                            fillOpacity={0.1}
+                                            name="订单数"
+                                        />
+                                    </AreaChart>
+                                </ResponsiveContainer>
+                            </div>
+
+                            {/* 佣金趋势 */}
+                            <div className="border border-gray-200 rounded-xl p-4">
+                                <h4 className="font-medium text-gray-900 mb-4">佣金趋势</h4>
+                                <ResponsiveContainer width="100%" height={250}>
+                                    <LineChart data={detailStats.trendData.dates.map((date: string, index: number) => ({
+                                        date,
+                                        commission: detailStats.trendData.commissions[index] || 0
+                                    }))}>
+                                        <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                                        <XAxis dataKey="date" stroke="#9CA3AF" fontSize={10} />
+                                        <YAxis stroke="#9CA3AF" fontSize={10} />
+                                        <Tooltip
+                                            contentStyle={{
+                                                backgroundColor: 'white',
+                                                border: '1px solid #e5e7eb',
+                                                borderRadius: '8px'
+                                            }}
+                                            formatter={(value: any) => [`$${value}`, '佣金']}
+                                        />
+                                        <Line
+                                            type="monotone"
+                                            dataKey="commission"
+                                            stroke="#10B981"
+                                            strokeWidth={2}
+                                            dot={{ fill: '#10B981', r: 3 }}
+                                            name="佣金"
+                                        />
+                                    </LineChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </div>
+
+                        {/* 按来源统计 */}
+                        <div>
+                            <div className="flex items-center gap-2 mb-4">
+                                <LinkIcon className="h-5 w-5 text-purple-600" />
+                                <h4 className="font-medium text-gray-900">按点击来源统计</h4>
+                            </div>
+                            {detailStats.sourceStats && detailStats.sourceStats.length > 0 ? (
+                                <div className="overflow-x-auto">
+                                    <table className="min-w-full divide-y divide-gray-200">
+                                        <thead className="bg-gray-50">
+                                            <tr>
+                                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">来源</th>
+                                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">点击数</th>
+                                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">转化数</th>
+                                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">转化率</th>
+                                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">佣金</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="bg-white divide-y divide-gray-200">
+                                            {detailStats.sourceStats.map((stat: any, index: number) => (
+                                                <tr key={index} className="hover:bg-gray-50">
+                                                    <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">{stat.source}</td>
+                                                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{stat.clicks.toLocaleString()}</td>
+                                                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{stat.conversions}</td>
+                                                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{stat.conversionRate.toFixed(2)}%</td>
+                                                    <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-green-600">${stat.revenue.toFixed(2)}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            ) : (
+                                <div className="text-center py-8 text-gray-500">暂无来源统计数据</div>
+                            )}
+                        </div>
+
+                        {/* 按着陆页统计 */}
+                        <div>
+                            <div className="flex items-center gap-2 mb-4">
+                                <LayoutTemplate className="h-5 w-5 text-indigo-600" />
+                                <h4 className="font-medium text-gray-900">按着陆页统计</h4>
+                            </div>
+                            {detailStats.landingPageStats && detailStats.landingPageStats.length > 0 ? (
+                                <div className="overflow-x-auto">
+                                    <table className="min-w-full divide-y divide-gray-200">
+                                        <thead className="bg-gray-50">
+                                            <tr>
+                                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">着陆页</th>
+                                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">点击数</th>
+                                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">转化数</th>
+                                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">转化率</th>
+                                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">佣金</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="bg-white divide-y divide-gray-200">
+                                            {detailStats.landingPageStats.map((stat: any, index: number) => (
+                                                <tr key={index} className="hover:bg-gray-50">
+                                                    <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900 truncate max-w-xs">{stat.landingPage}</td>
+                                                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{stat.clicks.toLocaleString()}</td>
+                                                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{stat.conversions}</td>
+                                                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{stat.conversionRate.toFixed(2)}%</td>
+                                                    <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-green-600">${stat.revenue.toFixed(2)}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            ) : (
+                                <div className="text-center py-8 text-gray-500">暂无着陆页统计数据</div>
+                            )}
+                        </div>
+                    </div>
+                ) : (
+                    <div className="text-center py-12 text-gray-500">暂无统计数据</div>
                 )}
             </div>
             

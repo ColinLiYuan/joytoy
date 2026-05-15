@@ -3,7 +3,7 @@
 import { NextResponse } from 'next/server'
 
 export async function GET() {
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://mythtoy.com'
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.mythtoy.com'
 
     const staticPages = [
         { loc: '', priority: 1.0, changefreq: 'daily' }, // 首页

@@ -61,6 +61,7 @@ function SidebarContent({ sidebarOpen, setSidebarOpen }: SidebarContentProps) {
             href: '/admin/affiliate',
             icon: TrendingUp,
             children: [
+                { name: '数据统计', href: '/admin/affiliate/stats' },
                 { name: '成员列表', href: '/admin/affiliate' },
                 { name: '提现管理', href: '/admin/affiliate/payouts' }
             ]

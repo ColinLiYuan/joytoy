@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Plus, Minus } from 'lucide-react';
 import { FAQ_DATA } from '@/lib/constants/faq-data';
 import Image from 'next/image';
+import Link from 'next/link';
 import { getProductImageUrl } from '@/lib/image-utils'; // 引入图片工具函数
 
 interface FAQSectionProps {
@@ -48,25 +49,80 @@ const RichText = ({ text, images = [] }: { text: string; images?: { url: string;
                     );
                 }
 
-                // 处理普通文本（包含换行和加粗）
+                // 处理普通文本（包含换行、加粗和产品链接）
                 const lines = part.split('\n').filter(line => line.trim() !== '');
                 return lines.map((line, lineIndex) => {
                     if (line === '---') {
                         return <hr key={`${index}-${lineIndex}`} className="my-4 border-gray-200" />;
                     }
 
-                    const textParts = line.split(/(\*\*.*?\*\*)/g);
+                    // 解析 *[文本](链接)* 语法
+                    const linkRegex = /\*\[([^\]]+)\]\(([^)]+)\)\*/g;
+                    const linkParts: Array<{ type: 'text' | 'link'; content: string; href?: string }> = [];
+                    let lastIndex = 0;
+                    let match;
+                    
+                    while ((match = linkRegex.exec(line)) !== null) {
+                        // 添加匹配前的普通文本
+                        if (match.index > lastIndex) {
+                            linkParts.push({ type: 'text', content: line.slice(lastIndex, match.index) });
+                        }
+                        // 添加链接
+                        linkParts.push({ type: 'link', content: match[1], href: match[2] });
+                        lastIndex = match.index + match[0].length;
+                    }
+                    // 添加剩余的文本
+                    if (lastIndex < line.length) {
+                        linkParts.push({ type: 'text', content: line.slice(lastIndex) });
+                    }
+
+                    // 如果没有链接，使用原来的加粗解析逻辑
+                    if (linkParts.length === 0) {
+                        const textParts = line.split(/(\*\*.*?\*\*)/g);
+                        return (
+                            <p key={`${index}-${lineIndex}`} className="leading-relaxed">
+                                {textParts.map((textPart, textIndex) => {
+                                    if (textPart.startsWith('**') && textPart.endsWith('**')) {
+                                        return (
+                                            <strong key={textIndex} className="font-semibold text-gray-900">
+                                                {textPart.slice(2, -2)}
+                                            </strong>
+                                        );
+                                    }
+                                    return textPart;
+                                })}
+                            </p>
+                        );
+                    }
+
+                    // 有链接时使用链接解析逻辑
                     return (
                         <p key={`${index}-${lineIndex}`} className="leading-relaxed">
-                            {textParts.map((textPart, textIndex) => {
-                                if (textPart.startsWith('**') && textPart.endsWith('**')) {
+                            {linkParts.map((linkPart, partIndex) => {
+                                if (linkPart.type === 'link' && linkPart.href) {
                                     return (
-                                        <strong key={textIndex} className="font-semibold text-gray-900">
-                                            {textPart.slice(2, -2)}
-                                        </strong>
+                                        <Link 
+                                            key={partIndex} 
+                                            href={linkPart.href}
+                                            className="text-[#C5A059] hover:text-[#B8944F] underline underline-offset-2 font-medium transition-colors"
+                                        >
+                                            {linkPart.content}
+                                        </Link>
                                     );
                                 }
-                                return textPart;
+                                
+                                // 普通文本，继续处理加粗
+                                const textParts = linkPart.content.split(/(\*\*.*?\*\*)/g);
+                                return textParts.map((textPart, textIndex) => {
+                                    if (textPart.startsWith('**') && textPart.endsWith('**')) {
+                                        return (
+                                            <strong key={`${partIndex}-${textIndex}`} className="font-semibold text-gray-900">
+                                                {textPart.slice(2, -2)}
+                                            </strong>
+                                        );
+                                    }
+                                    return textPart;
+                                });
                             })}
                         </p>
                     );
@@ -119,10 +175,12 @@ export default function FAQSection({ context = 'all', tag, className = '' }: FAQ
         items: category.items.filter(item => {
             const itemTags = item.tags || [];
 
+            // 如果指定了 tag，则只返回包含该 tag 的问题
             if (tag) {
                 return itemTags.includes(tag);
             }
 
+            // 如果没有 tag，则根据 context 过滤
             if (context === 'all') return true;
             if (context === 'product') return itemTags.includes('product');
             if (context === 'contact') return itemTags.includes('contact');
@@ -138,12 +196,13 @@ export default function FAQSection({ context = 'all', tag, className = '' }: FAQ
     if (isSpecificMode) {
         const flatItems = filteredData.flatMap(c => c.items);
 
+        // 如果没有匹配到任何问题，直接不渲染，而不是展示通用问题
         if (flatItems.length === 0) return null;
 
         return (
             <section className={`w-full ${className}`}>
                 <h3 className="text-2xl font-bold mb-8 font-['Playfair_Display'] text-center md:text-left">
-                    {context === 'contact' ? 'Common Questions' : 'Frequently Asked Questions'}
+                    Frequently Asked Questions
                 </h3>
                 <div className="w-full">
                     {flatItems.map((item) => (

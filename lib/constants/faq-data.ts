@@ -70,7 +70,7 @@ export const FAQ_DATA: FAQCategory[] = [
                 id: "material-safety",
                 question: "What materials do you use?",
                 answer: "We select materials based on the best tactile experience. Our **vibrators and air-pulse tools** are 100% non-porous medical-grade silicone for hygiene. Our **strokers (male masturbators)** use high-grade, skin-like TPE to ensure the softest and most realistic texture possible. All are Phthalate-free.",
-                tags: ["product", "home"] // 首页展示：解释硅胶与TPE的专业区分
+                tags: ["product", "home"]
             }
         ]
     },
@@ -98,7 +98,7 @@ export const FAQ_DATA: FAQCategory[] = [
                 id: "air-pulse-tech",
                 question: "What is Air-Pulse technology?",
                 answer: "Air-Pulse technology uses rapid waves of air pressure to stimulate the clitoris without direct contact. It mimics the sensation of oral sex and is the core tech behind our Onyx series.",
-                tags: ["product", "home"] // 首页展示：推销旗舰机技术
+                tags: ["product", "home"]
             },
             {
                 id: "waterproof-technology",
@@ -108,6 +108,23 @@ export const FAQ_DATA: FAQCategory[] = [
                     "**Pin-port / DC Charging:** These are also waterproof (typically IPX7). These ports are engineered with internal water-sealing technology or tight-fit silicone sleeves. While safe for bath use, they require more care—you must ensure the port is completely free of water and debris before charging to prevent corrosion.\n\n" +
                     "In short: All our devices are shower and bath-friendly, but for the best long-term performance, we recommend patting the charging area dry immediately after use.",
                 tags: ["product", "general", "home"]
+            }
+        ]
+    },
+    {
+        title: "Sensory Play Guide", // 针对当前前台 Sensory Play页面的专属FAQ
+        items: [
+            {
+                id: "what-are-adult-sensory-toys",
+                question: "What exactly are sensory toys for adults in intimacy?",
+                answer: "In adult wellness, **sensory toys for adults** are items designed to stimulate your five senses—touch, sight, and sound—to enhance pleasure and reduce stress. Unlike traditional devices, tools in our *[Sensory Play](/collections/female-sex-toys/nipple-toys)* collection (like *[The Brush](/toys/female-sex-toys/bullet-vibrators/the-brush)*) focus on unique textures, whisper-quiet motors, and variable frequencies to create a more mindful, immersive intimate experience.",
+                tags: ["sensory-play", "female-sex-toys/nipple-toys"]
+            },
+            {
+                id: "clit-vibrator-during-sex-guide",
+                question: "How do I choose a clit vibrator during sex for solo or couple play?",
+                answer: "When selecting a **clit vibrator during sex**, look for ergonomics and versatility. For solo exploration, wand stimulators provide targeted fulfillment. For couples, lightweight or wearable designs are perfect as they easily fit between partners during intercourse without getting in the way. Always start on the lowest setting to explore your sensitivity baseline.",
+                tags: ["sensory-play", "female-sex-toys/nipple-toys"]
             }
         ]
     }

@@ -38,6 +38,20 @@ export interface PathStat {
 }
 
 /**
+ * 按来源分组的统计数据
+ */
+export interface SourceStat extends PathStat {
+    conversionRate: number; // 转化率
+}
+
+/**
+ * 按着陆页分组的统计数据
+ */
+export interface LandingPageStat extends PathStat {
+    conversionRate: number; // 转化率
+}
+
+/**
  * 每日点击趋势数据（用于未来对接折线图）
  */
 export interface DailyTrend {

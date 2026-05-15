@@ -18,6 +18,7 @@ export const inventoryLogService = {
     if (request.orderId) params.append('orderId', request.orderId.toString());
     if (request.orderNumber) params.append('orderNumber', request.orderNumber);
     if (request.productName) params.append('productName', request.productName);
+    if (request.skuCode) params.append('skuCode', request.skuCode);
     if (request.changeType) params.append('changeType', request.changeType);
     if (request.startTime) params.append('startTime', request.startTime);
     if (request.endTime) params.append('endTime', request.endTime);

@@ -199,7 +199,7 @@ export default function ProductList({
                     <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-10 flex-1">
                         {products.map((product) => <ProductCard key={product.id} product={product} />)}
                     </div>
-                    {showPagination && <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />}
+                    {showPagination && <Pagination currentPage={currentPage} totalPages={totalPages} totalElements={totalProducts} onPageChange={handlePageChange} />}
                 </div>
             </div>
 

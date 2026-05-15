@@ -98,7 +98,7 @@ export const CATEGORIES_DATA: CategoriesData = {
                         slug: "female-sex-toys/nipple-toys",
                         name: "Sensory Play",
                         title: "Sensory & Nipple Toys",
-                        description: "Enhance sensitivity with clamps, suckers, and feather-soft touches.",
+                        description: "Elevate your wellness routine with our Sensory Play collection, featuring premium sensory toys for adults designed for high-tactile pleasure and mindful relaxation.",
                         image: "cat-banner-nipple.png",
                         root: "female-sex-toys",
                         priority: 0.7,

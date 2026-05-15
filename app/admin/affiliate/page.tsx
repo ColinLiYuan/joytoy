@@ -3,7 +3,7 @@
 
 import React, { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Users, MousePointerClick, DollarSign, TrendingUp, Calendar, Search, Filter, Wallet, Clock, CheckCircle, AlertCircle, Package, Video, FileText } from 'lucide-react'
+import { Search } from 'lucide-react'
 import { affiliateService } from '@/services/affiliateService'
 
 interface AffiliateUser {
@@ -32,17 +32,16 @@ interface AffiliateStats {
     totalConversions: number;
     totalCommission: number;
     conversionRate: number;
-    totalShipments: number;        // ✅ 新增：发货数
-    totalVideoReviews: number;     // ✅ 新增：视频评测数
-    totalBlogReviews: number;      // ✅ 新增：博客评测数
-    settledAmount: number;       // Settled amount (over 30 days)
-    pendingAmount: number;       // Pending amount (within 30 days)
-    currentBalance: number;      // Current total balance
-    totalPaid: number;           // Total paid amount
+    totalShipments: number;
+    totalVideoReviews: number;
+    totalBlogReviews: number;
+    settledAmount: number;
+    pendingAmount: number;
+    currentBalance: number;
+    totalPaid: number;
 }
 
 export default function AdminAffiliatePage() {
-    const [stats, setStats] = useState<AffiliateStats | null>(null);
     const [affiliates, setAffiliates] = useState<AffiliateUser[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -55,12 +54,6 @@ export default function AdminAffiliatePage() {
     const fetchData = async () => {
         try {
             setLoading(true);
-            
-            // Fetch stats data
-            const statsData = await affiliateService.getAdminStats();
-            setStats(statsData);
-
-            // Fetch affiliate member list
             const listData = await affiliateService.getAdminList({ page: 0, size: 100 });
             setAffiliates(listData.content || []);
         } catch (error) {
@@ -102,136 +95,9 @@ export default function AdminAffiliatePage() {
         <div className="space-y-6">
             {/* Header */}
             <div>
-                <h1 className="text-2xl font-bold text-gray-900">联盟营销管理</h1>
+                <h1 className="text-2xl font-bold text-gray-900">联盟成员列表</h1>
                 <p className="text-sm text-gray-500 mt-1">管理和监控所有分销客的表现和佣金数据</p>
             </div>
-
-            {/* Stats Cards */}
-            {stats && (
-                <>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                        <StatCard
-                            title="分销客总数"
-                            value={stats.totalAffiliates.toString()}
-                            subtitle={`${stats.activeAffiliates} 个活跃`}
-                            icon={Users}
-                            color="blue"
-                        />
-                        <StatCard
-                            title="总点击数"
-                            value={stats.totalClicks.toLocaleString()}
-                            subtitle="所有链接累计"
-                            icon={MousePointerClick}
-                            color="purple"
-                        />
-                        <StatCard
-                            title="总转化数"
-                            value={stats.totalConversions.toString()}
-                            subtitle={`转化率 ${stats.conversionRate}%`}
-                            icon={TrendingUp}
-                            color="green"
-                        />
-                        <StatCard
-                            title="总佣金支出"
-                            value={`$${stats.totalCommission.toFixed(2)}`}
-                            subtitle="历史累计支付"
-                            icon={DollarSign}
-                            color="orange"
-                        />
-                    </div>
-
-                    {/* ✅ 新增：活动统计 */}
-                    <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
-                        <div className="flex items-center gap-2 mb-6">
-                            <Calendar className="h-5 w-5 text-gray-400" />
-                            <h3 className="font-bold text-gray-900">活动统计</h3>
-                        </div>
-                        <div className="grid grid-cols-3 gap-6">
-                            <div className="space-y-2">
-                                <div className="flex items-center gap-2">
-                                    <Package className="h-4 w-4 text-blue-500" />
-                                    <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">发货数</span>
-                                </div>
-                                <div className="text-2xl font-black text-gray-900">
-                                    {stats.totalShipments?.toLocaleString() || '0'}
-                                </div>
-                                <div className="text-xs text-gray-400">累计发货次数</div>
-                            </div>
-                            <div className="space-y-2">
-                                <div className="flex items-center gap-2">
-                                    <Video className="h-4 w-4 text-pink-500" />
-                                    <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">视频评测</span>
-                                </div>
-                                <div className="text-2xl font-black text-gray-900">
-                                    {stats.totalVideoReviews?.toLocaleString() || '0'}
-                                </div>
-                                <div className="text-xs text-gray-400">视频评测数量</div>
-                            </div>
-                            <div className="space-y-2">
-                                <div className="flex items-center gap-2">
-                                    <FileText className="h-4 w-4 text-indigo-500" />
-                                    <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">博客评测</span>
-                                </div>
-                                <div className="text-2xl font-black text-gray-900">
-                                    {stats.totalBlogReviews?.toLocaleString() || '0'}
-                                </div>
-                                <div className="text-xs text-gray-400">博客评测数量</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Financial Overview */}
-                    <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
-                        <div className="flex items-center gap-2 mb-6">
-                            <Wallet className="h-5 w-5 text-gray-400" />
-                            <h3 className="font-bold text-gray-900">财务概览</h3>
-                        </div>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                            <div className="space-y-2">
-                                <div className="flex items-center gap-2">
-                                    <CheckCircle className="h-4 w-4 text-emerald-500" />
-                                    <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">已结算</span>
-                                </div>
-                                <div className="text-2xl font-black text-gray-900">
-                                    ${stats.settledAmount?.toFixed(2) || '0.00'}
-                                </div>
-                                <div className="text-xs text-gray-400">可提现金额</div>
-                            </div>
-                            <div className="space-y-2">
-                                <div className="flex items-center gap-2">
-                                    <Clock className="h-4 w-4 text-amber-500" />
-                                    <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">待结算</span>
-                                </div>
-                                <div className="text-2xl font-black text-gray-900">
-                                    ${stats.pendingAmount?.toFixed(2) || '0.00'}
-                                </div>
-                                <div className="text-xs text-gray-400">冷静期内 (30天)</div>
-                            </div>
-                            <div className="space-y-2">
-                                <div className="flex items-center gap-2">
-                                    <Wallet className="h-4 w-4 text-blue-500" />
-                                    <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">总余额</span>
-                                </div>
-                                <div className="text-2xl font-black text-gray-900">
-                                    ${stats.currentBalance?.toFixed(2) || '0.00'}
-                                </div>
-                                <div className="text-xs text-gray-400">所有分销客总计</div>
-                            </div>
-                            <div className="space-y-2">
-                                <div className="flex items-center gap-2">
-                                    <AlertCircle className="h-4 w-4 text-purple-500" />
-                                    <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">已支付</span>
-                                </div>
-                                <div className="text-2xl font-black text-gray-900">
-                                    ${stats.totalPaid?.toFixed(2) || '0.00'}
-                                </div>
-                                <div className="text-xs text-gray-400">历史累计</div>
-                            </div>
-                        </div>
-                    </div>
-                </>
-            )}
-
             {/* Filters */}
             <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
                 <div className="flex flex-col sm:flex-row gap-4">

@@ -3,14 +3,21 @@
 
 import { useState, useRef, useEffect, useMemo } from 'react';
 import Image from 'next/image';
-import Zoom from 'react-medium-image-zoom';
-import 'react-medium-image-zoom/dist/styles.css';
+import Lightbox from 'yet-another-react-lightbox';
+import Captions from 'yet-another-react-lightbox/plugins/captions';
+import ZoomPlugin from 'yet-another-react-lightbox/plugins/zoom';
+import Thumbnails from 'yet-another-react-lightbox/plugins/thumbnails';
+import Video from 'yet-another-react-lightbox/plugins/video';
+import 'yet-another-react-lightbox/styles.css';
+import 'yet-another-react-lightbox/plugins/captions.css';
+import 'yet-another-react-lightbox/plugins/thumbnails.css';
+import { ZoomIn as ZoomIcon, Play } from 'lucide-react';
 
 interface GalleryItem {
     url: string;
     alt?: string;
-    type?: 'image' | 'video'; // 增加类型区分
-    poster?: string;         // 视频封面图
+    type?: 'image' | 'video';
+    poster?: string;
 }
 
 interface ProductGalleryProps {
@@ -25,56 +32,104 @@ export default function ProductGallery({ images, productTitle, badges }: Product
     const [activeImageIndex, setActiveImageIndex] = useState(0);
     const [isDragging, setIsDragging] = useState(false);
     const [currentTranslate, setCurrentTranslate] = useState(0);
-    const [isZoomed, setIsZoomed] = useState(false);
+    const [lightboxOpen, setLightboxOpen] = useState(false);
+    const [lightboxIndex, setLightboxIndex] = useState(0);
 
     const dragStartX = useRef(0);
     const prevTranslate = useRef(0);
-    const galleryRef = useRef<HTMLDivElement>(null);
-
-    // --- 核心修改：增加视频引用管理 ---
+    const galleryRef = useRef<HTMLDivElement | null>(null);
     const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
 
+    // 处理图片和视频数据，转换为 Lightbox 格式
     const processedItems = useMemo(() => {
         return images.map((image, index) => ({
             ...image,
+            type: (image.type || 'image').toLowerCase() as 'image' | 'video', // 统一转小写
             isFull: image.url.toLowerCase().includes('-full'),
             alt: image.alt || `${productTitle} - Image ${index + 1}`
         }));
     }, [images, productTitle]);
 
-    // --- 核心修改：监听索引变化，强制触发播放 ---
-    useEffect(() => {
-        const currentItem = processedItems[activeImageIndex];
-        if (currentItem?.type === 'video') {
-            const videoEl = videoRefs.current[activeImageIndex];
-            if (videoEl) {
-                videoEl.muted = true; // 浏览器自动播放必须静音
-                videoEl.play().catch(err => console.log("Autoplay blocked:", err));
+    // 生成 Lightbox slides
+    const lightboxSlides = useMemo(() => {
+        return processedItems.map((item) => {
+            const isPng = item.url.toLowerCase().match(/\.png($|\?)/) !== null;
+            if (item.type === 'video') {
+                return {
+                    type: 'video' as const,
+                    poster: item.poster || item.url,
+                    sources: [{
+                        src: item.url,
+                        type: 'video/mp4'
+                    }],
+                    alt: item.alt,
+                    title: item.alt,
+                };
             }
-        }
+            return {
+                src: item.url,
+                alt: item.alt,
+                title: item.alt,
+                width: 1200,
+                height: 1200,
+                // 标记是否为 PNG，用于渲染时切换背景色
+                data: { png: isPng },
+            };
+        });
+    }, [processedItems]);
 
-        // 停止其他页面的视频，释放性能
-        videoRefs.current.forEach((video, idx) => {
-            if (idx !== activeImageIndex && video) {
+    // 初始化 videoRefs 数组
+    useEffect(() => {
+        videoRefs.current = new Array(processedItems.length).fill(null);
+    }, [processedItems.length]);
+
+    // 监听索引变化，处理视频自动播放
+    useEffect(() => {
+        console.log('[ProductGallery] Active index changed:', activeImageIndex, 'Type:', processedItems[activeImageIndex]?.type);
+        
+        // 停止所有视频
+        videoRefs.current.forEach((video) => {
+            if (video) {
                 video.pause();
                 video.currentTime = 0;
             }
         });
+
+        // 延迟播放当前视频，等待 DOM 更新
+        const timer = setTimeout(() => {
+            const currentItem = processedItems[activeImageIndex];
+            if (currentItem?.type === 'video') {
+                const videoEl = videoRefs.current[activeImageIndex];
+                console.log('[ProductGallery] Playing video:', currentItem.url, 'Element:', videoEl);
+                if (videoEl) {
+                    videoEl.muted = true;
+                    videoEl.play().then(() => {
+                        console.log('[ProductGallery] Video playing successfully');
+                    }).catch(err => {
+                        console.error('[ProductGallery] Video autoplay failed:', err);
+                    });
+                }
+            }
+        }, 100);
+
+        return () => clearTimeout(timer);
     }, [activeImageIndex, processedItems]);
 
+    // 同步拖拽位置
     useEffect(() => {
         setCurrentTranslate(-activeImageIndex * 100);
         prevTranslate.current = -activeImageIndex * 100;
     }, [activeImageIndex]);
 
+    // 拖拽处理
     const handleStart = (clientX: number) => {
-        if (isZoomed) return;
+        if (lightboxOpen) return;
         setIsDragging(true);
         dragStartX.current = clientX;
     };
 
     const handleMove = (clientX: number) => {
-        if (!isDragging || isZoomed) return;
+        if (!isDragging || lightboxOpen) return;
         const deltaX = clientX - dragStartX.current;
         const movePercent = (deltaX / (galleryRef.current?.offsetWidth || 1)) * 100;
         const nextTranslate = prevTranslate.current + movePercent;
@@ -97,81 +152,110 @@ export default function ProductGallery({ images, productTitle, badges }: Product
         prevTranslate.current = -activeImageIndex * 100;
     };
 
+    // 打开 Lightbox
+    const openLightbox = (index: number) => {
+        setLightboxIndex(index);
+        setLightboxOpen(true);
+    };
+
     return (
-        <div className="flex flex-col md:flex-row gap-4">
-            {/* 左侧缩略图 */}
-            <div className="hidden md:flex flex-col gap-4 w-20">
-                {processedItems.map((item, index) => (
-                    <button
-                        key={index}
-                        onClick={() => setActiveImageIndex(index)}
-                        className={`relative aspect-square rounded-xl overflow-hidden border-2 transition-all ${
-                            activeImageIndex === index ? 'border-black' : 'border-transparent'
-                        } bg-gray-50`}
-                    >
-                        <Image
-                            src={item.type === 'video' ? (item.poster || item.url) : item.url}
-                            alt={item.alt || ''}
-                            fill
-                            className={`transition-all ${
-                                item.isFull ? 'object-cover' : 'object-contain p-1 mix-blend-multiply'
-                            }`}
-                        />
-
-                        {item.type === 'video' && (
-                            <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-                                <svg className="w-8 h-8 text-white opacity-80" fill="currentColor" viewBox="0 0 24 24">
-                                    <path d="M8 5v14l11-7z" />
-                                </svg>
-                            </div>
-                        )}
-                    </button>
-                ))}
-            </div>
-
-            {/* 主图区域 */}
-            <div
-                className="flex-1 relative w-full aspect-square md:aspect-auto md:h-[600px] rounded-3xl overflow-hidden border border-gray-100 bg-gray-100 touch-pan-y"
-                ref={galleryRef}
-                onMouseDown={(e) => handleStart(e.clientX)}
-                onMouseMove={(e) => handleMove(e.clientX)}
-                onMouseUp={handleEnd}
-                onMouseLeave={handleEnd}
-                onTouchStart={(e) => handleStart(e.touches[0].clientX)}
-                onTouchMove={(e) => handleMove(e.touches[0].clientX)}
-                onTouchEnd={handleEnd}
-            >
-                {badges && <div className="absolute top-4 left-4 z-10">{badges}</div>}
-
-                <div
-                    className="flex h-full"
-                    style={{
-                        transform: `translateX(${currentTranslate}%)`,
-                        transition: isDragging ? 'none' : 'transform 300ms ease-out'
-                    }}
-                >
+        <>
+            <div className="flex flex-col md:flex-row gap-4">
+                {/* 左侧缩略图 (仅PC端) */}
+                <div className="hidden md:flex flex-col gap-4 w-20">
                     {processedItems.map((item, index) => (
-                        <div key={index} className="w-full h-full flex-shrink-0 relative flex items-center justify-center">
+                        <button
+                            key={index}
+                            onClick={() => setActiveImageIndex(index)}
+                            className={`relative aspect-square rounded-xl overflow-hidden border-2 transition-all ${
+                                activeImageIndex === index ? 'border-black' : 'border-transparent'
+                            } bg-gray-50 group`}
+                        >
                             {item.type === 'video' ? (
-                                <div className="w-full h-full bg-black flex items-center justify-center">
-                                    <video
-                                        ref={(e1) => {
-                                            videoRefs.current[index] = e1; // 只赋值，不返回
-                                        }}
-                                        src={item.url}
-                                        poster={item.poster}
-                                        controls
-                                        playsInline
-                                        muted
-                                        loop
-                                        className="w-full h-full object-contain"
-                                    />
-                                </div>
+                                <>
+                                    {item.poster ? (
+                                        <Image
+                                            src={item.poster}
+                                            alt={item.alt || ''}
+                                            fill
+                                            className="object-cover"
+                                        />
+                                    ) : (
+                                        <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                                            <Play className="w-8 h-8 text-gray-400" />
+                                        </div>
+                                    )}
+                                    <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                                        <Play className="w-8 h-8 text-white opacity-80" />
+                                    </div>
+                                </>
                             ) : (
-                                <Zoom
-                                    onZoomChange={(isZoomed) => setIsZoomed(isZoomed)}
-                                    zoomMargin={40}
-                                >
+                                <Image
+                                    src={item.url}
+                                    alt={item.alt || ''}
+                                    fill
+                                    className={`transition-all ${
+                                        item.isFull ? 'object-cover' : 'object-contain p-1 mix-blend-multiply'
+                                    }`}
+                                />
+                            )}
+                        </button>
+                    ))}
+                </div>
+
+                {/* 主图区域 */}
+                <div
+                    className="flex-1 relative w-full aspect-square md:aspect-auto md:h-[600px] rounded-3xl overflow-hidden border border-gray-100 bg-gray-100 touch-pan-y cursor-zoom-in"
+                    ref={galleryRef}
+                    onMouseDown={(e) => handleStart(e.clientX)}
+                    onMouseMove={(e) => handleMove(e.clientX)}
+                    onMouseUp={handleEnd}
+                    onMouseLeave={handleEnd}
+                    onTouchStart={(e) => handleStart(e.touches[0].clientX)}
+                    onTouchMove={(e) => handleMove(e.touches[0].clientX)}
+                    onTouchEnd={handleEnd}
+                    onClick={() => openLightbox(activeImageIndex)}
+                >
+                    {badges && <div className="absolute top-4 left-4 z-10">{badges}</div>}
+
+
+
+                    <div
+                        className="flex h-full pointer-events-none"
+                        style={{
+                            transform: `translateX(${currentTranslate}%)`,
+                            transition: isDragging ? 'none' : 'transform 300ms ease-out'
+                        }}
+                    >
+                        {processedItems.map((item, index) => (
+                            <div key={index} className="w-full h-full flex-shrink-0 relative flex items-center justify-center pointer-events-auto">
+                                {item.type === 'video' ? (
+                                    <div className="w-full h-full flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+                                        {item.poster && activeImageIndex !== index && (
+                                            <Image
+                                                src={item.poster}
+                                                alt={item.alt || ''}
+                                                fill
+                                                className="object-cover"
+                                            />
+                                        )}
+                                        <video
+                                            ref={(el) => {
+                                                console.log('[ProductGallery] Video ref set:', index, el);
+                                                videoRefs.current[index] = el;
+                                            }}
+                                            src={item.url}
+                                            poster={item.poster || ''}
+                                            controls
+                                            playsInline
+                                            muted
+                                            loop
+                                            className="w-full h-full object-contain relative z-10"
+                                            onLoadedData={() => console.log('[ProductGallery] Video loaded:', index)}
+                                            onError={(e) => console.error('[ProductGallery] Video error:', e)}
+                                        />
+                                    </div>
+                                ) : (
                                     <div className={`relative w-full h-full flex items-center justify-center ${item.isFull ? '' : 'bg-gray-100'}`}>
                                         <Image
                                             src={item.url}
@@ -190,19 +274,49 @@ export default function ProductGallery({ images, productTitle, badges }: Product
                                             }
                                         />
                                     </div>
-                                </Zoom>
-                            )}
-                        </div>
-                    ))}
-                </div>
+                                )}
+                            </div>
+                        ))}
+                    </div>
 
-                {/* 指示器 */}
-                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 md:hidden">
-                    {processedItems.map((_, idx) => (
-                        <div key={idx} className={`w-2 h-2 rounded-full ${idx === activeImageIndex ? 'bg-black w-4' : 'bg-black/20'}`} />
-                    ))}
+                    {/* 手机端指示器 */}
+                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 md:hidden">
+                        {processedItems.map((_, idx) => (
+                            <div key={idx} className={`w-2 h-2 rounded-full ${idx === activeImageIndex ? 'bg-black w-4' : 'bg-black/20'}`} />
+                        ))}
+                    </div>
                 </div>
             </div>
-        </div>
+
+            {/* 全屏 Lightbox */}
+            <Lightbox
+                open={lightboxOpen}
+                close={() => setLightboxOpen(false)}
+                index={lightboxIndex}
+                slides={lightboxSlides}
+                plugins={[ZoomPlugin, Thumbnails, Captions, Video]}
+                zoom={{
+                    maxZoomPixelRatio: 4,
+                    zoomInMultiplier: 2,
+                }}
+                thumbnails={{
+                    position: 'bottom',
+                    width: 80,
+                    height: 80,
+                    border: 2,
+                    borderRadius: 8,
+                    padding: 4,
+                    gap: 8,
+                }}
+                captions={{
+                    showToggle: true,
+                    descriptionTextAlign: 'center',
+                }}
+                carousel={{
+                    finite: false,
+                    preload: 2,
+                }}
+            />
+        </>
     );
 }

@@ -36,6 +36,7 @@ export default function InventoryLogPage() {
     changeType: '',
     orderNumber: '',
     productName: '',
+    skuCode: '',
     startTime: '',
     endTime: '',
   });
@@ -60,7 +61,7 @@ export default function InventoryLogPage() {
     }, 300); // 防抖 300ms
     
     return () => clearTimeout(timer);
-  }, [filters.page, filters.size, filters.changeType, filters.orderNumber, filters.productName, filters.startTime, filters.endTime]);
+  }, [filters.page, filters.size, filters.changeType, filters.orderNumber, filters.productName, filters.skuCode, filters.startTime, filters.endTime]);
 
   const handleFilterChange = (key: string, value: any) => {
     setFilters(prev => ({
@@ -82,6 +83,7 @@ export default function InventoryLogPage() {
       changeType: '',
       orderNumber: '',
       productName: '',
+      skuCode: '',
       startTime: '',
       endTime: '',
     });
@@ -191,6 +193,18 @@ export default function InventoryLogPage() {
               />
             </div>
 
+            {/* SKU编码 */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">SKU编码</label>
+              <input
+                type="text"
+                value={filters.skuCode || ''}
+                onChange={(e) => handleFilterChange('skuCode', e.target.value)}
+                placeholder="输入SKU编码搜索"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              />
+            </div>
+
             {/* 开始时间 */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">开始时间</label>
@@ -247,7 +261,7 @@ export default function InventoryLogPage() {
                     SKU编码
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
-                    库存变化
+                    变更数量/销售库存
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
                     订单号

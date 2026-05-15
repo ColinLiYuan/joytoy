@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { blogService } from '@/services/blogService';
 
 export async function GET() {
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://mythtoy.com';
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.mythtoy.com';
     let blogs: any[] = [];
 
     try {
@@ -25,7 +25,7 @@ export async function GET() {
   <url>
     <loc>${baseUrl}/blog/${post.slug}</loc>
     <lastmod>${new Date(post.updatedAt).toISOString()}</lastmod>
-    <changefreq>weekly</changefreq>
+    <changefreq>daily</changefreq>
     <priority>0.7</priority>
   </url>
   `).join('')}

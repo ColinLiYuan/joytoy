@@ -369,6 +369,177 @@ export class AffiliateService {
             };
         }
     }
+
+    /**
+     * 获取联盟趋势数据（管理端）
+     * @param days 天数（3/7/30/90）
+     */
+    async getTrendData(days: number = 7): Promise<{
+        dates: string[];
+        clicks: number[];
+        orders: number[];
+        commissions: number[];
+        conversionRates: number[];
+    }> {
+        try {
+            const url = `/api/admin/V1/affiliate/trend?days=${days}`;
+            
+            console.log('[AffiliateService] Fetching trend data:', url);
+            
+            const response = await axiosClient.get(url);
+
+            if (response.data?.success) {
+                return response.data.data;
+            }
+
+            throw new Error(response.data?.message || 'Failed to fetch trend data');
+        } catch (error) {
+            console.error('❌ [AffiliateService] Get trend data failed:', error);
+            // 返回空数据
+            return {
+                dates: [],
+                clicks: [],
+                orders: [],
+                commissions: [],
+                conversionRates: []
+            };
+        }
+    }
+
+    /**
+     * 获取按来源分组的统计数据（管理端）
+     */
+    async getSourceStats(): Promise<{
+        source: string;
+        clicks: number;
+        conversions: number;
+        revenue: number;
+        conversionRate: number;
+    }[]> {
+        try {
+            const url = `/api/admin/V1/affiliate/stats/by-source`;
+                
+            console.log('[AffiliateService] Fetching source stats:', url);
+                
+            const response = await axiosClient.get(url);
+    
+            if (response.data?.success) {
+                // 将后端的 name 字段转换为 source
+                return (response.data.data || []).map((item: any) => ({
+                    source: item.name,
+                    clicks: item.clicks || 0,
+                    conversions: item.conversions || 0,
+                    revenue: parseFloat(item.revenue) || 0,
+                    conversionRate: item.conversionRate || 0
+                }));
+            }
+    
+            throw new Error(response.data?.message || 'Failed to fetch source stats');
+        } catch (error) {
+            console.error('❌ [AffiliateService] Get source stats failed:', error);
+            return [];
+        }
+    }
+    
+    /**
+     * 获取按着陆页分组的统计数据（管理端）
+     */
+    async getLandingPageStats(): Promise<{
+        landingPage: string;
+        clicks: number;
+        conversions: number;
+        revenue: number;
+        conversionRate: number;
+    }[]> {
+        try {
+            const url = `/api/admin/V1/affiliate/stats/by-landing-page`;
+                
+            console.log('[AffiliateService] Fetching landing page stats:', url);
+                
+            const response = await axiosClient.get(url);
+    
+            if (response.data?.success) {
+                // 将后端的 name 字段转换为 landingPage
+                return (response.data.data || []).map((item: any) => ({
+                    landingPage: item.name,
+                    clicks: item.clicks || 0,
+                    conversions: item.conversions || 0,
+                    revenue: parseFloat(item.revenue) || 0,
+                    conversionRate: item.conversionRate || 0
+                }));
+            }
+    
+            throw new Error(response.data?.message || 'Failed to fetch landing page stats');
+        } catch (error) {
+            console.error('❌ [AffiliateService] Get landing page stats failed:', error);
+            return [];
+        }
+    }
+
+    /**
+     * 获取单个联盟客的统计数据（管理端）
+     * @param affiliateId 联盟客ID
+     * @param days 天数（3/7/30/90）
+     */
+    async getAffiliateDetailStats(affiliateId: string, days: number = 7): Promise<{
+        totalClicks: number;
+        totalConversions: number;
+        totalCommission: number;
+        conversionRate: number;
+        sourceStats: {
+            source: string;
+            clicks: number;
+            conversions: number;
+            revenue: number;
+            conversionRate: number;
+        }[];
+        landingPageStats: {
+            landingPage: string;
+            clicks: number;
+            conversions: number;
+            revenue: number;
+            conversionRate: number;
+        }[];
+        trendData: {
+            dates: string[];
+            clicks: number[];
+            orders: number[];
+            commissions: number[];
+            conversionRates: number[];
+        };
+    }> {
+        try {
+            const url = `/api/admin/V1/affiliate/${affiliateId}/stats?days=${days}`;
+            
+            console.log('[AffiliateService] Fetching affiliate detail stats:', url);
+            
+            const response = await axiosClient.get(url);
+
+            if (response.data?.success) {
+                return response.data.data;
+            }
+
+            throw new Error(response.data?.message || 'Failed to fetch affiliate detail stats');
+        } catch (error) {
+            console.error('❌ [AffiliateService] Get affiliate detail stats failed:', error);
+            // 返回默认值
+            return {
+                totalClicks: 0,
+                totalConversions: 0,
+                totalCommission: 0,
+                conversionRate: 0,
+                sourceStats: [],
+                landingPageStats: [],
+                trendData: {
+                    dates: [],
+                    clicks: [],
+                    orders: [],
+                    commissions: [],
+                    conversionRates: []
+                }
+            };
+        }
+    }
 }
 
 export const affiliateService = new AffiliateService();

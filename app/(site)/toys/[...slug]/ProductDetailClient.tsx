@@ -449,16 +449,6 @@ export default function ProductDetailClient({
         return <h1 className="text-3xl md:text-5xl font-bold text-gray-900 mb-4 font-['Playfair_Display'] leading-tight">{fullTitle}</h1>;
     };
 
-    const galleryBadges = (
-        <ProductBadge
-            stockStatus={isProductActive && (selectedSku ? getAvailableStock(selectedSku) > 0 : true)}
-            originalPrice={product.originalPrice}
-            currentPrice={product.currentPrice}
-            badge={!isProductActive ? 'OFF-SHELF' : product.badge}
-            className="absolute top-6 left-6 z-20 scale-110"
-        />
-    );
-
     return (
         <div className="w-full">
             <div className="container mx-auto px-4 max-w-7xl pt-4 pb-4">
@@ -471,8 +461,6 @@ export default function ProductDetailClient({
                         <ProductGallery
                             images={galleryItems}
                             productTitle={product.title}
-                            // @ts-ignore
-                            badges={galleryBadges}
                         />
                     </div>
 
@@ -607,10 +595,26 @@ export default function ProductDetailClient({
                             </div>
                         )}
 
-                        <div className="flex justify-between items-center py-6 border-t border-gray-100 text-xs font-bold text-gray-600 uppercase tracking-wider">
-                            <span className="flex items-center gap-2"><Truck size={16} /> Discreet Shipping</span>
-                            <span className="flex items-center gap-2"><ShieldCheck size={16} /> Body-Safe</span>
-                            <span className="flex items-center gap-2"><Package size={16} /> Plain Box</span>
+                        {/* 服务承诺 - 2x2 矩阵排列 */}
+                        <div className="py-6 border-t border-gray-100">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="flex items-center gap-3 py-3">
+                                    <Truck size={20} className="text-gray-600 flex-shrink-0" />
+                                    <span className="text-xs font-bold text-gray-700 uppercase tracking-wide">Discreet Shipping</span>
+                                </div>
+                                <div className="flex items-center gap-3 py-3">
+                                    <ShieldCheck size={20} className="text-gray-600 flex-shrink-0" />
+                                    <span className="text-xs font-bold text-gray-700 uppercase tracking-wide">Body-Safe Silicone</span>
+                                </div>
+                                <div className="flex items-center gap-3 py-3">
+                                    <ShieldCheck size={20} className="text-gray-600 flex-shrink-0" />
+                                    <span className="text-xs font-bold text-gray-700 uppercase tracking-wide">1-Year Warranty</span>
+                                </div>
+                                <div className="flex items-center gap-3 py-3">
+                                    <Package size={20} className="text-gray-600 flex-shrink-0" />
+                                    <span className="text-xs font-bold text-gray-700 uppercase tracking-wide">Plain Box Delivery</span>
+                                </div>
+                            </div>
                         </div>
 
                         {/* 套装推荐 */}

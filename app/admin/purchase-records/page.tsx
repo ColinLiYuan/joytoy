@@ -26,13 +26,15 @@ export default function PurchaseRecordPage() {
   const [totalElements, setTotalElements] = useState(0);
   
   // 筛选条件
-  const [filters, setFilters] = useState<PurchaseRecordQueryRequest>({
-    page: 0,
-    size: 20,
+  const [filters, setFilters] = useState({
     purchaseType: '',
     status: '',
     keyword: '',
   });
+  
+  // 分页状态
+  const [currentPage, setCurrentPage] = useState(0);
+  const pageSize = 20;
 
   // 操作弹窗
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -54,7 +56,14 @@ export default function PurchaseRecordPage() {
   const fetchRecords = async () => {
     setLoading(true);
     try {
-      const result = await purchaseRecordService.getPurchaseRecords(filters);
+      const request: PurchaseRecordQueryRequest = {
+        page: currentPage,
+        size: pageSize,
+        purchaseType: filters.purchaseType,
+        status: filters.status,
+        keyword: filters.keyword,
+      };
+      const result = await purchaseRecordService.getPurchaseRecords(request);
       setRecords(result.content || []);
       setTotalPages(result.totalPages);
       setTotalElements(result.totalElements);
@@ -71,14 +80,14 @@ export default function PurchaseRecordPage() {
     }, 300); // 防抖 300ms
     
     return () => clearTimeout(timer);
-  }, [filters.page, filters.size, filters.purchaseType, filters.status, filters.keyword]);
+  }, [currentPage, filters.purchaseType, filters.status, filters.keyword]);
 
   const handleFilterChange = (key: string, value: any) => {
     setFilters(prev => ({
       ...prev,
       [key]: value,
-      page: 0, // 重置到第一页
     }));
+    setCurrentPage(0); // 重置到第一页
   };
 
   const handleSearch = () => {
@@ -87,12 +96,11 @@ export default function PurchaseRecordPage() {
 
   const handleReset = () => {
     setFilters({
-      page: 0,
-      size: 20,
       purchaseType: '',
       status: '',
       keyword: '',
     });
+    setCurrentPage(0);
   };
 
   const formatDateTime = (dateStr: string) => {
@@ -113,9 +121,35 @@ export default function PurchaseRecordPage() {
 
   // 创建采购
   const handleCreate = async () => {
-    if (!createForm.productName || createForm.quantity <= 0) {
-      alert('请填写商品名称和采购数量');
-      return;
+    // 补货：SKU必填，商品名称可选
+    if (createForm.purchaseType === 'RESTOCK') {
+      if (!createForm.skuCode) {
+        alert('补货采购必须填写SKU编码');
+        return;
+      }
+      if (createForm.quantity <= 0) {
+        alert('请填写采购数量');
+        return;
+      }
+      if (!createForm.unitPrice || createForm.unitPrice <= 0) {
+        alert('请填写采购单价');
+        return;
+      }
+    }
+    // 样品：商品名称必填，SKU可选
+    else if (createForm.purchaseType === 'SAMPLE') {
+      if (!createForm.productName) {
+        alert('样品采购必须填写商品名称');
+        return;
+      }
+      if (createForm.quantity <= 0) {
+        alert('请填写采购数量');
+        return;
+      }
+      if (!createForm.unitPrice || createForm.unitPrice <= 0) {
+        alert('请填写采购单价');
+        return;
+      }
     }
     
     try {
@@ -128,9 +162,11 @@ export default function PurchaseRecordPage() {
         warehouseLocation: '新塘',
       });
       fetchRecords();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to create purchase:', error);
-      alert('创建失败，请重试');
+      // 显示后端返回的错误信息
+      const errorMessage = error.response?.data?.message || error.message || '创建失败，请重试';
+      alert(errorMessage);
     }
   };
 
@@ -439,10 +475,10 @@ export default function PurchaseRecordPage() {
           {/* Pagination */}
           {!loading && records.length > 0 && (
             <Pagination
-              currentPage={filters.page}
+              currentPage={currentPage}
               totalPages={totalPages}
               totalElements={totalElements}
-              onPageChange={(page) => setFilters(prev => ({ ...prev, page }))}
+              onPageChange={(page) => setCurrentPage(page)}
             />
           )}
         </div>
@@ -610,24 +646,28 @@ export default function PurchaseRecordPage() {
 
               {/* 商品名称 */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">商品名称 <span className="text-red-500">*</span></label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  商品名称 {createForm.purchaseType === 'SAMPLE' && <span className="text-red-500">*</span>}
+                </label>
                 <input
                   type="text"
                   value={createForm.productName}
                   onChange={(e) => setCreateForm({ ...createForm, productName: e.target.value })}
-                  placeholder="请输入商品名称"
+                  placeholder={createForm.purchaseType === 'RESTOCK' ? '可选，补货采购建议填写' : '请输入商品名称'}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                 />
               </div>
 
               {/* SKU编码 */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">SKU编码</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  SKU编码 {createForm.purchaseType === 'RESTOCK' && <span className="text-red-500">*</span>}
+                </label>
                 <input
                   type="text"
                   value={createForm.skuCode || ''}
                   onChange={(e) => setCreateForm({ ...createForm, skuCode: e.target.value })}
-                  placeholder="可选，新品采购可不填"
+                  placeholder={createForm.purchaseType === 'RESTOCK' ? '请输入SKU编码（必填）' : '可选，样品采购可不填'}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                 />
               </div>
@@ -645,14 +685,14 @@ export default function PurchaseRecordPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">采购单价</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">采购单价 <span className="text-red-500">*</span></label>
                   <input
                     type="number"
                     min="0"
                     step="0.01"
                     value={createForm.unitPrice || ''}
                     onChange={(e) => setCreateForm({ ...createForm, unitPrice: parseFloat(e.target.value) || undefined })}
-                    placeholder="可选"
+                    placeholder="请输入采购单价"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                   />
                 </div>

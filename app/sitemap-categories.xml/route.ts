@@ -11,7 +11,7 @@ interface CategoryPath {
 }
 
 export async function GET() {
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://mythtoy.com'
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.mythtoy.com'
 
     let categories: CategoryResponse[] = []
     try {

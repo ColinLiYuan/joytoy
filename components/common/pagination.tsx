@@ -19,8 +19,8 @@ export default function Pagination({ currentPage, totalPages, totalElements, onP
     return (
         <div className="flex items-center justify-between px-6 py-4 bg-gray-50 border-t border-gray-200">
             <div className="text-sm text-gray-700">
-                共 <span className="font-semibold">{totalElements || 0}</span> 条记录，
-                第 <span className="font-semibold">{displayPage}</span> / {totalPages} 页
+                Showing <span className="font-semibold">{totalElements || 0}</span> results,
+                Page <span className="font-semibold">{displayPage}</span> of {totalPages}
             </div>
             <div className="flex items-center gap-1">
                 {/* 上一页 */}
