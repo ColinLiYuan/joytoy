@@ -50,6 +50,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
         };
     }
     
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.mythtoy.com';
+    
     return {
         title: `${blog.title} | MythToy Blog`,
         description: blog.summary || blog.content.substring(0, 155),
@@ -63,7 +65,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
             authors: [blog.author || 'MythToy'],
         },
         alternates: {
-            canonical: `https://mythtoy.com/blog/${blog.slug}`,
+            canonical: `${baseUrl}/blog/${blog.slug}`,
         },
     };
 }

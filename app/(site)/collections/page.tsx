@@ -12,13 +12,13 @@ export const metadata: Metadata = {
     title: "Collections | MythToy - Premium Adult Pleasure",
     description: "Explore our curated collections of premium adult products. From intimate massagers to luxury lingerie, find exactly what you desire.",
     alternates: {
-        canonical: 'https://mythtoy.com/collections',
+        canonical: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.mythtoy.com'}/collections`,
     },
     openGraph: {
         title: "Collections | MythToy",
         description: "Explore our curated collections of premium adult products.",
         type: "website",
-        url: "https://mythtoy.com/collections",
+        url: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.mythtoy.com'}/collections`,
         siteName: 'MythToy',
     },
 };

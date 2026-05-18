@@ -40,7 +40,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
         }
         
         const product = result.data;
-        const canonicalUrl = `https://mythtoy.com/toys${slug}`;
+        const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.mythtoy.com';
+        const canonicalUrl = `${baseUrl}/toys${slug}`;
         const imageUrl = getProductImageUrl(undefined, product.image);
         // 去除 Markdown 符号，只取纯文本作为描述，避免 Schema 报错
         const cleanDescription = product.description?.replace(/[#*`]/g, '').substring(0, 160) || `Buy ${product.title}`;
@@ -145,12 +146,14 @@ export default async function ProductDetail({ params }: PageProps) {
         0
     );
 
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.mythtoy.com';
+    
     // ✅ 构建 SKU 变体列表
     const skuOffers = (product.productSkus || []).map(sku => {
         const skuStock = (sku.stock || 0) - (sku.lockedStock || 0);
         return {
             '@type': 'Offer',
-            url: `https://mythtoy.com/toys${slug}`,
+            url: `${baseUrl}/toys${slug}`,
             priceCurrency: 'USD',
             price: sku.price || product.currentPrice,
             priceValidUntil: '2026-12-31',
@@ -205,7 +208,7 @@ export default async function ProductDetail({ params }: PageProps) {
                     '@type': 'AggregateOffer',
                     offers: skuOffers.length > 0 ? skuOffers : [{
                         '@type': 'Offer',
-                        url: `https://mythtoy.com/toys${slug}`,
+                        url: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.mythtoy.com'}/toys${slug}`,
                         priceCurrency: 'USD',
                         price: product.currentPrice,
                         priceValidUntil: '2026-12-31',
@@ -238,7 +241,7 @@ export default async function ProductDetail({ params }: PageProps) {
                     '@type': 'ListItem',
                     position: index + 1,
                     name: crumb.name,
-                    item: crumb.path ? `https://mythtoy.com${crumb.path}` : undefined,
+                    item: crumb.path ? `${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.mythtoy.com'}${crumb.path}` : undefined,
                 })),
             },
         ],

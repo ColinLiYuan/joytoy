@@ -22,7 +22,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-    metadataBase: new URL('https://mythtoy.com'),
+    metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://www.mythtoy.com'),
     title: {
         default: 'MythToy - Premium Adult Lifestyle Products',
         template: '%s | MythToy',
@@ -54,7 +54,7 @@ export const metadata: Metadata = {
     openGraph: {
         title: 'MythToy - Premium Adult Lifestyle Products',
         description: 'Discover premium body-safe devices for wellness and intimacy. Elegant design meets cutting-edge technology.',
-        url: 'https://mythtoy.com',
+        url: process.env.NEXT_PUBLIC_SITE_URL || 'https://www.mythtoy.com',
         siteName: 'MythToy',
         locale: 'en_US',
         type: 'website',

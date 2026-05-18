@@ -127,5 +127,34 @@ export const FAQ_DATA: FAQCategory[] = [
                 tags: ["sensory-play", "female-sex-toys/nipple-toys"]
             }
         ]
+    },
+    {
+        title: "Stamina Training Guide", // 针对 stamina-training 页面的专属FAQ
+        items: [
+            {
+                id: "what-is-stamina-training",
+                question: "What is stamina training for men and how does it work?",
+                answer: "**Stamina training** is a specialized practice designed to help men improve their sexual endurance and control. Through gradual exercises using dedicated **sensation control tools** and **training devices**, you can learn to better manage arousal levels. Our **male stamina training** collection focuses on safe, body-safe materials and scientifically-backed methods to enhance your intimate experiences.\n\nThe key principle is **progressive training** - starting with basic sensation awareness and gradually building control over time, much like any other physical training program.",
+                tags: ["male-sex-toys/stamina-training", "stamina-training", "premature-ejaculation"]
+            },
+            {
+                id: "premature-ejaculation-devices",
+                question: "What devices help with premature ejaculation control?",
+                answer: "Several **premature ejaculation devices** can help with control:\n\n**Sensation Training Tools**: Specialized devices that help you practice the **stop-start method** and **squeeze technique** in a controlled environment, building arousal awareness over time.\n\n**Desensitizing Products**: Specialized lubricants and creams designed to slightly reduce sensation without numbing completely, allowing you to extend intimacy duration.\n\n**Control Enhancement Devices**: Tools designed to help you identify and manage your arousal levels, enabling gradual improvement in ejaculatory control.\n\nAll our **stamina training** products are made from body-safe materials and designed for gradual, safe training.",
+                tags: ["male-sex-toys/stamina-training", "stamina-training", "premature-ejaculation"]
+            },
+            {
+                id: "stop-start-method-training",
+                question: "How do I practice the stop-start method for better control?",
+                answer: "The **stop-start method** (also known as the **semans technique**) is one of the most effective **premature ejaculation** training techniques:\n\n1. **Begin stimulation** - Use your **stamina training device** or manual stimulation\n2. **Monitor arousal** - Pay attention to your arousal level on a scale of 1-10\n3. **Stop at 7-8** - When you reach high arousal (7-8 out of 10), pause all stimulation\n4. **Wait for recovery** - Let arousal decrease to 4-5 level\n5. **Resume training** - Start again, repeating the cycle 3-4 times\n\nRegular practice with our **stamina training** tools helps you develop better **arousal awareness** and **ejaculatory control** over time. Many men see improvement within 4-6 weeks of consistent practice.",
+                tags: ["male-sex-toys/stamina-training", "stamina-training", "premature-ejaculation"]
+            },
+            {
+                id: "safety-stamina-training",
+                question: "Is stamina training safe? What should I know?",
+                answer: "Yes, **stamina training** is completely safe when done correctly. Here are key safety guidelines:\n\n**Session Duration**: Start with short sessions (10-15 minutes) and gradually increase as you build control and comfort. Never push beyond your comfort zone.\n\n**Gradual Progression**: Begin with basic exercises and advance slowly. Consistent, moderate practice is more effective than intense, irregular sessions.\n\n**Body-Safe Materials**: All our **stamina training products** use medical-grade silicone, body-safe TPE, and phthalate-free materials.\n\n**Listen to Your Body**: If you feel pain or discomfort, stop immediately. Training should never be painful.\n\n**Consult Professionals**: If you have underlying health conditions, consult a healthcare provider before starting any training program.",
+                tags: ["male-sex-toys/stamina-training", "stamina-training"]
+            }
+        ]
     }
 ];

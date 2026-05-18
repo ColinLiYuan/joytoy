@@ -34,8 +34,8 @@ export default async function SiteLayout({
         "@context": "https://schema.org",
         "@type": "Organization",
         "name": "MythToy",
-        "url": "https://mythtoy.com",
-        "logo": "https://mythtoy.com/logo.svg",
+        "url": process.env.NEXT_PUBLIC_SITE_URL || "https://www.mythtoy.com",
+        "logo": process.env.NEXT_PUBLIC_SITE_URL ? `${process.env.NEXT_PUBLIC_SITE_URL}/logo.svg` : "https://www.mythtoy.com/logo.svg",
         "description": "Premium adult lifestyle products direct from source.",
         "foundingDate": "2024",
         "sameAs": [
