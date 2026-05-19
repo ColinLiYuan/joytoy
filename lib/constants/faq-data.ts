@@ -156,5 +156,40 @@ export const FAQ_DATA: FAQCategory[] = [
                 tags: ["male-sex-toys/stamina-training", "stamina-training"]
             }
         ]
+    },
+    {
+        title: "G-Spot Vibrator Guide", // 针对 g-spot-vibrators 页面的专属FAQ
+        items: [
+            {
+                id: "what-is-g-spot-toy",
+                question: "What is a G-spot toy and how does it work?",
+                answer: "A **G-spot toy** is specifically designed to stimulate the Grafenberg spot (G-spot), an erogenous zone located on the anterior wall of the vagina. Our **g spot vibrators** feature curved or angled designs that target this sensitive area precisely.\n\nUnlike straight vibrators, **g spot toys** have ergonomic curves that naturally align with your body's anatomy, making it easier to find and stimulate the G-spot effectively. The best **g spot vibrators** combine targeted pressure with powerful vibrations for intense, deep orgasms.",
+                tags: ["female-sex-toys/g-spot-vibrators", "g-spot-vibrators"]
+            },
+            {
+                id: "how-to-use-g-spot-vibrator",
+                question: "How do I use a G-spot vibrator for best results?",
+                answer: "Using a **g spot vibrator** effectively requires proper technique:\n\n**Preparation**: Apply water-based lubricant generously to both the toy and yourself for comfortable insertion.\n\n**Positioning**: Insert the curved end facing upward toward your belly button. The curve should press against the front vaginal wall where the G-spot is located (about 2-3 inches inside).\n\n**Finding Your Spot**: Move the toy in a 'come hither' motion or apply gentle pressure against the front wall. You'll know you've found it when you feel increased sensitivity or fullness.\n\n**Start Slow**: Begin with lower vibration settings and gradually increase intensity. Many women find that combining internal G-spot stimulation with external clitoral play creates the most powerful orgasms.\n\n**Experiment**: Try different angles, pressures, and vibration patterns to discover what works best for your body.",
+                tags: ["female-sex-toys/g-spot-vibrators", "g-spot-vibrators"]
+            },
+            {
+                id: "best-g-spot-vibrators-features",
+                question: "What makes the best G-spot vibrators stand out?",
+                answer: "The **best g spot vibrators** share several key features:\n\n**Ergonomic Curve**: A pronounced curve or angle (typically 30-45 degrees) that naturally targets the G-spot without awkward positioning.\n\n**Firm Yet Flexible**: Medical-grade silicone that's firm enough to provide targeted pressure but flexible enough for comfortable insertion.\n\n**Powerful Motor**: Strong, rumbly vibrations rather than buzzy ones. Look for multiple speed settings and pattern options.\n\n**Size Matters**: Medium-sized toys (6-8 inches total length, 1-1.5 inches diameter) work well for most users. Beginners may prefer slimmer profiles.\n\n**Waterproof Design**: IPX7 waterproof rating allows for bath or shower use and easy cleaning.\n\n**Quiet Operation**: Whisper-quiet motors ensure discretion during use.\n\nOur collection features only premium **g spot toys** that meet these criteria, ensuring you get the best possible experience.",
+                tags: ["female-sex-toys/g-spot-vibrators", "g-spot-vibrators"]
+            },
+            {
+                id: "g-spot-toy-vs-regular-vibrator",
+                question: "What's the difference between a G-spot toy and a regular vibrator?",
+                answer: "The main differences between **g spot toys** and regular vibrators:\n\n**Shape & Design**: **G spot vibrators** have distinctive curved or angled tips specifically designed to reach the anterior vaginal wall. Regular vibrators are typically straight.\n\n**Targeted Stimulation**: **G spot toys** focus on internal G-spot stimulation, while standard vibrators often target external areas like the clitoris.\n\n**Firmness**: **G spot vibrators** tend to be firmer to provide the pressure needed for G-spot activation. Regular vibrators may be softer and more flexible.\n\n**Purpose-Built**: Every aspect of a **g spot toy** — from the curve angle to the motor placement — is optimized for G-spot pleasure. Regular vibrators are more general-purpose.\n\nFor many women, having both types creates the most versatile pleasure toolkit. Consider pairing a **g spot vibrator** with one of our clitoral stimulators for blended orgasms.",
+                tags: ["female-sex-toys/g-spot-vibrators", "g-spot-vibrators"]
+            },
+            {
+                id: "g-spot-vibrator-beginner-tips",
+                question: "I'm new to G-spot toys. Any beginner tips?",
+                answer: "Starting with **g spot vibrators** is exciting! Here are essential beginner tips:\n\n**Choose Beginner-Friendly**: Start with a slim, moderately curved **g spot toy** rather than an advanced model. Our smaller diameter options are perfect for first-timers.\n\n**Use Plenty of Lube**: Water-based lubricant is essential for comfortable insertion and enhanced sensation.\n\n**Relax First**: Take time to relax and become aroused before insertion. This makes finding the G-spot much easier.\n\n**Don't Rush**: Spend time exploring different angles and pressures. The G-spot isn't always immediately obvious — it may take a few sessions to locate.\n\n**Combine with Clitoral Play**: Many beginners find that simultaneous clitoral stimulation helps them identify G-spot sensations more easily.\n\n**Be Patient**: It's normal if you don't experience intense G-spot orgasms right away. With practice and exploration, most women discover powerful G-spot pleasure.\n\n**Clean Properly**: Always clean your **g spot vibrator** before and after use with warm water and mild soap or toy cleaner.",
+                tags: ["female-sex-toys/g-spot-vibrators", "g-spot-vibrators"]
+            }
+        ]
     }
 ];

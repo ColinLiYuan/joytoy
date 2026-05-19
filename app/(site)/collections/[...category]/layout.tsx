@@ -6,6 +6,38 @@ export async function generateMetadata({ params }: { params: Promise<{ category:
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.mythtoy.com';
   const canonicalUrl = `${baseUrl}/collections/${slug}`;
 
+  // 针对 G-Spot Vibrators 分类的专属 SEO 配置
+  if (slug === 'female-sex-toys/g-spot-vibrators') {
+    return {
+      title: 'Best G-Spot Vibrators | Premium G Spot Toys for Women - MythToy',
+      description: 'Shop the best g spot vibrators designed for internal stimulation. Premium g spot toys with ergonomic curves for intense, deep orgasms. Free shipping on orders over $30.',
+      keywords: [
+        'g spot toy',
+        'g spot vibrators',
+        'best g spot vibrators',
+        'g spot toys for women',
+        'g spot vibrator for female',
+        'best g spot toys',
+        'ergonomic g spot vibrator',
+        'internal stimulation toy'
+      ],
+      alternates: {
+        canonical: canonicalUrl,
+      },
+      openGraph: {
+        title: 'Best G-Spot Vibrators | Premium G Spot Toys for Women',
+        description: 'Shop the best g spot vibrators designed for internal stimulation. Premium g spot toys with ergonomic curves for intense, deep orgasms.',
+        url: canonicalUrl,
+        type: 'website',
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title: 'Best G-Spot Vibrators | Premium G Spot Toys for Women',
+        description: 'Shop the best g spot vibrators designed for internal stimulation. Premium g spot toys with ergonomic curves for intense, deep orgasms.',
+      },
+    };
+  }
+
   // 针对 stamina-training 分类的专属 SEO 配置
   if (slug === 'male-sex-toys/stamina-training') {
     return {

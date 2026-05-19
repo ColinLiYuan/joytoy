@@ -20,7 +20,7 @@ export default function WholesaleForm() {
             const result = await submitWholesaleForm(formData);
 
             if (result.success) {
-                showToast('success', 'Inquiry Sent', 'We have received your request and will reply within 24 hours.');
+                showToast('success', 'Inquiry Sent', 'We have received your request and will contact you within the next few days.');
                 (e.target as HTMLFormElement).reset(); // 重置表单
             } else {
                 showToast('error', 'Error', 'Failed to send inquiry. Please try again.');
@@ -51,9 +51,61 @@ export default function WholesaleForm() {
                     <input name="email" type="email" className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl focus:border-black focus:ring-1 focus:ring-black transition-all outline-none" placeholder="name@company.com" required />
                 </div>
                 <div>
-                    <label className="block text-xs font-bold uppercase text-gray-500 mb-2">Phone / WhatsApp</label>
-                    <input name="phone" type="tel" className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl focus:border-black focus:ring-1 focus:ring-black transition-all outline-none" placeholder="+1 234 567 8900" />
+                    <label className="block text-xs font-bold uppercase text-gray-500 mb-2">Phone Number</label>
+                    <div className="grid grid-cols-[7rem_1fr] gap-2">
+                        <select name="countryCode" defaultValue="+1" className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl focus:border-black focus:ring-1 focus:ring-black transition-all outline-none appearance-none cursor-pointer">
+                            {/* Common Countries */}
+                            <option value="+1">🇺🇸 +1</option>
+                            <option value="+44">🇬🇧 +44</option>
+                            <option value="+61">🇦🇺 +61</option>
+                            <option value="+49">🇩🇪 +49</option>
+                            <option value="+33">🇫🇷 +33</option>
+                            <option value="+39">🇮🇹 +39</option>
+                            <option value="+34">🇪🇸 +34</option>
+                            <option value="+31">🇳🇱 +31</option>
+                            <option value="+46">🇸🇪 +46</option>
+                            <option value="+47">🇳🇴 +47</option>
+                            <option value="+86">🇨🇳 +86</option>
+                            <option value="+81">🇯🇵 +81</option>
+                            <option value="+82">🇰🇷 +82</option>
+                            <option value="+65">🇸🇬 +65</option>
+                            
+                            {/* Divider */}
+                            <option disabled>──────────</option>
+                            
+                            {/* Other Countries */}
+                            <option value="+45">🇩🇰 +45</option>
+                            <option value="+358">🇫🇮 +358</option>
+                            <option value="+41">🇨🇭 +41</option>
+                            <option value="+43">🇦🇹 +43</option>
+                            <option value="+32">🇧🇪 +32</option>
+                            <option value="+351">🇵🇹 +351</option>
+                            <option value="+353">🇮🇪 +353</option>
+                            <option value="+64">🇳🇿 +64</option>
+                            <option value="+852">🇭🇰 +852</option>
+                            <option value="+886">🇹🇼 +886</option>
+                            <option value="+91">🇮🇳 +91</option>
+                            <option value="+7">🇷🇺 +7</option>
+                            <option value="+55">🇧🇷 +55</option>
+                            <option value="+52">🇲🇽 +52</option>
+                            <option value="+27">🇿🇦 +27</option>
+                            <option value="+971">🇦🇪 +971</option>
+                            <option value="+966">🇸🇦 +966</option>
+                            <option value="+90">🇹🇷 +90</option>
+                            <option value="+66">🇹🇭 +66</option>
+                            <option value="+84">🇻🇳 +84</option>
+                            <option value="+62">🇮🇩 +62</option>
+                            <option value="+60">🇲🇾 +60</option>
+                            <option value="+63">🇵🇭 +63</option>
+                        </select>
+                        <input name="phone" type="tel" className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl focus:border-black focus:ring-1 focus:ring-black transition-all outline-none" placeholder="234 567 8900" />
+                    </div>
                 </div>
+            </div>
+
+            <div>
+                <label className="block text-xs font-bold uppercase text-gray-500 mb-2">WhatsApp (Optional)</label>
+                <input name="whatsapp" type="text" className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl focus:border-black focus:ring-1 focus:ring-black transition-all outline-none" placeholder="WhatsApp number if different from phone" />
             </div>
 
             <div>

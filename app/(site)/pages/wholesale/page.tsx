@@ -18,10 +18,14 @@ import WholesaleForm from '@/components/wholesale/wholesale-form';
 
 // 1. SEO Metadata: 针对 B2B 关键词进行饱和式覆盖
 export const metadata: Metadata = {
-    title: 'Wholesale Sex Toys Manufacturer & Distributor | MythToy',
-    description: 'Direct from source factory. We maintain a massive inventory of premium adult toys for wholesale, dropshipping, and private label (OEM/ODM). CE & RoHS certified.',
+    title: 'Premium Adult Toys Wholesale & Distribution Services',
+    description: 'Professional sourcing and distribution services for premium adult toys. We connect businesses with trusted manufacturers offering wholesale, dropshipping, and private label solutions.',
     keywords: [
         'wholesale sex toys',
+        'wholesale adult toys',
+        'adult toys wholesale',
+        'sex toy manufacturer',
+        'adult toy distributor',
         'adult products distributor',
         'bulk vibrators manufacturer',
         'sex toy dropshipping supplier',
@@ -30,8 +34,8 @@ export const metadata: Metadata = {
         'body safe silicone toys wholesale'
     ],
     openGraph: {
-        title: 'Partner with MythToy - Source Factory Direct',
-        description: 'Maximize your margins with factory-direct pricing. Low MOQ, fast global shipping, and premium quality assurance.',
+        title: 'Professional Adult Toy Sourcing & Distribution',
+        description: 'Connect with trusted manufacturers for wholesale adult toys. Low MOQ, quality assurance, and reliable logistics.',
         type: 'website',
         url: 'https://mythtoy.com/pages/wholesale',
     }
@@ -40,24 +44,24 @@ export const metadata: Metadata = {
 // 2. FAQ 数据 (SEO 核心 - 不会显示在页面上，但在代码里给爬虫看)
 const faqs = [
     {
-        question: "What is the Minimum Order Quantity (MOQ)?",
-        answer: "We support businesses of all stages. For dropshippers, there is NO MOQ. For wholesale bulk orders, our MOQ is as low as $500 mixed SKU to help you test the market. For Private Label (custom logo), MOQ typically starts at 50-100 units depending on the product."
+        question: "What are the order requirements?",
+        answer: "Order requirements vary by manufacturer. For wholesale bulk orders of wholesale adult toys, minimum orders typically start at $500 mixed SKU to help you test the market. For Private Label (custom logo) on wholesale adult toys, minimum orders typically start at 50-100 units depending on the product."
     },
     {
-        question: "Do you offer Blind Dropshipping?",
-        answer: "Yes. We offer a complete blind dropshipping service. Packages are sent in plain boxes with no invoices, marketing materials, or MythToy branding. Your customers will never know it came from us."
+        question: "How do you handle shipping?",
+        answer: "Many manufacturers offer complete shipping solutions. Orders are shipped in plain boxes with professional packaging. Your customers will receive products without any identifying branding."
     },
     {
         question: "How do you handle customs and duties?",
-        answer: "For most small wholesale orders via air express (DHL/FedEx), we can offer DDP (Delivered Duty Paid) shipping to the USA and EU, meaning we handle the customs clearance and taxes. For larger sea freight orders, we provide all necessary documentation (CE, RoHS, MSDS) for smooth clearance."
+        answer: "For most small wholesale orders via air express (DHL/FedEx), many suppliers can offer DDP (Delivered Duty Paid) shipping to the USA and EU, meaning they handle customs clearance and taxes. For larger sea freight orders, all necessary documentation (CE, RoHS, MSDS) is provided for smooth clearance."
     },
     {
         question: "Are your products body-safe?",
-        answer: "Safety is our priority. All our products are manufactured using medical-grade liquid silicone, body-safe ABS, and TPE. They are phthalate-free, latex-free, and certified with CE, RoHS, and FCC standards suitable for sale in Western markets."
+        answer: "Reputable manufacturers prioritize safety. Products are manufactured using medical-grade liquid silicone, body-safe ABS, and TPE. They are phthalate-free, latex-free, and certified with CE, RoHS, and FCC standards suitable for adult toys wholesale in Western markets."
     },
     {
         question: "Can I get a sample before placing a bulk order?",
-        answer: "Absolutely. We encourage you to test our quality. You can order samples at a discounted rate. Please contact our sales team to arrange sample shipping."
+        answer: "Absolutely. Manufacturers encourage quality testing. Samples are available at a discounted rate. Contact the sales team directly to arrange sample shipping for your wholesale adult toys evaluation."
     }
 ];
 
@@ -92,16 +96,17 @@ export default function Wholesale() {
                 <div className="container mx-auto max-w-5xl text-center relative z-10">
                     <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 text-pink-300 text-xs font-bold tracking-widest uppercase mb-8 border border-white/20">
                         <Factory size={14} />
-                        Source Factory Direct
+                        Trusted Sourcing Service
                     </div>
                     <h1 className="text-4xl md:text-7xl font-bold mb-8 font-['Playfair_Display'] leading-tight">
-                        Scale Your Business with <br/> Premium Adult Products
+                        Connect with Premium <br/> Adult Toy Manufacturers
                     </h1>
                     <p className="text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed font-light">
-                        Stop paying middleman markups. Partner with MythToy for
-                        <strong className="text-white font-semibold"> factory-direct pricing</strong>,
-                        <strong className="text-white font-semibold"> medical-grade quality</strong>, and
-                        <strong className="text-white font-semibold"> reliable global logistics</strong>.
+                        Connect with trusted <strong className="text-white font-semibold">sex toy manufacturers</strong> and <strong className="text-white font-semibold">adult toy distributors</strong> for
+                        <strong className="text-white font-semibold"> competitive pricing</strong>,
+                        <strong className="text-white font-semibold"> quality assurance</strong>, and
+                        <strong className="text-white font-semibold"> reliable logistics</strong>.
+                        We are your gateway to <strong className="text-white font-semibold">wholesale adult toys</strong> from verified suppliers.
                     </p>
                     <div className="mt-10 flex flex-wrap justify-center gap-4">
                         <a href="#contact-form" className="bg-white text-black px-10 py-4 rounded-full font-bold hover:bg-pink-50 transition-all shadow-lg hover:shadow-xl hover:-translate-y-1">
@@ -119,7 +124,7 @@ export default function Wholesale() {
                 {/* === 核心优势 (SEO 文本增强) === */}
                 <section className="mb-24">
                     <div className="text-center mb-16">
-                        <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4 font-['Playfair_Display']">Why Global Brands Choose Us</h2>
+                        <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4 font-['Playfair_Display']">Why Choose Our Sourcing Service</h2>
                         <div className="w-20 h-1 bg-pink-600 mx-auto rounded-full"></div>
                     </div>
 
@@ -130,7 +135,7 @@ export default function Wholesale() {
                             </div>
                             <h3 className="text-xl font-bold text-gray-900">Unbeatable Margins</h3>
                             <p className="text-gray-600 leading-relaxed">
-                                Located in Dongguan, the heart of global manufacturing, we own the supply chain. By eliminating trading companies and agents, we pass 30-50% savings directly to you, giving you a competitive edge in the market.
+                                We connect you directly with verified manufacturers in Dongguan, the heart of global manufacturing. By eliminating trading companies and agents, we help you access 30-50% savings, giving you a competitive edge in the <strong>adult toys wholesale</strong> market. Our <strong>wholesale adult toys</strong> sourcing ensures you get factory-direct pricing without middleman markups.
                             </p>
                         </div>
                         <div className="space-y-4">
@@ -139,7 +144,7 @@ export default function Wholesale() {
                             </div>
                             <h3 className="text-xl font-bold text-gray-900">Strict Quality Control</h3>
                             <p className="text-gray-600 leading-relaxed">
-                                We don't just ship boxes; we inspect them. Every single unit undergoes a 3-step QC process (Appearance, Function, Waterproofing). We ensure that what your customer receives is pristine, reducing your return rate to under 1%.
+                                We partner only with reputable <strong>sex toy manufacturers</strong> who maintain strict quality standards. Every single unit undergoes a 3-step QC process (Appearance, Function, Waterproofing). We ensure that what your customer receives is pristine, reducing your return rate to under 1% for <strong>adult toys wholesale</strong> orders.
                             </p>
                         </div>
                         <div className="space-y-4">
@@ -148,7 +153,7 @@ export default function Wholesale() {
                             </div>
                             <h3 className="text-xl font-bold text-gray-900">Global Logistics Network</h3>
                             <p className="text-gray-600 leading-relaxed">
-                                Whether you need 500 units sent to Amazon FBA or single units dropshipped to end users, our logistics partners cover 100+ countries. We handle customs clearance paperwork so you can focus on marketing.
+                                Whether you need 500 units of <strong>wholesale adult toys</strong> sent to Amazon FBA or other destinations, our logistics partners cover 100+ countries. As an experienced <strong>adult toy distributor</strong>, we handle customs clearance paperwork so you can focus on marketing.
                             </p>
                         </div>
                     </div>
@@ -168,8 +173,8 @@ export default function Wholesale() {
                                 <h3 className="font-bold text-lg">Wholesale / Bulk</h3>
                             </div>
                             <ul className="space-y-3 text-sm text-gray-600">
-                                <li className="flex items-start gap-2"><CheckCircle2 size={16} className="text-green-500 mt-0.5" /> Lowest tier pricing</li>
-                                <li className="flex items-start gap-2"><CheckCircle2 size={16} className="text-green-500 mt-0.5" /> MOQ: $500 mixed</li>
+                                <li className="flex items-start gap-2"><CheckCircle2 size={16} className="text-green-500 mt-0.5" /> Competitive pricing for <strong>wholesale adult toys</strong></li>
+                                <li className="flex items-start gap-2"><CheckCircle2 size={16} className="text-green-500 mt-0.5" /> Minimum order: $500</li>
                                 <li className="flex items-start gap-2"><CheckCircle2 size={16} className="text-green-500 mt-0.5" /> Fast air/sea freight</li>
                             </ul>
                         </div>
@@ -177,11 +182,11 @@ export default function Wholesale() {
                             <div className="absolute top-0 right-0 bg-pink-600 text-white text-[10px] font-bold px-3 py-1 rounded-bl-xl">POPULAR</div>
                             <div className="flex items-center gap-3 mb-4">
                                 <Globe className="text-pink-600" />
-                                <h3 className="font-bold text-lg">Dropshipping</h3>
+                                <h3 className="font-bold text-lg">Custom Orders</h3>
                             </div>
                             <ul className="space-y-3 text-sm text-gray-600">
-                                <li className="flex items-start gap-2"><CheckCircle2 size={16} className="text-green-500 mt-0.5" /> No inventory risk</li>
-                                <li className="flex items-start gap-2"><CheckCircle2 size={16} className="text-green-500 mt-0.5" /> Blind shipping (No logo)</li>
+                                <li className="flex items-start gap-2"><CheckCircle2 size={16} className="text-green-500 mt-0.5" /> No inventory risk with <strong>wholesale adult toys</strong></li>
+                                <li className="flex items-start gap-2"><CheckCircle2 size={16} className="text-green-500 mt-0.5" /> Professional packaging</li>
                                 <li className="flex items-start gap-2"><CheckCircle2 size={16} className="text-green-500 mt-0.5" /> API / CSV integration</li>
                             </ul>
                         </div>
@@ -191,9 +196,9 @@ export default function Wholesale() {
                                 <h3 className="font-bold text-lg">Private Label (OEM)</h3>
                             </div>
                             <ul className="space-y-3 text-sm text-gray-600">
-                                <li className="flex items-start gap-2"><CheckCircle2 size={16} className="text-green-500 mt-0.5" /> Your logo on products</li>
-                                <li className="flex items-start gap-2"><CheckCircle2 size={16} className="text-green-500 mt-0.5" /> Custom packaging design</li>
-                                <li className="flex items-start gap-2"><CheckCircle2 size={16} className="text-green-500 mt-0.5" /> Low MOQ for branding</li>
+                                <li className="flex items-start gap-2"><CheckCircle2 size={16} className="text-green-500 mt-0.5" /> Your logo on <strong>wholesale adult toys</strong></li>
+                                <li className="flex items-start gap-2"><CheckCircle2 size={16} className="text-green-500 mt-0.5" /> Custom packaging design for <strong>adult toys wholesale</strong></li>
+                                <li className="flex items-start gap-2"><CheckCircle2 size={16} className="text-green-500 mt-0.5" /> Low minimums for branding through trusted <strong>sex toy manufacturers</strong></li>
                             </ul>
                         </div>
                     </div>
@@ -205,15 +210,8 @@ export default function Wholesale() {
                         <div className="md:w-1/3">
                             <h2 className="text-3xl font-bold text-gray-900 mb-6 font-['Playfair_Display']">Extensive Product Catalog</h2>
                             <p className="text-gray-600 mb-6">
-                                Our catalog features over 500+ SKUs covering every major category in the adult wellness industry. We update our inventory monthly with the latest trending items.
+                                Our network features a comprehensive range of products covering every major category in the adult wellness industry. As a professional sourcing service connecting you with verified <strong>sex toy manufacturers</strong> and <strong>adult toy distributors</strong>, we specialize in <strong>wholesale adult toys</strong> and update our inventory monthly with the latest trending items. Whether you're looking for <strong>adult toys wholesale</strong> opportunities or private label solutions, we offer everything from intimate accessories to premium pleasure products.
                             </p>
-                            <div className="p-6 bg-black text-white rounded-2xl">
-                                <div className="text-3xl font-bold text-pink-500 mb-1">500+</div>
-                                <div className="text-sm opacity-80">Premium SKUs</div>
-                                <div className="w-full h-px bg-white/20 my-4"></div>
-                                <div className="text-3xl font-bold text-blue-400 mb-1">NEW</div>
-                                <div className="text-sm opacity-80">Items Added Monthly</div>
-                            </div>
                         </div>
                         <div className="md:w-2/3 grid grid-cols-1 sm:grid-cols-2 gap-6">
                             {[
@@ -257,9 +255,9 @@ export default function Wholesale() {
                         <div className="md:col-span-2 bg-black text-white p-10 flex flex-col justify-between relative overflow-hidden">
                             <div className="absolute top-0 left-0 w-full h-full bg-gray-900 opacity-50"></div>
                             <div className="relative z-10">
-                                <h3 className="text-2xl font-bold font-['Playfair_Display'] mb-4">Get Access Now</h3>
+                                <h3 className="text-2xl font-bold font-['Playfair_Display'] mb-4">Get Connected Today</h3>
                                 <p className="text-gray-300 mb-8 leading-relaxed">
-                                    Fill out the form to receive our <span className="text-white font-bold">Wholesale Price List</span> and <span className="text-white font-bold">Product Catalog</span> within 24 hours.
+                                    Fill out the form to receive our <span className="text-white font-bold">Wholesale Price List</span> and <span className="text-white font-bold">Product Catalog</span> within 24 hours. We'll connect you with trusted manufacturers for your <strong>wholesale adult toys</strong> needs.
                                 </p>
 
                                 <div className="space-y-6 mt-8">
@@ -268,13 +266,15 @@ export default function Wholesale() {
                                             <Users size={20} />
                                         </div>
                                         <div>
-                                            <p className="text-xs text-gray-400 uppercase font-bold">Sales Manager</p>
-                                            <p className="font-medium">Maya</p>
+                                            <p className="text-xs text-gray-400 uppercase font-bold">Sourcing Specialist</p>
+                                            <p className="font-medium">Colin</p>
                                         </div>
                                     </div>
                                     <div className="w-full h-px bg-white/10"></div>
                                     <div className="space-y-2 text-sm text-gray-300">
-                                        <p>📧 maya@mythtoy.com</p>
+                                        <p>📧 colinliyuan@gmail.com</p>
+                                        <p>📞 Phone: +86 138 2442 3871</p>
+                                        <p>💬 WhatsApp: <a href="https://wa.me/8613824423871" target="_blank" rel="noopener noreferrer" className="text-pink-400 hover:text-pink-300 underline">Chat on WhatsApp</a></p>
                                     </div>
                                 </div>
                             </div>

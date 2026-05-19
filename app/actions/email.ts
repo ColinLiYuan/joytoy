@@ -188,7 +188,9 @@ export async function submitWholesaleForm(formData: FormData) {
     const contactName = formData.get('contactName') as string;
     const businessName = formData.get('businessName') as string;
     const email = formData.get('email') as string;
+    const countryCode = formData.get('countryCode') as string;
     const phone = formData.get('phone') as string;
+    const whatsapp = formData.get('whatsapp') as string;
     const businessType = formData.get('businessType') as string;
     const volume = formData.get('volume') as string;
     const message = formData.get('message') as string;
@@ -196,6 +198,9 @@ export async function submitWholesaleForm(formData: FormData) {
     if (!contactName || !email) {
         return { success: false, error: 'Missing required fields' };
     }
+
+    // 组合完整的电话号码
+    const fullPhone = countryCode && phone ? `${countryCode} ${phone}` : (phone || 'N/A');
 
     try {
         const sendToAdmin = transporter.sendMail({
@@ -211,7 +216,8 @@ export async function submitWholesaleForm(formData: FormData) {
                         <p><strong>Name:</strong> ${contactName}</p>
                         <p><strong>Business Name:</strong> ${businessName || 'N/A'}</p>
                         <p><strong>Email:</strong> ${email}</p>
-                        <p><strong>Phone/WhatsApp:</strong> ${phone || 'N/A'}</p>
+                        <p><strong>Phone:</strong> ${fullPhone}</p>
+                        <p><strong>WhatsApp:</strong> ${whatsapp || fullPhone}</p>
                     </div>
                     <div style="background:#f0fdf4; padding:20px; border-radius:8px; border: 1px solid #bbf7d0;">
                         <h3 style="margin-top: 0;">Business Profile</h3>
@@ -237,7 +243,7 @@ export async function submitWholesaleForm(formData: FormData) {
                     <p>Hi ${contactName},</p>
                     <p>Thank you for your interest in partnering with <strong>MythToy</strong>.</p>
                     <p>We have received your inquiry regarding wholesale opportunities for <strong>${businessName || 'your business'}</strong>.</p>
-                    <p>Our sales team is currently reviewing your details. You can expect to receive our <strong>Product Catalog and Wholesale Price List</strong> within the next 24 hours.</p>
+                    <p>Our sales team is currently reviewing your details. You can expect to receive our <strong>Product Catalog and Wholesale Price List</strong> within the next few days.</p>
                     <p>In the meantime, feel free to browse our retail collection at <a href="https://mythtoy.com">mythtoy.com</a>.</p>
                     <br>
                     <p>Best Regards,</p>

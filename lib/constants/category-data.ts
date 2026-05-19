@@ -57,11 +57,11 @@ export const CATEGORIES_DATA: CategoriesData = {
                     {
                         slug: "female-sex-toys/g-spot-vibrators",
                         name: "G-Spot Vibrators",
-                        title: "G-Spot Vibrators | Internal Massage",
-                        description: "Ergonomically designed for precise internal stimulation. From flexible curves to targeted power, find your perfect angle.",
+                        title: "Best G-Spot Vibrators | Premium G Spot Toys for Women",
+                        description: "Discover the best g spot vibrators designed for precise internal stimulation. Our premium g spot toys feature ergonomic curves and powerful vibrations to find your perfect angle. Shop quality g spot vibrators for intense, deep orgasms.",
                         image: "cat-banner-g-spot.png?v=1",
                         root: "female-sex-toys",
-                        priority: 0.7,
+                        priority: 0.8,
                         changefreq: "weekly"
                     },
                     {
