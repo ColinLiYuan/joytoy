@@ -7,7 +7,8 @@ import Pagination from '@/components/common/pagination';
 import Breadcrumb from '@/components/common/breadcrumb';
 import { BlogListResponse } from '@/types/site/blog';
 import { getProductImageUrl } from '@/lib/image-utils';
-import { ArrowUpRight } from 'lucide-react';
+import { getAuthor } from '@/lib/constants/authors';
+import { ArrowUpRight, Star, User } from 'lucide-react';
 
 const FALLBACK_IMAGES = [
     "https://images.unsplash.com/photo-1507919909716-c8262e491cde?auto=format&fit=crop&q=80&w=800",
@@ -81,9 +82,10 @@ export default function BlogListClient({ initialBlogData, currentPage }: BlogLis
                                     {/* Content */}
                                     <div className="flex flex-col flex-grow">
                                         {/* Meta Info */}
-                                        <div className="flex items-center gap-4 text-[10px] uppercase tracking-[0.2em] text-gray-400 mb-4 font-sans">
+                                        <div className="flex items-center gap-3 text-[10px] uppercase tracking-[0.15em] text-gray-400 mb-4 font-sans">
                                             <span>{new Date(post.createdAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
-                                            <div className="h-[1px] flex-1 bg-gray-100"></div>
+                                            <span className="text-gray-300">—</span>
+                                            <span className="text-gray-500 font-medium">{getAuthor(post.author).name}</span>
                                         </div>
 
                                         {/* Title */}

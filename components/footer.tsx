@@ -47,7 +47,7 @@ export default function Footer() {
 
                     {/* Shop Section */}
                     <div className="footer-section">
-                        <h3 className="text-lg font-bold text-white mb-6 font-['Playfair_Display']">Shop</h3>
+                        <div className="text-lg font-bold text-white mb-6 font-['Playfair_Display']">Shop</div>
                         <ul className="space-y-3 font-['Inter']">
                             <li>
                                 {/* 链接颜色改为灰色，悬停变金色/白色 */}
@@ -66,7 +66,7 @@ export default function Footer() {
 
                     {/* Support Section */}
                     <div className="footer-section">
-                        <h3 className="text-lg font-bold text-white mb-6 font-['Playfair_Display']">Support</h3>
+                        <div className="text-lg font-bold text-white mb-6 font-['Playfair_Display']">Support</div>
                         <ul className="space-y-3 font-['Inter']">
                             <li><Link href="/pages/contact" className="text-sm text-gray-400 hover:text-white transition-colors duration-200">Contact Us</Link></li>
                             <li><Link href="/pages/shipping-policy" className="text-sm text-gray-400 hover:text-white transition-colors duration-200">Shipping Policy</Link></li>
@@ -79,7 +79,7 @@ export default function Footer() {
 
                     {/* About Section */}
                     <div className="footer-section">
-                        <h3 className="text-lg font-bold text-white mb-6 font-['Playfair_Display']">About</h3>
+                        <div className="text-lg font-bold text-white mb-6 font-['Playfair_Display']">About</div>
                         <ul className="space-y-3 font-['Inter']">
                             <li><Link href="/pages/about" className="text-sm text-gray-400 hover:text-white transition-colors duration-200">Our Story</Link></li>
                             <li><Link href="/pages/affiliate" className="text-sm text-gray-400 hover:text-white transition-colors duration-200">Affiliate Program</Link></li>
@@ -90,7 +90,7 @@ export default function Footer() {
 
                     {/* Policies Section */}
                     <div className="footer-section">
-                        <h3 className="text-lg font-bold text-white mb-6 font-['Playfair_Display']">Policies</h3>
+                        <div className="text-lg font-bold text-white mb-6 font-['Playfair_Display']">Policies</div>
                         <ul className="space-y-3 font-['Inter']">
                             <li><Link href="/pages/privacy-policy" className="text-sm text-gray-400 hover:text-white transition-colors duration-200">Privacy Policy</Link></li>
                             <li><Link href="/pages/terms-and-conditions" className="text-sm text-gray-400 hover:text-white transition-colors duration-200">Terms of Service</Link></li>
@@ -100,7 +100,7 @@ export default function Footer() {
 
                     {/* Subscribe Section */}
                     <div id="footer-subscribe" className="footer-section">
-                        <h3 className="text-lg font-bold text-white mb-6 font-['Playfair_Display']">Get 15% Off</h3>
+                        <div className="text-lg font-bold text-white mb-6 font-['Playfair_Display']">Get 15% Off</div>
 
                         {successCode ? (
                             // 订阅成功状态 (深色背景适配)

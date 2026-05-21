@@ -15,6 +15,7 @@ export interface BlogResponse {
     tags: string[];
     coverImage?: string;
     slug: string;
+    topic?: string;
 }
 
 export interface BlogListResponse {

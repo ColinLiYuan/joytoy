@@ -170,7 +170,7 @@ const AccordionItem = ({
 
 export default function FAQSection({ context = 'all', tag, className = '' }: FAQSectionProps) {
     // 1. 修改过滤逻辑
-    const filteredData = FAQ_DATA.map(category => ({
+    let filteredData = FAQ_DATA.map(category => ({
         ...category,
         items: category.items.filter(item => {
             const itemTags = item.tags || [];
@@ -188,6 +188,14 @@ export default function FAQSection({ context = 'all', tag, className = '' }: FAQ
             return itemTags.includes(context);
         })
     })).filter(category => category.items.length > 0);
+
+    // Fallback: if tag was specified but no items matched, fall back to general FAQs
+    if (tag && filteredData.length === 0) {
+        filteredData = FAQ_DATA.map(category => ({
+            ...category,
+            items: category.items.filter(item => (item.tags || []).includes('general'))
+        })).filter(category => category.items.length > 0);
+    }
 
     // 2. 判断是否是"特定场景"模式
     const isSpecificMode = tag || (context !== 'all');

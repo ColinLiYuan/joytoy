@@ -2,6 +2,7 @@
 import { Metadata } from 'next';
 import BlogDetailClient from './BlogDetailClient';
 import { BACKEND_CONFIG } from '@/lib/api-config';
+import { getAuthor } from '@/lib/constants/authors';
 
 interface PageProps {
     params: Promise<{
@@ -62,7 +63,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
             type: 'article',
             publishedTime: blog.createdAt,
             modifiedTime: blog.updatedAt,
-            authors: [blog.author || 'MythToy'],
+            authors: [getAuthor(blog.author).name],
         },
         alternates: {
             canonical: `${baseUrl}/blog/${blog.slug}`,

@@ -170,18 +170,19 @@ export default function BlogManagementPage() {
                         <table className="min-w-full divide-y divide-gray-200">
                             <thead className="bg-gray-50">
                             <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">文章信息</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">作者</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Slug</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">数据</th>
-                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4">文章信息</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">作者</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">状态</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">主题</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">评分</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">数据</th>
+                                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-32">操作</th>
                             </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
                             {blogs.map((blog) => (
                                 <tr key={blog.id} className="hover:bg-gray-50 transition-colors">
-                                    <td className="px-6 py-4">
+                                    <td className="px-4 py-4">
                                         <div className="flex items-start">
                                             <div className="h-12 w-12 flex-shrink-0 rounded-lg bg-gray-100 border border-gray-200 overflow-hidden">
                                                 {/* 列表页图片路径处理 */}
@@ -197,35 +198,43 @@ export default function BlogManagementPage() {
                                                     </div>
                                                 )}
                                             </div>
-                                            <div className="ml-4 flex-1 min-w-0">
-                                                <div className="text-sm font-medium text-gray-900 truncate max-w-xs" title={blog.title}>
+                                            <div className="ml-3 flex-1 min-w-0">
+                                                <div className="text-sm font-medium text-gray-900 truncate max-w-[200px]" title={blog.title}>
                                                     {blog.title}
                                                 </div>
-                                                <div className="text-sm text-gray-500 truncate max-w-xs">
+                                                <div className="text-xs text-gray-500 truncate max-w-[200px] mt-1">
                                                     {blog.summary}
                                                 </div>
                                             </div>
                                         </div>
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">
                                         {blog.author}
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
+                                    <td className="px-4 py-4 whitespace-nowrap">
                                     <span className={`inline-flex px-2.5 py-0.5 text-xs font-medium rounded-full border ${getStatusColor(blog.status)}`}>
                                         {getStatusText(blog.status)}
                                     </span>
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono text-xs">
-                                        {blog.slug || '-'}
+                                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">
+                                        {blog.topic || '-'}
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        <div className="flex flex-col">
+                                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">
+                                        {blog.rating ? (
+                                            <span className="flex items-center">
+                                                <span className="text-yellow-500 mr-1">★</span>
+                                                {blog.rating.toFixed(1)}
+                                            </span>
+                                        ) : '-'}
+                                    </td>
+                                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        <div className="flex flex-col space-y-1">
                                             <span className="text-xs" title="创建时间">📅 {new Date(blog.createdAt).toLocaleDateString()}</span>
-                                            <span className="text-xs mt-1" title="浏览量">👁️ {blog.viewCount || 0}</span>
+                                            <span className="text-xs" title="浏览量">👁️ {blog.viewCount || 0}</span>
                                         </div>
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                        <div className="flex justify-end space-x-3">
+                                    <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                        <div className="flex justify-end space-x-2">
                                             {blog.status === 'PUBLISHED' && blog.slug && (
                                                 <a
                                                     href={`/blog/${blog.slug}`}
@@ -241,7 +250,7 @@ export default function BlogManagementPage() {
                                                 href={`/admin/blog/edit/${blog.id}`}
                                                 className="text-blue-600 hover:text-blue-900 flex items-center transition-colors"
                                             >
-                                                <Edit size={18} className="mr-1"/> 编辑
+                                                <Edit size={18}/>
                                             </Link>
                                         </div>
                                     </td>

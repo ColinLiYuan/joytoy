@@ -19,9 +19,9 @@ export const AUTHORS_DATA: Record<string, AuthorProfile> = {
 
     // 2. 实验室/科普/材质 (Science / 硬核知识)
     "MythToy Lab": {
-        name: "MythToy Lab",
-        role: "R&D Team",
-        avatar: null, // 将来放个烧瓶或几何icon
+        name: "Dr. Ari Chen",
+        role: "Materials Scientist & Research Lead",
+        avatar: null,
         bio: "Deep diving into the chemistry of silicone, the physics of vibration, and the biology of pleasure. Where safety meets science."
     },
 
@@ -43,8 +43,8 @@ export const AUTHORS_DATA: Record<string, AuthorProfile> = {
 
     // 5. 科技/极客 (Tech / 极客内容)
     "MythToy Tech": {
-        name: "MythToy Tech",
-        role: "Digital Experience",
+        name: "Sam Rivera",
+        role: "Hardware Engineer",
         avatar: null,
         bio: "From Bluetooth protocols to whisper-quiet motors. Engineering the hardware that powers your connection."
     },

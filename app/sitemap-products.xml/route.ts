@@ -20,33 +20,31 @@ export async function GET() {
 
         if (res.ok) {
             const responseData = await res.json()
-            console.log('📦 API 返回数据结构:', responseData)
+            console.log('API response data structure:', responseData)
 
-            // 根据 Java API 的结构提取数据
             if (responseData.data && Array.isArray(responseData.data)) {
                 products = responseData.data
-                console.log(`✅ 动态获取 ${products.length} 个商品`)
+                console.log(`Dynamically fetched ${products.length} products`)
             } else {
-                console.error('❌ API 返回的数据格式不正确:', responseData)
+                console.error('Invalid API response format:', responseData)
                 throw new Error('Invalid API response format')
             }
         } else {
             throw new Error(`API responded with status: ${res.status}`)
         }
     } catch (error) {
-        console.error('❌ 获取商品失败:', error)
+        console.error('Failed to fetch products for sitemap:', error)
         if (process.env.NODE_ENV !== 'production') {
             products = [
                 { slug: '/vibrator-pro' },
                 { slug: '/massage-oil' },
             ]
-            console.log('🔄 使用测试数据:', products.length, '个商品')
+            console.log('Using test data:', products.length, 'products')
         }
     }
 
-    // 确保 products 是数组
     if (!Array.isArray(products)) {
-        console.error('❌ products 不是数组:', products)
+        console.error('products is not an array:', products)
         products = []
     }
 
@@ -56,13 +54,11 @@ export async function GET() {
   <url>
     <loc>${baseUrl}/toys${product.slug}</loc>
     <lastmod>${product.updatedAt || new Date().toISOString()}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
   </url>
   `).join('')}
 </urlset>`
 
-    console.log(`📄 生成包含 ${products.length} 个商品链接的 sitemap`)
+    console.log(`Generated sitemap with ${products.length} product URLs`)
 
     return new NextResponse(xml, {
         status: 200,

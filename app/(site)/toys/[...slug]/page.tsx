@@ -3,11 +3,14 @@ import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { cookies } from 'next/headers';
 import { productService } from '@/services/productService';
+import { blogService } from '@/services/blogService';
 import { ProductResponse } from '@/types/product';
+import { BlogResponse } from '@/types/site/blog';
 import ProductDetailClient from './ProductDetailClient';
 import { getProductImageUrl } from '@/lib/image-utils';
 import { colorMap } from '@/lib/constants/color-map';
 import { BACKEND_CONFIG } from '@/lib/api-config';
+import { getRelatedBlogSlugs } from '@/lib/constants/related-guides';
 
 interface PageProps {
     params: Promise<{
@@ -234,16 +237,7 @@ export default async function ProductDetail({ params }: PageProps) {
                 ...(reviewElements.length > 0 && {
                     review: reviewElements,
                 }),
-            },
-            {
-                '@type': 'BreadcrumbList',
-                itemListElement: breadcrumbs.map((crumb, index) => ({
-                    '@type': 'ListItem',
-                    position: index + 1,
-                    name: crumb.name,
-                    item: crumb.path ? `${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.mythtoy.com'}${crumb.path}` : undefined,
-                })),
-            },
+            }
         ],
     };
 
@@ -271,6 +265,22 @@ export default async function ProductDetail({ params }: PageProps) {
     const description = product.description || '';
     const defaultColor = product.colors?.[0] || null;
 
+    // Fetch related blog guides based on product category
+    const slugArray = Array.isArray(resolvedParams.slug) ? resolvedParams.slug : [resolvedParams.slug];
+    const productCategoryPath = slugArray.length > 1 ? slugArray.slice(0, -1).join('/') : '';
+    const productParentSlug = slugArray.length > 1 ? slugArray[0] : '';
+    const productRelatedBlogSlugs = getRelatedBlogSlugs(productCategoryPath, productParentSlug);
+    let productRelatedGuides: BlogResponse[] = [];
+    if (productRelatedBlogSlugs.length > 0) {
+        const blogResults = await Promise.allSettled(
+            productRelatedBlogSlugs.slice(0, 3).map(slug => blogService.getBySlug(slug))
+        );
+        productRelatedGuides = blogResults
+            .filter((r): r is PromiseFulfilledResult<BlogResponse> => r.status === 'fulfilled')
+            .map(r => r.value)
+            .filter(g => g?.slug);
+    }
+
     console.log('galleryItems', galleryItems)
 
     return (
@@ -291,6 +301,7 @@ export default async function ProductDetail({ params }: PageProps) {
                     description={description}
                     defaultColor={defaultColor}
                     colorMap={colorMap}
+                    relatedGuides={productRelatedGuides}
                 />
             </div>
         </div>

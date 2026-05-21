@@ -9,24 +9,21 @@ export async function GET() {
     try {
         const response = await blogService.list(0, 1000);
         blogs = response.content || [];
-        console.log(`✅ Sitemap 获取到 ${blogs.length} 篇博客`);
+        console.log(`Sitemap fetched ${blogs.length} blog posts`);
     } catch (error) {
-        console.error('❌ 获取博客列表失败:', error);
+        console.error('Failed to fetch blog list for sitemap:', error);
     }
 
     const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>${baseUrl}/blog</loc>
-    <changefreq>daily</changefreq>
-    <priority>0.9</priority>
+    <lastmod>${new Date().toISOString()}</lastmod>
   </url>
   ${blogs.map(post => `
   <url>
     <loc>${baseUrl}/blog/${post.slug}</loc>
     <lastmod>${new Date(post.updatedAt).toISOString()}</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.7</priority>
   </url>
   `).join('')}
 </urlset>`;
@@ -35,7 +32,6 @@ export async function GET() {
         status: 200,
         headers: {
             'Content-Type': 'application/xml',
-            // 博客更新频率可能较高，缓存设短一点
             'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=1800'
         }
     });

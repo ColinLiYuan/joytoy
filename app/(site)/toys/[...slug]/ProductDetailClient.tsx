@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
 import { ProductResponse, ProductSku, HighlightData } from '@/types/product';
+import { BlogResponse } from '@/types/site/blog';
 import { useToast } from '@/contexts/toastContext';
 import { useAuth } from '@/contexts/authContext';
 import { useCartStore } from '@/stores/useCartStore';
@@ -81,6 +82,7 @@ interface ProductDetailClientProps {
     description: string;
     defaultColor: string | null;
     colorMap: { [key: string]: string };
+    relatedGuides?: BlogResponse[];
 }
 
 const getFeatureIconAndStyle = (text: string) => {
@@ -192,7 +194,8 @@ export default function ProductDetailClient({
                                                 features,
                                                 description,
                                                 defaultColor,
-                                                colorMap
+                                                colorMap,
+                                                relatedGuides = [],
                                             }: ProductDetailClientProps) {
     const router = useRouter();
     const waitlistRef = useRef<HTMLDivElement>(null);
@@ -505,10 +508,14 @@ export default function ProductDetailClient({
                                     )}
                                 </div>
 
-                                <div className="flex items-center gap-1 self-start mt-2">
-                                    {[1, 2, 3, 4, 5].map(i => <Star key={i} size={16} className="fill-yellow-400 text-yellow-400" />)}
-                                    <span className="text-sm text-gray-500 ml-2 font-medium">{product.rating}</span>
-                                </div>
+                                {(product.reviewCount ?? 0) > 0 && (
+                                    <div className="flex items-center gap-1 self-start mt-2">
+                                        {[1, 2, 3, 4, 5].map(i => (
+                                            <Star key={i} size={16} className={i <= Math.round(product.rating ?? 0) ? 'fill-yellow-400 text-yellow-400' : 'fill-gray-200 text-gray-200'} />
+                                        ))}
+                                        <span className="text-sm text-gray-500 ml-2 font-medium">{product.rating ?? 0}</span>
+                                    </div>
+                                )}
                             </div>
                         </div>
 
@@ -889,6 +896,38 @@ export default function ProductDetailClient({
                                     <div className="w-px h-16 bg-gradient-to-b from-white to-transparent" />
                                 </div>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Related Guides — SEO internal linking from product to blog */}
+            {relatedGuides.length > 0 && (
+                <div className="w-full bg-[#F9FAFB] py-16 border-t border-gray-100">
+                    <div className="container mx-auto px-4 max-w-3xl">
+                        <h2 className="text-2xl md:text-3xl font-bold text-gray-900 font-['Playfair_Display'] mb-8 text-center">
+                            Related Guides
+                        </h2>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            {relatedGuides.map(guide => (
+                                <a
+                                    key={guide.id}
+                                    href={`/blog/${guide.slug}`}
+                                    className="group block p-6 rounded-xl bg-white border border-gray-100 hover:border-gray-300 hover:shadow-md transition-all"
+                                >
+                                    <h3 className="text-sm font-semibold text-[#1A1A1A] group-hover:text-black transition-colors line-clamp-2">
+                                        {guide.title}
+                                    </h3>
+                                    {guide.summary && (
+                                        <p className="text-xs text-gray-500 mt-2 line-clamp-2">
+                                            {guide.summary}
+                                        </p>
+                                    )}
+                                    <span className="inline-block mt-3 text-xs font-medium text-gray-400 group-hover:text-gray-600 transition-colors">
+                                        Read more →
+                                    </span>
+                                </a>
+                            ))}
                         </div>
                     </div>
                 </div>

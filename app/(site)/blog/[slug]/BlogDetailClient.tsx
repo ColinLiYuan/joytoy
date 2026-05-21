@@ -3,6 +3,7 @@
 import BlogContent from './blog-content';
 import Breadcrumb, { BreadcrumbItem } from '@/components/common/breadcrumb';
 import { BlogResponse } from '@/types/site/blog';
+import { getAuthor } from '@/lib/constants/authors';
 
 interface BlogDetailClientProps {
     initialBlog: BlogResponse | null;
@@ -39,8 +40,9 @@ export default function BlogDetailClient({ initialBlog }: BlogDetailClientProps)
         "dateModified": blog.updatedAt,
         "author": {
             "@type": "Person",
-            "name": blog.author || "MythToy Team"
+            "name": getAuthor(blog.author).name
         },
+        ...(blog.topic ? { "articleSection": blog.topic } : {}),
         "publisher": {
             "@type": "Organization",
             "name": "MythToy",

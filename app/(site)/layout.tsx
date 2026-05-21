@@ -39,8 +39,9 @@ export default async function SiteLayout({
         "description": "Premium adult lifestyle products direct from source.",
         "foundingDate": "2024",
         "sameAs": [
-            "https://www.instagram.com/myth.w.studio",
-            "https://www.facebook.com/profile.php?id=61581471022682",
+            "https://www.instagram.com/mythtoy.official",
+            "https://x.com/mythtoyofficial",
+            "https://www.facebook.com/mythtoy.official",
         ],
         "contactPoint": {
             "@type": "ContactPoint",
@@ -50,12 +51,31 @@ export default async function SiteLayout({
         }
     };
 
+    const webSiteStructuredData = {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "MythToy",
+        "url": process.env.NEXT_PUBLIC_SITE_URL || "https://www.mythtoy.com",
+        "potentialAction": {
+            "@type": "SearchAction",
+            "target": {
+                "@type": "EntryPoint",
+                "urlTemplate": `${process.env.NEXT_PUBLIC_SITE_URL || "https://www.mythtoy.com"}/search?q={search_term_string}`
+            },
+            "query-input": "required name=search_term_string"
+        }
+    };
+
     return (
         <>
             {/* JSON-LD 结构化数据 */}
             <script
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationStructuredData) }}
+            />
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(webSiteStructuredData) }}
             />
 
             {/* Google Analytics */}

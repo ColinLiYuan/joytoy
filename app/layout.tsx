@@ -16,7 +16,10 @@ const playfair = {
 };
 
 export const viewport: Viewport = {
-    themeColor: 'black',
+    themeColor: [
+        { media: '(prefers-color-scheme: dark)', color: 'black' },
+        { media: '(prefers-color-scheme: light)', color: 'white' },
+    ],
     width: 'device-width',
     initialScale: 1,
 };
@@ -74,6 +77,9 @@ export const metadata: Metadata = {
         images: ['/og-image.jpg'],
         creator: '@mythtoy',
     },
+    alternates: {
+        canonical: process.env.NEXT_PUBLIC_SITE_URL || 'https://www.mythtoy.com',
+    },
     robots: {
         index: true,
         follow: true,
@@ -84,6 +90,9 @@ export const metadata: Metadata = {
             'max-image-preview': 'large',
             'max-snippet': -1,
         },
+    },
+    other: {
+        rating: 'adult',
     },
     verification: {
         // 添加 Google Search Console 验证（需要时取消注释）

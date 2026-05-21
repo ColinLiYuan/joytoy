@@ -303,34 +303,14 @@ export const refreshTokenIfNeeded = async (): Promise<string | undefined> => {
         if (result?.success && result?.data?.accessToken) {
             const { accessToken, refreshToken: newRefreshToken, expiresIn, refreshExpiresIn } = result.data;
 
-            // 服务端：缓存token到内存并更新cookie
+            // 服务端：缓存token到内存（不写cookie，Next.js 16 Server Component 不允许修改 cookie）
             if (!isBrowser) {
                 console.log('[TokenUtils] Caching token in server memory');
                 serverTokenCache = accessToken;
                 if (expiresIn) {
                     serverTokenExpiry = Math.floor(Date.now() / 1000) + (expiresIn - 300); // 提前5分钟过期
                 }
-                
-                // 服务端：更新cookie
-                try {
-                    const { cookies } = await import('next/headers');
-                    const cookieStore = await cookies();
-                    console.log('[TokenUtils] Updating accessToken in server cookie');
-                    cookieStore.set(ACCESS_TOKEN_KEY, accessToken, {
-                        path: '/',
-                        maxAge: expiresIn || 1800, // 30分钟
-                    });
-                    
-                    if (newRefreshToken) {
-                        console.log('[TokenUtils] Updating refreshToken in server cookie');
-                        cookieStore.set(REFRESH_TOKEN_KEY, newRefreshToken, {
-                            path: '/',
-                            maxAge: refreshExpiresIn || 7 * 24 * 60 * 60, // 7天
-                        });
-                    }
-                } catch (error) {
-                    console.error('[TokenUtils] Failed to update server cookie:', error);
-                }
+                // Cookie 的写入由 Server Action / Route Handler 负责，这里只做内存缓存
             }
 
             // 客户端：更新localStorage和cookie

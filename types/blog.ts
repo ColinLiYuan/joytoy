@@ -38,6 +38,8 @@ export interface AdminBlogResponse {
     tags: string[];
     coverImage?: string;
     slug: string;
+    topic?: string;
+    rating?: number;
 }
 
 export interface AdminBlogListResponse {

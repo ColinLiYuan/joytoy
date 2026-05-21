@@ -68,7 +68,7 @@ export default function HeroSection() {
 
                         <p className="text-gray-300 text-lg md:text-xl font-light max-w-lg mx-auto md:mx-0 leading-relaxed drop-shadow-md">
                             Curated pleasure objects for the modern lifestyle.
-                            Where wellness meets technological artistry.
+                            Premium body-safe design, discreet delivery worldwide.
                         </p>
 
                         <div className="pt-4">
