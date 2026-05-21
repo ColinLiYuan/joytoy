@@ -130,6 +130,20 @@ export async function middleware(request: NextRequest) {
         return NextResponse.redirect(destination, { status: 301 });
     }
 
+    // 2.1 处理 /female-sex-toys/* 重定向到 /toys/female-sex-toys/*
+    if (pathname.startsWith('/female-sex-toys/')) {
+        const newPath = pathname.replace('/female-sex-toys/', '/toys/female-sex-toys/');
+        const destination = new URL(newPath + request.nextUrl.search, request.url);
+        return NextResponse.redirect(destination, { status: 301 });
+    }
+
+    // 2.2 处理 /male-sex-toys/* 重定向到 /toys/male-sex-toys/*
+    if (pathname.startsWith('/male-sex-toys/')) {
+        const newPath = pathname.replace('/male-sex-toys/', '/toys/male-sex-toys/');
+        const destination = new URL(newPath + request.nextUrl.search, request.url);
+        return NextResponse.redirect(destination, { status: 301 });
+    }
+
     // 3. 处理 410 删除 - 精确匹配
     if (gonePaths.has(pathname)) {
         return new Response('Gone', { status: 410, headers: { 'Content-Type': 'text/plain' } });

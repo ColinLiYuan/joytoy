@@ -41,7 +41,7 @@ export default function BlogManagementPage() {
 
     useEffect(() => {
         fetchBlogs();
-    }, [statusFilter, pagination.currentPage]);
+    }, [statusFilter, pagination.currentPage, searchTerm]);
 
     const fetchBlogs = async () => {
         try {
@@ -50,7 +50,8 @@ export default function BlogManagementPage() {
                 pagination.currentPage,
                 pagination.pageSize,
                 statusFilter !== 'ALL' ? statusFilter : undefined,
-                'createdAt'  // 按创建时间排序
+                'createdAt',  // 按创建时间排序
+                searchTerm || undefined  // 传递搜索关键词
             );
 
             setBlogs(response.content);
@@ -73,12 +74,10 @@ export default function BlogManagementPage() {
         setPagination(prev => ({ ...prev, currentPage: page }));
     };
 
-    const filteredBlogs = blogs.filter(blog => {
-        const matchesSearch = blog.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            blog.author.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            blog.tags?.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
-        return matchesSearch;
-    });
+    const handleSearchChange = (value: string) => {
+        setSearchTerm(value);
+        setPagination(prev => ({ ...prev, currentPage: 0 }));  // 搜索时重置到第一页
+    };
 
     const getStatusColor = (status: AdminBlogResponse['status']) => {
         switch (status) {
@@ -134,7 +133,7 @@ export default function BlogManagementPage() {
                                     type="text"
                                     placeholder="搜索标题、作者或标签..."
                                     value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    onChange={(e) => handleSearchChange(e.target.value)}
                                     className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-full"
                                 />
                                 <svg className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -180,7 +179,7 @@ export default function BlogManagementPage() {
                             </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
-                            {filteredBlogs.map((blog) => (
+                            {blogs.map((blog) => (
                                 <tr key={blog.id} className="hover:bg-gray-50 transition-colors">
                                     <td className="px-6 py-4">
                                         <div className="flex items-start">
@@ -262,7 +261,7 @@ export default function BlogManagementPage() {
                         />
                     )}
 
-                    {filteredBlogs.length === 0 && (
+                    {blogs.length === 0 && !loading && (
                         <div className="text-center py-16">
                             <div className="bg-gray-50 rounded-full h-16 w-16 flex items-center justify-center mx-auto mb-4">
                                 <Plus className="h-8 w-8 text-gray-400" />

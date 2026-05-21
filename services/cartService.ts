@@ -30,6 +30,43 @@ export interface CartStatistics {
     avgItemsPerCart: number;
 }
 
+// 购物车操作日志接口
+export interface CartOperationLog {
+    id: number;
+    cartId: number;
+    sessionId: string;
+    userId: number | null;
+    userEmail: string | null;
+    userName: string;
+    isGuest: boolean;
+    operationType: string;
+    operationDesc: string;
+    productId: number | null;
+    productTitle: string | null;
+    productSku: string | null;
+    skuId: number | null;
+    quantity: number | null;
+    unitPrice: number | null;
+    totalPrice: number | null;
+    cartTotalItems: number;
+    cartTotalAmount: number;
+    ip: string | null;
+    userAgent: string | null;
+    createdAt: string;
+}
+
+// 操作日志统计接口
+export interface CartOperationStatistics {
+    totalOperations: number;
+    todayOperations: number;
+    addOperations: number;
+    updateOperations: number;
+    removeOperations: number;
+    clearOperations: number;
+    abandonOperations: number;
+    avgOperationsPerCart: number;
+}
+
 class CartService {
     /**
      * 获取用户购物车（查询 - 使用 Axios 直连后端）
@@ -140,6 +177,91 @@ class CartService {
         }
 
         throw new Error(response.data?.message || 'Failed to fetch cart statistics');
+    }
+
+    // ✅ 获取购物车操作日志列表
+    async getCartOperationLogs(params: {
+        page?: number;
+        size?: number;
+        operationType?: string;
+        isGuest?: boolean;
+        search?: string;
+    } = {}): Promise<{ content: CartOperationLog[]; totalPages: number; totalElements: number }> {
+        try {
+            const {
+                page = 0,
+                size = 20,
+                operationType = '',
+                isGuest,
+                search = ''
+            } = params;
+
+            const queryParams = new URLSearchParams();
+            queryParams.append('page', page.toString());
+            queryParams.append('size', size.toString());
+
+            if (operationType) queryParams.append('operationType', operationType);
+            if (search) {
+                queryParams.append('userName', search);
+                queryParams.append('userEmail', search);
+            }
+
+            const queryString = queryParams.toString();
+            const url = `/api/admin/V1/cart/operation-logs${queryString ? '?' + queryString : ''}`;
+
+            console.log('[CartService] Fetching cart operation logs:', url);
+
+            const response = await axiosClient.get(url);
+
+            if (response.data?.success) {
+                return response.data.data;
+            }
+
+            throw new Error(response.data?.message || 'Failed to fetch cart operation logs');
+        } catch (error) {
+            console.error('❌ [CartService] Error fetching cart operation logs:', error);
+            throw error;
+        }
+    }
+
+    // ✅ 获取购物车操作日志统计
+    async getCartOperationStatistics(): Promise<CartOperationStatistics> {
+        try {
+            const url = `/api/admin/V1/cart/operation-logs/statistics`;
+            console.log('[CartService] Fetching cart operation logs statistics:', url);
+
+            const response = await axiosClient.get(url);
+
+            if (response.data?.success) {
+                // 将后端返回的数据格式转换为前端期望的格式
+                const backendData = response.data.data;
+                return {
+                    totalOperations: backendData.totalOperations || 0,
+                    todayOperations: backendData.todayOperations || 0,
+                    addOperations: backendData.addOperations || 0,
+                    updateOperations: backendData.updateOperations || 0,
+                    removeOperations: backendData.removeOperations || 0,
+                    clearOperations: backendData.clearOperations || 0,
+                    abandonOperations: backendData.abandonOperations || 0,
+                    avgOperationsPerCart: backendData.avgOperationsPerCart || 0
+                };
+            }
+
+            throw new Error(response.data?.message || 'Failed to fetch cart operation logs statistics');
+        } catch (error) {
+            console.error(' [CartService] Error fetching cart operation logs statistics:', error);
+            // 返回默认值
+            return {
+                totalOperations: 0,
+                todayOperations: 0,
+                addOperations: 0,
+                updateOperations: 0,
+                removeOperations: 0,
+                clearOperations: 0,
+                abandonOperations: 0,
+                avgOperationsPerCart: 0
+            };
+        }
     }
 }
 

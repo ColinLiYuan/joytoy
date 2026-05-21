@@ -71,7 +71,8 @@ class BlogService {
         page: number = 0,
         size: number = 12,
         status?: string,
-        sortBy?: string
+        sortBy?: string,
+        keyword?: string
     ): Promise<AdminBlogListResponse> {
         try {
             const queryParams = new URLSearchParams({
@@ -85,6 +86,10 @@ class BlogService {
             
             if (sortBy) {
                 queryParams.append('sortBy', sortBy);
+            }
+
+            if (keyword) {
+                queryParams.append('keyword', keyword);
             }
 
             const url = `${BACKEND_API_ROUTES.admin.blog.list}?${queryParams}`;

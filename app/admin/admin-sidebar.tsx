@@ -17,7 +17,8 @@ import {
     Tag,
     Truck,
     Warehouse,
-    Layers
+    Layers,
+    ClipboardList
 } from 'lucide-react';
 
 interface SidebarContentProps {
@@ -40,7 +41,15 @@ function SidebarContent({ sidebarOpen, setSidebarOpen }: SidebarContentProps) {
         { name: '套装管理', href: '/admin/bundle', icon: Layers },
         { name: '订单管理', href: '/admin/order', icon: ShoppingCart },
         { name: '用户管理', href: '/admin/user', icon: Users },
-        { name: '购物车管理', href: '/admin/cart', icon: CreditCard },
+        { 
+            name: '购物车管理', 
+            href: '/admin/cart',
+            icon: CreditCard,
+            children: [
+                { name: '购物车列表', href: '/admin/cart' },
+                { name: '操作日志', href: '/admin/cart/logs' }
+            ]
+        },
         { name: '优惠券管理', href: '/admin/coupon', icon: Tag },
         
         // 库存与采购
