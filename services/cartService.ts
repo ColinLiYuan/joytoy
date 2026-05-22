@@ -116,8 +116,6 @@ class CartService {
 
             const url = `/api/admin/V1/cart/list?page=${page}&size=${size}&sortBy=${sortBy}${status ? `&status=${status}` : ''}${userId ? `&userId=${userId}` : ''}${isGuest !== undefined ? `&isGuest=${isGuest}` : ''}`;
             
-            console.log('[CartService] Fetching admin cart list:', url);
-            
             // 添加时间戳参数，避免浏览器缓存
             const cacheBusterUrl = `${url}${url.includes('?') ? '&' : '?'}_t=${Date.now()}`;
             const response = await axiosClient.get(cacheBusterUrl);
@@ -209,9 +207,7 @@ class CartService {
             const queryString = queryParams.toString();
             const url = `/api/admin/V1/cart/operation-logs${queryString ? '?' + queryString : ''}`;
 
-            console.log('[CartService] Fetching cart operation logs:', url);
-
-            const response = await axiosClient.get(url);
+const response = await axiosClient.get(url);
 
             if (response.data?.success) {
                 return response.data.data;
@@ -228,9 +224,7 @@ class CartService {
     async getCartOperationStatistics(): Promise<CartOperationStatistics> {
         try {
             const url = `/api/admin/V1/cart/operation-logs/statistics`;
-            console.log('[CartService] Fetching cart operation logs statistics:', url);
-
-            const response = await axiosClient.get(url);
+const response = await axiosClient.get(url);
 
             if (response.data?.success) {
                 // 将后端返回的数据格式转换为前端期望的格式

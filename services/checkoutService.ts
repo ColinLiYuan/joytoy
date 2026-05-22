@@ -7,9 +7,7 @@ class CheckoutService {
 
     async validateCoupon(checkoutValidateRequest: CheckoutValidateRequest): Promise<CouponResponse> {
         const url = `/api/V1/checkout/validateCoupon`;
-        // console.log('🟢 Creating order, URL:', url);
-
-        const response = await fetch(url, {
+const response = await fetch(url, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -23,7 +21,6 @@ class CheckoutService {
             throw new Error(apiResponse.message || 'coupon validated failed, please contact support@mythtoy.com');
         }
 
-        // console.log('createOrder service: ', apiResponse)
         return apiResponse.data;
     }
 }

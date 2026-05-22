@@ -1,7 +1,6 @@
 // app/toys/[...slug]/route.ts
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { cookies } from 'next/headers';
 import { productService } from '@/services/productService';
 import { blogService } from '@/services/blogService';
 import { ProductResponse } from '@/types/product';
@@ -22,20 +21,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     const resolvedParams = await params;
     const slug = Array.isArray(resolvedParams.slug) ? `/${resolvedParams.slug.join('/')}` : `/${resolvedParams.slug}`;
     try {
-        // ✅ 从 Cookie 读取 Token（服务端）
-        const cookieStore = await cookies();
-        const accessToken = cookieStore.get('accessToken')?.value;
-        
-        // ✅ 手动构建请求，带上 Token
         const url = `${BACKEND_CONFIG.baseURL}/api/V1/product?slug=${encodeURIComponent(slug)}`;
-        const headers: Record<string, string> = {
-            'Content-Type': 'application/json',
-        };
-        if (accessToken) {
-            headers['Authorization'] = `Bearer ${accessToken}`;
-        }
-        
-        const response = await fetch(url, { headers });
+        const response = await fetch(url, { next: { revalidate: 3600 } });
         const result = await response.json();
         
         if (!result?.success) {
@@ -50,7 +37,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
         const cleanDescription = product.description?.replace(/[#*`]/g, '').substring(0, 160) || `Buy ${product.title}`;
 
         return {
-            title: `${product.title} - MythToy`,
+            title: product.title,
             description: cleanDescription,
             alternates: { canonical: canonicalUrl },
             openGraph: {
@@ -94,26 +81,16 @@ function formatDisplayName(slug: string): string {
     return slug.replace(/-/g, ' ').split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
 }
 
+export const revalidate = 3600;
+
 export default async function ProductDetail({ params }: PageProps) {
     const resolvedParams = await params;
     const slug = Array.isArray(resolvedParams.slug) ? `/${resolvedParams.slug.join('/')}` : `/${resolvedParams.slug}`;
     let product: ProductResponse | null = null;
 
     try {
-        // ✅ 从 Cookie 读取 Token（服务端）
-        const cookieStore = await cookies();
-        const accessToken = cookieStore.get('accessToken')?.value;
-        
-        // ✅ 手动构建请求，带上 Token
         const url = `${BACKEND_CONFIG.baseURL}/api/V1/product?slug=${encodeURIComponent(slug)}`;
-        const headers: Record<string, string> = {
-            'Content-Type': 'application/json',
-        };
-        if (accessToken) {
-            headers['Authorization'] = `Bearer ${accessToken}`;
-        }
-        
-        const response = await fetch(url, { headers });
+        const response = await fetch(url, { next: { revalidate: 3600 } });
         const result = await response.json();
         
         if (result?.success) {
@@ -159,7 +136,7 @@ export default async function ProductDetail({ params }: PageProps) {
             url: `${baseUrl}/toys${slug}`,
             priceCurrency: 'USD',
             price: sku.price || product.currentPrice,
-            priceValidUntil: '2026-12-31',
+            priceValidUntil: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
             itemCondition: 'https://schema.org/NewCondition',
             availability: skuStock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
             sku: sku.sku || `${product.sku}-${sku.color}-${sku.size}`,
@@ -194,7 +171,12 @@ export default async function ProductDetail({ params }: PageProps) {
         '@graph': [
             {
                 '@type': 'Product',
+                '@id': `${baseUrl}/toys${slug}#product`,
                 name: product.title,
+                mainEntityOfPage: {
+                    '@type': 'WebPage',
+                    '@id': `${baseUrl}/toys${slug}`,
+                },
                 image: allImages.map((img, index) => ({
                     '@type': 'ImageObject',
                     url: img,
@@ -214,7 +196,7 @@ export default async function ProductDetail({ params }: PageProps) {
                         url: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.mythtoy.com'}/toys${slug}`,
                         priceCurrency: 'USD',
                         price: product.currentPrice,
-                        priceValidUntil: '2026-12-31',
+                        priceValidUntil: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
                         itemCondition: 'https://schema.org/NewCondition',
                         availability: (product.status === 'ACTIVE' && totalAvailableStock > 0)
                             ? 'https://schema.org/InStock'
@@ -280,8 +262,6 @@ export default async function ProductDetail({ params }: PageProps) {
             .map(r => r.value)
             .filter(g => g?.slug);
     }
-
-    console.log('galleryItems', galleryItems)
 
     return (
         <div className="min-h-screen bg-white">

@@ -14,8 +14,6 @@ interface PageProps {
 async function getBlogData(slug: string) {
     try {
         const url = `${BACKEND_CONFIG.baseURL}/api/V1/blog?slug=${encodeURIComponent(slug)}`;
-        console.log('[BlogDetail] Fetching blog from:', url);
-        
         const response = await fetch(url, {
             next: { revalidate: 3600 }, // 缓存1小时
         });
@@ -46,7 +44,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     
     if (!blog) {
         return {
-            title: 'Article Not Found | MythToy',
+            title: 'Article Not Found',
             description: 'The requested article could not be found.',
         };
     }
@@ -54,7 +52,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.mythtoy.com';
     
     return {
-        title: `${blog.title} | MythToy Blog`,
+        title: {
+            absolute: `${blog.title} | MythToy Blog`,
+        },
         description: blog.summary || blog.content.substring(0, 155),
         openGraph: {
             title: blog.title,

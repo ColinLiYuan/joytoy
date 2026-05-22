@@ -10,11 +10,7 @@ class BundleService {
     async adminList(page: number = 0, size: number = 20): Promise<BundleListResponse> {
         try {
             const url = `/api/admin/V1/bundles?page=${page}&size=${size}`;
-            console.log('[BundleService] Fetching admin bundles:', url);
-            
             const response = await axiosClient.get(url);
-            console.log('[BundleService] Admin bundles response:', response.data);
-
             if (response.data?.success) {
                 return response.data.data;
             }
@@ -32,11 +28,7 @@ class BundleService {
     async adminGetById(id: number): Promise<ProductBundle> {
         try {
             const url = `/api/admin/V1/bundles/${id}`;
-            console.log('[BundleService] Fetching bundle by ID:', url);
-            
             const response = await axiosClient.get(url);
-            console.log('[BundleService] Bundle detail response:', response.data);
-
             if (response.data?.success) {
                 return response.data.data;
             }
@@ -54,11 +46,7 @@ class BundleService {
     async create(bundle: Omit<ProductBundle, 'id' | 'createdAt' | 'updatedAt'>): Promise<ProductBundle> {
         try {
             const url = `/api/admin/V1/bundles`;
-            console.log('[BundleService] Creating bundle:', url);
-            
             const response = await axiosClient.post(url, bundle);
-            console.log('[BundleService] Create bundle response:', response.data);
-
             if (response.data?.success) {
                 return response.data.data;
             }
@@ -76,11 +64,7 @@ class BundleService {
     async update(id: number, bundle: Partial<ProductBundle>): Promise<ProductBundle> {
         try {
             const url = `/api/admin/V1/bundles/${id}`;
-            console.log('[BundleService] Updating bundle:', url);
-            
             const response = await axiosClient.put(url, bundle);
-            console.log('[BundleService] Update bundle response:', response.data);
-
             if (response.data?.success) {
                 return response.data.data;
             }
@@ -98,11 +82,7 @@ class BundleService {
     async delete(id: number): Promise<void> {
         try {
             const url = `/api/admin/V1/bundles/${id}`;
-            console.log('[BundleService] Deleting bundle:', url);
-            
             const response = await axiosClient.delete(url);
-            console.log('[BundleService] Delete bundle response:', response.data);
-
             if (!response.data?.success) {
                 throw new Error(response.data?.message || 'Failed to delete bundle');
             }

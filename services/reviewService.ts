@@ -11,10 +11,7 @@ class ReviewService {
     async getReviews(productId: number, page: number = 0, size: number = 5): Promise<ReviewListResponse> {
         try {
             const url = `${BACKEND_API_ROUTES.review.list}/${productId}?page=${page}&size=${size}`
-            console.log('[ReviewService] Fetching reviews from:', url)
-            const response = await axiosClient.get(url)
-            console.log('[ReviewService] Response:', response.data)
-            
+const response = await axiosClient.get(url)
             if (response.data?.success) {
                 return response.data.data
             }

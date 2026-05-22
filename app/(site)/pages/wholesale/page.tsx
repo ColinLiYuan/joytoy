@@ -37,7 +37,7 @@ export const metadata: Metadata = {
         title: 'Professional Adult Toy Sourcing & Distribution',
         description: 'Connect with trusted manufacturers for wholesale adult toys. Low MOQ, quality assurance, and reliable logistics.',
         type: 'website',
-        url: 'https://mythtoy.com/pages/wholesale',
+        url: 'https://www.mythtoy.com/pages/wholesale',
     }
 };
 

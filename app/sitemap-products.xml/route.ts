@@ -53,7 +53,7 @@ export async function GET() {
   ${products.map(product => `
   <url>
     <loc>${baseUrl}/toys${product.slug}</loc>
-    <lastmod>${product.updatedAt || new Date().toISOString()}</lastmod>
+    ${product.updatedAt ? `<lastmod>${new Date(product.updatedAt).toISOString()}</lastmod>` : ''}
   </url>
   `).join('')}
 </urlset>`

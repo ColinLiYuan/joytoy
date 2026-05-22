@@ -43,14 +43,8 @@ export default function AffiliateDashboard() {
             try {
                 console.log('[Affiliate Dashboard] Fetching dashboard data...');
                 const response = await affiliateService.getDashboardData();
-                console.log('[Affiliate Dashboard] Dashboard data loaded:', response);
                 setData(response);
             } catch (error: any) {
-                console.error("[Affiliate Dashboard] Failed to load dashboard data", error);
-                console.error("[Affiliate Dashboard] Error details:", {
-                    message: error.message,
-                    stack: error.stack
-                });
             } finally {
                 setLoading(false);
             }

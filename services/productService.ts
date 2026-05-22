@@ -46,11 +46,7 @@ class ProductService {
             }
 
             const url = `/api/admin/V1/product/list?${queryParams.toString()}`;
-            console.log('[ProductService] Fetching admin products from:', url);
-            
             const response = await axiosClient.get(url);
-            console.log('[ProductService] Admin products response:', response.data);
-
             if (response.data?.success) {
                 return response.data.data;
             }
@@ -75,11 +71,7 @@ class ProductService {
     async adminGetById(id: string): Promise<AdminProductResponse> {
         try {
             const url = `/api/admin/V1/product/${id}`;
-            console.log('[ProductService] Fetching product by ID:', url);
-            
             const response = await axiosClient.get(url);
-            console.log('[ProductService] Product detail response:', response.data);
-
             if (response.data?.success) {
                 return response.data.data;
             }
@@ -210,11 +202,7 @@ class ProductService {
             }
 
             const url = `/api/V1/product/list?${queryParams}`;
-            console.log('[ProductService] getProductsByCategory - url:', url);
-
-            const response = await axiosClient.get(url);
-
-            console.log('response:', response)
+const response = await axiosClient.get(url);
 
             if (response.data?.success) {
                 const data = response.data.data;
@@ -233,7 +221,6 @@ class ProductService {
         } catch (error: any) {
             // 401 或其他认证错误 - 不处理，让 axios 拦截器自动重试
             if (error.response?.status === 401) {
-                console.log('[ProductService] 401 error, returning empty list');
                 return this.getEmptyList(page, size);
             }
             console.error('[ProductService] Network error:', error);
@@ -324,7 +311,6 @@ class ProductService {
         } catch (error: any) {
             // 401 或其他认证错误 - 不处理，让 axios 拦截器自动重试
             if (error.response?.status === 401) {
-                console.log('[ProductService] 401 error, returning empty list');
                 return this.getEmptyList(page, size);
             }
             console.error('[ProductService] Network error:', error);
@@ -353,10 +339,7 @@ class ProductService {
     async getHeroProducts(): Promise<ProductResponse[]> {
         try {
             const url = `/api/V1/product/hero`;
-            console.log('[ProductService] getHeroProducts - Calling:', url);
             const response = await axiosClient.get(url);
-            console.log('[ProductService] getHeroProducts - Response:', response.data);
-
             if (response.data?.success) {
                 return response.data.data || [];
             }
@@ -383,7 +366,6 @@ class ProductService {
 
             return [];
         } catch (error) {
-            console.error("Failed to fetch add-ons", error);
             return [];
         }
     }

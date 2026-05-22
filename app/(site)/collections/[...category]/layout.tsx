@@ -8,7 +8,7 @@ const CATEGORY_SEO: Record<string, {
     keywords?: string[];
 }> = {
     'female-sex-toys/g-spot-vibrators': {
-        title: 'Best G-Spot Vibrators — Premium G Spot Toys for Women | MythToy',
+        title: 'Best G-Spot Vibrators — Premium G Spot Toys for Women',
         description: 'Shop the best g spot vibrators designed for internal stimulation. Premium g spot toys with ergonomic curves for intense, deep orgasms. Free shipping on orders over $49.',
         keywords: [
             'g spot toy', 'g spot vibrators', 'best g spot vibrators',
@@ -17,12 +17,12 @@ const CATEGORY_SEO: Record<string, {
         ],
     },
     'all': {
-        title: 'Shop All Products — Premium Body-Safe Adult Toys | MythToy',
+        title: 'Shop All Products — Premium Body-Safe Adult Toys',
         description: 'Browse our complete catalog of premium body-safe adult toys. Medical-grade silicone vibrators, air-pulse stimulators, and more. Discreet shipping, 1-year warranty.',
         keywords: ['adult toys', 'premium vibrators', 'body-safe products', 'discreet shipping', 'shop all', 'luxury adult toys'],
     },
     'male-sex-toys/stamina-training': {
-        title: 'Stamina Training Devices & Delay Rings | MythToy',
+        title: 'Stamina Training Devices & Delay Rings',
         description: 'Explore premium stamina training units and premature ejaculation devices. Safe, body-safe tools to improve control, endurance, and intimacy. Shop discreetly at MythToy.',
         keywords: [
             'stamina training', 'premature ejaculation device', 'stamina training unit',
@@ -83,7 +83,7 @@ export async function generateMetadata({ params }: { params: Promise<{ category:
             .join(' ');
     }
 
-    const title = `${categoryName} — Premium Body-Safe Adult Toys | MythToy`;
+    const title = `${categoryName} — Premium Body-Safe Adult Toys`;
     const description = `Shop ${categoryName.toLowerCase()} at MythToy. Premium body-safe materials, discreet shipping, and 1-year warranty. Browse our curated collection online.`;
 
     return {

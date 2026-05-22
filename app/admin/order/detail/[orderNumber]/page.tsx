@@ -27,7 +27,6 @@ function OrderDetailContent() {
             const orderNo = params.orderNumber as string;
 
             if (!orderNo) {
-                console.error("No orderNumber found in params");
                 return;
             }
 

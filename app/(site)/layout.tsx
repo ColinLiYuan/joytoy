@@ -32,10 +32,11 @@ export default async function SiteLayout({
 
     const organizationStructuredData = {
         "@context": "https://schema.org",
+        "@id": "https://www.mythtoy.com/#organization",
         "@type": "Organization",
         "name": "MythToy",
         "url": process.env.NEXT_PUBLIC_SITE_URL || "https://www.mythtoy.com",
-        "logo": process.env.NEXT_PUBLIC_SITE_URL ? `${process.env.NEXT_PUBLIC_SITE_URL}/logo.svg` : "https://www.mythtoy.com/logo.svg",
+        "logo": process.env.NEXT_PUBLIC_SITE_URL ? `${process.env.NEXT_PUBLIC_SITE_URL}/icon_v2.png` : "https://www.mythtoy.com/icon_v2.png",
         "description": "Premium adult lifestyle products direct from source.",
         "foundingDate": "2024",
         "sameAs": [
@@ -53,6 +54,7 @@ export default async function SiteLayout({
 
     const webSiteStructuredData = {
         "@context": "https://schema.org",
+        "@id": "https://www.mythtoy.com/#website",
         "@type": "WebSite",
         "name": "MythToy",
         "url": process.env.NEXT_PUBLIC_SITE_URL || "https://www.mythtoy.com",

@@ -30,12 +30,7 @@ class UserService {
             }
 
             const url = `${BACKEND_API_ROUTES.admin.user.list}?${queryParams}`;
-            console.log('[UserService] Fetching admin users from:', url);
-            
             const response = await axiosClient.get(url);
-            console.log('[UserService] Admin users response status:', response.status);
-            console.log('[UserService] Admin users response data:', response.data);
-
             if (response.data?.success) {
                 return response.data.data;
             }

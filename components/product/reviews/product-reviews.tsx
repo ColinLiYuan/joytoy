@@ -55,7 +55,6 @@ export default function ProductReviews({ productId }: ProductReviewsProps) {
                 setStats(data.stats);
             }
         } catch (error) {
-            console.error("Failed to load reviews", error);
         } finally {
             setIsLoading(false);
         }

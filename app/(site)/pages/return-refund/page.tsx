@@ -5,10 +5,10 @@ import { Suspense } from 'react';
 import PolicyNav from '@/components/policy-nav';
 
 export const metadata: Metadata = {
-    title: 'Return & Warranty Policy | MythToy - 1-Year Guarantee',
+    title: 'Return & Warranty Policy - 1-Year Guarantee',
     description: 'We stand by our quality. Learn about our 1-Year Warranty, replacement process for defective items, and hygiene standards.',
     alternates: {
-        canonical: 'https://mythtoy.com/pages/return-refund',
+        canonical: 'https://www.mythtoy.com/pages/return-refund',
     },
 };
 

@@ -12,7 +12,14 @@ const ITEMS_PER_PAGE = 12;
 export default function ManualsPage() {
     const [searchQuery, setSearchQuery] = useState('');
     const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
-    const { isLoggedIn } = useAuth();
+    const { isLoggedIn, userInfo } = useAuth();
+    const orderCount = userInfo?.orderCount ?? 0;
+
+    const loyaltyTier = orderCount === 0
+        ? { code: 'MYTH15', discount: '15%', label: 'First Purchase Offer' }
+        : orderCount <= 2
+            ? { code: 'THANKYOU20', discount: '20%', label: 'Loyal Customer Reward' }
+            : { code: 'VIP25', discount: '25%', label: 'VIP Exclusive' };
 
     // ✅ 记录当前正在检查哪个 ID 的文件 (用于显示转圈圈)
     const [checkingId, setCheckingId] = useState<string | null>(null);
@@ -99,25 +106,33 @@ export default function ManualsPage() {
                         <div className="relative z-10">
                             <div className="inline-flex items-center gap-2 bg-white text-indigo-600 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider mb-4 shadow-sm">
                                 <Gift size={16} />
-                                Exclusive Offer
+                                {loyaltyTier.label}
                             </div>
                             <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3 font-['Playfair_Display']">
-                                Thank You for Being a Valued Customer
+                                {orderCount === 0
+                                    ? 'Unlock Your First MythToy Experience'
+                                    : orderCount <= 2
+                                        ? 'Welcome Back — A Gift For You'
+                                        : 'VIP Treatment For Our Best Customer'}
                             </h2>
                             <p className="text-gray-600 mb-6 max-w-xl mx-auto">
-                                As a token of our appreciation, here's an exclusive discount code just for you.
+                                {orderCount === 0
+                                    ? 'Start your journey with an exclusive first-purchase discount.'
+                                    : orderCount <= 2
+                                        ? 'Thank you for coming back. Here\'s a reward for your continued support.'
+                                        : 'Your loyalty inspires us. Please enjoy this premium discount.'}
                             </p>
-                            
+
                             <div className="inline-flex items-center gap-4 bg-white border-2 border-dashed border-indigo-300 rounded-xl px-6 py-4 shadow-sm hover:border-indigo-400 transition-colors cursor-pointer"
                                  onClick={() => {
-                                     navigator.clipboard.writeText('THANKYOU20');
+                                     navigator.clipboard.writeText(loyaltyTier.code);
                                      showToast('success', 'Copied!', 'Discount code copied to clipboard');
                                  }}
                             >
-                                <span className="text-3xl font-bold text-indigo-600 font-mono tracking-wider">THANKYOU20</span>
+                                <span className="text-3xl font-bold text-indigo-600 font-mono tracking-wider">{loyaltyTier.code}</span>
                                 <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">Click to copy</span>
                             </div>
-                            <p className="text-xs text-gray-500 mt-3">20% off your next purchase • Valid for all products</p>
+                            <p className="text-xs text-gray-500 mt-3">{loyaltyTier.discount} off your next purchase • Valid for all products</p>
                         </div>
                     </div>
                 )}
@@ -228,4 +243,4 @@ export default function ManualsPage() {
             </div>
         </div>
     );
-}export const dynamic = 'force-dynamic'; 
+}

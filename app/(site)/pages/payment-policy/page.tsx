@@ -4,10 +4,10 @@ import { Metadata } from 'next';
 import PolicyNav from '@/components/policy-nav';
 
 export const metadata: Metadata = {
-    title: 'Payment Policy | MythToy - Secure Transactions',
+    title: 'Payment Policy - Secure Transactions',
     description: 'MythToy accepts secure payments via Credit Cards, PayPal, and Bank Transfer. Learn about our SSL encryption, billing discretion, and fraud protection.',
     alternates: {
-        canonical: 'https://mythtoy.com/pages/payment-policy',
+        canonical: 'https://www.mythtoy.com/pages/payment-policy',
     },
 };
 

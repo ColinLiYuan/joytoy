@@ -2,15 +2,15 @@ import { Metadata } from 'next';
 import PolicyNav from '@/components/policy-nav';
 
 export const metadata: Metadata = {
-    title: 'Terms of Service | MythToy - User Agreement & Legal Info',
+    title: 'Terms of Service - User Agreement & Legal Info',
     description: 'Read the Terms of Service for MythToy. Understand the rules, regulations, age restrictions (18+), and agreements for using our website and purchasing adult products.',
     alternates: {
-        canonical: 'https://mythtoy.com/pages/terms-and-conditions',
+        canonical: 'https://www.mythtoy.com/pages/terms-and-conditions',
     },
     openGraph: {
-        title: 'Terms of Service | MythToy',
+        title: 'Terms of Service',
         description: 'User agreement and legal terms for using MythToy.',
-        url: 'https://mythtoy.com/pages/terms-and-conditions',
+        url: 'https://www.mythtoy.com/pages/terms-and-conditions',
         type: 'website',
     },
 };

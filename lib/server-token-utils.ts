@@ -47,14 +47,7 @@ export async function refreshAccessToken(): Promise<string | null> {
             // ✅ 使用后端返回的过期时间，而不是写死的 30 分钟
             const accessMaxAge = expiresIn || 30 * 60 // 默认 30 分钟
             const refreshMaxAge = refreshExpiresIn || 7 * 24 * 60 * 60 // 默认 7 天
-            
-            console.log('[Server Token] Using backend expires:', {
-                expiresIn: accessMaxAge,
-                refreshExpiresIn: refreshMaxAge,
-                expiresInMinutes: accessMaxAge / 60,
-                refreshExpiresInDays: refreshMaxAge / 60 / 60 / 24
-            })
-            
+
             // 更新 Cookie
             cookieStore.set('accessToken', accessToken, {
                 path: '/',
@@ -74,7 +67,6 @@ export async function refreshAccessToken(): Promise<string | null> {
                 })
             }
 
-            console.log('[Server Token] Token refreshed successfully')
             return accessToken
         }
 
@@ -99,13 +91,7 @@ export async function fetchWithAuth(
     }
 
     const token = await getAccessToken()
-    
-    console.log('[Server Token] fetchWithAuth called:', {
-        url: fullUrl.substring(0, 100),
-        hasToken: !!token,
-        tokenLength: token?.length || 0
-    })
-    
+
     const headers = new Headers(options.headers || {})
     if (token) {
         headers.set('Authorization', `Bearer ${token}`)
@@ -124,15 +110,13 @@ export async function fetchWithAuth(
 
     // 如果 401，尝试刷新 token 并重试（只重试一次）
     if (response.status === 401 && !headers.has('X-Retry-After-Refresh')) {
-        console.log('[Server Token] Got 401, attempting refresh...')
         const newToken = await refreshAccessToken()
-        
+
         if (newToken) {
             headers.set('Authorization', `Bearer ${newToken}`)
             // 标记已重试，防止无限循环
             headers.set('X-Retry-After-Refresh', 'true')
-            
-            console.log('[Server Token] Retrying with new token...')
+
             response = await fetch(fullUrl, {
                 ...options,
                 headers,

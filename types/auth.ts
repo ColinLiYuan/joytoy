@@ -29,6 +29,10 @@ export interface LoginResponse {
     role?: 'CUSTOMER' | 'ADMIN' | 'SUPER_ADMIN';
     isAdmin?: boolean;
     isAffiliate?: boolean;
+
+    // 用户消费数据 (用于复购优惠)
+    orderCount?: number;
+    totalSpent?: number;
 }
 
 export interface RegisterRequest {

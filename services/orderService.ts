@@ -40,15 +40,8 @@ class OrderService {
     // 创建订单
     async createOrder(orderCreateRequest: OrderCreateRequest): Promise<OrderResponse> {
         const url = `/api/V1/order`;
-        console.log('[OrderService] Creating order...')
-        console.log('[OrderService] Request URL:', url)
-        console.log('[OrderService] Request data:', JSON.stringify(orderCreateRequest, null, 2))
-        
         try {
             const response = await axiosClient.post(url, orderCreateRequest);
-            console.log('[OrderService] Create order response status:', response.status)
-            console.log('[OrderService] Create order response data:', response.data)
-
             if (response.data?.success) {
                 return response.data.data;
             }
@@ -168,13 +161,9 @@ class OrderService {
             if (guestEmail) queryParams.append('guestEmail', guestEmail);
 
             const url = `/api/admin/V1/order/list?${queryParams.toString()}`;
-            console.log('[OrderService] Fetching admin orders from:', url);
-            
             // 添加时间戳参数，避免浏览器缓存
             const cacheBusterUrl = `${url}${url.includes('?') ? '&' : '?'}_t=${Date.now()}`;
             const response = await axiosClient.get(cacheBusterUrl);
-            console.log('[OrderService] Admin orders response:', response.data);
-
             if (response.data?.success) {
                 return response.data.data;
             }

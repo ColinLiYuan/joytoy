@@ -116,7 +116,6 @@ export default function Cart({ isOpen, onClose }: CartProps) {
                 setUpsellProducts(products);
 
             } catch (error) {
-                console.error("Failed to load upsells", error);
             } finally {
                 setUpsellLoading(false);
             }

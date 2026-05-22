@@ -62,10 +62,10 @@ export async function sendContactEmail(formData: FormData) {
                         <h4 style="margin-top: 0; margin-bottom: 10px;">In a hurry?</h4>
                         <ul style="list-style-type: none; padding-left: 0; margin: 0;">
                             <li style="margin-bottom: 8px;">
-                                📦 <strong>Where is my order?</strong> <a href="https://mythtoy.com/pages/order-tracking" style="color: #E11D48; text-decoration: none;">Track Your Package Here</a>
+                                📦 <strong>Where is my order?</strong> <a href="https://www.mythtoy.com/pages/order-tracking" style="color: #E11D48; text-decoration: none;">Track Your Package Here</a>
                             </li>
                             <li style="margin-bottom: 8px;">
-                                🚚 <strong>Shipping Times?</strong> <a href="https://mythtoy.com/pages/shipping-policy" style="color: #E11D48; text-decoration: none;">Read Shipping Policy</a>
+                                🚚 <strong>Shipping Times?</strong> <a href="https://www.mythtoy.com/pages/shipping-policy" style="color: #E11D48; text-decoration: none;">Read Shipping Policy</a>
                             </li>
                         </ul>
                     </div>
@@ -167,7 +167,7 @@ export async function subscribeToNewsletter(formData: FormData) {
                     <h2 style="color: #d63031; font-size: 24px;">MYTH15</h2>
                     <p>Use this code at checkout to get 15% off your first order.</p>
                     <br/>
-                    <a href="https://mythtoy.com/collections/all">Shop Now</a>
+                    <a href="https://www.mythtoy.com/collections/all">Shop Now</a>
                 `,
             });
         } catch (emailError) {
@@ -244,7 +244,7 @@ export async function submitWholesaleForm(formData: FormData) {
                     <p>Thank you for your interest in partnering with <strong>MythToy</strong>.</p>
                     <p>We have received your inquiry regarding wholesale opportunities for <strong>${businessName || 'your business'}</strong>.</p>
                     <p>Our sales team is currently reviewing your details. You can expect to receive our <strong>Product Catalog and Wholesale Price List</strong> within the next few days.</p>
-                    <p>In the meantime, feel free to browse our retail collection at <a href="https://mythtoy.com">mythtoy.com</a>.</p>
+                    <p>In the meantime, feel free to browse our retail collection at <a href="https://www.mythtoy.com">mythtoy.com</a>.</p>
                     <br>
                     <p>Best Regards,</p>
                     <p><strong>Colin Li</strong><br>Sales Manager | MythToy</p>

@@ -48,12 +48,12 @@ export default function BlogDetailClient({ initialBlog }: BlogDetailClientProps)
             "name": "MythToy",
             "logo": {
                 "@type": "ImageObject",
-                "url": "https://mythtoy.com/icon_v2.png"
+                "url": "https://www.mythtoy.com/icon_v2.png"
             }
         },
         "mainEntityOfPage": {
             "@type": "WebPage",
-            "@id": `https://mythtoy.com/blog/${blog.slug}`
+            "@id": `https://www.mythtoy.com/blog/${blog.slug}`
         }
     };
 

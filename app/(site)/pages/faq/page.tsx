@@ -4,13 +4,13 @@ import { FAQ_DATA } from '@/lib/constants/faq-data';
 // ✅ SEO: Metadata
 export async function generateMetadata() {
     return {
-        title: 'Frequently Asked Questions - MythToy',
+        title: 'Frequently Asked Questions',
         description: 'Find answers to common questions about MythToy products, shipping, returns, and customer support.',
         alternates: {
-            canonical: 'https://mythtoy.com/pages/faq',
+            canonical: 'https://www.mythtoy.com/pages/faq',
         },
         openGraph: {
-            title: 'FAQ - MythToy Support',
+            title: 'FAQ',
             description: 'Get answers to your questions about our premium adult lifestyle products.',
             type: 'website',
         },

@@ -77,8 +77,7 @@ export class AffiliateService {
 
     private async logClick(data: AffiliateClickLog): Promise<void> {
         try {
-            console.log('[AffiliateService] Logging click:', data);
-            await apiPost(`${SERVER_CONFIG.apiRoutes.affiliate}/click`, data);
+await apiPost(`${SERVER_CONFIG.apiRoutes.affiliate}/click`, data);
         } catch (error) {
             // 仅仅是记录点击，即使报错也不要干扰用户正常访问
             console.error('Affiliate click logging error:', error);
@@ -89,16 +88,8 @@ export class AffiliateService {
      * 获取 Dashboard 统计数据 (Java API: /api/V1/affiliate/dashboard)
      */
     async getDashboardData(): Promise<AffDashboardResponse> {
-        console.log('[Affiliate Service] Calling getDashboardData...');
         const result = await apiGet<AffDashboardResponse>(`${SERVER_CONFIG.apiRoutes.affiliate}/dashboard`);
-        
-        console.log('[Affiliate Service] getDashboardData result:', {
-            success: result.success,
-            status: result.status,
-            message: result.message,
-            hasData: !!result.data
-        });
-        
+
         if (!result.success) {
             console.error('[Affiliate Service] getDashboardData failed:', result);
             throw new Error(result.message || 'Failed to fetch dashboard');
@@ -189,8 +180,6 @@ export class AffiliateService {
     }> {
         try {
             const url = '/api/admin/V1/affiliate/stats';
-            console.log('[AffiliateService] Fetching admin stats:', url);
-            
             const response = await axiosClient.get(url);
 
             if (response.data?.success) {
@@ -234,8 +223,6 @@ export class AffiliateService {
             const { page = 0, size = 20 } = params;
             const url = `/api/admin/V1/affiliate/list?page=${page}&size=${size}`;
             
-            console.log('[AffiliateService] Fetching admin affiliate list:', url);
-            
             const response = await axiosClient.get(url);
 
             if (response.data?.success) {
@@ -267,8 +254,6 @@ export class AffiliateService {
     }> {
         try {
             const url = `/api/admin/V1/affiliate/${affiliateId}/commission-logs?page=${page}&size=${size}`;
-            
-            console.log('[AffiliateService] Fetching admin commission logs:', url);
             
             const response = await axiosClient.get(url);
 
@@ -306,8 +291,6 @@ export class AffiliateService {
         try {
             const url = `/api/admin/V1/affiliate/payouts?page=${page}&size=${size}`;
             
-            console.log('[AffiliateService] Fetching all payouts:', url);
-            
             const response = await axiosClient.get(url);
 
             if (response.data?.success) {
@@ -332,8 +315,6 @@ export class AffiliateService {
         try {
             // 首先获取详情，详情中包含活动列表
             const url = `/api/admin/V1/affiliate/${affiliateId}/detail`;
-            
-            console.log('[AffiliateService] Fetching admin affiliate detail:', url);
             
             const response = await axiosClient.get(url);
 
@@ -384,8 +365,6 @@ export class AffiliateService {
         try {
             const url = `/api/admin/V1/affiliate/trend?days=${days}`;
             
-            console.log('[AffiliateService] Fetching trend data:', url);
-            
             const response = await axiosClient.get(url);
 
             if (response.data?.success) {
@@ -419,8 +398,7 @@ export class AffiliateService {
         try {
             const url = `/api/admin/V1/affiliate/stats/by-source`;
                 
-            console.log('[AffiliateService] Fetching source stats:', url);
-                
+    
             const response = await axiosClient.get(url);
     
             if (response.data?.success) {
@@ -454,8 +432,7 @@ export class AffiliateService {
         try {
             const url = `/api/admin/V1/affiliate/stats/by-landing-page`;
                 
-            console.log('[AffiliateService] Fetching landing page stats:', url);
-                
+    
             const response = await axiosClient.get(url);
     
             if (response.data?.success) {
@@ -510,8 +487,6 @@ export class AffiliateService {
     }> {
         try {
             const url = `/api/admin/V1/affiliate/${affiliateId}/stats?days=${days}`;
-            
-            console.log('[AffiliateService] Fetching affiliate detail stats:', url);
             
             const response = await axiosClient.get(url);
 

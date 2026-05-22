@@ -30,6 +30,7 @@ export default function BlogManagementPage() {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState<'ALL' | AdminBlogResponse['status']>('ALL');
+    const [sortBy, setSortBy] = useState<'updatedAt' | 'createdAt' | 'rating' | 'viewCount' | 'likeCount'>('updatedAt');
     const [pagination, setPagination] = useState({
         currentPage: 0,
         pageSize: 12,
@@ -41,7 +42,7 @@ export default function BlogManagementPage() {
 
     useEffect(() => {
         fetchBlogs();
-    }, [statusFilter, pagination.currentPage, searchTerm]);
+    }, [statusFilter, pagination.currentPage, searchTerm, sortBy]);
 
     const fetchBlogs = async () => {
         try {
@@ -50,7 +51,7 @@ export default function BlogManagementPage() {
                 pagination.currentPage,
                 pagination.pageSize,
                 statusFilter !== 'ALL' ? statusFilter : undefined,
-                'createdAt',  // 按创建时间排序
+                sortBy,  // 使用动态排序字段
                 searchTerm || undefined  // 传递搜索关键词
             );
 
@@ -152,6 +153,20 @@ export default function BlogManagementPage() {
                                 <option value="DRAFT">草稿</option>
                                 <option value="PUBLISHED">已发布</option>
                                 <option value="ARCHIVED">已归档</option>
+                            </select>
+                            <select
+                                value={sortBy}
+                                onChange={(e) => {
+                                    setSortBy(e.target.value as any);
+                                    setPagination(prev => ({ ...prev, currentPage: 0 }));
+                                }}
+                                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-full sm:w-40 bg-white"
+                            >
+                                <option value="updatedAt">更新时间</option>
+                                <option value="createdAt">创建时间</option>
+                                <option value="rating">评分</option>
+                                <option value="viewCount">浏览量</option>
+                                <option value="likeCount">点赞数</option>
                             </select>
                         </div>
                         <Link

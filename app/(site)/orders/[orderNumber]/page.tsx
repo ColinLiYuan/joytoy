@@ -3,6 +3,8 @@
 
 import { Suspense, useState, useEffect, use } from 'react';
 import Link from 'next/link';
+
+export const dynamic = 'force-dynamic';
 import { useSearchParams } from 'next/navigation';
 import { orderService } from '@/services/orderService';
 import { OrderResponse } from '@/types/order';
@@ -38,7 +40,6 @@ function OrderDetailsContent({ params }: { params: Promise<{ orderNumber: string
                 // ✅ 先检查是否登录（跟订单列表一样）
                 const userId = getUserId();
                 if (!userId) {
-                    console.log('[Order Detail] User not logged in, redirecting to orders page');
                     setAuthError(true);
                     setIsLoading(false);
                     return;
@@ -51,26 +52,20 @@ function OrderDetailsContent({ params }: { params: Promise<{ orderNumber: string
                 if (savedOrder) {
                     const parsed = JSON.parse(savedOrder);
                     if (parsed.orderNumber === orderNumber || parsed.orderNumber === `#${orderNumber}`) {
-                        console.log('[Order Detail] Found order in localStorage');
                         data = parsed;
                     }
                 }
                 
                 // ✅ 如果 localStorage 没有或订单号不匹配，调用 API
                 if (!data) {
-                    console.log('[Order Detail] Fetching order from API...');
                     data = await orderService.getOrder(orderNumber);
                 }
-                
-                console.log('📦 Order Detail Data:', data);
-                
+
                 if (!data) {
-                    console.error('⚠️ Order data is null');
                     setOrder(null);
                     return;
                 }
-                
-                console.log('📦 First Item:', data.items?.[0]);
+
                 setOrder(data);
 
                 // 计算商品小计
@@ -79,32 +74,21 @@ function OrderDetailsContent({ params }: { params: Promise<{ orderNumber: string
                 }, 0);
                 setSubtotal(calculatedSubtotal);
             } catch (error: any) {
-                console.error('Failed to load order:', error);
-                console.log('[Order Detail] Error response status:', error.response?.status);
-                console.log('[Order Detail] Error message:', error.message);
-                
                 // 检测是否是认证错误
                 if (error.message?.includes('请先登录') || error.message?.includes('Please login') || error.message?.includes('login') || error.response?.status === 401) {
-                    console.log('[Order Detail] Auth error detected, trying localStorage...');
-                    
                     // ✅ 尝试从 localStorage 恢复
                     const savedOrder = localStorage.getItem('currentOrder');
-                    console.log('[Order Detail] localStorage currentOrder:', savedOrder ? 'exists' : 'not found');
-                    
+
                     if (savedOrder) {
                         const parsed = JSON.parse(savedOrder);
-                        console.log('[Order Detail] Parsed order number:', parsed.orderNumber, 'vs requested:', orderNumber);
-                        
+
                         if (parsed.orderNumber === orderNumber || parsed.orderNumber === `#${orderNumber}`) {
-                            console.log('[Order Detail] Using localStorage order due to auth error');
                             setOrder(parsed);
                             const calculatedSubtotal = parsed.items.reduce((total: number, item: any) => {
                                 return total + (item.unitPrice * (item.quantity || 1));
                             }, 0);
                             setSubtotal(calculatedSubtotal);
                             return;
-                        } else {
-                            console.log('[Order Detail] Order number mismatch, cannot use localStorage');
                         }
                     }
                     setAuthError(true);

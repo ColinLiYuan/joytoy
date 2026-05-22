@@ -21,17 +21,11 @@ const axiosClient = axios.create({
 // 请求拦截器
 axiosClient.interceptors.request.use(
     (config) => {
-        console.log('[AxiosClient] Request:', {
-            url: config.url,
-            baseURL: config.baseURL,
-        });
-        
         // 从 Cookie 读取 Token 并添加到请求头
         if (typeof window !== 'undefined') {
             const token = getAccessToken();
             if (token) {
                 config.headers.Authorization = `Bearer ${token}`;
-                console.log('[AxiosClient] Token added to request');
             }
         }
         
@@ -69,23 +63,20 @@ const getAccessToken = (): string | null => {
     for (const cookie of cookies) {
         const [name, value] = cookie.trim().split('=');
         if (name === 'accessToken') {
-            console.log('[AxiosClient] Found accessToken in cookie');
             return decodeURIComponent(value);
         }
     }
-    
+
     // 2. 如果 Cookie 没有，尝试从 localStorage 读取
     try {
         const token = localStorage.getItem('accessToken');
         if (token) {
-            console.log('[AxiosClient] Found accessToken in localStorage');
             return token;
         }
     } catch (e) {
-        console.log('[AxiosClient] Failed to read localStorage:', e);
+        // ignore
     }
-    
-    console.log('[AxiosClient] accessToken not found');
+
     return null;
 };
 
@@ -97,23 +88,20 @@ const getRefreshToken = (): string | null => {
     for (const cookie of cookies) {
         const [name, value] = cookie.trim().split('=');
         if (name === 'refreshToken') {
-            console.log('[AxiosClient] Found refreshToken in cookie');
             return decodeURIComponent(value);
         }
     }
-    
+
     // 2. 如果 Cookie 没有，尝试从 localStorage 读取
     try {
         const token = localStorage.getItem('refreshToken');
         if (token) {
-            console.log('[AxiosClient] Found refreshToken in localStorage');
             return token;
         }
     } catch (e) {
-        console.log('[AxiosClient] Failed to read localStorage:', e);
+        // ignore
     }
-    
-    console.log('[AxiosClient] refreshToken not found');
+
     return null;
 };
 
@@ -167,12 +155,9 @@ axiosClient.interceptors.response.use(
                 // 尝试刷新 Token
                 const refreshToken = getRefreshToken();
                 if (!refreshToken) {
-                    console.log('[AxiosClient] No refresh token found, skipping refresh');
                     throw new Error('No refresh token');
                 }
 
-                console.log('[AxiosClient] Attempting to refresh token...');
-                
                 // ✅ 创建一个新的 axios 实例，避免触发拦截器造成死循环
                 const refreshAxios = axios.create({
                     baseURL: axiosBaseURL,
@@ -186,19 +171,12 @@ axiosClient.interceptors.response.use(
                     refreshToken,
                 });
 
-                console.log('[AxiosClient] Refresh response:', refreshResponse.data);
-
                 if (refreshResponse.data?.success && refreshResponse.data?.data?.accessToken) {
-                    console.log('[AxiosClient] Token refreshed successfully');
-                    
                     const newAccessToken = refreshResponse.data.data.accessToken;
                     const newRefreshToken = refreshResponse.data.data.refreshToken;
                     const expiresIn = refreshResponse.data.data.expiresIn;
                     const refreshExpiresIn = refreshResponse.data.data.refreshExpiresIn;
-                    
-                    console.log('[AxiosClient] Backend returned expiresIn:', expiresIn);
-                    console.log('[AxiosClient] Backend returned refreshExpiresIn:', refreshExpiresIn);
-                    
+
                     // ✅ 同时更新 localStorage 和 Cookie，确保 getAccessToken 能读取到新 Token
                     if (typeof window !== 'undefined') {
                         try {
@@ -206,7 +184,6 @@ axiosClient.interceptors.response.use(
                             if (newRefreshToken) {
                                 localStorage.setItem('refreshToken', newRefreshToken);
                             }
-                            console.log('[AxiosClient] Tokens updated in localStorage');
                         } catch (e) {
                             console.error('[AxiosClient] Failed to update localStorage:', e);
                         }
@@ -231,16 +208,14 @@ axiosClient.interceptors.response.use(
                             });
                         }
                         
-                        console.log('[AxiosClient] Tokens updated in cookie');
                     }
-                    
+
                     // ✅ 强制更新 originalRequest 的 Authorization header
                     originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
                     
                     processQueue(null);
                     return axiosClient(originalRequest);
                 } else {
-                    console.log('[AxiosClient] Refresh response invalid:', refreshResponse.data);
                     throw new Error('Invalid refresh response');
                 }
             } catch (refreshError: any) {
@@ -255,8 +230,6 @@ axiosClient.interceptors.response.use(
                     removeCookie('refreshToken');
                     localStorage.removeItem('accessToken');
                     localStorage.removeItem('refreshToken');
-                                
-                    console.log('[AxiosClient] Tokens cleared, AuthGuard will handle login modal');
                 }
             } finally {
                 isRefreshing = false;

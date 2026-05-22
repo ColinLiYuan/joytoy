@@ -20,8 +20,6 @@ class BlogService {
             });
 
             const url = `/api/V1/blog/list?${queryParams}`;
-            console.log('[BlogService] Fetching blogs from:', url);
-            
             const response = await axiosClient.get(url);
 
             if (response.data?.success) {
@@ -49,8 +47,6 @@ class BlogService {
     async getBySlug(slug: string): Promise<BlogResponse> {
         try {
             const url = `/api/V1/blog?slug=${encodeURIComponent(slug)}`;
-            console.log('[BlogService] Fetching blog by slug:', url);
-            
             const response = await axiosClient.get(url);
 
             if (response.data?.success) {
@@ -93,11 +89,7 @@ class BlogService {
             }
 
             const url = `${BACKEND_API_ROUTES.admin.blog.list}?${queryParams}`;
-            console.log('[BlogService] Fetching admin blogs from:', url);
-            
             const response = await axiosClient.get(url);
-            console.log('[BlogService] Admin blogs response:', response.data);
-
             if (response.data?.success) {
                 return response.data.data;
             }
@@ -115,11 +107,7 @@ class BlogService {
     async getById(id: number): Promise<AdminBlogResponse> {
         try {
             const url = `${BACKEND_API_ROUTES.admin.blog.detail}/${id}`;
-            console.log('[BlogService] Fetching blog by ID:', url);
-            
             const response = await axiosClient.get(url);
-            console.log('[BlogService] Blog detail response:', response.data);
-
             if (response.data?.success) {
                 return response.data.data;
             }
@@ -140,15 +128,11 @@ class BlogService {
             formData.append('file', file);
 
             const url = `${BACKEND_API_ROUTES.admin.blog.upload}`;
-            console.log('[BlogService] Uploading image to:', url);
-            
             const response = await axiosClient.post(url, formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },
             });
-            console.log('[BlogService] Upload image response:', response.data);
-
             if (response.data?.success) {
                 return response.data.data;
             }

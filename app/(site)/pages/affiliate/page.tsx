@@ -3,7 +3,7 @@ import { Metadata } from 'next';
 import PolicyNav from '@/components/policy-nav';
 
 export const metadata: Metadata = {
-    title: 'Affiliate Program | MythToy',
+    title: 'Affiliate Program',
     description: 'Join the MythToy Affiliate Program. Earn 10% - 25% commission and get free products by sharing premium adult lifestyle products.',
 };
 

@@ -2,10 +2,10 @@ import { Metadata } from 'next';
 import PolicyNav from '@/components/policy-nav';
 
 export const metadata: Metadata = {
-    title: 'Cookie Policy | MythToy',
+    title: 'Cookie Policy',
     description: 'Understand how MythToy uses cookies to improve your shopping experience, analyze traffic, and ensure site functionality. Manage your preferences here.',
     alternates: {
-        canonical: 'https://mythtoy.com/pages/cookie-policy',
+        canonical: 'https://www.mythtoy.com/pages/cookie-policy',
     },
 };
 

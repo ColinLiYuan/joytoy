@@ -50,7 +50,6 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
                     // Service 返回的是分页对象，我们要取 content
                     setResults(data.content || []);
                 } catch (e) {
-                    console.error("Search error:", e);
                     setResults([]);
                 } finally {
                     setIsLoading(false);

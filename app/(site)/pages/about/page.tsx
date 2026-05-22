@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { ShieldCheck, Lock, Gem, MoveRight } from 'lucide-react';
 
 export const metadata: Metadata = {
-    title: 'About Us | MythToy - Pleasure, Demystified.',
+    title: 'About Us - Pleasure, Demystified.',
     description: 'We believe intimacy shouldn\'t be complicated. MythToy bridges the gap between premium manufacturing and your bedroom.',
 };
 

@@ -8,7 +8,7 @@ export async function GET() {
     const staticPages = [
         '/',
         '/collections',
-        '/blog',
+        '/bundles',
         '/pages/about',
         '/pages/contact',
         '/pages/wholesale',
@@ -19,7 +19,12 @@ export async function GET() {
         '/pages/payment-policy',
         '/pages/cookie-policy',
         '/pages/age-verification',
-        '/pages/order-tracking'
+        '/pages/order-tracking',
+        '/pages/faq',
+        '/pages/affiliate',
+        '/pages/manuals',
+        '/pioneer',
+        '/links',
     ];
 
     const xml = `<?xml version="1.0" encoding="UTF-8"?>

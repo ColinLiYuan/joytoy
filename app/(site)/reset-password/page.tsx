@@ -3,6 +3,8 @@
 import { useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { resetPassword as resetPasswordAction } from '@/app/actions/auth';
+
+export const dynamic = 'force-dynamic';
 import { Loader2, CheckCircle2, Lock } from 'lucide-react';
 
 function ResetPasswordForm() {

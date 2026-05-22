@@ -10,6 +10,8 @@ import SimpleProductGrid from '@/components/product/simple-product-grid';
 import { useAuth } from '@/contexts/authContext';
 import { useRouter } from 'next/navigation';
 import { ProductResponse } from '@/types/product';
+
+export const dynamic = 'force-dynamic';
 import { SITE_CONFIG } from '@/lib/constants/site-config';
 
 // ✅ 修复：更精确的数据映射
@@ -54,10 +56,6 @@ export default function WishlistPage() {
             setError('');
             setIsAuthRequired(false);
             const items = await wishlistService.getWishlist()
-                        
-            // 调试：查看原始数据
-            console.log('[WishlistPage] Raw items from service:', items)
-            console.log('[WishlistPage] First item detail:', items?.[0])
                         
             // 如果返回 null，说明 session 过期
             if (items === null) {

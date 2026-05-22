@@ -9,13 +9,13 @@ import { getProductImageUrl } from '@/lib/image-utils'; // ✅ 引入工具函�
 
 // SEO Metadata
 export const metadata: Metadata = {
-    title: "Collections | MythToy - Premium Adult Pleasure",
+    title: "Collections - Premium Adult Pleasure",
     description: "Explore our curated collections of premium adult products. From intimate massagers to luxury lingerie, find exactly what you desire.",
     alternates: {
         canonical: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.mythtoy.com'}/collections`,
     },
     openGraph: {
-        title: "Collections | MythToy",
+        title: "Collections",
         description: "Explore our curated collections of premium adult products.",
         type: "website",
         url: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.mythtoy.com'}/collections`,

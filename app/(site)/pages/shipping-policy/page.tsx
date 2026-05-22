@@ -4,10 +4,10 @@ import { Metadata } from 'next';
 import PolicyNav from '@/components/policy-nav';
 
 export const metadata: Metadata = {
-    title: 'Shipping Policy | MythToy - 100% Discreet & Global Delivery',
+    title: 'Shipping Policy - 100% Discreet & Global Delivery',
     description: 'Learn about MythToy\'s discreet shipping, delivery times, and order processing. We prioritize your privacy with plain, secure packaging.',
     alternates: {
-        canonical: 'https://mythtoy.com/pages/shipping-policy',
+        canonical: 'https://www.mythtoy.com/pages/shipping-policy',
     },
 };
 

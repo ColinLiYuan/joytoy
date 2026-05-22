@@ -21,42 +21,33 @@ export const getToken = async (): Promise<string | undefined> => {
     if (!isBrowser && serverTokenCache && serverTokenExpiry) {
         const now = Math.floor(Date.now() / 1000);
         if (now < serverTokenExpiry) {
-            console.log('[TokenUtils] getToken - using server cached token');
             return serverTokenCache;
         } else {
             // 缓存过期，清除
             serverTokenCache = undefined;
             serverTokenExpiry = undefined;
-            console.log('[TokenUtils] Server token cache expired, clearing');
         }
     }
     
     // 服务端：缓存过期，尝试刷新token
     if (!isBrowser && !serverTokenCache) {
-        console.log('[TokenUtils] Server token cache not available, attempting refresh');
         const newToken = await refreshTokenIfNeeded();
         if (newToken) {
-            console.log('[TokenUtils] Server token refreshed successfully');
             return newToken;
         }
     }
     
     // 1. 尝试从 Cookie 获取 (支持 Server & Client)
     const cookieToken = await getCookie(ACCESS_TOKEN_KEY);
-    console.log('[TokenUtils] getToken - cookieToken exists:', !!cookieToken);
-    console.log('[TokenUtils] getToken - cookieToken length:', cookieToken?.length || 0);
     if (cookieToken) {
         // 检查是否即将过期（提前30秒）
         if (!isTokenExpired(cookieToken, 30)) {
             return cookieToken;
         }
         // Token即将过期，尝试刷新
-        console.log('[TokenUtils] getToken - cookie token expired, refreshing...');
         const refreshedToken = await refreshTokenIfNeeded();
         return refreshedToken;
     }
-    // console.log('getToken cookieToken: ', cookieToken)
-    // console.log('getToken storage: ', localStorage.getItem(ACCESS_TOKEN_KEY))
     // 2. 如果是客户端，尝试从 LocalStorage 兜底
     if (isBrowser) {
         return localStorage.getItem(ACCESS_TOKEN_KEY) || undefined;
@@ -70,15 +61,10 @@ export const getToken = async (): Promise<string | undefined> => {
  */
 export const getRefreshToken = async (): Promise<string | undefined> => {
     const cookieToken = await getCookie(REFRESH_TOKEN_KEY);
-    console.log('[TokenUtils] getRefreshToken - cookieToken exists:', !!cookieToken);
-    console.log('[TokenUtils] getRefreshToken - cookieToken length:', cookieToken?.length || 0);
-    console.log('[TokenUtils] getRefreshToken - cookieToken preview:', cookieToken ? cookieToken.substring(0, 40) + '...' : 'none');
-    
     if (cookieToken) return cookieToken;
 
     if (isBrowser) {
         const storageToken = localStorage.getItem(REFRESH_TOKEN_KEY) || undefined;
-        console.log('[TokenUtils] getRefreshToken - fallback to localStorage, exists:', !!storageToken);
         return storageToken;
     }
     return undefined;
@@ -269,43 +255,29 @@ export const refreshTokenIfNeeded = async (): Promise<string | undefined> => {
         return undefined;
     }
 
-    console.log('[TokenUtils] Refresh token exists, length:', refreshToken.length);
-    console.log('[TokenUtils] Refresh token preview:', refreshToken.substring(0, 30) + '...');
-    console.log('[TokenUtils] Calling backend refresh API...');
-
     try {
         const { BACKEND_CONFIG } = await import('@/lib/api-config');
         const refreshUrl = `${BACKEND_CONFIG.baseURL}/api/V1/users/refresh`;
-        console.log('[TokenUtils] Refresh URL:', refreshUrl);
-        
+
         const response = await fetch(refreshUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ refreshToken }),
         });
 
-        console.log('[TokenUtils] Refresh response status:', response.status);
-
         if (!response.ok) {
             const errorText = await response.text();
             console.warn('[TokenUtils] Token refresh failed:', response.status, errorText);
-            
-            // 注意：在 Server Component 渲染期间不能修改 Cookie
-            // 只记录日志，不删除 Cookie
-            console.log('[TokenUtils] Will not clear cookies during Server Component render');
-            
             return undefined;
         }
 
         const result = await response.json();
-        console.log('[TokenUtils] Refresh response:', JSON.stringify(result, null, 2));
         
         if (result?.success && result?.data?.accessToken) {
             const { accessToken, refreshToken: newRefreshToken, expiresIn, refreshExpiresIn } = result.data;
 
             // 服务端：缓存token到内存（不写cookie，Next.js 16 Server Component 不允许修改 cookie）
             if (!isBrowser) {
-                console.log('[TokenUtils] Caching token in server memory');
                 serverTokenCache = accessToken;
                 if (expiresIn) {
                     serverTokenExpiry = Math.floor(Date.now() / 1000) + (expiresIn - 300); // 提前5分钟过期
@@ -315,14 +287,12 @@ export const refreshTokenIfNeeded = async (): Promise<string | undefined> => {
 
             // 客户端：更新localStorage和cookie
             if (isBrowser) {
-                console.log('[TokenUtils] Updating tokens in localStorage');
                 localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
                 if (newRefreshToken) {
                     localStorage.setItem(REFRESH_TOKEN_KEY, newRefreshToken);
                 }
-                
+
                 // 客户端：更新cookie
-                console.log('[TokenUtils] Updating tokens in client cookie');
                 setCookie(ACCESS_TOKEN_KEY, accessToken, {
                     expires: (expiresIn || 1800) / 60 / 60 / 24, // 转换为天
                     path: '/',
@@ -339,14 +309,12 @@ export const refreshTokenIfNeeded = async (): Promise<string | undefined> => {
                 }
             }
 
-            console.log('[TokenUtils] Token refreshed successfully');
             return accessToken;
         }
 
         // 刷新失败，不更新 Cookie（Server Component 渲染期间不能修改）
         console.warn('[TokenUtils] Refresh response not success or no accessToken');
-        console.log('[TokenUtils] Will not clear cookies during Server Component render');
-        
+
         return undefined;
     } catch (error) {
         console.error('[TokenUtils] Token refresh error:', error);

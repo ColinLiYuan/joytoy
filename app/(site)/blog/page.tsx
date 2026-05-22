@@ -10,15 +10,27 @@ interface PageProps {
 }
 
 export async function generateMetadata(): Promise<Metadata> {
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.mythtoy.com';
     return {
-        title: 'Journal - Pleasure & Wellness | MythToy',
+        title: 'Journal - Pleasure & Wellness',
         description: 'Explorations in intimacy, education, and the art of living well.',
+        alternates: {
+            canonical: `${baseUrl}/blog`,
+        },
+        openGraph: {
+            title: 'Journal - Pleasure & Wellness',
+            description: 'Explorations in intimacy, education, and the art of living well.',
+            url: `${baseUrl}/blog`,
+            type: 'website',
+        },
     };
 }
 
-async function getBlogData(page: number) {
+async function getBlogData(page: number, topic?: string) {
     try {
-        const url = `${BACKEND_CONFIG.baseURL}/api/V1/blog/list?page=${page}&size=12`;
+        const params = new URLSearchParams({ page: String(page), size: '12' });
+        if (topic) params.set('topic', topic);
+        const url = `${BACKEND_CONFIG.baseURL}/api/V1/blog/list?${params.toString()}`;
         const response = await fetch(url, { next: { revalidate: 3600 } });
         if (!response.ok) return { content: [], totalElements: 0, totalPages: 0 };
         const result = await response.json();
@@ -36,7 +48,7 @@ export default async function BlogListPage({ searchParams }: PageProps) {
     const currentPage = isNaN(page) ? 0 : page;
     const activeTopic = resolvedSearchParams.topic || '';
 
-    const blogData = await getBlogData(currentPage);
+    const blogData = await getBlogData(currentPage, activeTopic || undefined);
 
     return (
         <BlogListClient

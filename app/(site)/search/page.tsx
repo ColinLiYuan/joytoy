@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { productService } from '@/services/productService';
+
+export const dynamic = 'force-dynamic';
 import { filterService } from '@/services/filterService';
 import ProductList from '@/components/product/product-list';
 import Breadcrumb from '@/components/common/breadcrumb';

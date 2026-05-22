@@ -25,7 +25,6 @@ export default function AutoLoginModal({ redirectPath }: AutoLoginModalProps) {
         
         // 如果有 redirect 参数且用户未登录，自动打开 authContext 的全局登录框
         if (redirectPath && !isLoggedIn) {
-            console.log('[AutoLoginTrigger] Redirect detected:', redirectPath, '- opening login modal');
             openAuthModal('login');
         }
     }, [redirectPath, isLoggedIn, isClient, openAuthModal]);
@@ -33,7 +32,6 @@ export default function AutoLoginModal({ redirectPath }: AutoLoginModalProps) {
     // 如果用户已经登录了，清除 URL 中的 redirect 参数
     useEffect(() => {
         if (isLoggedIn && redirectPath) {
-            console.log('[AutoLoginTrigger] User already logged in, clearing redirect param');
             router.replace('/');
         }
     }, [isLoggedIn, redirectPath, router]);

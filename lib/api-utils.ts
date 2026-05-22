@@ -103,14 +103,8 @@ export async function proxyRequest(
     let token: string | undefined;
     const hasCustomAuth = headers && (headers as Record<string, string>)['Authorization'];
     
-    console.log('[PROXY REQUEST] Endpoint:', endpoint);
-    console.log('[PROXY REQUEST] Has custom auth:', !!hasCustomAuth);
-    
     if (!hasCustomAuth) {
         token = await getToken();
-        console.log('[PROXY REQUEST] Auto-fetched token:', token ? 'YES' : 'NO');
-    } else {
-        console.log('[PROXY REQUEST] Using custom auth header');
     }
 
     // 2. 构造 Header
@@ -127,11 +121,6 @@ export async function proxyRequest(
         ...headers,                         // 手动传递的 Token（优先级最高）
     };
     
-    console.log('[PROXY REQUEST] Final headers:', {
-        hasAuth: !!(requestHeaders as Record<string, string>)['Authorization'],
-        authPreview: (requestHeaders as Record<string, string>)['Authorization'] ? `${(requestHeaders as Record<string, string>)['Authorization'].substring(0, 30)}...` : 'none'
-    });
-
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeout);
 
@@ -251,15 +240,6 @@ export async function handleApiResponse<T>(
     try {
         const responseClone = response.clone();
         const responseText = await responseClone.text();
-
-        // 🔍 调试日志：记录原始响应
-        console.log('[API-UTILS] Raw response:', {
-            url: response.url,
-            status: response.status,
-            ok: response.ok,
-            textLength: responseText?.length || 0,
-            first100Chars: responseText?.substring(0, 100)
-        });
 
         // 处理空响应
         if (!responseText || !responseText.trim()) {

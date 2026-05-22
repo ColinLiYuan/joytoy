@@ -295,7 +295,6 @@ export default function ProductDetailClient({
         const fetchBundleRecommendations = async () => {
             try {
                 const bundles = await bundleService.getSuggestBundles([product.id]);
-                console.log('📦 [产品详情页] 获取到套装推荐:', bundles);
                 setBundleRecommendations(bundles || []);
             } catch (error) {
                 console.error('Failed to fetch bundle recommendations:', error);

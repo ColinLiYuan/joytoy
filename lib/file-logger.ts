@@ -26,8 +26,7 @@ class FileLogger {
 
         // 写入文件
         fs.appendFileSync(this.logFile, logLine, 'utf8');
-        // 控制台也输出
-        console.log(logLine.trim());
+        // 控制台也输出（已移除）
     }
 
     info(message: string, data?: any) {

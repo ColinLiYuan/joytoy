@@ -70,8 +70,35 @@ export default function BundleDetailPage() {
         notFound()
     }
 
+    const bundleSchema = {
+        "@context": "https://schema.org",
+        "@type": "Product",
+        "name": bundle.bundleName,
+        "description": bundle.description || bundle.subtitle || '',
+        "image": bundle.coverImage ? [bundle.coverImage] : [],
+        "brand": { "@type": "Brand", "name": "MythToy" },
+        "sku": `BUNDLE-${bundle.id}`,
+        "offers": {
+            "@type": "Offer",
+            "price": bundle.bundlePrice,
+            "priceCurrency": "USD",
+            "availability": bundle.stock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+            "itemCondition": "https://schema.org/NewCondition"
+        },
+        "isSimilarTo": bundle.items?.map(item => ({
+            "@type": "Product",
+            "name": item.productName || item.productTitle,
+            "sku": item.skuCode || item.skuId || ''
+        }))
+    };
+
     return (
-        <div className="container mx-auto px-4 py-12">
+        <>
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(bundleSchema) }}
+            />
+            <div className="container mx-auto px-4 py-12">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
                 {/* 左侧：图片展示 */}
                 <div className="space-y-4">
@@ -168,5 +195,6 @@ export default function BundleDetailPage() {
                 </div>
             </div>
         </div>
+        </>
     )
 }

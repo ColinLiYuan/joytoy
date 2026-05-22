@@ -3,6 +3,8 @@
 import { productService } from '@/services/productService';
 import { ProductResponse } from '@/types/product';
 import { getProductImageUrl } from '@/lib/image-utils';
+export const revalidate = 3600;
+
 import ClientAgeVerification from '@/components/common/client-age-verification';
 import HeroSection from '@/components/home/hero-section';
 import BestSellersSection from '@/components/home/best-sellers-section';

@@ -13,8 +13,7 @@ export const pageview = (url: string): void => {
             page_path: url,
         })
     } else {
-        // 开发环境只打印日志，不发送给GA
-        console.log('[DEV] GA Pageview:', url)
+        // 开发环境不发送给GA
     }
 }
 
@@ -46,8 +45,7 @@ export const event = ({ action, category, label, value, ...rest }: GtagEvent): v
 
         window.gtag('event', action, params)
     } else {
-        // 开发环境只打印日志
-        console.log('[DEV] GA Event:', { action, category, label, value, ...rest })
+        // 开发环境不发送给GA
     }
 }
 

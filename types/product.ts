@@ -40,6 +40,8 @@ export interface ProductResponse {
     reviewCount?: number;
     status?: string;
     reviews?: Review[];
+    updatedAt?: string;
+    createdAt?: string;
 }
 
 export interface ProductListResponse {

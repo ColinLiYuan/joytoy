@@ -19,7 +19,7 @@ export async function GET() {
   ${categories.map(cat => `
   <url>
     <loc>${baseUrl}/collections/${cat.slug}</loc>
-    <lastmod>${cat.lastModified ? new Date(cat.lastModified).toISOString() : new Date().toISOString()}</lastmod>
+    ${cat.lastModified ? `<lastmod>${new Date(cat.lastModified).toISOString()}</lastmod>` : ''}
   </url>
   `).join('')}
 </urlset>`

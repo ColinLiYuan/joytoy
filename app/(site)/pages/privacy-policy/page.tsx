@@ -4,15 +4,15 @@ import PolicyNav from '@/components/policy-nav';
 
 // ✅ 生成专业的 SEO Metadata
 export const metadata: Metadata = {
-    title: 'Privacy Policy | MythToy - Your Data Security is Our Priority',
+    title: 'Privacy Policy - Your Data Security is Our Priority',
     description: 'Read the MythToy Privacy Policy. Learn how we protect your personal information, ensure discreet shipping, and secure your payment data.',
     alternates: {
-        canonical: 'https://mythtoy.com/pages/privacy-policy',
+        canonical: 'https://www.mythtoy.com/pages/privacy-policy',
     },
     openGraph: {
-        title: 'Privacy Policy | MythToy',
+        title: 'Privacy Policy',
         description: 'We are committed to protecting your privacy. Read our full policy here.',
-        url: 'https://mythtoy.com/pages/privacy-policy',
+        url: 'https://www.mythtoy.com/pages/privacy-policy',
         type: 'website',
     },
 };

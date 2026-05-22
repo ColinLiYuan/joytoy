@@ -9,6 +9,8 @@ import { useAuth } from '@/contexts/authContext';
 import { useCartStore } from '@/stores/useCartStore';
 import type { OrderPaymentResult } from '@/types/order';
 
+export const dynamic = 'force-dynamic';
+
 // --- 配置区域 ---
 const PAYMENT_CONFIG = {
     ENABLE_PAYPAL: true,
@@ -59,7 +61,6 @@ function PaymentContent() {
             
             // 如果2分钟内有过支付尝试，显示提示
             if (secondsSinceAttempt < 120) {
-                console.log('⚠️ 检测到近期支付尝试，显示提示');
                 setRecentPaymentAttempt(true);
             }
         }
@@ -83,30 +84,25 @@ function PaymentContent() {
                 if (savedOrder) {
                     const parsed = JSON.parse(savedOrder);
                     if (parsed.orderNumber === orderNumber || parsed.orderNumber === `#${orderNumber}`) {
-                        console.log('[Payment] Found order in localStorage');
                         data = parsed;
                     }
                 }
                 
                 // ✅ 如果 localStorage 没有且用户已登录，调用 API
                 if (!data && isLoggedIn) {
-                    console.log('[Payment] Fetching order from API (logged in)...');
                     data = await orderService.getOrder(orderNumber);
                 }
                 
                 // ✅ 如果还是没找到数据，但 URL 中有邮箱（游客通过邮件链接访问）
                 if (!data && !isLoggedIn && guestEmail) {
-                    console.log('[Payment] Guest mode with email param, calling /guest-query API...');
                     // 使用 /api/V1/order/guest-query 接口（支持 orderNumber + email 查询）
                     const response = await fetch(`/api/backend/order/guest-query?orderNumber=${encodeURIComponent(orderNumber)}&email=${encodeURIComponent(guestEmail)}`, {
                         headers: {}, // ✅ 确保不携带任何 Token
                     });
                     const result = await response.json();
-                    console.log('[Payment] /guest-query API response:', result);
                     if (result.success) {
                         data = result.data;
                     } else {
-                        console.error('[Payment] /guest-query API error:', result.message);
                     }
                 }
                 
@@ -116,7 +112,6 @@ function PaymentContent() {
                         throw new Error('Order not found');
                     } else {
                         // 游客模式，localStorage 没有数据且 URL 没有邮箱
-                        console.log('[Payment] Guest mode, no order data. Please access from confirmation email link.');
                         setErrorMessage('Order data not found. Please access this page from your order confirmation email.');
                         setIsLoading(false);
                         return;
@@ -127,7 +122,6 @@ function PaymentContent() {
                 
                 // ✅ 检查订单状态：如果已支付，自动跳转
                 if (data.status === 'PAID') {
-                    console.log('✅ 订单已支付，跳转到确认页面');
                     if (isLoggedIn) {
                         router.push(`/orders/${orderNumber}?payment_success=1`);
                     } else {
@@ -138,21 +132,17 @@ function PaymentContent() {
                 
                 // ✅ 检查订单状态：如果已取消或过期，阻止支付
                 if (data.status === 'CANCELLED' || data.status === 'EXPIRED') {
-                    console.log('❌ 订单已取消或过期:', data.status);
                     setErrorMessage(`This order has been ${data.status.toLowerCase()}. Please create a new order.`);
                     setIsLoading(false);
                     return;
                 }
             } catch (error: any) {
-                console.error('[Payment] Failed to load order:', error);
-                
                 // ✅ 如果是 401 错误，尝试从 localStorage 恢复
                 if (error.response?.status === 401) {
                     const savedOrder = localStorage.getItem('currentOrder');
                     if (savedOrder) {
                         const parsed = JSON.parse(savedOrder);
                         if (parsed.orderNumber === orderNumber || parsed.orderNumber === `#${orderNumber}`) {
-                            console.log('[Payment] Using localStorage order due to auth error');
                             setOrderData(parsed);
                             return;
                         }
@@ -183,7 +173,6 @@ function PaymentContent() {
                 router.push(`/order-confirmation?orderNumber=${orderNumber}`);
             }
         } catch (error) {
-            console.error("Post-payment error:", error);
             setPaymentStatus('success');
         }
     };
@@ -191,8 +180,7 @@ function PaymentContent() {
     // --- PayPal 专用逻辑 ---
     const createPayPalOrder = async (data: any, actions: any) => {
         try {
-            console.log('[Payment] 调用后端创建 PayPal 订单...');
-            
+
             // ✅ 调用前检查并刷新 Token（提前 5 分钟）
             const { ensureFreshToken, getToken } = await import('@/lib/token-utils');
             await ensureFreshToken(300);
@@ -218,9 +206,7 @@ function PaymentContent() {
                 
                 if (guestEmail) {
                     body.guestEmail = guestEmail;
-                    console.log('[Payment] Guest mode, adding guestEmail:', guestEmail);
                 } else {
-                    console.error('[Payment] Guest mode but no email found in order data!');
                 }
             }
             
@@ -232,19 +218,16 @@ function PaymentContent() {
             });
             
             const result = await response.json();
-            console.log('[Payment] Backend response:', result);
-            
+
             if (!result.success) {
                 throw new Error(result.message || 'Failed to create PayPal order');
             }
             
             const paypalOrderId = result.data;
-            console.log('[Payment] Backend returned PayPal Order ID:', paypalOrderId);
-            
+
             // ✅ 返回后端生成的 PayPal Order ID
             return paypalOrderId;
         } catch (error) {
-            console.error('[Payment] Failed to create PayPal order:', error);
             throw error;
         }
     };
@@ -276,17 +259,14 @@ function PaymentContent() {
             
             // 2. 检查支付结果（OrderPaymentResult 返回的是 { success, message, orderNumber }）
             if (paymentResult?.success === true) {
-                console.log('✅ Payment confirmed:', paymentResult.message);
                 await handlePaymentSuccess();
             } else {
-                console.warn('⚠️ Payment failed:', paymentResult?.message);
                 setErrorMessage(paymentResult?.message || 'Payment processing failed. Please contact support.');
                 setPaymentStatus('error');
             }
         } catch (error: any) {
             clearTimeout(timeoutId);
-            console.error('PayPal payment error:', error);
-            
+
             // ✅ 区分超时错误和其他错误
             if (error.name === 'AbortError' || error.message?.includes('aborted')) {
                 setErrorMessage('Payment verification is taking longer than expected. Please check your email for order confirmation or contact support@mythtoy.com. Order: ' + orderNumber);
@@ -304,13 +284,11 @@ function PaymentContent() {
         try {
             setIsCheckingStatus(true);
             setErrorMessage('');
-            
-            console.log('🔍 Checking order status:', orderNumber);
+
             const order = await orderService.getOrder(orderNumber!);
             
             if (order.status === 'PAID') {
                 // ✅ Order has been paid successfully, proceed with success flow even if timed out before
-                console.log('✅ Order paid successfully, redirecting to confirmation page');
                 await handlePaymentSuccess();
             } else if (order.status === 'PENDING') {
                 // ✅ Order still pending, user can retry
@@ -322,7 +300,6 @@ function PaymentContent() {
                 setPaymentStatus('error');
             }
         } catch (error: any) {
-            console.error('Failed to check order status:', error);
             setErrorMessage('Failed to check order status. Please refresh the page or contact support.');
             setPaymentStatus('error');
         } finally {

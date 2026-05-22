@@ -5,6 +5,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { orderService } from '@/services/orderService';
 import { OrderResponse } from '@/types/order';
+
+export const dynamic = 'force-dynamic';
 import { getUserId } from '@/lib/user-utils';
 import { getProductImageUrl } from '@/lib/image-utils';
 import {
@@ -59,7 +61,6 @@ export default function OrdersPage() {
     const { isLoggedIn, isClient, openAuthModal } = useAuth();
 
     useEffect(() => {
-        console.log('[OrdersPage] Component mounted, fetching orders...');
         if (isClient) {
             if (!isLoggedIn) {
                 setIsLoading(false);
@@ -70,17 +71,14 @@ export default function OrdersPage() {
     }, [isClient, isLoggedIn]);
 
     const fetchOrders = async () => {
-        console.log('[OrdersPage] fetchOrders called');
         try {
             setIsLoading(true);
             setError('');
             setIsAuthRequired(false);
             
-            console.log('[OrdersPage] Calling orderService.getUserOrders()...');
             // ✅ 直接调用接口，让后端根据 Token 判断
             const data = await orderService.getUserOrders(0, 20);
-            console.log('[OrdersPage] Got response from orderService:', data)
-            
+
             // 如果返回 null，说明 session 过期或未登录
             if (data === null) {
                 setIsAuthRequired(true);
@@ -90,7 +88,6 @@ export default function OrdersPage() {
             
             setOrders(Array.isArray(data) ? data : []);
         } catch (error) {
-            console.error(error);
             setError('Unable to load orders');
         } finally {
             setIsLoading(false);

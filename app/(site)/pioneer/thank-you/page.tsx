@@ -6,7 +6,6 @@ import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
 import { getProductImageUrl } from '@/lib/image-utils';
 import { Instagram, ArrowRight, CheckCircle, Sparkles, Shield, Clock } from 'lucide-react';
-
 // 这是您的页面组件
 export default function ThankYouPage() {
     return (
