@@ -271,7 +271,7 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
                         onClick={handleAddToCart}
                         disabled={!hasAvailableStock || addingToCart}
                         className={`
-                            w-10 h-10 rounded-full flex items-center justify-center transition-all
+                            w-12 h-12 rounded-full flex items-center justify-center transition-all
                             ${!hasAvailableStock
                             ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                             : 'bg-black text-white hover:bg-gray-800 hover:scale-105 shadow-md'
@@ -280,9 +280,9 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
                         aria-label="Add to cart"
                     >
                         {addingToCart ? (
-                            <Loader2 size={18} className="animate-spin" />
+                            <Loader2 size={20} className="animate-spin" />
                         ) : (
-                            <ShoppingBag size={18} strokeWidth={1.5} />
+                            <ShoppingBag size={20} strokeWidth={1.5} />
                         )}
                     </button>
                 </div>

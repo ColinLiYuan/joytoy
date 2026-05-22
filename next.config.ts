@@ -82,9 +82,42 @@ const nextConfig: NextConfig = {
             {
                 source: '/:path*',
                 headers: [
+                    // 安全头
                     {
-                        key: 'x-next-cache-tags',
-                        value: 'dynamic',
+                        key: 'X-Frame-Options',
+                        value: 'DENY',
+                    },
+                    {
+                        key: 'X-Content-Type-Options',
+                        value: 'nosniff',
+                    },
+                    {
+                        key: 'Referrer-Policy',
+                        value: 'strict-origin-when-cross-origin',
+                    },
+                    {
+                        key: 'Permissions-Policy',
+                        value: 'camera=(), microphone=(), geolocation=()',
+                    },
+                ],
+            },
+            {
+                // 页面路由：Vercel 边缘缓存（ISR 风格）
+                source: '/((?!api|admin|_next|checkout|account|wishlist).*)',
+                headers: [
+                    {
+                        key: 'Cache-Control',
+                        value: 'public, s-maxage=3600, stale-while-revalidate=86400',
+                    },
+                ],
+            },
+            {
+                // 静态资源：长期缓存
+                source: '/_next/static/(.*)',
+                headers: [
+                    {
+                        key: 'Cache-Control',
+                        value: 'public, max-age=31536000, immutable',
                     },
                 ],
             },

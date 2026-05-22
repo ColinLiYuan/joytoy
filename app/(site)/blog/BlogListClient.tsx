@@ -8,6 +8,7 @@ import Breadcrumb from '@/components/common/breadcrumb';
 import { BlogListResponse } from '@/types/site/blog';
 import { getProductImageUrl } from '@/lib/image-utils';
 import { getAuthor } from '@/lib/constants/authors';
+import { BLOG_TOPIC_LABELS } from '@/lib/constants/blog-topics';
 import { ArrowUpRight, Star, User } from 'lucide-react';
 
 const FALLBACK_IMAGES = [
@@ -20,9 +21,10 @@ const FALLBACK_IMAGES = [
 interface BlogListClientProps {
     initialBlogData: BlogListResponse;
     currentPage: number;
+    activeTopic: string;
 }
 
-export default function BlogListClient({ initialBlogData, currentPage }: BlogListClientProps) {
+export default function BlogListClient({ initialBlogData, currentPage, activeTopic }: BlogListClientProps) {
     const router = useRouter();
     const blogData = initialBlogData;
     const posts = blogData.content || [];
@@ -33,7 +35,17 @@ export default function BlogListClient({ initialBlogData, currentPage }: BlogLis
     ];
 
     const handlePageChange = (page: number) => {
-        router.push(`/blog?page=${page}`);
+        const params = new URLSearchParams({ page: String(page) });
+        if (activeTopic) params.set('topic', activeTopic);
+        router.push(`/blog?${params.toString()}`);
+    };
+
+    const handleTopicChange = (topic: string) => {
+        if (topic) {
+            router.push(`/blog?topic=${topic}`);
+        } else {
+            router.push('/blog');
+        }
     };
 
     return (
@@ -54,6 +66,33 @@ export default function BlogListClient({ initialBlogData, currentPage }: BlogLis
             <div className="container mx-auto px-6 max-w-7xl py-16">
                 <div className="mb-12 flex justify-center md:justify-start">
                     <Breadcrumb items={breadcrumbs} showLastItem={true} />
+                </div>
+
+                {/* Topic Filter */}
+                <div className="mb-16 flex flex-wrap items-center justify-center gap-3">
+                    <button
+                        onClick={() => handleTopicChange('')}
+                        className={`px-5 py-2.5 rounded-full text-xs font-medium tracking-wide transition-all duration-300 ${
+                            !activeTopic
+                                ? 'bg-[#1A1A1A] text-white shadow-md'
+                                : 'bg-gray-50 text-gray-500 hover:bg-gray-100 hover:text-gray-700'
+                        }`}
+                    >
+                        All
+                    </button>
+                    {Object.entries(BLOG_TOPIC_LABELS).map(([slug, label]) => (
+                        <button
+                            key={slug}
+                            onClick={() => handleTopicChange(slug)}
+                            className={`px-5 py-2.5 rounded-full text-xs font-medium tracking-wide transition-all duration-300 ${
+                                activeTopic === slug
+                                    ? 'bg-[#1A1A1A] text-white shadow-md'
+                                    : 'bg-gray-50 text-gray-500 hover:bg-gray-100 hover:text-gray-700'
+                            }`}
+                        >
+                            {label}
+                        </button>
+                    ))}
                 </div>
 
                 {/* Blog Grid */}

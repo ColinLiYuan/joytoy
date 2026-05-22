@@ -2,6 +2,7 @@
 // 产品数据在服务端获取，Google 爬虫可直接看到产品内容
 import { productService } from '@/services/productService';
 import { ProductResponse } from '@/types/product';
+import { getProductImageUrl } from '@/lib/image-utils';
 import ClientAgeVerification from '@/components/common/client-age-verification';
 import HeroSection from '@/components/home/hero-section';
 import BestSellersSection from '@/components/home/best-sellers-section';
@@ -22,6 +23,8 @@ export default async function HomePage() {
         console.error('Error fetching hero products:', err);
         fetchError = 'Failed to load products';
     }
+
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.mythtoy.com';
 
     const faqPageSchema = {
         "@context": "https://schema.org",
@@ -60,12 +63,64 @@ export default async function HomePage() {
         ]
     };
 
+    // Product/ItemList schema for Editor's Choice products
+    const productListSchema = bestSellers.length > 0 ? {
+        "@context": "https://schema.org",
+        "@graph": [
+            {
+                "@type": "ItemList",
+                "@id": `${baseUrl}/#editors-choice`,
+                "url": baseUrl,
+                "name": "Editor's Choice — Best Adult Toys 2026",
+                "description": "Curated selection of premium body-safe pleasure products, tested and recommended by MythToy.",
+                "numberOfItems": bestSellers.length,
+                "itemListOrder": "https://schema.org/ItemListOrderAscending",
+                "itemListElement": bestSellers.map((product, index) => ({
+                    "@type": "ListItem",
+                    "position": index + 1,
+                    "url": `${baseUrl}/toys${product.slug}`,
+                    "item": {
+                        "@type": "Product",
+                        "name": product.name || product.title,
+                        "image": getProductImageUrl(undefined, product.image) || '',
+                        "brand": { "@type": "Brand", "name": "MythToy" },
+                        "offers": {
+                            "@type": "Offer",
+                            "price": product.currentPrice || '',
+                            "priceCurrency": "USD",
+                            "availability": "https://schema.org/InStock",
+                            "url": `${baseUrl}/toys${product.slug}`
+                        },
+                        ...(product.rating && (product.reviewCount ?? 0) > 0 ? {
+                            aggregateRating: {
+                                "@type": "AggregateRating",
+                                "ratingValue": product.rating,
+                                "reviewCount": product.reviewCount,
+                                "bestRating": "5",
+                                "worstRating": "1"
+                            }
+                        } : {}),
+                        "description": product.description
+                            ? product.description.replace(/[#*`]/g, '').substring(0, 160)
+                            : `${product.name || product.title} — body-safe premium pleasure product by MythToy.`
+                    }
+                }))
+            }
+        ]
+    } : null;
+
     return (
         <>
             <script
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(faqPageSchema) }}
             />
+            {productListSchema && (
+                <script
+                    type="application/ld+json"
+                    dangerouslySetInnerHTML={{ __html: JSON.stringify(productListSchema) }}
+                />
+            )}
 
             <ClientAgeVerification />
 

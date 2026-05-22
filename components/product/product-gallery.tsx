@@ -2,16 +2,11 @@
 'use client';
 
 import { useState, useRef, useEffect, useMemo } from 'react';
+import dynamic from 'next/dynamic';
 import Image from 'next/image';
-import Lightbox from 'yet-another-react-lightbox';
-import Captions from 'yet-another-react-lightbox/plugins/captions';
-import ZoomPlugin from 'yet-another-react-lightbox/plugins/zoom';
-import Thumbnails from 'yet-another-react-lightbox/plugins/thumbnails';
-import Video from 'yet-another-react-lightbox/plugins/video';
-import 'yet-another-react-lightbox/styles.css';
-import 'yet-another-react-lightbox/plugins/captions.css';
-import 'yet-another-react-lightbox/plugins/thumbnails.css';
 import { ZoomIn as ZoomIcon, Play } from 'lucide-react';
+
+const ProductLightbox = dynamic(() => import('./product-lightbox'), { ssr: false });
 
 interface GalleryItem {
     url: string;
@@ -288,35 +283,15 @@ export default function ProductGallery({ images, productTitle, badges }: Product
                 </div>
             </div>
 
-            {/* 全屏 Lightbox */}
-            <Lightbox
-                open={lightboxOpen}
-                close={() => setLightboxOpen(false)}
-                index={lightboxIndex}
-                slides={lightboxSlides}
-                plugins={[ZoomPlugin, Thumbnails, Captions, Video]}
-                zoom={{
-                    maxZoomPixelRatio: 4,
-                    zoomInMultiplier: 2,
-                }}
-                thumbnails={{
-                    position: 'bottom',
-                    width: 80,
-                    height: 80,
-                    border: 2,
-                    borderRadius: 8,
-                    padding: 4,
-                    gap: 8,
-                }}
-                captions={{
-                    showToggle: true,
-                    descriptionTextAlign: 'center',
-                }}
-                carousel={{
-                    finite: false,
-                    preload: 2,
-                }}
-            />
+            {/* 全屏 Lightbox (lazy loaded on interaction) */}
+            {lightboxOpen && (
+                <ProductLightbox
+                    open={lightboxOpen}
+                    index={lightboxIndex}
+                    slides={lightboxSlides}
+                    onClose={() => setLightboxOpen(false)}
+                />
+            )}
         </>
     );
 }

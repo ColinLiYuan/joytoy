@@ -146,13 +146,13 @@ export async function middleware(request: NextRequest) {
 
     // 3. 处理 410 删除 - 精确匹配
     if (gonePaths.has(pathname)) {
-        return new Response('Gone', { status: 410, headers: { 'Content-Type': 'text/plain' } });
+        return new Response('Gone', { status: 410, headers: { 'Content-Type': 'text/plain', 'X-Frame-Options': 'DENY', 'X-Content-Type-Options': 'nosniff' } });
     }
 
     // 4. 处理 410 删除 - 前缀匹配
     for (const prefix of gonePrefixes) {
         if (pathname.startsWith(prefix)) {
-            return new Response('Gone', { status: 410, headers: { 'Content-Type': 'text/plain' } });
+            return new Response('Gone', { status: 410, headers: { 'Content-Type': 'text/plain', 'X-Frame-Options': 'DENY', 'X-Content-Type-Options': 'nosniff' } });
         }
     }
 
