@@ -63,7 +63,8 @@ export default function TermsOfService() {
                             <p>Questions about the Terms of Service should be sent to us at:</p>
                             <ul className="list-none pl-0 mt-4 space-y-2 bg-gray-50 p-6 rounded-lg border border-gray-100">
                                 <li><strong>Email:</strong> support@mythtoy.com</li>
-                                <li><strong>Address:</strong> 123 MythToy Avenue, Commerce Park, NV 89101, United States</li>
+                                <li><strong>Address:</strong> Room 306, Building B, No.61 Dongpu 2nd Road, Tianhe District, Guangzhou, Guangdong, China</li>
+                                <li><strong>Phone:</strong> +86 17620189025</li>
                             </ul>
                         </section>
                     </div>

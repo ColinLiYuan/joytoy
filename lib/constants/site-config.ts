@@ -8,7 +8,7 @@ export const SITE_CONFIG = {
     // 联系信息
     contact: {
         email: "support@mythtoy.com",
-        phone: "+1 (888) 123-4567"
+        phone: "+86 17620189025"
     },
 
     // 社交媒体链接

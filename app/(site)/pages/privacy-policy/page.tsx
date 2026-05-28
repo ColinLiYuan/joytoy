@@ -127,7 +127,7 @@ export default function PrivacyPolicy() {
                                 <li><strong>Restriction:</strong> Limit processing of your data</li>
                                 <li><strong>Withdraw Consent:</strong> Withdraw consent at any time</li>
                             </ul>
-                            <p className="mt-3">To exercise these rights, contact us at <a href="mailto:privacy@mythtoy.com" className="text-blue-600 hover:underline">privacy@mythtoy.com</a>.</p>
+                            <p className="mt-3">To exercise these rights, contact us at <a href="mailto:support@mythtoy.com" className="text-blue-600 hover:underline">support@mythtoy.com</a>.</p>
                         </section>
 
                         <section>
@@ -139,10 +139,9 @@ export default function PrivacyPolicy() {
                             <h2 className="text-xl font-bold text-gray-900 mt-8 mb-4">10. Contact Information</h2>
                             <p>For privacy-related questions or to exercise your rights, contact us at:</p>
                             <ul className="list-none pl-0 mt-4 space-y-2 bg-gray-50 p-6 rounded-lg border border-gray-100">
-                                <li><strong>Email:</strong> privacy@mythtoy.com</li>
-                                <li><strong>Data Protection Officer:</strong> dpo@mythtoy.com</li>
-                                {/* ⚠️ 请务必修改下方地址为真实地址或注册地址 */}
-                                <li><strong>Address:</strong> 123 MythToy Avenue, Commerce Park, NV 89101, United States</li>
+                                <li><strong>Email:</strong> support@mythtoy.com</li>
+                                <li><strong>Phone:</strong> +86 17620189025</li>
+                                <li><strong>Address:</strong> Room 306, Building B, No.61 Dongpu 2nd Road, Tianhe District, Guangzhou, Guangdong, China</li>
                             </ul>
                         </section>
 

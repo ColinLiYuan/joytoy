@@ -98,6 +98,24 @@ export async function GET() {
       <g:google_product_category>${escapeXml(googleProductCategory)}</g:google_product_category>
       <g:product_type>${escapeXml(productType)}</g:product_type>
       <g:mpn>${escapeXml(mpn)}</g:mpn>
+      <g:shipping>
+        <g:country>US</g:country>
+        <g:service>Standard (6-12 business days)</g:service>
+        <g:price>4.99 USD</g:price>
+      </g:shipping>
+      <g:shipping>
+        <g:country>GB</g:country>
+        <g:service>Standard (5-14 business days)</g:service>
+        <g:price>4.99 USD</g:price>
+      </g:shipping>
+      <g:shipping>
+        <g:country>DE</g:country>
+        <g:service>Standard (5-14 business days)</g:service>
+        <g:price>4.99 USD</g:price>
+      </g:shipping>
+      <g:return_policy_label>
+        <g:url>${baseUrl}/pages/return-refund</g:url>
+      </g:return_policy_label>
     </item>`
     }).join('')}
   </channel>

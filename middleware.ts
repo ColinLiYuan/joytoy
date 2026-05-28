@@ -12,11 +12,15 @@ const redirectMap: Record<string, string> = {
     '/collections/pussy-masturbators': '/male-sex-toys/manual-strokers',
     '/female-sex-toys/bullet-vibrators/the-brush': 'https://www.mythtoy.com/toys/female-sex-toys/bullet-vibrators/the-brush',
     '/female-sex-toys/bullet-vibrators/the-rouge-ii': 'https://www.mythtoy.com/toys/female-sex-toys/bullet-vibrators/the-rouge-ii',
+    '/contact': '/pages/contact',
+    '/about': '/pages/about',
 };
 
 // 2. 定义 410 删除规则 (Gone)
 // 使用 Set 提高查找性能 (O(1))，比数组 includes (O(n)) 快
 const gonePaths = new Set([
+    '/$',
+    '/female-sex-toys/nipple-toys/quiet-nipple-pleasure',
     '/female-sex-toys/bullet-vibrators/matte-red-lipstick-bullet-vibes',
     '/sex-toys/butt-plugs/medal-butt-plug-HT019',
     '/male-sex-toys/pussy-masturbators/life-like-miru',
@@ -25,7 +29,6 @@ const gonePaths = new Set([
     '/membership',
     '/products/suction-sex-toy-soft-szm',
     '/products/sex-doll-vagina-dghs',
-    '/contact',
     '/collections/male-sex-toys/pocket-pussy',
     '/collections/female-sex-toys/fairy-dildos',
     '/collections/sex-toys/pocket-pussy',
@@ -64,7 +67,6 @@ const gonePaths = new Set([
     '/collections/female',
     // 新增下架产品路径
     '/sex-toys/butt-plugs/gem-remote-metal-plug',
-    '/lingerie/bodystockings/the-mesh',
     '/female-sex-toys/g-spot-vibrators/the-emerald',
     '/male-sex-toys/male-masturbators/the-shadow',
     '/male-sex-toys/male-masturbators/realistic-pocket-pussy-snow',
@@ -73,21 +75,16 @@ const gonePaths = new Set([
     '/female-sex-toys/g-spot-vibrators/the-link',
     '/toys/female-sex-toys/clit-vibrators/secret-wearable-app-vibe',
     '/toys/male-sex-toys/prostate-toys/remote-control-p-vibrator',
-    '/toys/female-sex-toys/clit-suction-vibrators/charming-vibes',
     '/toys/female-sex-toys/clit-vibrators/power-clit-vibrator',
     '/toys/female-sex-toys/g-spot-vibrators/g-spot-green-191',
     '/toys/male-sex-toys/male-masturbators/funny-peach-pussy',
     '/toys/female-sex-toys/g-spot-vibrators/charming-vibes',
     '/toys/female-sex-toys/dildos/realistic-dildos-aley',
     '/toys/sex-toys/butt-plugs/medal-butt-plug-HT019',
-    '/female-sex-toys/wand-vibrators/the-feather',
     '/female-sex-toys/rabbit-vibrators/mythtoy-jade-rabbit-heated',
     '/male-sex-toys/pussy-masturbators/realistic-pocket-pussy-dream',
     '/female-sex-toys/bullet-vibrators/dart-precision-bullet',
-    '/female-sex-toys/bullet-vibrators/matte-red-lipstick-bullet-vibes',
-    '/sex-toys/butt-plugs/medal-butt-plug-ht019',
     '/toys/male-sex-toys/male-masturbators/auto-suction-masturbator-fire',
-    '/collections/vibrator?page=0',
     // 下架产品
     '/toys/female-sex-toys/clit-vibrators/vibrator-g-sucking-usb-szm',
     '/toys/female-sex-toys/clit-vibrators/squirrel-auto-suction-vibes',
@@ -101,7 +98,6 @@ const gonePaths = new Set([
 // 3. 定义 410 前缀匹配规则
 const gonePrefixes = [
     '/collections/vibrators',
-    '/sex-toys',  // 临时注释，可能导致重定向循环
     '/products'
 ];
 
@@ -112,7 +108,7 @@ export async function middleware(request: NextRequest) {
     if (pathname.startsWith('/api/') || pathname.startsWith('/_next/')) {
         return NextResponse.next();
     }
-    
+
     // 注意：www 重定向由 Vercel 自动处理，不需要在 middleware 中处理
     // 避免与 Vercel 的域名配置冲突
 
@@ -130,6 +126,11 @@ export async function middleware(request: NextRequest) {
         return NextResponse.redirect(destination, { status: 301 });
     }
 
+    // 2.0 处理 410 删除 - 精确匹配（在前缀重定向之前，避免误重定向）
+    if (gonePaths.has(pathname)) {
+        return new Response('Gone', { status: 410, headers: { 'Content-Type': 'text/plain', 'X-Frame-Options': 'DENY', 'X-Content-Type-Options': 'nosniff' } });
+    }
+
     // 2.1 处理 /female-sex-toys/* 重定向到 /toys/female-sex-toys/*
     if (pathname.startsWith('/female-sex-toys/')) {
         const newPath = pathname.replace('/female-sex-toys/', '/toys/female-sex-toys/');
@@ -144,9 +145,18 @@ export async function middleware(request: NextRequest) {
         return NextResponse.redirect(destination, { status: 301 });
     }
 
-    // 3. 处理 410 删除 - 精确匹配
-    if (gonePaths.has(pathname)) {
-        return new Response('Gone', { status: 410, headers: { 'Content-Type': 'text/plain', 'X-Frame-Options': 'DENY', 'X-Content-Type-Options': 'nosniff' } });
+    // 2.3 处理 /sex-toys/* 重定向到 /toys/sex-toys/*
+    if (pathname.startsWith('/sex-toys/')) {
+        const newPath = pathname.replace('/sex-toys/', '/toys/sex-toys/');
+        const destination = new URL(newPath + request.nextUrl.search, request.url);
+        return NextResponse.redirect(destination, { status: 301 });
+    }
+
+    // 2.4 处理 /lingerie/* 重定向到 /toys/lingerie/*
+    if (pathname.startsWith('/lingerie/')) {
+        const newPath = pathname.replace('/lingerie/', '/toys/lingerie/');
+        const destination = new URL(newPath + request.nextUrl.search, request.url);
+        return NextResponse.redirect(destination, { status: 301 });
     }
 
     // 4. 处理 410 删除 - 前缀匹配

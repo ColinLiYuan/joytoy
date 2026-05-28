@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect, useCallback, useRef } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { cancelAdminOrder, refundAdminOrder, settleOrderCommission, updateOrderStatus } from '@/app/actions/order'
 import { orderService } from '@/services/orderService'
 import { OrderResponse, OrderStatus } from '@/types/order'
@@ -17,7 +17,9 @@ import {
     RotateCcw,
     XCircle,
     DollarSign,
-    CheckCircle
+    CheckCircle,
+    Paperclip,
+    X
 } from 'lucide-react'
 import Pagination from '@/components/common/pagination'
 
@@ -42,11 +44,17 @@ const statusMap: Record<string, string> = {
 
 export default function OrderPage() {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const [orders, setOrders] = useState<OrderResponse[]>([])
     const [loading, setLoading] = useState(true)
 
-    // 初始化默认过滤"全部订单"状态
-    const [activeStatus, setActiveStatus] = useState<OrderStatus | 'ALL'>('ALL')
+    // 从 URL 参数初始化状态筛选
+    const statusParam = searchParams.get('status')
+    const initialStatus = statusParam && (statuses.includes(statusParam as any) || statusParam === 'ALL')
+        ? (statusParam as OrderStatus | 'ALL')
+        : 'ALL'
+
+    const [activeStatus, setActiveStatus] = useState<OrderStatus | 'ALL'>(initialStatus)
     const [searchQuery, setSearchQuery] = useState('')
     const [emailQuery, setEmailQuery] = useState('')
     const [page, setPage] = useState(0)
@@ -57,7 +65,10 @@ export default function OrderPage() {
     const [isShipModalOpen, setIsShipModalOpen] = useState(false)
     const [shipOrder, setShipOrder] = useState<OrderResponse | null>(null)
     const [trackingNumber, setTrackingNumber] = useState('')
+    const [labelUrl, setLabelUrl] = useState('')
     const [shipLoading, setShipLoading] = useState(false)
+    const [uploading, setUploading] = useState(false)
+    const fileInputRef = useRef<HTMLInputElement>(null)
 
     // 退款弹窗状态
     const [isRefundModalOpen, setIsRefundModalOpen] = useState(false)
@@ -72,6 +83,9 @@ export default function OrderPage() {
     
     // 佣金结算 loading 状态
     const [settlingOrderId, setSettlingOrderId] = useState<number | null>(null)
+
+    // 提示信息
+    const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
 
     // 获取订单列表
     const fetchOrders = useCallback(async () => {
@@ -98,10 +112,18 @@ export default function OrderPage() {
         fetchOrders()
     }, [fetchOrders])
 
+    // 自动清除提示
+    useEffect(() => {
+        if (toast) {
+            const timer = setTimeout(() => setToast(null), 4000)
+            return () => clearTimeout(timer)
+        }
+    }, [toast])
+
     // 更新状态逻辑（后端是状态机模式，根据当前状态自动推进到下一步）
-    const handleUpdateStatus = async (orderNumber: string, trackingNumber?: string) => {
-        console.log('[Handle Update Status] orderNumber:', orderNumber, 'trackingNumber:', trackingNumber);
-        
+    const handleUpdateStatus = async (orderNumber: string, trackingNumber?: string, labelUrl?: string) => {
+        console.log('[Handle Update Status] orderNumber:', orderNumber, 'trackingNumber:', trackingNumber, 'labelUrl:', labelUrl);
+
         // 如果是发货操作，检查物流单号
         if (trackingNumber) {
             if (!window.confirm(`确定要发货吗？物流单号：${trackingNumber}`)) return;
@@ -111,12 +133,13 @@ export default function OrderPage() {
 
         try {
             console.log('[Handle Update Status] Calling updateOrderStatus...');
-            await updateOrderStatus(orderNumber, trackingNumber);
+            await updateOrderStatus(orderNumber, trackingNumber, labelUrl);
             console.log('[Handle Update Status] Success, refreshing orders...');
+            setToast({ type: 'success', message: `订单 #${orderNumber} 状态已更新` })
             fetchOrders();
         } catch (error: any) {
             console.error('[Handle Update Status] Error:', error);
-            alert('操作失败: ' + (error.message || '未知错误'));
+            setToast({ type: 'error', message: '操作失败: ' + (error.message || '未知错误') })
         }
     };
 
@@ -128,10 +151,11 @@ export default function OrderPage() {
             await refundAdminOrder(refundOrder.orderNumber, refundReason || '管理员退款')
             setIsRefundModalOpen(false)
             setRefundReason('')
+            setToast({ type: 'success', message: `订单 #${refundOrder.orderNumber} 已退款` })
             fetchOrders()
         } catch (error: any) {
             console.error('Refund error:', error)
-            alert('退款操作失败: ' + (error.message || '未知错误'));
+            setToast({ type: 'error', message: '退款失败: ' + (error.message || '未知错误') })
         } finally {
             setRefundLoading(false)
         }
@@ -144,37 +168,78 @@ export default function OrderPage() {
         try {
             await cancelAdminOrder(cancelOrder.orderNumber)
             setIsCancelModalOpen(false)
+            setToast({ type: 'success', message: `订单 #${cancelOrder.orderNumber} 已取消` })
             fetchOrders()
         } catch (error: any) {
             console.error('Cancel error:', error)
-            alert('取消订单失败: ' + (error.message || '未知错误'));
+            setToast({ type: 'error', message: '取消失败: ' + (error.message || '未知错误') })
         } finally {
             setCancelLoading(false)
         }
     }
-    
+
     // 佣金结算
     const handleSettleCommission = async (order: OrderResponse) => {
         if (!window.confirm(`确定要结算订单 #${order.orderNumber} 的佣金吗？`)) return;
-        
+
         setSettlingOrderId(order.id);
         try {
             const result = await settleOrderCommission(order.orderNumber);
-            alert(`佣金结算成功！\n联盟ID: ${result.affiliateId}\n佣金金额: $${result.commissionAmount}`);
+            setToast({ type: 'success', message: `佣金结算成功！联盟ID: ${result.affiliateId}，佣金: $${result.commissionAmount}` })
             fetchOrders();
         } catch (error: any) {
             console.error('Settle commission error:', error);
-            // 显示后端返回的具体错误信息
             const errorMsg = error.message || '未知错误';
-            if (errorMsg.includes('没有联盟推广')) {
-                alert('该订单没有联盟推广，无需结算佣金。');
-            } else if (errorMsg.includes('已结算')) {
-                alert('该订单佣金已结算，无需重复操作。');
-            } else {
-                alert('佣金结算失败: ' + errorMsg);
-            }
+            setToast({ type: 'error', message: '佣金结算失败: ' + errorMsg })
         } finally {
             setSettlingOrderId(null);
+        }
+    }
+
+    // 面单文件上传
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (!file) return
+
+        const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf']
+        if (!validTypes.includes(file.type)) {
+            alert('只支持 JPG/PNG/GIF/WebP 图片或 PDF 文件')
+            return
+        }
+        if (file.size > 20 * 1024 * 1024) {
+            alert('文件大小不能超过 20MB')
+            return
+        }
+
+        setUploading(true)
+        try {
+            const formData = new FormData()
+            formData.append('file', file)
+            let token: string | null = null
+            const cookies = document.cookie.split(';')
+            for (const c of cookies) {
+                const [n, v] = c.trim().split('=')
+                if (n === 'accessToken') { token = decodeURIComponent(v); break }
+            }
+            if (!token) {
+                try { token = localStorage.getItem('accessToken') } catch (_) {}
+            }
+            const res = await fetch('/api/admin/V1/upload/myth/order/attachment', {
+                method: 'POST',
+                headers: token ? { Authorization: `Bearer ${token}` } : {},
+                body: formData,
+            })
+            const json = await res.json()
+            if (json.success) {
+                setLabelUrl(json.data.url)
+                setToast({ type: 'success', message: '文件上传成功' })
+            } else {
+                setToast({ type: 'error', message: '上传失败: ' + (json.message || '未知错误') })
+            }
+        } catch (err: any) {
+            setToast({ type: 'error', message: '上传失败: ' + (err.message || '网络错误') })
+        } finally {
+            setUploading(false)
         }
     }
 
@@ -183,16 +248,17 @@ export default function OrderPage() {
         if (!trackingNumber || !shipOrder) return
         setShipLoading(true)
         try {
-            await updateOrderStatus(shipOrder.orderNumber, trackingNumber);
-
-            // ✅ 发货邮件由后端自动发送，前端无需处理
+            await updateOrderStatus(shipOrder.orderNumber, trackingNumber, labelUrl || undefined);
 
             setIsShipModalOpen(false)
             setTrackingNumber('')
+            setLabelUrl('')
+            if (fileInputRef.current) fileInputRef.current.value = ''
+            setToast({ type: 'success', message: `订单 #${shipOrder.orderNumber} 已发货，物流单号: ${trackingNumber}` })
             fetchOrders()
         } catch (error: any) {
             console.error('Ship error:', error)
-            alert('发货操作失败: ' + (error.message || '未知错误'));
+            setToast({ type: 'error', message: '发货失败: ' + (error.message || '未知错误') })
         } finally {
             setShipLoading(false)
         }
@@ -215,6 +281,18 @@ export default function OrderPage() {
                 <div className="flex justify-between items-center mb-8">
                     <h1 className="text-2xl font-bold text-gray-900 tracking-tight">订单管理</h1>
                 </div>
+
+                {/* 提示消息 */}
+                {toast && (
+                    <div className={`mb-6 px-4 py-3 rounded-lg flex items-center justify-between text-sm font-medium ${
+                        toast.type === 'success' ? 'bg-green-50 text-green-800 border border-green-200' : 'bg-red-50 text-red-800 border border-red-200'
+                    }`}>
+                        <span>{toast.message}</span>
+                        <button onClick={() => setToast(null)} className="ml-4 text-gray-400 hover:text-gray-600">
+                            <X size={16} />
+                        </button>
+                    </div>
+                )}
 
                 {/* 筛选与搜索 */}
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 mb-8 space-y-6">
@@ -314,7 +392,10 @@ export default function OrderPage() {
                             return (
                             <tr key={order.id} className="hover:bg-gray-50/50 transition-colors">
                                 <td className="px-6 py-4">
-                                    <div className="font-mono text-sm font-bold text-gray-900">#{order.orderNumber}</div>
+                                    <div className="font-mono text-sm font-bold text-gray-900 flex items-center gap-1">
+                                        #{order.orderNumber}
+                                        {order.labelUrl && <Paperclip className="h-3.5 w-3.5 text-gray-400" />}
+                                    </div>
                                     <div className="flex items-center gap-1 mt-1 text-[11px] text-gray-500" title={orderDate.toLocaleString('zh-CN')}>
                                         <Calendar className="h-3 w-3 flex-shrink-0" />
                                         <span>{orderDateStr}</span>
@@ -536,6 +617,18 @@ export default function OrderPage() {
                                 className="w-full border border-gray-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-black"
                                 placeholder="请输入物流单号"
                             />
+                            <label className="block text-sm font-medium text-gray-700 mb-1 mt-4">面单附件 (选填)</label>
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept="image/jpeg,image/png,image/gif,image/webp,application/pdf"
+                                onChange={handleFileUpload}
+                                className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200"
+                            />
+                            {uploading && <p className="text-sm text-blue-600 mt-1">上传中...</p>}
+                            {labelUrl && !uploading && (
+                                <p className="text-sm text-green-600 mt-1 truncate">已上传: {labelUrl.split('/').pop()}</p>
+                            )}
                         </div>
                         <div className="bg-gray-50 px-6 py-4 flex justify-end space-x-3">
                             <button onClick={() => setIsShipModalOpen(false)} className="px-4 py-2 text-sm text-gray-600">取消</button>

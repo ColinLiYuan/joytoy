@@ -69,7 +69,7 @@ export default function PaymentPolicy() {
                             <h2 className="text-xl font-bold text-gray-900 mt-8 mb-4">5. Contact Payment Support</h2>
                             <p>If you encounter payment issues or declines, please contact your bank first, then reach out to us at:</p>
                             <ul className="list-none pl-0 mt-4 space-y-2 bg-gray-50 p-6 rounded-lg border border-gray-100">
-                                <li><strong>Email:</strong> payments@mythtoy.com</li>
+                                <li><strong>Email:</strong> support@mythtoy.com</li>
                             </ul>
                         </section>
                     </div>

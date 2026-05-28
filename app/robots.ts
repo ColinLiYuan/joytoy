@@ -40,6 +40,7 @@ export default function robots(): MetadataRoute.Robots {
 
                 // --- 5. 爬虫预算优化 (Crawl Budget Optimization) ---
                 // 防止爬虫抓取无数种筛选组合（导致重复内容问题）
+                '/*?*aff=',
                 '/*?*priceRange=',
                 '/*?*colors=',
                 '/*?*features=',

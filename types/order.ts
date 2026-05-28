@@ -14,6 +14,7 @@ export type OrderStatus =
 export interface OrderCreateRequest {
     userId?: number;        // 后端新增
     cartId?: number;        // 后端新增
+    sessionId?: string;     // 游客购物车会话ID
     guestEmail?: string;
     items: OrderItemRequest[];
     shippingAddress: AddressRequest;
@@ -34,6 +35,7 @@ export interface OrderResponse {
     id: number;
     orderNumber: string;
     trackingNumber: string;
+    labelUrl?: string;
     status: OrderStatus;
     totalAmount: number;
     shippingFee: number;

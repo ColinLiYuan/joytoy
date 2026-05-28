@@ -3,6 +3,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import { productService } from '@/services/productService'
 import { ProductResponse, ProductListResponse } from '@/types/product'
 import {
@@ -23,18 +24,23 @@ export const dynamic = 'force-dynamic';
 const categories = ['情趣内衣', '震动棒', '飞机杯', '润滑液', 'SM道具', '延时喷剂']
 
 export default function ProductList() {
+    const searchParams = useSearchParams()
+    const initialLowStock = searchParams.get('stock') === 'low'
+
     const [products, setProducts] = useState<ProductResponse[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string>('')
     const [filters, setFilters] = useState({
         keyword: '',
         category: '',
-        status: ''
+        status: '',
+        lowStock: initialLowStock
     })
     const [searchFilters, setSearchFilters] = useState({
         keyword: '',
         category: '',
-        status: ''
+        status: '',
+        lowStock: initialLowStock
     })
     const [pagination, setPagination] = useState({
         currentPage: 0,
@@ -62,7 +68,9 @@ export default function ProductList() {
                 pagination.currentPage,
                 12,
                 searchFilters.keyword || '',
-                statusParam || ''
+                statusParam || '',
+                '',
+                searchFilters.lowStock || false
             )
 
             setProducts(result.content || [])
@@ -97,7 +105,8 @@ export default function ProductList() {
         const resetFilters = {
             keyword: '',
             category: '',
-            status: ''
+            status: '',
+            lowStock: false
         }
         setFilters(resetFilters)
         setSearchFilters(resetFilters)
@@ -106,6 +115,10 @@ export default function ProductList() {
 
     const handleFilterChange = (key: string, value: string) => {
         setFilters(prev => ({ ...prev, [key]: value }))
+    }
+
+    const handleLowStockToggle = () => {
+        setFilters(prev => ({ ...prev, lowStock: !prev.lowStock }))
     }
 
     const handlePageChange = (page: number) => {
@@ -202,6 +215,17 @@ export default function ProductList() {
                                 <option value="inactive">下架</option>
                             </select>
                         </div>
+                        <div className="md:col-span-2">
+                            <label className="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                                <input
+                                    type="checkbox"
+                                    checked={filters.lowStock}
+                                    onChange={handleLowStockToggle}
+                                    className="w-4 h-4 text-red-600 rounded focus:ring-red-500"
+                                />
+                                <span className="text-sm text-gray-700">仅显示库存预警</span>
+                            </label>
+                        </div>
 
                         <div className="md:col-span-2 flex gap-2">
                             <button
@@ -211,7 +235,7 @@ export default function ProductList() {
                                 <Search className="h-4 w-4 mr-1" />
                                 搜索
                             </button>
-                            {(searchFilters.keyword || searchFilters.category || searchFilters.status) && (
+                            {(searchFilters.keyword || searchFilters.category || searchFilters.status || searchFilters.lowStock) && (
                                 <button
                                     type="button"
                                     onClick={handleResetFilters}
@@ -223,7 +247,7 @@ export default function ProductList() {
                         </div>
                     </form>
                     {/* 显示当前搜索条件 */}
-                    {(searchFilters.keyword || searchFilters.category || searchFilters.status) && (
+                    {(searchFilters.keyword || searchFilters.category || searchFilters.status || searchFilters.lowStock) && (
                         <div className="mt-3 text-sm text-gray-500">
                             当前搜索：
                             {searchFilters.keyword && <span className="ml-2">名称包含：{searchFilters.keyword}</span>}

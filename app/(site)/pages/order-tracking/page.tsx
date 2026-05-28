@@ -151,7 +151,8 @@ function TrackingContent() {
         setOrderData(null);
 
         try {
-            const data = await orderService.trackOrder(orderNum, emailStr);
+            const cleanOrderNum = orderNum.trim().replace(/^#/, '');
+            const data = await orderService.trackOrder(cleanOrderNum, emailStr.trim());
             setOrderData(data);
         } catch (err: any) {
             setError(err.message || 'Order not found. Please check your details.');

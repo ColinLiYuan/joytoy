@@ -18,7 +18,8 @@ import {
     Truck,
     Warehouse,
     Layers,
-    ClipboardList
+    ClipboardList,
+    Eye
 } from 'lucide-react';
 
 interface SidebarContentProps {
@@ -64,9 +65,12 @@ function SidebarContent({ sidebarOpen, setSidebarOpen }: SidebarContentProps) {
         },
         { name: '采购管理', href: '/admin/purchase-records', icon: Truck },
         
+        // 数据分析
+        { name: '访问统计', href: '/admin/analytics', icon: Eye },
+
         // 营销与推广
-        { 
-            name: '联盟管理', 
+        {
+            name: '联盟管理',
             href: '/admin/affiliate',
             icon: TrendingUp,
             children: [

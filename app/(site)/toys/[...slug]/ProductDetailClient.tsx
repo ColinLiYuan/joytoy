@@ -917,11 +917,6 @@ export default function ProductDetailClient({
                                     <h3 className="text-sm font-semibold text-[#1A1A1A] group-hover:text-black transition-colors line-clamp-2">
                                         {guide.title}
                                     </h3>
-                                    {guide.summary && (
-                                        <p className="text-xs text-gray-500 mt-2 line-clamp-2">
-                                            {guide.summary}
-                                        </p>
-                                    )}
                                     <span className="inline-block mt-3 text-xs font-medium text-gray-400 group-hover:text-gray-600 transition-colors">
                                         Read more →
                                     </span>

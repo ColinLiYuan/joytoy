@@ -200,6 +200,7 @@ function CheckoutContent() {
         const orderData: OrderCreateRequest = {
             userId: userId ?? undefined,
             cartId: cartId ?? undefined,
+            sessionId: cart?.sessionId || undefined,
             items: orderItems,
             shippingAddress: shippingAddressData,
             billingAddress: billingAddressData as any,

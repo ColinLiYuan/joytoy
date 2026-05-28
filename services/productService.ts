@@ -24,7 +24,8 @@ class ProductService {
         size: number = 12,
         keyword: string = '',
         status: string = '',
-        vendor: string = ''
+        vendor: string = '',
+        lowStock: boolean = false
     ): Promise<ProductListResponse> {
         try {
             const queryParams = new URLSearchParams({
@@ -43,6 +44,9 @@ class ProductService {
             }
             if (vendor) {
                 queryParams.append('vendor', vendor);
+            }
+            if (lowStock) {
+                queryParams.append('lowStock', 'true');
             }
 
             const url = `/api/admin/V1/product/list?${queryParams.toString()}`;

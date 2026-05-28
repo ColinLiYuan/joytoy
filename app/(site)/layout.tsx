@@ -7,6 +7,7 @@ import GARouteTracker from '@/components/analytics/ga-route-tracker';
 import Script from 'next/script';
 import { Suspense } from 'react';
 import AffiliateTracker from '@/components/common/AffiliateTracker';
+import PageViewTracker from '@/components/common/PageViewTracker';
 import DiscountPopup from '@/components/common/discount-popup';
 
 export const dynamic = 'force-dynamic';
@@ -39,6 +40,15 @@ export default async function SiteLayout({
         "logo": process.env.NEXT_PUBLIC_SITE_URL ? `${process.env.NEXT_PUBLIC_SITE_URL}/icon_v2.png` : "https://www.mythtoy.com/icon_v2.png",
         "description": "Premium adult lifestyle products direct from source.",
         "foundingDate": "2024",
+        "address": {
+            "@type": "PostalAddress",
+            "streetAddress": "Room 306, Building B, No.61 Dongpu 2nd Road",
+            "addressLocality": "Guangzhou",
+            "addressRegion": "Guangdong",
+            "addressCountry": "CN"
+        },
+        "telephone": "+86 17620189025",
+        "email": "support@mythtoy.com",
         "sameAs": [
             "https://www.instagram.com/mythtoy.official",
             "https://x.com/mythtoyofficial",
@@ -46,6 +56,7 @@ export default async function SiteLayout({
         ],
         "contactPoint": {
             "@type": "ContactPoint",
+            "telephone": "+86 17620189025",
             "email": "support@mythtoy.com",
             "contactType": "customer service",
             "availableLanguage": ["English", "Chinese"]
@@ -105,6 +116,7 @@ export default async function SiteLayout({
             {/* ✅ 这里的 div 不再需要字体变量，因为 RootLayout 已经给了 */}
             <div className="relative flex flex-col min-h-screen w-full">
                 <Suspense fallback={null}>
+                    <PageViewTracker />
                     <GARouteTracker />
                     <AffiliateTracker />
                     <DiscountPopup />

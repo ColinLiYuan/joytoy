@@ -3,13 +3,17 @@
 import BlogContent from './blog-content';
 import Breadcrumb, { BreadcrumbItem } from '@/components/common/breadcrumb';
 import { BlogResponse } from '@/types/site/blog';
+import { ProductResponse } from '@/types/product';
+import { TocItem } from './page';
 import { getAuthor } from '@/lib/constants/authors';
 
 interface BlogDetailClientProps {
     initialBlog: BlogResponse | null;
+    recommendedProducts: ProductResponse[];
+    toc: TocItem[];
 }
 
-export default function BlogDetailClient({ initialBlog }: BlogDetailClientProps) {
+export default function BlogDetailClient({ initialBlog, recommendedProducts, toc }: BlogDetailClientProps) {
     // 如果服务端没有获取到数据，显示错误页面
     if (!initialBlog) {
         return (
@@ -72,7 +76,7 @@ export default function BlogDetailClient({ initialBlog }: BlogDetailClientProps)
                 </div>
 
                 {/* Content Component */}
-                <BlogContent blog={blog} />
+                <BlogContent blog={blog} recommendedProducts={recommendedProducts} toc={toc} />
             </div>
         </>
     );

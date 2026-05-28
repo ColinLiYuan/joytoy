@@ -30,41 +30,81 @@ export interface CartStatistics {
     avgItemsPerCart: number;
 }
 
-// 购物车操作日志接口
+// 购物车操作日志接口（与后端 CartOperationLogResponse 对齐）
 export interface CartOperationLog {
     id: number;
     cartId: number;
-    sessionId: string;
     userId: number | null;
+    sessionId: string;
     userEmail: string | null;
     userName: string;
-    isGuest: boolean;
     operationType: string;
-    operationDesc: string;
+    operationTypeDesc: string;
+    // 商品信息
     productId: number | null;
+    productName: string | null;
     productTitle: string | null;
     productSku: string | null;
     skuId: number | null;
-    quantity: number | null;
+    skuColor: string | null;
+    bundleId: number | null;
+    bundleName: string | null;
+    productImage: string | null;
+    // 数量和价格
+    quantityBefore: number | null;
+    quantityAfter: number | null;
+    quantityChange: number | null;
     unitPrice: number | null;
     totalPrice: number | null;
-    cartTotalItems: number;
-    cartTotalAmount: number;
-    ip: string | null;
+    // 购物车状态
+    cartItemsCount: number;
+    cartTotalQuantity: number;
+    cartSubtotal: number;
+    // 其他
+    reason: string | null;
+    ipAddress: string | null;
     userAgent: string | null;
     createdAt: string;
 }
 
-// 操作日志统计接口
+// 操作日志统计接口（与后端 CartAnalyticsResponse 对齐）
 export interface CartOperationStatistics {
     totalOperations: number;
     todayOperations: number;
+    createOperations: number;
     addOperations: number;
-    updateOperations: number;
     removeOperations: number;
-    clearOperations: number;
     abandonOperations: number;
     avgOperationsPerCart: number;
+    addToCartConversionRate: number;
+    last7Days: {
+        cartsCreated: number;
+        itemsAdded: number;
+        itemsRemoved: number;
+        cartsAbandoned: number;
+        avgCartSubtotal: number;
+    } | null;
+    last30Days: {
+        cartsCreated: number;
+        itemsAdded: number;
+        itemsRemoved: number;
+        cartsAbandoned: number;
+        avgCartSubtotal: number;
+    } | null;
+    topAddedProducts: Array<{
+        productId: number;
+        productName: string;
+        productTitle: string;
+        count: number;
+        totalAmount: number;
+    }>;
+    topRemovedProducts: Array<{
+        productId: number;
+        productName: string;
+        productTitle: string;
+        count: number;
+        totalAmount: number;
+    }>;
 }
 
 class CartService {
@@ -227,33 +267,39 @@ const response = await axiosClient.get(url);
 const response = await axiosClient.get(url);
 
             if (response.data?.success) {
-                // 将后端返回的数据格式转换为前端期望的格式
-                const backendData = response.data.data;
+                const d = response.data.data;
                 return {
-                    totalOperations: backendData.totalOperations || 0,
-                    todayOperations: backendData.todayOperations || 0,
-                    addOperations: backendData.addOperations || 0,
-                    updateOperations: backendData.updateOperations || 0,
-                    removeOperations: backendData.removeOperations || 0,
-                    clearOperations: backendData.clearOperations || 0,
-                    abandonOperations: backendData.abandonOperations || 0,
-                    avgOperationsPerCart: backendData.avgOperationsPerCart || 0
+                    totalOperations: d.totalOperations || 0,
+                    todayOperations: d.todayOperations || 0,
+                    createOperations: d.totalCartsCreated || 0,
+                    addOperations: d.totalItemsAdded || 0,
+                    removeOperations: d.totalItemsRemoved || 0,
+                    abandonOperations: d.totalCartsAbandoned || 0,
+                    avgOperationsPerCart: d.avgItemsPerCart || 0,
+                    addToCartConversionRate: d.addToCartConversionRate || 0,
+                    last7Days: d.last7Days || null,
+                    last30Days: d.last30Days || null,
+                    topAddedProducts: d.topAddedProducts || [],
+                    topRemovedProducts: d.topRemovedProducts || [],
                 };
             }
 
             throw new Error(response.data?.message || 'Failed to fetch cart operation logs statistics');
         } catch (error) {
-            console.error(' [CartService] Error fetching cart operation logs statistics:', error);
-            // 返回默认值
+            console.error('[CartService] Error fetching cart operation logs statistics:', error);
             return {
                 totalOperations: 0,
                 todayOperations: 0,
+                createOperations: 0,
                 addOperations: 0,
-                updateOperations: 0,
                 removeOperations: 0,
-                clearOperations: 0,
                 abandonOperations: 0,
-                avgOperationsPerCart: 0
+                avgOperationsPerCart: 0,
+                addToCartConversionRate: 0,
+                last7Days: null,
+                last30Days: null,
+                topAddedProducts: [],
+                topRemovedProducts: [],
             };
         }
     }

@@ -115,12 +115,13 @@ export async function settleOrderCommission(orderNumber: string): Promise<any> {
  * @param orderNumber 订单号
  * @param trackingNumber 物流单号（仅发货时需要）
  */
-export async function updateOrderStatus(orderNumber: string, trackingNumber?: string): Promise<void> {
+export async function updateOrderStatus(orderNumber: string, trackingNumber?: string, labelUrl?: string): Promise<void> {
     try {
-        console.log('[Order Action] Updating order status:', orderNumber, 'trackingNumber:', trackingNumber)
+        console.log('[Order Action] Updating order status:', orderNumber, 'trackingNumber:', trackingNumber, 'labelUrl:', labelUrl)
 
-        // 发货时需要传 trackingNumber，其他操作传空对象
-        const body = trackingNumber ? { trackingNumber } : {}
+        const body: Record<string, string> = {}
+        if (trackingNumber) body.trackingNumber = trackingNumber
+        if (labelUrl) body.labelUrl = labelUrl
 
         const response = await fetchWithAuth(API_PATHS.ORDER_UPDATE_STATUS(orderNumber), {
             cache: 'no-store',

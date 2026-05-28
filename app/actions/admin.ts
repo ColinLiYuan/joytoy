@@ -15,17 +15,15 @@ const fetchWithAuthPost = (url: string, body: any) => fetchWithAuth(url, {
 
 export interface DashboardStats {
     todaySales: number
-    totalOrders: number
+    todayOrders: number
+    yesterdaySales: number
+    yesterdayOrders: number
+    pendingOrders: number
     totalProducts: number
     totalUsers: number
-    cancelledOrders: number
-    refundedOrders: number
-    cancelledAmount: number
-    refundedAmount: number
-    salesChange: string
-    ordersChange: string
-    productsChange: string
-    usersChange: string
+    inventoryAlerts: number
+    ordersByStatus: Record<string, number>
+    salesTrend: { date: string; amount: number; orders: number }[]
 }
 
 export interface RecentOrder {
@@ -137,73 +135,56 @@ export interface AffiliateActivityRequest {
 // ==================== 公共工具函数 ====================
 // 已迁移到 lib/server-token-utils.ts
 
+// ==================== 访问统计 (Analytics) Actions ====================
+
+export interface AnalyticsOverview {
+    todayPV: number
+    yesterdayPV: number
+    topPages: { page: string; count: number }[]
+    hourly: number[]
+}
+
+export async function getAnalyticsOverview(): Promise<AnalyticsOverview> {
+    try {
+        const response = await fetchWithAuthGet('/api/V1/analytics/admin/overview')
+
+        if (!response.ok) throw new Error(`获取访问统计失败: ${response.status}`)
+
+        const data = await response.json()
+        if (!data.success) throw new Error(data.message || '获取访问统计失败')
+
+        return data.data
+    } catch (error) {
+        console.error('Error fetching analytics overview:', error)
+        return { todayPV: 0, yesterdayPV: 0, topPages: [], hourly: [] }
+    }
+}
+
 // ==================== 仪表盘 (Dashboard) Actions ====================
 
 export async function getDashboardStats(): Promise<DashboardStats> {
-    const { BACKEND_CONFIG } = await import('@/lib/api-config')
-
     try {
-        // 并行获取所有统计数据
-        const [ordersRes, productsRes, usersRes] = await Promise.all([
-            fetchWithAuthGet(`/api/admin/V1/order/list?page=0&size=1000`),
-            fetchWithAuthGet(`/api/admin/V1/product/list?page=0&size=1000`),
-            fetchWithAuthGet(`/api/admin/V1/user/list?page=0&size=1000`)
-        ])
+        const response = await fetchWithAuthGet('/api/admin/V1/order/stats/dashboard')
 
-        const ordersData = await ordersRes.json()
-        const productsData = await productsRes.json()
-        const usersData = await usersRes.json()
+        if (!response.ok) throw new Error(`获取仪表盘数据失败: ${response.status}`)
 
-        const orders = ordersData.success ? ordersData.data.content || [] : []
-        const products = productsData.success ? productsData.data.content || [] : []
-        const users = usersData.success ? usersData.data.content || [] : []
+        const data = await response.json()
+        if (!data.success) throw new Error(data.message || '获取仪表盘数据失败')
 
-        const today = new Date()
-        today.setHours(0, 0, 0, 0)
-        
-        const todayOrders = orders.filter((order: any) => {
-            const orderDate = new Date(order.createdAt)
-            return orderDate >= today
-        })
-        
-        const todaySales = todayOrders.reduce((sum: number, order: any) => sum + (order.totalAmount || 0), 0)
-        
-        // 计算取消和退款订单统计
-        const cancelledOrders = orders.filter((o: any) => o.status === 'CANCELLED')
-        const refundedOrders = orders.filter((o: any) => o.status === 'REFUNDED')
-        const cancelledAmount = cancelledOrders.reduce((sum: number, o: any) => sum + (o.totalAmount || 0), 0)
-        const refundedAmount = refundedOrders.reduce((sum: number, o: any) => sum + (o.totalAmount || 0), 0)
-
-        return {
-            todaySales,
-            totalOrders: orders.length,
-            totalProducts: products.length,
-            totalUsers: users.length,
-            cancelledOrders: cancelledOrders.length,
-            refundedOrders: refundedOrders.length,
-            cancelledAmount,
-            refundedAmount,
-            salesChange: '+12%',
-            ordersChange: '+8%',
-            productsChange: '+3%',
-            usersChange: '+5%'
-        }
+        return data.data
     } catch (error) {
         console.error('Error fetching dashboard stats:', error)
-        // ✅ 返回默认值而不是抛出错误
         return {
             todaySales: 0,
-            totalOrders: 0,
+            todayOrders: 0,
+            yesterdaySales: 0,
+            yesterdayOrders: 0,
+            pendingOrders: 0,
             totalProducts: 0,
             totalUsers: 0,
-            cancelledOrders: 0,
-            refundedOrders: 0,
-            cancelledAmount: 0,
-            refundedAmount: 0,
-            salesChange: '+0%',
-            ordersChange: '+0%',
-            productsChange: '+0%',
-            usersChange: '+0%'
+            inventoryAlerts: 0,
+            ordersByStatus: {},
+            salesTrend: []
         }
     }
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Mail, Clock, MapPin, Send, Instagram, Loader2, ArrowRight } from 'lucide-react';
+import { Mail, Clock, MapPin, Phone, Send, Instagram, Loader2, ArrowRight } from 'lucide-react';
 import { sendContactEmail } from '@/app/actions/email';
 import { useToast } from '@/contexts/toastContext';
 import FAQSection from '@/components/common/faq-section';
@@ -72,7 +72,7 @@ export default function Contact() {
                             <h3 className="font-serif text-xl text-[#1A1A1A] mb-2">WhatsApp</h3>
                             <p className="text-sm text-gray-500 mb-6 font-light">Direct line for wholesale & urgent requests.</p>
 
-                            <a href="https://wa.me/17620189025" target="_blank" rel="noopener noreferrer" className="bg-[#1A1A1A] text-white px-6 py-3 rounded-full text-xs font-bold uppercase tracking-widest hover:bg-gray-800 transition-colors inline-flex items-center gap-2">
+                            <a href="https://wa.me/8617620189025" target="_blank" rel="noopener noreferrer" className="bg-[#1A1A1A] text-white px-6 py-3 rounded-full text-xs font-bold uppercase tracking-widest hover:bg-gray-800 transition-colors inline-flex items-center gap-2">
                                 Chat on WhatsApp <ArrowRight size={14} />
                             </a>
                         </div>
@@ -83,7 +83,7 @@ export default function Contact() {
                                 <MapPin size={20} strokeWidth={1.5} className="mt-1 text-[#1A1A1A]" />
                                 <div>
                                     <h4 className="font-serif text-[#1A1A1A] mb-1">Headquarters</h4>
-                                    <p className="text-gray-500 text-sm font-light">Global Fulfillment Center<br/>Strategic Logistics Hub</p>
+                                    <p className="text-gray-500 text-sm font-light">Room 306, Building B, No.61 Dongpu 2nd Road<br/>Tianhe District, Guangzhou<br/>Guangdong, China</p>
                                 </div>
                             </div>
                             <div className="flex items-start gap-4">
@@ -93,12 +93,19 @@ export default function Contact() {
                                     <p className="text-gray-500 text-sm font-light">Mon-Fri: 9AM - 6PM (GMT+8)</p>
                                 </div>
                             </div>
+                            <div className="flex items-start gap-4">
+                                <Phone size={20} strokeWidth={1.5} className="mt-1 text-[#1A1A1A]" />
+                                <div>
+                                    <h4 className="font-serif text-[#1A1A1A] mb-1">Phone</h4>
+                                    <p className="text-gray-500 text-sm font-light">+86 17620189025</p>
+                                </div>
+                            </div>
 
                             {/* ✅ Updated Socials (Referring to Footer) */}
                             <div className="pt-4 flex gap-4 border-t border-gray-200/50 mt-4">
                                 {/* Instagram */}
                                 <a
-                                    href="https://www.instagram.com/myth.w.studio"
+                                    href="https://www.instagram.com/mythtoy.official"
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     aria-label="Follow us on Instagram"
@@ -120,7 +127,7 @@ export default function Contact() {
 
                                 {/* X (Twitter) */}
                                 <a
-                                    href="https://twitter.com/myth_objects"
+                                    href="https://x.com/mythtoyofficial"
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     aria-label="Follow us on X"

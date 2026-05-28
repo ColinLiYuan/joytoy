@@ -1,140 +1,35 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { cartService } from '@/services/cartService'
+import { cartService, CartOperationLog, CartOperationStatistics } from '@/services/cartService'
 import { getProductImageUrl } from '@/lib/image-utils'
 import {
-    Search,
-    Filter,
-    Clock,
-    TrendingUp,
-    ShoppingCart,
-    Trash2,
-    Package,
-    Loader2,
-    ChevronLeft,
-    ChevronRight,
-    X,
-    Eye
+    Search, Filter, Clock, TrendingUp, ShoppingCart,
+    Trash2, Package, Loader2, ChevronLeft, ChevronRight, ChevronDown,
+    Plus, Minus, RotateCcw, User, Monitor, MapPin, Tag, Hash
 } from 'lucide-react'
 
-// 购物车操作日志类型
-interface CartOperationLog {
-    id: number;
-    cartId: number;
-    sessionId: string;
-    userId: number | null;
-    userEmail: string | null;
-    userName: string;
-    isGuest: boolean;
-    operationType: string; // ADD_ITEM, UPDATE_QUANTITY, REMOVE_ITEM, CLEAR_CART, ABANDON_CART, CREATE_CART
-    operationDesc: string;
-    productId: number | null;
-    productTitle: string | null;
-    productSku: string | null;
-    skuId: number | null;
-    quantity: number | null;
-    unitPrice: number | null;
-    totalPrice: number | null;
-    cartTotalItems: number;
-    cartTotalAmount: number;
-    ip: string | null;
-    userAgent: string | null;
-    createdAt: string;
+const ITEMS_PER_PAGE = 20
+
+const typeConfig: Record<string, { label: string; color: string; icon: typeof Package }> = {
+    CART_CREATE:   { label: '创建购物车', color: 'bg-blue-100 text-blue-700',   icon: ShoppingCart },
+    ITEM_ADD:      { label: '添加商品',   color: 'bg-green-100 text-green-700',   icon: Plus },
+    ITEM_UPDATE:   { label: '修改数量',   color: 'bg-amber-100 text-amber-700',   icon: TrendingUp },
+    ITEM_REMOVE:   { label: '删除商品',   color: 'bg-red-100 text-red-700',       icon: Minus },
+    CART_CLEAR:    { label: '清空购物车', color: 'bg-orange-100 text-orange-700', icon: Trash2 },
+    CART_ABANDON:  { label: '废弃购物车', color: 'bg-gray-200 text-gray-700',    icon: RotateCcw },
+    CART_MERGE:    { label: '合并购物车', color: 'bg-purple-100 text-purple-700', icon: ShoppingCart },
+    CART_EXPIRE:   { label: '购物车过期', color: 'bg-red-100 text-red-700',       icon: Clock },
 }
 
-// 操作日志统计类型
-interface CartOperationStatistics {
-    totalOperations: number;
-    todayOperations: number;
-    addOperations: number;
-    updateOperations: number;
-    removeOperations: number;
-    clearOperations: number;
-    abandonOperations: number;
-    avgOperationsPerCart: number;
+const operationTypes = ['ALL', 'CART_CREATE', 'ITEM_ADD', 'ITEM_UPDATE', 'ITEM_REMOVE', 'CART_CLEAR', 'CART_ABANDON', 'CART_MERGE', 'CART_EXPIRE']
+
+function formatTime(iso: string) {
+    return new Date(iso).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' })
 }
 
-// 操作类型映射（字典翻译）
-const operationTypeMap: Record<string, { label: string; color: string; icon: any; description?: string }> = {
-    'CREATE_CART': { 
-        label: '创建购物车', 
-        color: 'bg-blue-100 text-blue-800', 
-        icon: ShoppingCart,
-        description: '用户首次添加商品到购物车时自动创建' 
-    },
-    'ITEM_ADD': { 
-        label: '添加商品', 
-        color: 'bg-green-100 text-green-800', 
-        icon: Package,
-        description: '向购物车中添加新的商品' 
-    },
-    'ADD_ITEM': { 
-        label: '添加商品', 
-        color: 'bg-green-100 text-green-800', 
-        icon: Package,
-        description: '向购物车中添加新的商品' 
-    },
-    'ITEM_UPDATE': { 
-        label: '修改数量', 
-        color: 'bg-yellow-100 text-yellow-800', 
-        icon: TrendingUp,
-        description: '修改购物车中商品的数量' 
-    },
-    'UPDATE_QUANTITY': { 
-        label: '修改数量', 
-        color: 'bg-yellow-100 text-yellow-800', 
-        icon: TrendingUp,
-        description: '修改购物车中商品的数量' 
-    },
-    'ITEM_REMOVE': { 
-        label: '删除商品', 
-        color: 'bg-red-100 text-red-800', 
-        icon: Trash2,
-        description: '从购物车中移除某个商品' 
-    },
-    'REMOVE_ITEM': { 
-        label: '删除商品', 
-        color: 'bg-red-100 text-red-800', 
-        icon: Trash2,
-        description: '从购物车中移除某个商品' 
-    },
-    'CART_CLEAR': { 
-        label: '清空购物车', 
-        color: 'bg-orange-100 text-orange-800', 
-        icon: Trash2,
-        description: '清空购物车中的所有商品' 
-    },
-    'CLEAR_CART': { 
-        label: '清空购物车', 
-        color: 'bg-orange-100 text-orange-800', 
-        icon: Trash2,
-        description: '清空购物车中的所有商品' 
-    },
-    'CART_ABANDON': { 
-        label: '废弃购物车', 
-        color: 'bg-gray-100 text-gray-800', 
-        icon: X,
-        description: '购物车被标记为废弃状态（长时间未操作或结账失败）' 
-    },
-    'ABANDON_CART': { 
-        label: '废弃购物车', 
-        color: 'bg-gray-100 text-gray-800', 
-        icon: X,
-        description: '购物车被标记为废弃状态（长时间未操作或结账失败）' 
-    }
-}
-
-// 用户类型映射
-const userTypeMap: Record<string, { label: string; color: string }> = {
-    'GUEST': { 
-        label: '游客', 
-        color: 'bg-gray-100 text-gray-700' 
-    },
-    'REGISTERED': { 
-        label: '注册用户', 
-        color: 'bg-purple-100 text-purple-700' 
-    }
+function formatFullTime(iso: string) {
+    return new Date(iso).toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' })
 }
 
 export default function CartOperationLogsPage() {
@@ -143,325 +38,274 @@ export default function CartOperationLogsPage() {
     const [page, setPage] = useState(0)
     const [totalPages, setTotalPages] = useState(0)
     const [totalElements, setTotalElements] = useState(0)
-    const [statistics, setStatistics] = useState<CartOperationStatistics | null>(null)
-    
-    // 筛选条件
-    const [searchQuery, setSearchQuery] = useState('')
-    const [operationType, setOperationType] = useState<string>('ALL')
-    const [isGuestFilter, setIsGuestFilter] = useState<boolean | undefined>(undefined)
-    const [dateRange, setDateRange] = useState<string>('')
-    
-    // 详情弹窗
-    const [selectedLog, setSelectedLog] = useState<CartOperationLog | null>(null)
-    const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
+    const [stats, setStats] = useState<CartOperationStatistics | null>(null)
+    const [expandedId, setExpandedId] = useState<number | null>(null)
 
-    const operationTypes = ['ALL', 'CREATE_CART', 'ADD_ITEM', 'UPDATE_QUANTITY', 'REMOVE_ITEM', 'CLEAR_CART', 'ABANDON_CART']
+    // filters
+    const [searchText, setSearchText] = useState('')
+    const [opType, setOpType] = useState('ALL')
+    const [userType, setUserType] = useState<'ALL' | 'GUEST' | 'REGISTERED'>('ALL')
 
-    // 加载统计数据
-    useEffect(() => {
-        loadStatistics()
-    }, [])
+    useEffect(() => { loadStats() }, [])
+    useEffect(() => { loadLogs() }, [page, opType, userType])
 
-    // 加载日志列表
-    useEffect(() => {
-        loadLogs()
-    }, [page, operationType, isGuestFilter])
-
-    const loadStatistics = async () => {
-        try {
-            const stats = await cartService.getCartOperationStatistics()
-            setStatistics(stats)
-        } catch (error) {
-            console.error('加载统计数据失败:', error)
-        }
+    const loadStats = async () => {
+        try { setStats(await cartService.getCartOperationStatistics()) } catch { /* ignore */ }
     }
 
     const loadLogs = async () => {
         setLoading(true)
         try {
             const result = await cartService.getCartOperationLogs({
-                page,
-                size: 20,
-                operationType: operationType === 'ALL' ? '' : operationType,
-                isGuest: isGuestFilter,
-                search: searchQuery
+                page, size: ITEMS_PER_PAGE,
+                operationType: opType === 'ALL' ? '' : opType,
+                isGuest: userType === 'ALL' ? undefined : userType === 'GUEST',
+                search: searchText,
             })
             setLogs(result.content)
             setTotalPages(result.totalPages)
             setTotalElements(result.totalElements)
-        } catch (error) {
-            console.error('加载日志失败:', error)
-        } finally {
-            setLoading(false)
-        }
+        } catch { /* ignore */ } finally { setLoading(false) }
     }
 
-    const handleSearch = () => {
-        setPage(0)
-        loadLogs()
-    }
+    const doSearch = () => { setPage(0); loadLogs() }
+    const resetFilters = () => { setSearchText(''); setOpType('ALL'); setUserType('ALL'); setPage(0) }
 
-    const resetFilters = () => {
-        setSearchQuery('')
-        setOperationType('ALL')
-        setIsGuestFilter(undefined)
-        setDateRange('')
-        setPage(0)
-    }
+    const StatCard = ({ label, value, color, Icon }: { label: string; value: number | string; color: string; Icon: typeof Package }) => (
+        <div className="bg-white rounded-xl border border-gray-200 p-5">
+            <div className="flex items-center justify-between">
+                <div>
+                    <p className="text-xs text-gray-500">{label}</p>
+                    <p className={`text-2xl font-bold mt-1 ${color}`}>{value}</p>
+                </div>
+                <div className={`h-10 w-10 rounded-lg flex items-center justify-center bg-opacity-10 ${color.replace('text-', 'bg-')}`}>
+                    <Icon className={`h-5 w-5 ${color}`} />
+                </div>
+            </div>
+        </div>
+    )
 
     return (
         <div className="min-h-screen bg-gray-50">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                {/* 页面标题 */}
-                <div className="mb-8">
-                    <h1 className="text-2xl font-bold text-gray-900 tracking-tight">购物车操作日志</h1>
-                    <p className="mt-2 text-sm text-gray-600">查看和分析所有购物车操作记录</p>
+                <div className="mb-6">
+                    <h1 className="text-xl font-bold text-gray-900">购物车操作日志</h1>
                 </div>
 
-                {/* 统计卡片 */}
-                {statistics && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                        <div className="bg-white rounded-xl border border-gray-200 p-6">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-sm font-medium text-gray-600">总操作数</p>
-                                    <p className="text-3xl font-bold text-gray-900 mt-2">{statistics.totalOperations}</p>
-                                </div>
-                                <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                                    <Clock className="h-6 w-6 text-blue-600" />
+                {/* ====== Stats ====== */}
+                {stats && (
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
+                        <StatCard label="总操作数" value={stats.totalOperations} color="text-gray-900" Icon={Hash} />
+                        <StatCard label="今日操作" value={stats.todayOperations} color="text-green-600" Icon={TrendingUp} />
+                        <StatCard label="创建购物车" value={stats.createOperations} color="text-blue-600" Icon={ShoppingCart} />
+                        <StatCard label="添加商品" value={stats.addOperations} color="text-emerald-600" Icon={Plus} />
+                        <StatCard label="删除商品" value={stats.removeOperations} color="text-red-600" Icon={Minus} />
+                        <StatCard label="加购转化率" value={`${stats.addToCartConversionRate}%`} color="text-purple-600" Icon={TrendingUp} />
+                    </div>
+                )}
+
+                {/* ====== Top products + period stats ====== */}
+                {stats && (stats.topAddedProducts.length > 0 || stats.last7Days) && (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                        {stats.topAddedProducts.length > 0 && (
+                            <div className="bg-white rounded-xl border border-gray-200 p-4">
+                                <h4 className="text-xs font-semibold text-gray-500 uppercase mb-3">热门添加 Top {stats.topAddedProducts.length}</h4>
+                                <div className="space-y-2">
+                                    {stats.topAddedProducts.map((p, i) => (
+                                        <div key={p.productId} className="flex items-center justify-between text-sm">
+                                            <span className="text-gray-700 truncate flex-1">
+                                                <span className="text-gray-400 mr-1">#{i + 1}</span>
+                                                {p.productName || p.productTitle || `ID:${p.productId}`}
+                                            </span>
+                                            <span className="text-gray-500 ml-2 whitespace-nowrap">{p.count}次</span>
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
-                        </div>
-
-                        <div className="bg-white rounded-xl border border-gray-200 p-6">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-sm font-medium text-gray-600">今日操作</p>
-                                    <p className="text-3xl font-bold text-green-600 mt-2">{statistics.todayOperations}</p>
-                                </div>
-                                <div className="h-12 w-12 bg-green-100 rounded-lg flex items-center justify-center">
-                                    <TrendingUp className="h-6 w-6 text-green-600" />
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="bg-white rounded-xl border border-gray-200 p-6">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-sm font-medium text-gray-600">添加商品</p>
-                                    <p className="text-3xl font-bold text-blue-600 mt-2">{statistics.addOperations}</p>
-                                </div>
-                                <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                                    <Package className="h-6 w-6 text-blue-600" />
+                        )}
+                        {stats.topRemovedProducts.length > 0 && (
+                            <div className="bg-white rounded-xl border border-gray-200 p-4">
+                                <h4 className="text-xs font-semibold text-gray-500 uppercase mb-3">热门删除 Top {stats.topRemovedProducts.length}</h4>
+                                <div className="space-y-2">
+                                    {stats.topRemovedProducts.map((p, i) => (
+                                        <div key={p.productId} className="flex items-center justify-between text-sm">
+                                            <span className="text-gray-700 truncate flex-1">
+                                                <span className="text-gray-400 mr-1">#{i + 1}</span>
+                                                {p.productName || p.productTitle || `ID:${p.productId}`}
+                                            </span>
+                                            <span className="text-gray-500 ml-2 whitespace-nowrap">{p.count}次</span>
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
-                        </div>
-
-                        <div className="bg-white rounded-xl border border-gray-200 p-6">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-sm font-medium text-gray-600">平均每购物车</p>
-                                    <p className="text-3xl font-bold text-purple-600 mt-2">{statistics.avgOperationsPerCart}</p>
-                                </div>
-                                <div className="h-12 w-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                                    <ShoppingCart className="h-6 w-6 text-purple-600" />
-                                </div>
+                        )}
+                        <div className="bg-white rounded-xl border border-gray-200 p-4">
+                            <h4 className="text-xs font-semibold text-gray-500 uppercase mb-3">近期趋势</h4>
+                            <div className="space-y-3 text-xs">
+                                {stats.last7Days && (
+                                    <div>
+                                        <p className="text-gray-400 mb-1">近 7 天</p>
+                                        <div className="grid grid-cols-2 gap-1">
+                                            <span className="text-gray-600">添加: {stats.last7Days.itemsAdded}</span>
+                                            <span className="text-gray-600">删除: {stats.last7Days.itemsRemoved}</span>
+                                            <span className="text-gray-600">创建: {stats.last7Days.cartsCreated}</span>
+                                            <span className="text-gray-600">废弃: {stats.last7Days.cartsAbandoned}</span>
+                                        </div>
+                                    </div>
+                                )}
+                                {stats.last30Days && (
+                                    <div>
+                                        <p className="text-gray-400 mb-1">近 30 天</p>
+                                        <div className="grid grid-cols-2 gap-1">
+                                            <span className="text-gray-600">添加: {stats.last30Days.itemsAdded}</span>
+                                            <span className="text-gray-600">删除: {stats.last30Days.itemsRemoved}</span>
+                                            <span className="text-gray-600">创建: {stats.last30Days.cartsCreated}</span>
+                                            <span className="text-gray-600">废弃: {stats.last30Days.cartsAbandoned}</span>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
                 )}
 
-                {/* 筛选器 */}
-                <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
-                    <div className="flex items-center gap-2 mb-4">
-                        <Filter className="h-5 w-5 text-gray-400" />
-                        <h3 className="text-sm font-semibold text-gray-900">筛选条件</h3>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                        {/* 搜索框 */}
-                        <div>
-                            <label className="block text-xs font-medium text-gray-700 mb-2">搜索</label>
+                {/* ====== Filters ====== */}
+                <div className="bg-white rounded-xl border border-gray-200 p-4 mb-4">
+                    <div className="flex flex-wrap items-end gap-3">
+                        <div className="flex-1 min-w-[200px]">
+                            <label className="block text-xs text-gray-500 mb-1">搜索</label>
                             <div className="relative">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-300" />
                                 <input
-                                    type="text"
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    placeholder="用户名、邮箱、SessionId..."
-                                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                    onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                                    value={searchText}
+                                    onChange={e => setSearchText(e.target.value)}
+                                    onKeyDown={e => e.key === 'Enter' && doSearch()}
+                                    placeholder="用户名 / 邮箱 ..."
+                                    className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none"
                                 />
                             </div>
                         </div>
-
-                        {/* 操作类型 */}
                         <div>
-                            <label className="block text-xs font-medium text-gray-700 mb-2">操作类型</label>
-                            <select
-                                value={operationType}
-                                onChange={(e) => setOperationType(e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            >
-                                {operationTypes.map(type => (
-                                    <option key={type} value={type}>
-                                        {type === 'ALL' ? '全部类型' : operationTypeMap[type]?.label || type}
-                                    </option>
+                            <label className="block text-xs text-gray-500 mb-1">操作类型</label>
+                            <select value={opType} onChange={e => { setOpType(e.target.value); setPage(0) }}
+                                className="px-3 py-2 border border-gray-200 rounded-lg text-sm outline-none">
+                                {operationTypes.map(t => (
+                                    <option key={t} value={t}>{t === 'ALL' ? '全部类型' : typeConfig[t]?.label || t}</option>
                                 ))}
                             </select>
                         </div>
-
-                        {/* 用户类型 */}
                         <div>
-                            <label className="block text-xs font-medium text-gray-700 mb-2">用户类型</label>
-                            <select
-                                value={isGuestFilter === undefined ? 'ALL' : isGuestFilter ? 'GUEST' : 'REGISTERED'}
-                                onChange={(e) => {
-                                    const value = e.target.value
-                                    setIsGuestFilter(value === 'ALL' ? undefined : value === 'GUEST')
-                                }}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            >
-                                <option value="ALL">全部用户</option>
+                            <label className="block text-xs text-gray-500 mb-1">用户类型</label>
+                            <select value={userType} onChange={e => { setUserType(e.target.value as typeof userType); setPage(0) }}
+                                className="px-3 py-2 border border-gray-200 rounded-lg text-sm outline-none">
+                                <option value="ALL">全部</option>
                                 <option value="GUEST">游客</option>
                                 <option value="REGISTERED">注册用户</option>
                             </select>
                         </div>
-
-                        {/* 操作按钮 */}
-                        <div className="flex items-end gap-2">
-                            <button
-                                onClick={handleSearch}
-                                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
-                            >
-                                查询
-                            </button>
-                            <button
-                                onClick={resetFilters}
-                                className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors"
-                            >
-                                重置
-                            </button>
-                        </div>
+                        <button onClick={doSearch} className="px-5 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700">查询</button>
+                        <button onClick={resetFilters} className="px-4 py-2 border text-sm rounded-lg hover:bg-gray-50">重置</button>
                     </div>
                 </div>
 
-                {/* 日志列表 */}
+                {/* ====== Table ====== */}
                 <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-                    {/* 表格头部 */}
-                    <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
-                        <div className="flex items-center justify-between">
-                            <h3 className="text-sm font-semibold text-gray-900">
-                                操作日志列表
-                                {totalElements > 0 && (
-                                    <span className="ml-2 text-xs font-normal text-gray-500">
-                                        (共 {totalElements} 条记录)
-                                    </span>
-                                )}
-                            </h3>
-                        </div>
-                    </div>
-
-                    {/* 表格内容 */}
                     {loading ? (
-                        <div className="flex items-center justify-center py-16">
-                            <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-                        </div>
+                        <div className="flex justify-center py-20"><Loader2 className="h-6 w-6 animate-spin text-gray-300" /></div>
                     ) : logs.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center py-16 text-gray-400">
-                            <Clock className="h-12 w-12 mb-4" />
-                            <p className="text-lg font-medium">暂无操作日志</p>
-                            <p className="text-sm mt-2">尝试调整筛选条件</p>
+                        <div className="flex flex-col items-center py-20 text-gray-400">
+                            <Clock className="h-10 w-10 mb-3" />
+                            <p className="text-sm">暂无操作日志</p>
                         </div>
                     ) : (
                         <>
                             <div className="overflow-x-auto">
-                                <table className="w-full">
-                                    <thead className="bg-gray-50">
-                                        <tr>
-                                            <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">操作时间</th>
-                                            <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">操作类型</th>
-                                            <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">用户</th>
-                                            <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">商品信息</th>
-                                            <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">操作详情</th>
-                                            <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">购物车状态</th>
-                                            <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">操作</th>
+                                <table className="w-full text-sm">
+                                    <thead>
+                                        <tr className="border-b border-gray-100 bg-gray-50/50">
+                                            <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 w-[140px]">时间</th>
+                                            <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 w-[170px]">用户</th>
+                                            <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 w-[110px]">操作</th>
+                                            <th className="px-5 py-3 text-left text-xs font-medium text-gray-500">商品 / 详情</th>
+                                            <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 w-[110px]">购物车状态</th>
+                                            <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 w-[50px]"></th>
                                         </tr>
                                     </thead>
-                                    <tbody className="bg-white divide-y divide-gray-200">
-                                        {logs.map((log) => {
-                                            const operationConfig = operationTypeMap[log.operationType] || { label: log.operationType, color: 'bg-gray-100 text-gray-800', icon: Clock }
-                                            const OperationIcon = operationConfig.icon
+                                    <tbody className="divide-y divide-gray-50">
+                                        {logs.map(log => {
+                                            const cfg = typeConfig[log.operationType] || { label: log.operationType, color: 'bg-gray-100 text-gray-600', icon: Clock }
+                                            const Icon = cfg.icon
+                                            const isExpanded = expandedId === log.id
+                                            const isGuest = log.userId == null
 
                                             return (
-                                                <tr key={log.id} className="hover:bg-gray-50 transition-colors">
-                                                    <td className="px-6 py-4 whitespace-nowrap">
-                                                        <div className="text-sm text-gray-900">
-                                                            {new Date(log.createdAt).toLocaleString('zh-CN', {
-                                                                year: 'numeric',
-                                                                month: '2-digit',
-                                                                day: '2-digit',
-                                                                hour: '2-digit',
-                                                                minute: '2-digit',
-                                                                second: '2-digit'
-                                                            })}
+                                                <tr key={log.id} className={`hover:bg-gray-50/50 transition-colors ${isExpanded ? 'bg-blue-50/30' : ''}`}>
+                                                    <td className="px-5 py-3 text-gray-600 font-mono text-xs whitespace-nowrap">
+                                                        {formatTime(log.createdAt)}
+                                                    </td>
+                                                    <td className="px-5 py-3">
+                                                        <div className="flex items-center gap-2">
+                                                            <div className={`h-7 w-7 rounded-full flex items-center justify-center ${isGuest ? 'bg-gray-100' : 'bg-blue-50'}`}>
+                                                                <User className={`h-3.5 w-3.5 ${isGuest ? 'text-gray-400' : 'text-blue-500'}`} />
+                                                            </div>
+                                                            <div className="min-w-0">
+                                                                <p className="text-gray-900 font-medium truncate">{log.userName || '—'}</p>
+                                                                <p className="text-xs text-gray-400 truncate">
+                                                                    {isGuest ? '游客' : log.userEmail || '—'}
+                                                                    {log.sessionId && <span className="ml-1 font-mono">{log.sessionId.substring(0, 8)}…</span>}
+                                                                </p>
+                                                            </div>
                                                         </div>
                                                     </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap">
-                                                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${operationConfig.color}`}>
-                                                            <OperationIcon className="h-3 w-3" />
-                                                            {operationConfig.label}
+                                                    <td className="px-5 py-3 whitespace-nowrap">
+                                                        <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${cfg.color}`}>
+                                                            <Icon className="h-3 w-3" />{cfg.label}
                                                         </span>
                                                     </td>
-                                                    <td className="px-6 py-4">
-                                                        <div className="text-sm">
-                                                            <div className="font-medium text-gray-900">{log.userName}</div>
-                                                            <div className="text-xs text-gray-500">
-                                                                {log.isGuest ? userTypeMap['GUEST'].label : (log.userEmail || userTypeMap['REGISTERED'].label)}
-                                                            </div>
-                                                            <div className="text-xs text-gray-400 font-mono mt-1">
-                                                                {log.sessionId?.substring(0, 12)}...
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-6 py-4">
+                                                    <td className="px-5 py-3">
                                                         {log.productId ? (
-                                                            <div className="text-sm">
-                                                                <div className="font-medium text-gray-900">{log.productTitle || '商品'}</div>
-                                                                <div className="text-xs text-gray-500">SKU: {log.productSku}</div>
-                                                                {log.quantity && (
-                                                                    <div className="text-xs text-gray-500">数量: {log.quantity}</div>
-                                                                )}
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="w-10 h-10 rounded-lg bg-gray-100 flex-shrink-0 overflow-hidden border border-gray-200">
+                                                                    {log.productImage ? (
+                                                                        <img src={getProductImageUrl(undefined, log.productImage)} alt="" className="w-full h-full object-cover" />
+                                                                    ) : (
+                                                                        <Package className="w-5 h-5 text-gray-300 m-auto mt-2.5" />
+                                                                    )}
+                                                                </div>
+                                                                <div className="min-w-0">
+                                                                    <p className="text-gray-900 font-medium truncate">{log.productName || log.productTitle || `#${log.productId}`}</p>
+                                                                    <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-0.5 text-xs text-gray-400">
+                                                                        {log.productSku && <span>SKU: {log.productSku}</span>}
+                                                                        {log.skuColor && <span>{log.skuColor}</span>}
+                                                                        {log.bundleName && <span>套装: {log.bundleName}</span>}
+                                                                        {log.unitPrice != null && <span>${log.unitPrice.toFixed(2)}</span>}
+                                                                        {log.quantityChange != null && (
+                                                                            <span className={log.quantityChange > 0 ? 'text-green-600' : log.quantityChange < 0 ? 'text-red-600' : ''}>
+                                                                                {log.quantityChange > 0 ? '+' : ''}{log.quantityChange}
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
                                                             </div>
                                                         ) : (
-                                                            <span className="text-sm text-gray-400">-</span>
+                                                            <span className="text-gray-400 text-xs">
+                                                                {log.reason || log.operationTypeDesc || '—'}
+                                                            </span>
                                                         )}
                                                     </td>
-                                                    <td className="px-6 py-4">
-                                                        <div className="text-sm text-gray-600 max-w-xs">
-                                                            {log.operationDesc || '-'}
-                                                        </div>
+                                                    <td className="px-5 py-3 whitespace-nowrap">
+                                                        <p className="text-gray-900">{log.cartTotalQuantity || 0} 件商品</p>
+                                                        <p className="text-xs text-gray-400">{log.cartItemsCount || 0} 个SKU</p>
+                                                        <p className="text-xs text-gray-400">
+                                                            ${(log.cartSubtotal ?? 0).toFixed(2)}
+                                                        </p>
                                                     </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap">
-                                                        <div className="text-sm">
-                                                            <div className="text-gray-900">
-                                                                {log.cartTotalItems || 0} 件商品
-                                                            </div>
-                                                            <div className="text-xs text-gray-500">
-                                                                ${log.cartTotalAmount?.toFixed(2) || '0.00'}
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                    <td className="px-5 py-3">
                                                         <button
-                                                            onClick={() => {
-                                                                setSelectedLog(log)
-                                                                setIsDetailModalOpen(true)
-                                                            }}
-                                                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                                            title="查看详情"
+                                                            onClick={() => setExpandedId(isExpanded ? null : log.id)}
+                                                            className={`p-1.5 rounded-lg transition-colors ${isExpanded ? 'bg-blue-100 text-blue-600' : 'text-gray-300 hover:text-gray-600 hover:bg-gray-100'}`}
                                                         >
-                                                            <Eye className="h-4 w-4" />
+                                                            <ChevronDown className={`h-4 w-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
                                                         </button>
                                                     </td>
                                                 </tr>
@@ -471,26 +315,125 @@ export default function CartOperationLogsPage() {
                                 </table>
                             </div>
 
-                            {/* 分页 */}
+                            {/* ====== Expanded Row Detail ====== */}
+                            {expandedId != null && (() => {
+                                const log = logs.find(l => l.id === expandedId)
+                                if (!log) return null
+                                const cfg = typeConfig[log.operationType] || { label: log.operationType, color: 'bg-gray-100 text-gray-600', icon: Clock }
+                                return (
+                                    <div className="border-t border-gray-200 bg-gray-50/70 px-5 py-4">
+                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                                            {/* 基本信息 */}
+                                            <div>
+                                                <h5 className="text-xs font-semibold text-gray-500 uppercase mb-2">基本信息</h5>
+                                                <div className="space-y-1 text-gray-700">
+                                                    <p><span className="text-gray-400">ID:</span> #{log.id}</p>
+                                                    <p><span className="text-gray-400">时间:</span> {formatFullTime(log.createdAt)}</p>
+                                                    <p>
+                                                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${cfg.color}`}>
+                                                            <cfg.icon className="h-3 w-3" />{cfg.label}
+                                                        </span>
+                                                    </p>
+                                                    <p><span className="text-gray-400">描述:</span> {log.reason || log.operationTypeDesc || '—'}</p>
+                                                </div>
+                                            </div>
+
+                                            {/* 用户信息 */}
+                                            <div>
+                                                <h5 className="text-xs font-semibold text-gray-500 uppercase mb-2">用户信息</h5>
+                                                <div className="space-y-1 text-gray-700">
+                                                    <p><span className="text-gray-400">用户名:</span> {log.userName || '—'}</p>
+                                                    <p><span className="text-gray-400">邮箱:</span> {log.userEmail || '—'}</p>
+                                                    <p><span className="text-gray-400">类型:</span> {log.userId ? '注册用户' : '游客'}</p>
+                                                    <p className="font-mono text-xs"><span className="text-gray-400">Session:</span> {log.sessionId || '—'}</p>
+                                                    {log.ipAddress && (
+                                                        <p className="flex items-center gap-1 text-xs">
+                                                            <MapPin className="h-3 w-3 text-gray-400" /> {log.ipAddress}
+                                                        </p>
+                                                    )}
+                                                    {log.userAgent && (
+                                                        <p className="flex items-center gap-1 text-xs text-gray-400 truncate max-w-[280px]" title={log.userAgent}>
+                                                            <Monitor className="h-3 w-3 flex-shrink-0" /> {log.userAgent.substring(0, 60)}{log.userAgent.length > 60 ? '…' : ''}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            {/* 商品 / 数量变化 */}
+                                            <div>
+                                                <h5 className="text-xs font-semibold text-gray-500 uppercase mb-2">商品 &amp; 数量</h5>
+                                                <div className="space-y-1 text-gray-700">
+                                                    {log.productId ? (
+                                                        <>
+                                                            <div className="flex items-center gap-3 mb-2">
+                                                                <div className="w-16 h-16 rounded-lg bg-gray-100 flex-shrink-0 overflow-hidden border border-gray-200">
+                                                                    {log.productImage ? (
+                                                                        <img src={getProductImageUrl(undefined, log.productImage)} alt="" className="w-full h-full object-cover" />
+                                                                    ) : (
+                                                                        <Package className="w-8 h-8 text-gray-300 m-auto mt-4" />
+                                                                    )}
+                                                                </div>
+                                                                <div>
+                                                                    <p className="font-medium">{log.productName || log.productTitle || `#${log.productId}`}</p>
+                                                                    {log.bundleName && <p className="text-xs text-gray-400">套装: {log.bundleName}</p>}
+                                                                </div>
+                                                            </div>
+                                                            <p><span className="text-gray-400">SKU:</span> {log.productSku || '—'}</p>
+                                                            {log.skuColor && <p><span className="text-gray-400">颜色:</span> {log.skuColor}</p>}
+                                                            <div className="flex items-center gap-2 mt-1">
+                                                                {(log.quantityBefore != null || log.quantityAfter != null) ? (
+                                                                    <>
+                                                                        <span className="px-2 py-0.5 bg-gray-200 rounded text-xs">{log.quantityBefore ?? 0}</span>
+                                                                        <span className="text-gray-400">→</span>
+                                                                        <span className="px-2 py-0.5 bg-gray-200 rounded text-xs">{log.quantityAfter ?? 0}</span>
+                                                                        {log.quantityChange != null && (
+                                                                            <span className={`text-xs font-medium ${log.quantityChange > 0 ? 'text-green-600' : log.quantityChange < 0 ? 'text-red-600' : 'text-gray-400'}`}>
+                                                                                ({log.quantityChange > 0 ? '+' : ''}{log.quantityChange})
+                                                                            </span>
+                                                                        )}
+                                                                    </>
+                                                                ) : (
+                                                                    <span className="text-gray-400 text-xs">—</span>
+                                                                )}
+                                                            </div>
+                                                            {log.unitPrice != null && <p className="text-xs text-gray-400">单价: ${log.unitPrice.toFixed(2)}</p>}
+                                                            {log.totalPrice != null && <p className="text-xs text-gray-400">总价: ${log.totalPrice.toFixed(2)}</p>}
+                                                        </>
+                                                    ) : (
+                                                        <p className="text-gray-400 text-xs">无商品信息</p>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            {/* 购物车状态 */}
+                                            <div>
+                                                <h5 className="text-xs font-semibold text-gray-500 uppercase mb-2">购物车状态</h5>
+                                                <div className="space-y-1 text-gray-700">
+                                                    <p><span className="text-gray-400">Cart ID:</span> #{log.cartId}</p>
+                                                    <p><span className="text-gray-400">SKU 数:</span> {log.cartItemsCount || 0}</p>
+                                                    <p><span className="text-gray-400">总件数:</span> {log.cartTotalQuantity || 0}</p>
+                                                    <p className="font-medium"><span className="text-gray-400">金额:</span> ${(log.cartSubtotal ?? 0).toFixed(2)}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )
+                            })()}
+
+                            {/* ====== Pagination ====== */}
                             {totalPages > 1 && (
-                                <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
-                                    <p className="text-sm text-gray-500">
-                                        第 <span className="font-medium">{page + 1}</span> 页 / 共 <span className="font-medium">{totalPages}</span> 页
-                                    </p>
-                                    <div className="flex space-x-2">
-                                        <button
-                                            disabled={page === 0}
-                                            onClick={() => setPage(prev => prev - 1)}
-                                            className="p-2 rounded border bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                                        >
-                                            <ChevronLeft size={18} />
+                                <div className="px-5 py-3 border-t border-gray-100 flex items-center justify-between text-sm">
+                                    <span className="text-gray-500">
+                                        第 {page + 1} / {totalPages} 页，共 {totalElements} 条
+                                    </span>
+                                    <div className="flex gap-1">
+                                        <button disabled={page === 0} onClick={() => setPage(p => p - 1)}
+                                            className="px-3 py-1.5 border rounded-lg hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed text-xs">
+                                            上一页
                                         </button>
-                                        <button
-                                            disabled={page >= totalPages - 1}
-                                            onClick={() => setPage(prev => prev + 1)}
-                                            className="p-2 rounded border bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                                        >
-                                            <ChevronRight size={18} />
+                                        <button disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)}
+                                            className="px-3 py-1.5 border rounded-lg hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed text-xs">
+                                            下一页
                                         </button>
                                     </div>
                                 </div>
@@ -499,130 +442,6 @@ export default function CartOperationLogsPage() {
                     )}
                 </div>
             </div>
-
-            {/* 详情弹窗 */}
-            {isDetailModalOpen && selectedLog && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                    <div className="fixed inset-0 bg-black/50 transition-opacity" onClick={() => setIsDetailModalOpen(false)} />
-                    <div className="relative bg-white rounded-xl shadow-xl w-full max-w-3xl max-h-[80vh] overflow-hidden flex flex-col">
-                        {/* 弹窗头部 */}
-                        <div className="p-6 border-b border-gray-200">
-                            <div className="flex justify-between items-start">
-                                <div>
-                                    <h3 className="text-lg font-bold text-gray-900 mb-2">操作日志详情</h3>
-                                    <p className="text-sm text-gray-500">日志 ID: #{selectedLog.id}</p>
-                                </div>
-                                <button
-                                    onClick={() => setIsDetailModalOpen(false)}
-                                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                                >
-                                    <X className="h-5 w-5" />
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* 弹窗内容 */}
-                        <div className="flex-1 overflow-y-auto p-6">
-                            {/* 基本信息 */}
-                            <div className="mb-6">
-                                <h4 className="text-sm font-semibold text-gray-900 mb-3">基本信息</h4>
-                                <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
-                                    <div>
-                                        <p className="text-xs text-gray-500">操作时间</p>
-                                        <p className="text-sm font-medium">
-                                            {new Date(selectedLog.createdAt).toLocaleString('zh-CN')}
-                                        </p>
-                                    </div>
-                                    <div>
-                                        <p className="text-xs text-gray-500">操作类型</p>
-                                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${operationTypeMap[selectedLog.operationType]?.color || 'bg-gray-100 text-gray-800'}`}>
-                                            {operationTypeMap[selectedLog.operationType]?.label || selectedLog.operationType}
-                                        </span>
-                                    </div>
-                                    <div>
-                                        <p className="text-xs text-gray-500">用户</p>
-                                        <p className="text-sm font-medium">{selectedLog.userName}</p>
-                                        <p className="text-xs text-gray-500">{selectedLog.userEmail || (selectedLog.isGuest ? userTypeMap['GUEST'].label : userTypeMap['REGISTERED'].label)}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-xs text-gray-500">Session ID</p>
-                                        <p className="text-sm font-mono text-gray-600">{selectedLog.sessionId}</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* 商品信息 */}
-                            {selectedLog.productId && (
-                                <div className="mb-6">
-                                    <h4 className="text-sm font-semibold text-gray-900 mb-3">商品信息</h4>
-                                    <div className="p-4 bg-gray-50 rounded-lg">
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-16 h-16 bg-white rounded-lg flex items-center justify-center border border-gray-200">
-                                                <Package className="h-8 w-8 text-gray-400" />
-                                            </div>
-                                            <div className="flex-1">
-                                                <p className="text-sm font-medium text-gray-900">{selectedLog.productTitle}</p>
-                                                <p className="text-xs text-gray-500 mt-1">SKU: {selectedLog.productSku}</p>
-                                                {selectedLog.quantity && (
-                                                    <p className="text-xs text-gray-500">数量: {selectedLog.quantity}</p>
-                                                )}
-                                                {selectedLog.unitPrice && (
-                                                    <p className="text-xs text-gray-500">单价: ${selectedLog.unitPrice.toFixed(2)}</p>
-                                                )}
-                                                {selectedLog.totalPrice && (
-                                                    <p className="text-xs text-gray-500">总价: ${selectedLog.totalPrice.toFixed(2)}</p>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* 操作描述 */}
-                            <div className="mb-6">
-                                <h4 className="text-sm font-semibold text-gray-900 mb-3">操作描述</h4>
-                                <div className="p-4 bg-gray-50 rounded-lg">
-                                    <p className="text-sm text-gray-700">{selectedLog.operationDesc}</p>
-                                </div>
-                            </div>
-
-                            {/* 购物车状态 */}
-                            <div className="mb-6">
-                                <h4 className="text-sm font-semibold text-gray-900 mb-3">购物车状态（操作后）</h4>
-                                <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
-                                    <div>
-                                        <p className="text-xs text-gray-500">购物车 ID</p>
-                                        <p className="text-sm font-medium">#{selectedLog.cartId}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-xs text-gray-500">商品总数</p>
-                                        <p className="text-sm font-medium">{selectedLog.cartTotalItems} 件</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-xs text-gray-500">总金额</p>
-                                        <p className="text-sm font-medium">${selectedLog.cartTotalAmount?.toFixed(2) || '0.00'}</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* 其他信息 */}
-                            <div>
-                                <h4 className="text-sm font-semibold text-gray-900 mb-3">其他信息</h4>
-                                <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
-                                    <div>
-                                        <p className="text-xs text-gray-500">IP 地址</p>
-                                        <p className="text-sm font-medium">{selectedLog.ip || '-'}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-xs text-gray-500">用户代理</p>
-                                        <p className="text-sm font-medium">{selectedLog.userAgent ? selectedLog.userAgent.substring(0, 50) + '...' : '-'}</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     )
 }

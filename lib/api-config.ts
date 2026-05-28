@@ -55,7 +55,7 @@ export const ADMIN_CONFIG = {
         V1_order: '/api/admin/V1/order',
         V1_blog: '/api/admin/V1/blog',
         V1_review: '/api/admin/V1/review',
-        V1_user: '/api/admin/V1/user',
+        V1_user: '/api/admin/V1/users',
         V1_cart: '/api/admin/V1/cart',
     }
 };

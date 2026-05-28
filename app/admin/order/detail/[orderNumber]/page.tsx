@@ -8,7 +8,7 @@ import { getProductImageUrl } from '@/lib/image-utils';
 import {
     ChevronLeft, Package, Truck, CreditCard, User,
     MapPin, Mail, Phone, Loader2, Calendar, Hash, Clock, History, DollarSign, TrendingUp, TrendingDown,
-    Check, CheckCircle2, XCircle, Clock3
+    Check, CheckCircle2, XCircle, Clock3, Paperclip, FileText
 } from 'lucide-react';
 
 function OrderDetailContent() {
@@ -259,6 +259,15 @@ function OrderDetailContent() {
                                         {order.trackingNumber || 'N/A'}
                                     </span>
                                 </div>
+                                {order.labelUrl && (
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-gray-500 flex items-center gap-1"><Paperclip size={14} /> 面单附件</span>
+                                        <a href={order.labelUrl} target="_blank" rel="noopener noreferrer"
+                                            className="text-blue-600 hover:text-blue-800 underline flex items-center gap-1 font-medium">
+                                            <FileText size={14} /> 查看/下载
+                                        </a>
+                                    </div>
+                                )}
                             </div>
                         </div>
 

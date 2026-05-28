@@ -3,13 +3,16 @@
 
 import dynamic from 'next/dynamic';
 import { BlogResponse } from '@/types/site/blog';
-import { Calendar, User, Clock, Share2, ThumbsUp, Mail, ArrowRight, CheckCircle2, Copy } from 'lucide-react';
-import { useState } from 'react';
+import { Calendar, User, Clock, Share2, ThumbsUp, Mail, ArrowRight, CheckCircle2, Copy, List } from 'lucide-react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { subscribeToNewsletter } from '@/app/actions/email';
 import { useToast } from '@/contexts/toastContext';
 import { getProductImageUrl } from '@/lib/image-utils';
 // ✅ 引入刚才写的配置
 import { getAuthor, MARKETING_CONFIG } from '@/lib/constants/authors';
+import ProductCard from '@/components/product/product-card';
+import { ProductResponse } from '@/types/product';
+import type { TocItem } from './page';
 
 // 获取图片 CDN 前缀
 const CDN_URL = process.env.NEXT_PUBLIC_IMAGE_UPLOAD_PATH || '';
@@ -47,12 +50,20 @@ const MDViewer = dynamic(
 
 interface BlogContentProps {
     blog: BlogResponse;
+    recommendedProducts: ProductResponse[];
+    toc: TocItem[];
 }
 
-export default function BlogContent({ blog }: BlogContentProps) {
+function headingId(text: string) {
+  return text.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-');
+}
+
+export default function BlogContent({ blog, recommendedProducts, toc }: BlogContentProps) {
     const [email, setEmail] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [successCode, setSuccessCode] = useState<string | null>(null);
+    const [tocOpen, setTocOpen] = useState(false);
+    const contentRef = useRef<HTMLDivElement>(null);
     const { showToast } = useToast();
 
     // 1. 获取作者信息 (动态)
@@ -63,6 +74,24 @@ export default function BlogContent({ blog }: BlogContentProps) {
 
     // 处理封面图 URL
     const coverImageUrl = blog.coverImage ? getProductImageUrl('', blog.coverImage) : null;
+
+    // 给渲染后的 heading 加上 id，支持 TOC 锚点跳转
+    useEffect(() => {
+        if (!contentRef.current || toc.length === 0) return;
+        const headings = contentRef.current.querySelectorAll('h2, h3');
+        headings.forEach((el) => {
+            const id = headingId(el.textContent || '');
+            el.setAttribute('id', id);
+        });
+    }, [toc, blog.content]);
+
+    const scrollToHeading = useCallback((id: string) => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+        setTocOpen(false);
+    }, []);
 
     const handleSubscribe = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -140,9 +169,46 @@ export default function BlogContent({ blog }: BlogContentProps) {
                 </div>
             )}
 
+            {/* TOC 标题导读 */}
+            {toc.length > 0 && (
+                <div className="container mx-auto px-4 max-w-3xl mb-12">
+                    <div className="bg-[#F9FAFB] border border-gray-100 rounded-2xl overflow-hidden">
+                        <button
+                            onClick={() => setTocOpen(!tocOpen)}
+                            className="w-full flex items-center justify-between px-6 py-4 hover:bg-gray-50 transition-colors"
+                        >
+                            <span className="flex items-center gap-2 text-sm font-bold text-gray-900 uppercase tracking-wider">
+                                <List size={16} /> In This Guide
+                            </span>
+                            <span className="text-xs text-gray-400">{tocOpen ? '−' : '+'}</span>
+                        </button>
+                        {tocOpen && (
+                            <nav className="px-6 pb-4 border-t border-gray-100">
+                                <ul className="space-y-1 mt-3">
+                                    {toc.map((item) => (
+                                        <li key={item.id}>
+                                            <button
+                                                onClick={() => scrollToHeading(item.id)}
+                                                className={`block w-full text-left text-sm py-1.5 px-3 rounded-lg hover:bg-gray-100 transition-colors truncate ${
+                                                    item.level === 2
+                                                        ? 'text-gray-800 font-medium'
+                                                        : 'text-gray-500 pl-6'
+                                                }`}
+                                            >
+                                                {item.text}
+                                            </button>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </nav>
+                        )}
+                    </div>
+                </div>
+            )}
+
             {/* Main Content */}
             <div className="container mx-auto px-4 max-w-3xl">
-                <div className="prose prose-lg md:prose-xl prose-stone max-w-none font-serif leading-relaxed">
+                <div ref={contentRef} className="prose prose-lg md:prose-xl prose-stone max-w-none font-serif leading-relaxed [&_h2]:scroll-mt-24 [&_h3]:scroll-mt-24">
                     <MDViewer
                         source={processMarkdownImages(blog.content || '')}
                         style={{ backgroundColor: 'transparent', fontFamily: 'var(--font-inter)' }}
@@ -172,6 +238,22 @@ export default function BlogContent({ blog }: BlogContentProps) {
                         </button>
                     </div>
                 </div>
+
+                {/* 文章中提到的产品 — 横向滚动 */}
+                {recommendedProducts.length > 0 && (
+                    <section className="mt-16 -mx-4 sm:mx-0">
+                        <h2 className="text-xl font-serif font-bold text-gray-900 mb-6 px-4 sm:px-0">
+                            Shop This Article
+                        </h2>
+                        <div className="flex gap-4 overflow-x-auto px-4 sm:px-0 pb-2 snap-x snap-mandatory scrollbar-hide">
+                            {recommendedProducts.map((product) => (
+                                <div key={product.id} className="w-[260px] flex-shrink-0 snap-start">
+                                    <ProductCard product={product} />
+                                </div>
+                            ))}
+                        </div>
+                    </section>
+                )}
 
                 {/* 底部作者卡片 (动态渲染) */}
                 <div className="mt-16 bg-[#F9FAFB] p-8 md:p-10 rounded-2xl flex flex-col md:flex-row items-center gap-8 border border-gray-100">
