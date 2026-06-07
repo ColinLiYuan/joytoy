@@ -160,6 +160,73 @@ export async function getAnalyticsOverview(): Promise<AnalyticsOverview> {
     }
 }
 
+// ==================== 访问记录 Actions ====================
+
+export interface VisitRecord {
+    page: string
+    ref: string
+    title: string
+    ip: string
+    country: string
+    isBot: boolean
+    ua: string
+    ts: number
+    _date: string
+}
+
+export interface VisitRecordsResponse {
+    content: VisitRecord[]
+    currentPage: number
+    totalPages: number
+    totalElements: number
+}
+
+export async function getVisitRecords(
+    startDate: string,
+    endDate: string,
+    country?: string,
+    isBot?: boolean,
+    ip?: string,
+    page: number = 0,
+    size: number = 20
+): Promise<VisitRecordsResponse> {
+    try {
+        const params = new URLSearchParams({ startDate, endDate, page: page.toString(), size: size.toString() })
+        if (country) params.append('country', country)
+        if (isBot !== undefined) params.append('isBot', String(isBot))
+        if (ip) params.append('ip', ip)
+
+        const response = await fetchWithAuthGet(`/api/V1/analytics/admin/records?${params}`)
+
+        if (!response.ok) throw new Error(`获取访问记录失败: ${response.status}`)
+
+        const data = await response.json()
+        if (!data.success) throw new Error(data.message || '获取访问记录失败')
+
+        return data.data
+    } catch (error) {
+        console.error('Error fetching visit records:', error)
+        return { content: [], currentPage: 0, totalPages: 0, totalElements: 0 }
+    }
+}
+
+export async function getVisitCountries(startDate: string, endDate: string): Promise<string[]> {
+    try {
+        const params = new URLSearchParams({ startDate, endDate })
+        const response = await fetchWithAuthGet(`/api/V1/analytics/admin/countries?${params}`)
+
+        if (!response.ok) throw new Error(`获取国家列表失败: ${response.status}`)
+
+        const data = await response.json()
+        if (!data.success) throw new Error(data.message || '获取国家列表失败')
+
+        return data.data || []
+    } catch (error) {
+        console.error('Error fetching countries:', error)
+        return []
+    }
+}
+
 // ==================== 仪表盘 (Dashboard) Actions ====================
 
 export async function getDashboardStats(): Promise<DashboardStats> {

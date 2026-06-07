@@ -78,7 +78,7 @@ export default function AdminProductBasicInfo({ product, updateProduct }: BasicI
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
                     <div className="md:col-span-12">
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                            展示标题 <span className="text-red-500">*</span>
+                            展示标题 (SEO/页面显示) <span className="text-red-500">*</span>
                         </label>
                         <input
                             type="text"
@@ -94,14 +94,14 @@ export default function AdminProductBasicInfo({ product, updateProduct }: BasicI
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="md:col-span-1">
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                            产品名称 (中文/自定义名称)
+                            产品名称 (SKU命名，唯一标识) <span className="text-red-500">*</span>
                         </label>
                         <input
                             type="text"
                             value={product.name || ''}
                             onChange={(e) => handleInputChange('name', e.target.value)}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
-                            placeholder="中文名称..."
+                            placeholder="如: the-pearls、the-scepter..."
                         />
                     </div>
                     <div>

@@ -154,6 +154,7 @@ function AdminProductFormContent() {
     // 表单逻辑校验
     const validateForm = (data: ReleaseProductRequest): string | null => {
         if (!data.title?.trim()) return "错误：产品标题不能为空";
+        if (!data.name?.trim()) return "错误：产品名称不能为空（SKU命名依赖此字段）";
         if (!data.slug?.trim()) return "错误：请生成产品 URL (Slug)";
 
         if (!data.currentPrice || data.currentPrice <= 0) return "错误：当前价格必须大于 0";

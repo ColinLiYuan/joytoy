@@ -19,7 +19,9 @@ import {
     DollarSign,
     CheckCircle,
     Paperclip,
-    X
+    X,
+    Monitor,
+    Smartphone
 } from 'lucide-react'
 import Pagination from '@/components/common/pagination'
 
@@ -372,10 +374,12 @@ export default function OrderPage() {
                                 });
                             }
                             
-                            // 格式化下单时间
-                            const orderDate = new Date(order.createdAt);
-                            const orderTimeStr = orderDate.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
-                            const orderDateStr = orderDate.toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' });
+                            // 下单时间（后端存 UTC，加 Z 确保正确解析）
+                            const orderDate = new Date(order.createdAt + 'Z');
+                            const orderTimeStr = orderDate.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' });
+                            const orderDateStr = orderDate.toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit', timeZone: 'UTC' });
+                            // 北京时间
+                            const cnTime = orderDate.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Shanghai' });
                             
                             // 格式化完成时间
                             let completedTimeStr = '';
@@ -396,10 +400,14 @@ export default function OrderPage() {
                                         #{order.orderNumber}
                                         {order.labelUrl && <Paperclip className="h-3.5 w-3.5 text-gray-400" />}
                                     </div>
-                                    <div className="flex items-center gap-1 mt-1 text-[11px] text-gray-500" title={orderDate.toLocaleString('zh-CN')}>
+                                    <div className="flex items-center gap-1 mt-1 text-[11px] text-gray-500">
                                         <Calendar className="h-3 w-3 flex-shrink-0" />
                                         <span>{orderDateStr}</span>
                                         <span className="text-gray-400">{orderTimeStr}</span>
+                                    </div>
+                                    <div className="flex items-center gap-1 text-[10px] text-gray-400 mt-0.5">
+                                        {order.deviceType === 'MOBILE' ? <Smartphone className="h-3 w-3" /> : <Monitor className="h-3 w-3" />}
+                                        北京时间 {cnTime}
                                     </div>
                                     {order.completedAt && (
                                         <div className="flex items-center gap-1 mt-0.5 text-[11px] text-green-600" title={new Date(order.completedAt).toLocaleString('zh-CN')}>

@@ -1,17 +1,28 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Search, FileText, Download, ArrowRight, BookOpen, AlertCircle, Loader2, Gift } from 'lucide-react';
-import { MANUALS_DATA } from '@/lib/constants/manuals-data';
+import { productService } from '@/services/productService';
+import { ProductResponse } from '@/types/product';
 import { getProductImageUrl } from '@/lib/image-utils';
 import { useToast } from '@/contexts/toastContext';
 import { useAuth } from '@/contexts/authContext';
 
 const ITEMS_PER_PAGE = 12;
 
+interface ManualItem {
+    id: string;
+    slug: string;
+    title: string;
+    image: string | null;
+    pdfUrl: string;
+}
+
 export default function ManualsPage() {
     const [searchQuery, setSearchQuery] = useState('');
     const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
+    const [products, setProducts] = useState<ProductResponse[]>([]);
+    const [loading, setLoading] = useState(true);
     const { isLoggedIn, userInfo } = useAuth();
     const orderCount = userInfo?.orderCount ?? 0;
 
@@ -25,8 +36,39 @@ export default function ManualsPage() {
     const [checkingId, setCheckingId] = useState<string | null>(null);
     const { showToast } = useToast();
 
+    // 从公开 API 拉取全部产品，自动生成说明书列表
+    useEffect(() => {
+        const fetchProducts = async () => {
+            try {
+                setLoading(true);
+                // 用公开的搜索接口，不传 keyword 拿全部产品
+                const result = await productService.searchProducts('', 0, 200);
+                setProducts(result.content || []);
+            } catch (err) {
+                console.error('Failed to fetch manuals products:', err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchProducts();
+    }, []);
+
+    // 将产品转为说明书项：slug 最后一个节点 → pdfUrl
+    const manualsData: ManualItem[] = useMemo(() => {
+        return products.map(p => {
+            const slug = (p.slug || '').split('/').pop() || '';
+            return {
+                id: String(p.id),
+                slug,
+                title: p.title,
+                image: p.image || null,
+                pdfUrl: `/manuals/${slug}-guide.pdf`,
+            };
+        });
+    }, [products]);
+
     // 搜索过滤逻辑
-    const filteredManuals = MANUALS_DATA.filter((item) => {
+    const filteredManuals = manualsData.filter((item) => {
         const normalizedTitle = item.title.toLowerCase().replace(/\s+/g, '');
         const normalizedQuery = searchQuery.toLowerCase().replace(/\s+/g, '');
         return normalizedTitle.includes(normalizedQuery);
@@ -137,7 +179,13 @@ export default function ManualsPage() {
                     </div>
                 )}
 
-                {filteredManuals.length === 0 && (
+                {loading && (
+                    <div className="col-span-full flex justify-center py-20">
+                        <Loader2 className="animate-spin text-gray-400" size={32} />
+                    </div>
+                )}
+
+                {!loading && filteredManuals.length === 0 && (
                     <div className="text-center py-20 bg-white rounded-3xl border border-gray-100 shadow-sm">
                         <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-400">
                             <AlertCircle size={24} />

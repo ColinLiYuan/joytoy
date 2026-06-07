@@ -36,6 +36,7 @@ export interface OrderResponse {
     orderNumber: string;
     trackingNumber: string;
     labelUrl?: string;
+    deviceType?: string;
     status: OrderStatus;
     totalAmount: number;
     shippingFee: number;
