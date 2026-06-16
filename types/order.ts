@@ -37,6 +37,10 @@ export interface OrderResponse {
     trackingNumber: string;
     labelUrl?: string;
     deviceType?: string;
+    expenseShippingSynced?: boolean;
+    expenseShippingId?: number;
+    expenseRefundSynced?: boolean;
+    expenseRefundId?: number;
     status: OrderStatus;
     totalAmount: number;
     shippingFee: number;

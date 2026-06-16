@@ -236,6 +236,16 @@ class OrderService {
 
         throw new Error(response.data?.message || 'Failed to fetch order commission logs');
     }
+
+    async syncShippingExpense(orderId: number, amount: number): Promise<void> {
+        const response = await axiosClient.post(`/api/admin/V1/order/${orderId}/sync-shipping`, { amount });
+        if (!response.data?.success) throw new Error(response.data?.message || '同步失败');
+    }
+
+    async syncRefundExpense(orderId: number): Promise<void> {
+        const response = await axiosClient.post(`/api/admin/V1/order/${orderId}/sync-refund`);
+        if (!response.data?.success) throw new Error(response.data?.message || '同步失败');
+    }
 }
 
 export const orderService = new OrderService();

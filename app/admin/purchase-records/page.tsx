@@ -463,6 +463,27 @@ export default function PurchaseRecordPage() {
                             </button>
                           )}
 
+                          {/* 同步支出按钮 */}
+                          {record.expenseSynced ? (
+                            <span className="text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded font-medium">✓ 已记账</span>
+                          ) : (
+                            <button
+                              onClick={async () => {
+                                const amount = record.totalAmount || 0;
+                                if (!confirm(`确认将「${record.productName}」¥${amount} 同步到wholesale支出？`)) return;
+                                try {
+                                  await purchaseRecordService.syncExpense(record.id);
+                                  alert('同步成功');
+                                  fetchRecords();
+                                } catch (e: any) { alert(e.message || '同步失败'); }
+                              }}
+                              className="px-2 py-1 bg-green-600 text-white rounded text-xs font-bold hover:bg-green-700 flex items-center gap-1"
+                            >
+                              <DollarSign className="w-3 h-3" />
+                              记账
+                            </button>
+                          )}
+
                         </div>
                       </td>
                     </tr>

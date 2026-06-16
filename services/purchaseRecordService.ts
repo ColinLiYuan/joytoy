@@ -96,6 +96,16 @@ export const purchaseRecordService = {
   },
 
   /**
+   * 手动同步到wholesale支出
+   */
+  async syncExpense(id: number): Promise<PurchaseRecordResponse> {
+    const url = `/api/admin/V1/purchase-records/${id}/sync-expense`;
+    const response = await axiosClient.post(url);
+    if (response.data?.success) return response.data.data;
+    throw new Error(response.data?.message || 'Failed to sync expense');
+  },
+
+  /**
    * 取消采购
    */
   async cancelPurchase(id: number, reason?: string): Promise<PurchaseRecordResponse> {

@@ -41,7 +41,10 @@ export interface PurchaseRecordResponse {
   statusDesc: string; // 中文描述
   reason?: string;
   notes?: string;
-  
+
+  expenseSynced?: boolean; // 已同步支出
+  expenseId?: number;     // wholesale支出ID
+
   createdAt: string;
   updatedAt: string;
 }

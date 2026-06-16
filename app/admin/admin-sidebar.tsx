@@ -81,8 +81,8 @@ function SidebarContent({ sidebarOpen, setSidebarOpen }: SidebarContentProps) {
         },
         
         // 内容与互动
-        { name: '评论管理', href: '/admin/review', icon: MessageSquare },
         { name: '博客管理', href: '/admin/blog', icon: BookOpen },
+        { name: '评论管理', href: '/admin/review', icon: MessageSquare },
     ];
 
     return (
