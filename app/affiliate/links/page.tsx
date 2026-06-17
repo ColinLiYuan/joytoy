@@ -40,7 +40,7 @@ export default function AffiliateLinksPage() {
     const [loading, setLoading] = useState(true);
     const [copiedCoupon, setCopiedCoupon] = useState<string | null>(null);
 
-    const baseUrl = "https://mythtoy.com";
+    const baseUrl = "https://www.mythtoy.com";
 
     // 1. 获取 affiliateId
     // 2. 如果没拿到显示 "PENDING"
@@ -270,11 +270,11 @@ export default function AffiliateLinksPage() {
                                 <div className="space-y-3">
                                     <div className="text-xs bg-white p-3 rounded-lg border border-indigo-200">
                                         <span className="text-gray-400 uppercase font-bold text-[10px]">Product Page:</span><br/>
-                                        <span className="text-indigo-600 font-mono">https://mythtoy.com/toys/female-sex-toys/clit-vibrators/the-arc<b className="text-red-500">?aff={isClient ? affiliateId : "YOUR_ID"}</b></span>
+                                        <span className="text-indigo-600 font-mono">https://www.mythtoy.com/toys/female-sex-toys/clit-vibrators/the-arc<b className="text-red-500">?aff={isClient ? affiliateId : "YOUR_ID"}</b></span>
                                     </div>
                                     <div className="text-xs bg-white p-3 rounded-lg border border-indigo-200">
                                         <span className="text-gray-400 uppercase font-bold text-[10px]">Collection Page:</span><br/>
-                                        <span className="text-indigo-600 font-mono">https://mythtoy.com/collections/best-sellers<b className="text-red-500">?aff={isClient ? affiliateId : "YOUR_ID"}</b></span>
+                                        <span className="text-indigo-600 font-mono">https://www.mythtoy.com/collections/best-sellers<b className="text-red-500">?aff={isClient ? affiliateId : "YOUR_ID"}</b></span>
                                     </div>
                                 </div>
                             </div>

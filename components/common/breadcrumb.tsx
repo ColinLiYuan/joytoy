@@ -14,7 +14,7 @@ interface BreadcrumbProps {
     showLastItem?: boolean;
 }
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://mythtoy.com';
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.mythtoy.com';
 
 export default function Breadcrumb({ items, showLastItem = false }: BreadcrumbProps) {
     const visibleItems = showLastItem ? items : items.slice(0, -1);

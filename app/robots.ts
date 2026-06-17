@@ -32,6 +32,9 @@ export default function robots(): MetadataRoute.Robots {
                 '/api/V1/checkout/',
                 '/api/V1/payment/',
                 '/api/admin/',
+                // Next.js 自动生成的路由，无需索引
+                '/opengraph-image',
+                '/icon',
                 '/_next/private/',
 
                 // --- 4. 搜索结果 (Search Results) ---
