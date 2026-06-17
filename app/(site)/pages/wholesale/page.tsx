@@ -11,7 +11,9 @@ import {
     HelpCircle,
     Truck,
     Award,
-    Users
+    Users,
+    ExternalLink,
+    ArrowRight
 } from 'lucide-react';
 // ✅ 引入我们之前做好的客户端表单组件
 import WholesaleForm from '@/components/wholesale/wholesale-form';
@@ -94,9 +96,10 @@ export default function Wholesale() {
                     <div className="absolute -left-20 -bottom-20 w-96 h-96 bg-purple-600 rounded-full mix-blend-overlay filter blur-3xl opacity-20"></div>
                 </div>
                 <div className="container mx-auto max-w-5xl text-center relative z-10">
-                    <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 text-pink-300 text-xs font-bold tracking-widest uppercase mb-8 border border-white/20">
-                        <Factory size={14} />
-                        Trusted Sourcing Service
+                    <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-pink-600/30 text-pink-200 text-xs font-bold tracking-widest uppercase mb-8 border border-pink-400/30">
+                        <ExternalLink size={14} />
+                        Visit Our Dedicated Wholesale Platform →
+                        <a href="https://www.adult-toy-wholesale.com" target="_blank" rel="noopener" className="underline font-extrabold ml-1 hover:text-white transition-colors">adult-toy-wholesale.com</a>
                     </div>
                     <h1 className="text-4xl md:text-7xl font-bold mb-8 font-['Playfair_Display'] leading-tight">
                         Connect with Premium <br/> Adult Toy Manufacturers
@@ -109,6 +112,9 @@ export default function Wholesale() {
                         We are your gateway to <strong className="text-white font-semibold">wholesale adult toys</strong> from verified suppliers.
                     </p>
                     <div className="mt-10 flex flex-wrap justify-center gap-4">
+                        <a href="https://www.adult-toy-wholesale.com" target="_blank" rel="noopener" className="inline-flex items-center gap-2 bg-gradient-to-r from-pink-600 to-purple-600 text-white px-10 py-4 rounded-full font-bold hover:from-pink-500 hover:to-purple-500 transition-all shadow-lg hover:shadow-xl hover:-translate-y-1">
+                            Visit Wholesale Platform <ArrowRight size={18} />
+                        </a>
                         <a href="#contact-form" className="bg-white text-black px-10 py-4 rounded-full font-bold hover:bg-pink-50 transition-all shadow-lg hover:shadow-xl hover:-translate-y-1">
                             Request Price List
                         </a>
@@ -119,7 +125,40 @@ export default function Wholesale() {
                 </div>
             </section>
 
-            <div className="container mx-auto px-4 max-w-6xl py-20">
+            <div className="container mx-auto px-4 max-w-6xl">
+
+                {/* === 🚀 引流 Banner：引导批发客户到专用平台 === */}
+                <section className="py-10">
+                    <div className="bg-gradient-to-r from-pink-50 via-purple-50 to-pink-50 border-2 border-pink-200 rounded-3xl p-8 md:p-10 relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-40 h-40 bg-pink-200/50 rounded-full blur-3xl"></div>
+                        <div className="absolute bottom-0 left-0 w-40 h-40 bg-purple-200/50 rounded-full blur-3xl"></div>
+                        <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
+                            <div className="flex-1">
+                                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-pink-100 text-pink-700 text-xs font-bold tracking-widest uppercase mb-4">
+                                    <Globe size={12} />
+                                    Dedicated B2B Platform
+                                </div>
+                                <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3 font-['Playfair_Display']">
+                                    Looking for Wholesale Pricing?
+                                </h3>
+                                <p className="text-gray-600 text-base leading-relaxed max-w-2xl">
+                                    <strong className="text-gray-900">MythToy</strong> is our retail store. For <strong className="text-pink-600">wholesale adult toys</strong>, bulk orders, dropshipping, and private label OEM, please visit our dedicated wholesale platform at{' '}
+                                    <strong className="text-gray-900">adult-toy-wholesale.com</strong> — purpose-built for B2B buyers with factory-direct pricing, instant quotes, and dedicated account management.
+                                </p>
+                            </div>
+                            <a
+                                href="https://www.adult-toy-wholesale.com"
+                                target="_blank"
+                                rel="noopener"
+                                className="shrink-0 inline-flex items-center gap-2 bg-gray-900 text-white px-8 py-5 rounded-2xl font-bold text-lg hover:bg-pink-600 transition-all shadow-xl hover:shadow-2xl hover:-translate-y-0.5"
+                            >
+                                Visit Wholesale Platform <ExternalLink size={20} />
+                            </a>
+                        </div>
+                    </div>
+                </section>
+
+                <div className="py-20">
 
                 {/* === 核心优势 (SEO 文本增强) === */}
                 <section className="mb-24">
@@ -272,6 +311,7 @@ export default function Wholesale() {
                                     </div>
                                     <div className="w-full h-px bg-white/10"></div>
                                     <div className="space-y-2 text-sm text-gray-300">
+                                        <p>🌐 <a href="https://www.adult-toy-wholesale.com" target="_blank" rel="noopener" className="text-pink-400 hover:text-pink-300 underline font-bold">adult-toy-wholesale.com</a></p>
                                         <p>📧 colinliyuan@gmail.com</p>
                                         <p>📞 Phone: +86 138 2442 3871</p>
                                         <p>💬 WhatsApp: <a href="https://wa.me/8613824423871" target="_blank" rel="noopener noreferrer" className="text-pink-400 hover:text-pink-300 underline">Chat on WhatsApp</a></p>
@@ -286,7 +326,8 @@ export default function Wholesale() {
                         </div>
                     </div>
                 </section>
+                </div>
             </div>
         </div>
     );
-}export const dynamic = 'force-dynamic'; 
+}export const dynamic = 'force-dynamic';
