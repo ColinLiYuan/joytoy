@@ -266,18 +266,18 @@ export default function AdminAnalyticsPage() {
                             <table className="min-w-full text-left">
                                 <thead>
                                     <tr className="bg-gray-50 border-b border-gray-100">
-                                        <th className="px-3 py-2 text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">时间</th>
-                                        <th className="px-3 py-2 text-[11px] font-bold text-gray-500 uppercase">页面</th>
-                                        <th className="px-3 py-2 text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">来源</th>
-                                        <th className="px-3 py-2 text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">IP</th>
-                                        <th className="px-3 py-2 text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">国家</th>
-                                        <th className="px-3 py-2 text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">类型</th>
+                                        <th className="px-2 py-2 text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap min-w-[90px]">时间</th>
+                                        <th className="px-2 py-2 text-[11px] font-bold text-gray-500 uppercase">页面</th>
+                                        <th className="px-2 py-2 text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">来源</th>
+                                        <th className="px-2 py-2 text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">IP</th>
+                                        <th className="px-2 py-2 text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">国家</th>
+                                        <th className="px-2 py-2 text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">类型</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-100">
                                     {records.map((r, i) => (
                                         <tr key={`${r.ts}-${i}`} className={`hover:bg-gray-50 ${r.isBot ? 'opacity-60' : ''}`}>
-                                            <td className="px-3 py-1.5 text-[11px] text-gray-500 whitespace-nowrap font-mono" title={new Date(r.ts).toLocaleString('zh-CN')}>
+                                            <td className="px-2 py-1.5 text-[11px] text-gray-500 whitespace-nowrap font-mono" title={new Date(r.ts).toLocaleString('zh-CN')}>
                                                 {(() => {
                                                     const d = new Date(r.ts)
                                                     const mm = String(d.getMonth() + 1).padStart(2, '0')
@@ -287,7 +287,7 @@ export default function AdminAnalyticsPage() {
                                                     return `${mm}-${dd} ${hh}:${mi}`
                                                 })()}
                                             </td>
-                                            <td className="px-3 py-1.5 text-[11px] text-gray-900 max-w-[200px] truncate" title={r.page}>
+                                            <td className="px-2 py-1.5 text-[11px] text-gray-900 max-w-[200px] truncate" title={r.page}>
                                                 {r.title || r.page}
                                             </td>
                                             <td className="px-3 py-1.5 text-[11px] text-gray-400 max-w-[100px] truncate" title={r.ref || ''}>
