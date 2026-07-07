@@ -255,51 +255,45 @@ export default function AdminAnalyticsPage() {
                     </div>
 
                     {/* 记录表格 */}
-                    <div className="overflow-x-auto -mx-6">
-                        <div className="inline-block min-w-full align-middle">
+                    <div className="overflow-x-auto">
                         {recordsLoading ? (
                             <div className="py-20 text-center text-gray-400">
                                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
                                 <p className="mt-3">加载中...</p>
                             </div>
                         ) : records.length > 0 ? (
-                            <table className="min-w-full text-left">
+                            <table className="w-full text-left border-collapse">
                                 <thead>
-                                    <tr className="bg-gray-50 border-b border-gray-100">
-                                        <th className="px-2 py-2 text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap w-[55px]">时间</th>
-                                        <th className="px-2 py-2 text-[11px] font-bold text-gray-500 uppercase">页面</th>
-                                        <th className="px-2 py-2 text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap w-[90px]">来源</th>
-                                        <th className="px-2 py-2 text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap w-[115px]">IP</th>
-                                        <th className="px-2 py-2 text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap w-[50px]">国家</th>
-                                        <th className="px-2 py-2 text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap w-[52px]">类型</th>
+                                    <tr className="bg-gray-50 border-b border-gray-200">
+                                        <th className="px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">时间</th>
+                                        <th className="px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">页面</th>
+                                        <th className="px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">来源</th>
+                                        <th className="px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">IP</th>
+                                        <th className="px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">国家</th>
+                                        <th className="px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">类型</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-100">
                                     {records.map((r, i) => (
                                         <tr key={`${r.ts}-${i}`} className={`hover:bg-gray-50 ${r.isBot ? 'opacity-60' : ''}`}>
-                                            <td className="px-2 py-1.5 text-[11px] text-gray-500 whitespace-nowrap font-mono" title={new Date(r.ts).toLocaleString('zh-CN')}>
-                                                {(() => {
-                                                    const d = new Date(r.ts)
-                                                    const hh = String(d.getHours()).padStart(2, '0')
-                                                    const mi = String(d.getMinutes()).padStart(2, '0')
-                                                    return `${hh}:${mi}`
-                                                })()}
+                                            <td className="px-4 py-3 text-xs text-gray-500 whitespace-nowrap font-mono">
+                                                {new Date(r.ts).toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                                             </td>
-                                            <td className="px-2 py-1.5 text-[11px] text-gray-900 max-w-[200px] truncate" title={r.page}>
-                                                {r.title || r.page}
+                                            <td className="px-4 py-3 text-xs text-gray-900 max-w-[300px] truncate" title={r.page}>
+                                                {r.page}
                                             </td>
-                                            <td className="px-3 py-1.5 text-[11px] text-gray-400 max-w-[100px] truncate" title={r.ref || ''}>
+                                            <td className="px-4 py-3 text-xs text-gray-400 max-w-[150px] truncate" title={r.ref || ''}>
                                                 {r.ref ? (() => { try { return new URL(r.ref).hostname } catch { return r.ref } })() : '-'}
                                             </td>
-                                            <td className="px-3 py-1.5 text-[11px] text-gray-400 font-mono whitespace-nowrap">{r.ip || '-'}</td>
-                                            <td className="px-3 py-1.5 text-[11px] whitespace-nowrap">
+                                            <td className="px-4 py-3 text-xs text-gray-400 font-mono whitespace-nowrap">{r.ip || '-'}</td>
+                                            <td className="px-4 py-3 text-xs whitespace-nowrap">
                                                 {r.isBot ? <span className="text-gray-400">-</span>
                                                     : <span className="text-gray-700">{r.country || 'Unknown'}</span>}
                                             </td>
-                                            <td className="px-3 py-1.5 text-[11px] whitespace-nowrap">
+                                            <td className="px-4 py-3 text-xs whitespace-nowrap">
                                                 {r.isBot
-                                                    ? <span className="inline-flex items-center gap-0.5 px-1 py-0.5 rounded-full bg-orange-100 text-orange-700 font-medium"><Bot size={10} /> Bot</span>
-                                                    : <span className="inline-flex items-center gap-0.5 px-1 py-0.5 rounded-full bg-green-100 text-green-700 font-medium"><User size={10} /> 真人</span>}
+                                                    ? <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-orange-100 text-orange-700 font-medium"><Bot size={10} /> Bot</span>
+                                                    : <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-green-100 text-green-700 font-medium"><User size={10} /> 真人</span>}
                                             </td>
                                         </tr>
                                     ))}
@@ -308,7 +302,6 @@ export default function AdminAnalyticsPage() {
                         ) : (
                             <div className="py-20 text-center text-gray-400">暂无访问记录</div>
                         )}
-                        </div>
                     </div>
 
                     {/* 分页 */}
