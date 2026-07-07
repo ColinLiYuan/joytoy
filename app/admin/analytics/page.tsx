@@ -266,12 +266,12 @@ export default function AdminAnalyticsPage() {
                             <table className="min-w-full text-left">
                                 <thead>
                                     <tr className="bg-gray-50 border-b border-gray-100">
-                                        <th className="px-2 py-2 text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap min-w-[90px]">时间</th>
+                                        <th className="px-2 py-2 text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap w-[55px]">时间</th>
                                         <th className="px-2 py-2 text-[11px] font-bold text-gray-500 uppercase">页面</th>
-                                        <th className="px-2 py-2 text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">来源</th>
-                                        <th className="px-2 py-2 text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">IP</th>
-                                        <th className="px-2 py-2 text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">国家</th>
-                                        <th className="px-2 py-2 text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap">类型</th>
+                                        <th className="px-2 py-2 text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap w-[90px]">来源</th>
+                                        <th className="px-2 py-2 text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap w-[115px]">IP</th>
+                                        <th className="px-2 py-2 text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap w-[50px]">国家</th>
+                                        <th className="px-2 py-2 text-[11px] font-bold text-gray-500 uppercase whitespace-nowrap w-[52px]">类型</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-100">
@@ -280,11 +280,9 @@ export default function AdminAnalyticsPage() {
                                             <td className="px-2 py-1.5 text-[11px] text-gray-500 whitespace-nowrap font-mono" title={new Date(r.ts).toLocaleString('zh-CN')}>
                                                 {(() => {
                                                     const d = new Date(r.ts)
-                                                    const mm = String(d.getMonth() + 1).padStart(2, '0')
-                                                    const dd = String(d.getDate()).padStart(2, '0')
                                                     const hh = String(d.getHours()).padStart(2, '0')
                                                     const mi = String(d.getMinutes()).padStart(2, '0')
-                                                    return `${mm}-${dd} ${hh}:${mi}`
+                                                    return `${hh}:${mi}`
                                                 })()}
                                             </td>
                                             <td className="px-2 py-1.5 text-[11px] text-gray-900 max-w-[200px] truncate" title={r.page}>
