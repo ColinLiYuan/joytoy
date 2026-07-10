@@ -515,14 +515,36 @@ export default function OrderPage() {
                                             <button onClick={() => handleUpdateStatus(order.orderNumber)} className="p-2 text-green-600 hover:bg-green-50 rounded-lg" title="标记已完成"><CheckCircle className="h-5 w-5" /></button>
                                         )}
                                         {order.status === 'COMPLETED' && order.affiliateId && (order.commissionAmount || 0) > 0 && order.affiliatePayoutStatus?.toUpperCase() === 'PENDING' && (
-                                            <button 
-                                                onClick={() => handleSettleCommission(order)} 
+                                            <button
+                                                onClick={() => handleSettleCommission(order)}
                                                 disabled={settlingOrderId === order.id}
-                                                className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg disabled:opacity-50" 
+                                                className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg disabled:opacity-50"
                                                 title="结算佣金"
                                             >
                                                 {settlingOrderId === order.id ? <Loader2 className="h-5 w-5 animate-spin" /> : <DollarSign className="h-5 w-5" />}
                                             </button>
+                                        )}
+
+                                        {/* 记账按钮 */}
+                                        {!order.expenseShippingSynced && ['SHIPPED', 'DELIVERED', 'COMPLETED'].includes(order.status) && (
+                                            <button onClick={() => {
+                                                const amt = prompt(`输入「${order.orderNumber}」实际运费 (CNY):`);
+                                                if (!amt || isNaN(Number(amt))) return;
+                                                orderService.syncShippingExpense(order.id, Number(amt))
+                                                    .then(() => { setToast({type:'success',message:'运费记账成功'}); fetchOrders(); })
+                                                    .catch((e:any) => setToast({type:'error',message:e.message}));
+                                            }}
+                                                className="text-[10px] px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded font-medium" title="记运费">🚚</button>
+                                        )}
+                                        {order.expenseShippingSynced && (
+                                            <span className="text-[10px] text-green-500" title="运费已记账">✓</span>
+                                        )}
+                                        {order.status === 'REFUNDED' && !order.expenseRefundSynced && (
+                                            <button onClick={async () => { try { await orderService.syncRefundExpense(order.id); setToast({type:'success',message:'退款记账成功'}); fetchOrders(); } catch(e:any) { setToast({type:'error',message:e.message}); } }}
+                                                className="text-[10px] px-1.5 py-0.5 bg-red-100 text-red-700 rounded font-medium" title="记退款">💸</button>
+                                        )}
+                                        {order.expenseRefundSynced && (
+                                            <span className="text-[10px] text-green-500" title="退款已记账">✓</span>
                                         )}
                                     </div>
                                 </td>

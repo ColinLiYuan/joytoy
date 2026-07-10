@@ -51,10 +51,12 @@ export const CATEGORY_BLOG_MAP: Record<string, string[]> = {
     'best-beginner-vibrators-guide',
   ],
   'female-sex-toys/rabbit-vibrators': [
+    'what-is-a-rabbit-vibrator',
     'how-to-use-g-spot-vibrator-beginners-guide',
     'best-beginner-vibrators-guide',
   ],
   'female-sex-toys/wand-vibrators': [
+    'wand-vibrator-beginners-guide',
     'decibel-test-quietest-vibrators',
     'best-beginner-vibrators-guide',
   ],
@@ -69,6 +71,7 @@ export const CATEGORY_BLOG_MAP: Record<string, string[]> = {
     'prostate-health-massage-benefits',
   ],
   'male-sex-toys/male-masturbators': [
+    'male-masturbator-beginners-guide',
     'best-male-masturbators-2026',
     ...MALE_BASE,
   ],
@@ -81,6 +84,7 @@ export const CATEGORY_BLOG_MAP: Record<string, string[]> = {
     'death-grip-syndrome-desensitization-fix',
   ],
   'male-sex-toys/cock-rings': [
+    'cock-ring-beginners-guide',
     'science-of-stamina-training-for-men',
   ],
   'male-sex-toys/prostate-toys': [
@@ -96,6 +100,7 @@ export const CATEGORY_BLOG_MAP: Record<string, string[]> = {
     'temperature-play-glass-metal-guide',
   ],
   'sex-toys/butt-plugs': [
+    'butt-plug-beginners-guide',
     'body-safe-materials-guide',
     'ultimate-cleaning-routine',
     'temperature-play-glass-metal-guide',
