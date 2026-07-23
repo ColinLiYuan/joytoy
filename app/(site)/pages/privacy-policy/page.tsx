@@ -155,4 +155,4 @@ export default function PrivacyPolicy() {
             </div>
         </div>
     );
-}export const dynamic = 'force-dynamic'; 
+} 

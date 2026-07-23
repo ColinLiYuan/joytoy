@@ -86,4 +86,4 @@ export default function AffiliatePage() {
             </div>
         </div>
     );
-}export const dynamic = 'force-dynamic'; 
+} 

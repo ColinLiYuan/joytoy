@@ -12,7 +12,7 @@ export const metadata: Metadata = {
     },
 };
 
-export const dynamic = 'force-dynamic';
+// static page
 
 export default function ReturnRefundPolicy() {
     return (

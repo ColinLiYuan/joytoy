@@ -330,4 +330,4 @@ export default function Wholesale() {
             </div>
         </div>
     );
-}export const dynamic = 'force-dynamic';
+}

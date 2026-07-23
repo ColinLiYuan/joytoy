@@ -77,4 +77,4 @@ export default function PaymentPolicy() {
             </div>
         </div>
     );
-}export const dynamic = 'force-dynamic'; 
+} 

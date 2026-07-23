@@ -72,4 +72,4 @@ export default function TermsOfService() {
             </div>
         </div>
     );
-}export const dynamic = 'force-dynamic'; 
+} 

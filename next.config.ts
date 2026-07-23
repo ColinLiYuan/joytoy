@@ -30,7 +30,7 @@ const nextConfig: NextConfig = {
     experimental: {
         ppr: false,
         staleTimes: {
-            dynamic: 30,
+            dynamic: 300,
             static: 300,
         },
         serverActions: {
