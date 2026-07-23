@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     const slug = Array.isArray(resolvedParams.slug) ? `/${resolvedParams.slug.join('/')}` : `/${resolvedParams.slug}`;
     try {
         const url = `${BACKEND_CONFIG.baseURL}/api/V1/product?slug=${encodeURIComponent(slug)}`;
-        const response = await fetch(url, { next: { revalidate: 3600 } });
+        const response = await fetch(url, { next: { revalidate: 86400 } });
         const result = await response.json();
         
         if (!result?.success) {
@@ -81,7 +81,7 @@ function formatDisplayName(slug: string): string {
     return slug.replace(/-/g, ' ').split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
 }
 
-export const revalidate = 3600;
+export const revalidate = 86400;
 
 export default async function ProductDetail({ params }: PageProps) {
     const resolvedParams = await params;
@@ -90,7 +90,7 @@ export default async function ProductDetail({ params }: PageProps) {
 
     try {
         const url = `${BACKEND_CONFIG.baseURL}/api/V1/product?slug=${encodeURIComponent(slug)}`;
-        const response = await fetch(url, { next: { revalidate: 3600 } });
+        const response = await fetch(url, { next: { revalidate: 86400 } });
         const result = await response.json();
         
         if (result?.success) {
