@@ -1,16 +1,25 @@
 // providers.tsx
 'use client';
+import { Suspense } from 'react';
 import { ToastProvider } from '@/contexts/toastContext';
 import { AuthProvider } from '@/contexts/authContext';
 import { CartSync } from './cart-sync';
 import AutoLoginModal from '@/components/common/auto-login-modal';
 import { useSearchParams, usePathname } from 'next/navigation';
 
-function AutoLoginWrapper() {
+function AutoLoginContent() {
     const searchParams = useSearchParams();
     const redirectPath = searchParams.get('redirect') || null;
-    
+
     return <AutoLoginModal redirectPath={redirectPath} />;
+}
+
+function AutoLoginWrapper() {
+    return (
+        <Suspense fallback={null}>
+            <AutoLoginContent />
+        </Suspense>
+    );
 }
 
 function CartSyncWrapper() {
