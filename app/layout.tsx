@@ -111,10 +111,10 @@ export default function RootLayout({
         <html lang="en">
         {/* ✅ 将字体变量注入 Body，全局生效，无需在子 Layout 重复定义 */}
         <body className={`${inter.variable} ${playfair.variable} font-sans antialiased w-full max-w-[100vw] overflow-x-hidden bg-white text-[#1A1A1A]`} suppressHydrationWarning>
-        <Suspense fallback={null}>
-            <AffiliateRedirectHandler />
-        </Suspense>
         <Providers>
+            <Suspense fallback={null}>
+                <AffiliateRedirectHandler />
+            </Suspense>
             {children}
         </Providers>
         </body>
