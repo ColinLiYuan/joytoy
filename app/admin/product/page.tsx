@@ -17,6 +17,7 @@ import {
 import Pagination from '@/components/common/pagination'
 
 import { getProductImageUrl } from '@/lib/image-utils';
+import { usePermission } from '@/hooks/usePermission';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,6 +27,7 @@ const categories = ['情趣内衣', '震动棒', '飞机杯', '润滑液', 'SM�
 export default function ProductList() {
     const searchParams = useSearchParams()
     const initialLowStock = searchParams.get('stock') === 'low'
+    const { canEdit } = usePermission()
 
     const [products, setProducts] = useState<ProductResponse[]>([])
     const [loading, setLoading] = useState(true)
@@ -158,13 +160,15 @@ export default function ProductList() {
                     <Package className="h-6 w-6 mr-2" />
                     产品管理
                 </h1>
-                <Link
-                    href="/admin/product/add"
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center transition-colors"
-                >
-                    <Plus className="h-4 w-4 mr-1" />
-                    新增产品
-                </Link>
+                {canEdit && (
+                    <Link
+                        href="/admin/product/add"
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center transition-colors"
+                    >
+                        <Plus className="h-4 w-4 mr-1" />
+                        新增产品
+                    </Link>
+                )}
             </div>
 
             {/* 错误提示 */}
@@ -356,13 +360,15 @@ export default function ProductList() {
                                                 <Eye className="h-4 w-4" />
                                             </Link>
                                             {/* 完整编辑 */}
-                                            <Link
-                                                href={`/admin/product/edit/${product.id}`}
-                                                className="bg-blue-100 hover:bg-blue-200 text-blue-700 p-2 rounded transition-colors"
-                                                title="完整编辑"
-                                            >
-                                                <Edit className="h-4 w-4" />
-                                            </Link>
+                                            {canEdit && (
+                                                <Link
+                                                    href={`/admin/product/edit/${product.id}`}
+                                                    className="bg-blue-100 hover:bg-blue-200 text-blue-700 p-2 rounded transition-colors"
+                                                    title="完整编辑"
+                                                >
+                                                    <Edit className="h-4 w-4" />
+                                                </Link>
+                                            )}
                                         </div>
                                     </td>
                                 </tr>

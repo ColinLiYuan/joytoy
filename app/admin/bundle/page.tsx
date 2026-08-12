@@ -7,12 +7,14 @@ import { bundleService } from '@/services/bundleService'
 import { ProductBundle } from '@/types/bundle'
 import { getProductImageUrl } from '@/lib/image-utils'
 import { Plus, Edit, Trash2, Package } from 'lucide-react'
+import { usePermission } from '@/hooks/usePermission'
 
 export default function AdminBundleList() {
     const [bundles, setBundles] = useState<ProductBundle[]>([])
     const [loading, setLoading] = useState(true)
     const [page, setPage] = useState(0)
     const [totalPages, setTotalPages] = useState(0)
+    const { canEdit } = usePermission()
 
     useEffect(() => {
         loadBundles()
@@ -67,13 +69,15 @@ export default function AdminBundleList() {
                 {/* 页面标题 */}
                 <div className="flex justify-between items-center mb-6">
                     <h1 className="text-2xl font-bold text-gray-900">套装管理</h1>
-                    <Link
-                        href="/admin/bundle/add"
-                        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-indigo-600 hover:bg-indigo-700"
-                    >
-                        <Plus className="h-4 w-4 mr-2" />
-                        新建套装
-                    </Link>
+                    {canEdit && (
+                        <Link
+                            href="/admin/bundle/add"
+                            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-indigo-600 hover:bg-indigo-700"
+                        >
+                            <Plus className="h-4 w-4 mr-2" />
+                            新建套装
+                        </Link>
+                    )}
                 </div>
 
                 {/* 套装列表 */}
@@ -140,22 +144,24 @@ export default function AdminBundleList() {
                                         </div>
 
                                         {/* 操作按钮 */}
-                                        <div className="flex items-center space-x-2 ml-4">
-                                            <Link
-                                                href={`/admin/bundle/edit/${bundle.id}`}
-                                                className="inline-flex items-center px-3 py-1.5 border border-gray-300 text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50"
-                                            >
-                                                <Edit className="h-3 w-3 mr-1" />
-                                                编辑
-                                            </Link>
-                                            <button
-                                                onClick={() => handleDelete(bundle.id!)}
-                                                className="inline-flex items-center px-3 py-1.5 border border-red-300 text-xs font-medium rounded text-red-700 bg-white hover:bg-red-50"
-                                            >
-                                                <Trash2 className="h-3 w-3 mr-1" />
-                                                删除
-                                            </button>
-                                        </div>
+                                        {canEdit && (
+                                            <div className="flex items-center space-x-2 ml-4">
+                                                <Link
+                                                    href={`/admin/bundle/edit/${bundle.id}`}
+                                                    className="inline-flex items-center px-3 py-1.5 border border-gray-300 text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50"
+                                                >
+                                                    <Edit className="h-3 w-3 mr-1" />
+                                                    编辑
+                                                </Link>
+                                                <button
+                                                    onClick={() => handleDelete(bundle.id!)}
+                                                    className="inline-flex items-center px-3 py-1.5 border border-red-300 text-xs font-medium rounded text-red-700 bg-white hover:bg-red-50"
+                                                >
+                                                    <Trash2 className="h-3 w-3 mr-1" />
+                                                    删除
+                                                </button>
+                                            </div>
+                                        )}
                                     </div>
                                 </li>
                             ))}

@@ -9,6 +9,7 @@ import {
     Tag,
     Loader2
 } from 'lucide-react';
+import { usePermission } from '@/hooks/usePermission';
 
 interface Coupon {
     id: number;
@@ -30,6 +31,7 @@ interface Coupon {
 export default function AdminCouponListPage() {
     const [coupons, setCoupons] = useState<Coupon[]>([]);
     const [loading, setLoading] = useState(true);
+    const { canEdit } = usePermission();
     const [currentPage, setCurrentPage] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
     const [keyword, setKeyword] = useState('');
@@ -223,13 +225,15 @@ export default function AdminCouponListPage() {
         <div className="p-6 space-y-4">
             <div className="flex justify-between items-center">
                 <h1 className="text-2xl font-bold text-gray-900">优惠券管理</h1>
-                <button
-                    onClick={handleOpenCreate}
-                    className="px-4 py-2 bg-black text-white rounded-lg flex items-center gap-2 hover:bg-gray-800"
-                >
-                    <Plus className="h-4 w-4" />
-                    创建优惠券
-                </button>
+                {canEdit && (
+                    <button
+                        onClick={handleOpenCreate}
+                        className="px-4 py-2 bg-black text-white rounded-lg flex items-center gap-2 hover:bg-gray-800"
+                    >
+                        <Plus className="h-4 w-4" />
+                        创建优惠券
+                    </button>
+                )}
             </div>
 
             {/* 筛选栏 */}
@@ -326,20 +330,24 @@ export default function AdminCouponListPage() {
                                     </td>
                                     <td className="px-6 py-4 text-right">
                                         <div className="flex items-center justify-end gap-2">
-                                            <button
-                                                onClick={() => handleOpenEdit(coupon)}
-                                                className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg"
-                                                title="编辑"
-                                            >
-                                                <Edit className="h-4 w-4" />
-                                            </button>
-                                            <button
-                                                onClick={() => handleDelete(coupon.id)}
-                                                className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
-                                                title="禁用"
-                                            >
-                                                <Trash2 className="h-4 w-4" />
-                                            </button>
+                                            {canEdit && (
+                                                <>
+                                                    <button
+                                                        onClick={() => handleOpenEdit(coupon)}
+                                                        className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg"
+                                                        title="编辑"
+                                                    >
+                                                        <Edit className="h-4 w-4" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDelete(coupon.id)}
+                                                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+                                                        title="禁用"
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </button>
+                                                </>
+                                            )}
                                         </div>
                                     </td>
                                 </tr>

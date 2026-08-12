@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
+import { useAuth } from '@/contexts/authContext';
 import {
     ShoppingCart,
     Users,
@@ -33,17 +34,24 @@ export default function AdminSidebar({ sidebarOpen, setSidebarOpen }: SidebarCon
 
 function SidebarContent({ sidebarOpen, setSidebarOpen }: SidebarContentProps) {
     const pathname = usePathname()
+    const { userInfo } = useAuth()
+    const role = userInfo?.role
+
+    // OPERATOR 不能看到的功能
+    const isOperator = role === 'OPERATOR'
+    // 操作员隐藏：用户管理、优惠券管理、联盟管理、博客管理
+    const showForOperator = !isOperator
 
     // 导航配置（按业务逻辑分组）
-    const navigation = [
+    const allNavigation = [
         // 核心业务
         { name: '仪表盘', href: '/admin', icon: BarChart3 },
         { name: '商品管理', href: '/admin/product', icon: Package },
         { name: '套装管理', href: '/admin/bundle', icon: Layers },
         { name: '订单管理', href: '/admin/order', icon: ShoppingCart },
-        { name: '用户管理', href: '/admin/user', icon: Users },
-        { 
-            name: '购物车管理', 
+        { name: '用户管理', href: '/admin/user', icon: Users, requireAdmin: true },
+        {
+            name: '购物车管理',
             href: '/admin/cart',
             icon: CreditCard,
             children: [
@@ -51,11 +59,11 @@ function SidebarContent({ sidebarOpen, setSidebarOpen }: SidebarContentProps) {
                 { name: '操作日志', href: '/admin/cart/logs' }
             ]
         },
-        { name: '优惠券管理', href: '/admin/coupon', icon: Tag },
-        
+        { name: '优惠券管理', href: '/admin/coupon', icon: Tag, requireAdmin: true },
+
         // 库存与采购
-        { 
-            name: '库存管理', 
+        {
+            name: '库存管理',
             href: '/admin/warehouse-inventory',
             icon: Warehouse,
             children: [
@@ -64,7 +72,7 @@ function SidebarContent({ sidebarOpen, setSidebarOpen }: SidebarContentProps) {
             ]
         },
         { name: '采购管理', href: '/admin/purchase-records', icon: Truck },
-        
+
         // 数据分析
         { name: '访问统计', href: '/admin/analytics', icon: Eye },
 
@@ -73,17 +81,24 @@ function SidebarContent({ sidebarOpen, setSidebarOpen }: SidebarContentProps) {
             name: '联盟管理',
             href: '/admin/affiliate',
             icon: TrendingUp,
+            requireAdmin: true,
             children: [
                 { name: '数据统计', href: '/admin/affiliate/stats' },
                 { name: '成员列表', href: '/admin/affiliate' },
                 { name: '提现管理', href: '/admin/affiliate/payouts' }
             ]
         },
-        
+
         // 内容与互动
-        { name: '博客管理', href: '/admin/blog', icon: BookOpen },
+        { name: '博客管理', href: '/admin/blog', icon: BookOpen, requireAdmin: true },
         { name: '评论管理', href: '/admin/review', icon: MessageSquare },
     ];
+
+    // 根据角色过滤导航项
+    const navigation = allNavigation.filter(item => {
+        if (item.requireAdmin && isOperator) return false
+        return true
+    })
 
     return (
         <>

@@ -6,6 +6,7 @@ import { blogService } from '@/services/blogService'
 import Pagination from '@/components/common/pagination';
 import { AdminBlogResponse, AdminBlogListResponse } from '@/types/blog'
 import { Eye, Edit, Plus, ExternalLink } from 'lucide-react';
+import { usePermission } from '@/hooks/usePermission';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,6 +29,7 @@ const getImageUrl = (path: string | undefined | null) => {
 export default function BlogManagementPage() {
     const [blogs, setBlogs] = useState<AdminBlogResponse[]>([]);
     const [loading, setLoading] = useState(true);
+    const { canEdit } = usePermission();
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState<'ALL' | AdminBlogResponse['status']>('ALL');
     const [sortBy, setSortBy] = useState<'updatedAt' | 'createdAt' | 'rating' | 'viewCount' | 'likeCount'>('updatedAt');
@@ -169,13 +171,15 @@ export default function BlogManagementPage() {
                                 <option value="likeCount">点赞数</option>
                             </select>
                         </div>
-                        <Link
-                            href="/admin/blog/add"
-                            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition duration-200 font-medium flex items-center justify-center w-full sm:w-auto shadow-sm"
-                        >
-                            <Plus size={18} className="mr-2" />
-                            新建博客
-                        </Link>
+                        {canEdit && (
+                            <Link
+                                href="/admin/blog/add"
+                                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition duration-200 font-medium flex items-center justify-center w-full sm:w-auto shadow-sm"
+                            >
+                                <Plus size={18} className="mr-2" />
+                                新建博客
+                            </Link>
+                        )}
                     </div>
                 </div>
 
@@ -261,12 +265,14 @@ export default function BlogManagementPage() {
                                                     <ExternalLink size={18} />
                                                 </a>
                                             )}
-                                            <Link
-                                                href={`/admin/blog/edit/${blog.id}`}
-                                                className="text-blue-600 hover:text-blue-900 flex items-center transition-colors"
-                                            >
-                                                <Edit size={18}/>
-                                            </Link>
+                                            {canEdit && (
+                                                <Link
+                                                    href={`/admin/blog/edit/${blog.id}`}
+                                                    className="text-blue-600 hover:text-blue-900 flex items-center transition-colors"
+                                                >
+                                                    <Edit size={18}/>
+                                                </Link>
+                                            )}
                                         </div>
                                     </td>
                                 </tr>
