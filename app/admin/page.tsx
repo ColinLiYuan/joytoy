@@ -14,6 +14,7 @@ import {
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { getDashboardStats, DashboardStats, getAnalyticsOverview, AnalyticsOverview } from '@/app/actions/admin'
+import { usePermission } from '@/hooks/usePermission'
 import {
     LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
     ResponsiveContainer, PieChart, Pie, Cell
@@ -54,11 +55,16 @@ function computeGrowth(current: number, previous: number): { value: string; up: 
 
 export default function AdminDashboard() {
     const router = useRouter()
+    const { isOperator } = usePermission()
     const [stats, setStats] = useState<DashboardStats | null>(null)
     const [analytics, setAnalytics] = useState<AnalyticsOverview | null>(null)
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
+        if (isOperator) {
+            router.replace('/403')
+            return
+        }
         const fetchData = async () => {
             try {
                 setLoading(true)
@@ -75,7 +81,7 @@ export default function AdminDashboard() {
             }
         }
         fetchData()
-    }, [])
+    }, [isOperator, router])
 
     if (loading) {
         return (

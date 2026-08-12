@@ -45,7 +45,7 @@ function SidebarContent({ sidebarOpen, setSidebarOpen }: SidebarContentProps) {
     // 导航配置（按业务逻辑分组）
     const allNavigation = [
         // 核心业务
-        { name: '仪表盘', href: '/admin', icon: BarChart3 },
+        { name: '仪表盘', href: '/admin', icon: BarChart3, requireAdmin: true },
         { name: '商品管理', href: '/admin/product', icon: Package },
         { name: '套装管理', href: '/admin/bundle', icon: Layers },
         { name: '订单管理', href: '/admin/order', icon: ShoppingCart },
@@ -74,7 +74,7 @@ function SidebarContent({ sidebarOpen, setSidebarOpen }: SidebarContentProps) {
         { name: '采购管理', href: '/admin/purchase-records', icon: Truck },
 
         // 数据分析
-        { name: '访问统计', href: '/admin/analytics', icon: Eye },
+        { name: '访问统计', href: '/admin/analytics', icon: Eye, requireAdmin: true },
 
         // 营销与推广
         {

@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react'
 import { Eye, TrendingUp, TrendingDown, Globe, Search, RotateCcw, Bot, User, ChevronLeft, ChevronRight } from 'lucide-react'
 import { getAnalyticsOverview, AnalyticsOverview } from '@/app/actions/admin'
+import { usePermission } from '@/hooks/usePermission'
+import { useRouter } from 'next/navigation'
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
     ResponsiveContainer
@@ -31,6 +33,8 @@ function formatDate(d: Date): string {
 function todayStr(): string { return formatDate(new Date()) }
 
 export default function AdminAnalyticsPage() {
+    const router = useRouter()
+    const { isOperator } = usePermission()
     const [data, setData] = useState<AnalyticsOverview | null>(null)
     const [loading, setLoading] = useState(true)
 
@@ -47,14 +51,22 @@ export default function AdminAnalyticsPage() {
     const [totalElements, setTotalElements] = useState(0)
     const [recordsLoading, setRecordsLoading] = useState(false)
 
+    // OPERATOR 无权访问
     useEffect(() => {
+        if (isOperator) {
+            router.replace('/403')
+        }
+    }, [isOperator, router])
+
+    useEffect(() => {
+        if (isOperator) return
         const fetchData = async () => {
             try { setLoading(true); setData(await getAnalyticsOverview()) }
             catch (e) { console.error(e) }
             finally { setLoading(false) }
         }
         fetchData()
-    }, [])
+    }, [isOperator])
 
     // 切换日期后重新加载记录和国家列表
     useEffect(() => {
