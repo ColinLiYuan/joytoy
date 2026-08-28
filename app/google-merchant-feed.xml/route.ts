@@ -1,7 +1,7 @@
 // app/google-merchant-feed.xml/route.ts
 
 import { NextResponse } from 'next/server'
-import { BACKEND_CONFIG } from '@/lib/api-config'
+import { BACKEND_CONFIG, SITE_HEADERS } from '@/lib/api-config'
 import { getProductImageUrl } from '@/lib/image-utils'
 
 export async function GET() {
@@ -17,6 +17,7 @@ export async function GET() {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
+                ...SITE_HEADERS,
             },
             cache: 'no-store'
         })

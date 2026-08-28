@@ -33,6 +33,10 @@ yarn-error.log*
 # envData files (can opt-in for committing if needed)
 .env*
 
+# 调试产物与重构备份
+_diag_order.json
+*.bak
+
 # vercel
 .vercel
 

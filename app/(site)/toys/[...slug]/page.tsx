@@ -236,8 +236,22 @@ export default async function ProductDetail({ params }: PageProps) {
                 poster: getProductImageUrl(undefined, gallery.poster)
             }));
         }
-        
-        // 如果没有 galleries，返回空数组
+
+        // 无产品相册时回退：默认颜色 SKU 的图（默认色无图则取第一个有图的 SKU）
+        const defaultColor = product.colors?.[0];
+        const skus = product.productSkus || [];
+        const targetSku = skus.find(s => s.color === defaultColor && (s.images?.length || 0) > 0)
+            || skus.find(s => (s.images?.length || 0) > 0);
+        if (targetSku?.images?.length) {
+            return targetSku.images.map(img => ({
+                url: getProductImageUrl(undefined, img.url),
+                alt: img.alt || product.title,
+                type: 'image' as const,
+                poster: ''
+            }));
+        }
+
+        // 两者都没有，返回空数组
         return [];
     };
 

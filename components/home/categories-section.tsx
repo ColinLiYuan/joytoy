@@ -1,10 +1,13 @@
 // components/home/categories-section.tsx
+// 首页「Curated Collections」区块：后台配置了集合（/api/V1/home 的 collections）时渲染集合卡片，
+// 否则回退硬编码分类入口（升级过渡期，站点视觉不回退）。
 import Link from 'next/link';
 import Image from 'next/image';
 import { MoveRight } from 'lucide-react';
 import { getProductImageUrl } from '@/lib/image-utils';
+import { CollectionCardResponse } from '@/types/collection';
 
-const categories = [
+const fallbackCategories = [
     {
         id: 'for-her',
         title: "For Her",
@@ -39,7 +42,24 @@ const categories = [
     }
 ];
 
-export default function CategoriesSection() {
+interface CategoriesSectionProps {
+    /** 后台集合（show_on_home 按 sortOrder 排序）；为空数组时回退硬编码分类入口 */
+    collections?: CollectionCardResponse[];
+}
+
+export default function CategoriesSection({ collections = [] }: CategoriesSectionProps) {
+    // 后台集合数据（营销聚合，链到 /collections/{slug} 落地页）
+    const items = collections.length > 0
+        ? collections.map(col => ({
+            id: String(col.id),
+            title: col.name,
+            description: col.description || `Curated selection of ${col.productCount} products.`,
+            link: `/collections/${col.slug}`,
+            image: col.image || '',
+            alt: col.name,
+        }))
+        : fallbackCategories;
+
     return (
         <section id="categories" className="py-24 bg-white w-full">
             <div className="container max-w-7xl mx-auto px-6">
@@ -62,7 +82,7 @@ export default function CategoriesSection() {
 
                 {/* 2. Grid Layout - Editorial Style */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-16">
-                    {categories.map((cat) => (
+                    {items.map((cat) => (
                         <Link
                             key={cat.id}
                             href={cat.link}
@@ -75,14 +95,20 @@ export default function CategoriesSection() {
                                 3. bg-[#F5F5F7]: 图片加载前的占位底色
                             */}
                             <div className="relative w-full aspect-[4/5] bg-[#F5F5F7] overflow-hidden">
-                                <Image
-                                    src={getProductImageUrl(undefined, cat.image)}
-                                    alt={cat.alt}
-                                    fill
-                                    sizes="(max-width: 768px) 100vw, 50vw"
-                                    // object-cover: 铺满容器，实现 Full Bleed 效果 (不再是 object-contain)
-                                    className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-                                />
+                                {cat.image ? (
+                                    <Image
+                                        src={getProductImageUrl(undefined, cat.image)}
+                                        alt={cat.alt}
+                                        fill
+                                        sizes="(max-width: 768px) 100vw, 50vw"
+                                        // object-cover: 铺满容器，实现 Full Bleed 效果 (不再是 object-contain)
+                                        className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                                    />
+                                ) : (
+                                    <div className="w-full h-full flex items-center justify-center text-gray-300 font-serif text-3xl">
+                                        {cat.title}
+                                    </div>
+                                )}
 
                                 {/* 可选：微弱的遮罩，增加质感 */}
                                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-500" />

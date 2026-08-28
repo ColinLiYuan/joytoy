@@ -9,13 +9,13 @@ const FEMALE_BASE = [
 
 const MALE_BASE = [
   'death-grip-syndrome-desensitization-fix',
-  'beginners-guide-exploring-male-p-spot',
+  'beginners-guide-exploring-male-p-spot-safely',
   'science-of-stamina-training-for-men',
 ];
 
 const UNIVERSAL = [
   'body-safe-materials-guide',
-  'ultimate-cleaning-routine',
+  'ultimate-cleaning-routine-toy-care',
 ];
 
 export const CATEGORY_BLOG_MAP: Record<string, string[]> = {
@@ -23,7 +23,7 @@ export const CATEGORY_BLOG_MAP: Record<string, string[]> = {
   all: [
     'best-beginner-vibrators-guide',
     'body-safe-materials-guide',
-    'ultimate-cleaning-routine',
+    'ultimate-cleaning-routine-toy-care',
   ],
   'new-arrivals': UNIVERSAL,
   'best-sellers': UNIVERSAL,
@@ -32,21 +32,20 @@ export const CATEGORY_BLOG_MAP: Record<string, string[]> = {
   'female-sex-toys': [
     ...FEMALE_BASE,
     'decibel-test-quietest-vibrators',
-    'sonic-waves-vs-vibration',
-    'how-to-find-g-spot',
-    'guide-to-luxury-lubrication',
+    'sonic-waves-vs-vibration-technology',
+    'best-wand-vibrators-complete-guide',
+    'guide-to-luxury-lubrication-water-vs-silicone',
   ],
   'female-sex-toys/g-spot-vibrators': [
     'how-to-use-g-spot-vibrator-beginners-guide',
-    'how-to-find-g-spot',
     'best-beginner-vibrators-guide',
   ],
   'female-sex-toys/clit-vibrators': [
-    'sonic-waves-vs-vibration',
+    'sonic-waves-vs-vibration-technology',
     'best-beginner-vibrators-guide',
   ],
   'female-sex-toys/bullet-vibrators': [
-    'packing-for-pleasure',
+    'packing-for-pleasure-travel-checklist',
     'decibel-test-quietest-vibrators',
     'best-beginner-vibrators-guide',
   ],
@@ -72,12 +71,12 @@ export const CATEGORY_BLOG_MAP: Record<string, string[]> = {
   ],
   'male-sex-toys/male-masturbators': [
     'male-masturbator-beginners-guide',
-    'best-male-masturbators-2026',
+    'stamina-training-edging-guide',
     ...MALE_BASE,
   ],
   'male-sex-toys/manual-strokers': [
     'death-grip-syndrome-desensitization-fix',
-    'best-male-masturbators-2026',
+    'male-masturbator-beginners-guide',
   ],
   'male-sex-toys/stamina-training': [
     'science-of-stamina-training-for-men',
@@ -89,32 +88,32 @@ export const CATEGORY_BLOG_MAP: Record<string, string[]> = {
   ],
   'male-sex-toys/prostate-toys': [
     'prostate-health-massage-benefits',
-    'beginners-guide-exploring-male-p-spot',
+    'beginners-guide-exploring-male-p-spot-safely',
   ],
 
   // ── Anal Play ──
   'sex-toys': [
-    'ultimate-cleaning-routine',
+    'ultimate-cleaning-routine-toy-care',
     'body-safe-materials-guide',
-    'guide-to-luxury-lubrication',
+    'guide-to-luxury-lubrication-water-vs-silicone',
     'temperature-play-glass-metal-guide',
   ],
   'sex-toys/butt-plugs': [
     'butt-plug-beginners-guide',
     'body-safe-materials-guide',
-    'ultimate-cleaning-routine',
+    'ultimate-cleaning-routine-toy-care',
     'temperature-play-glass-metal-guide',
   ],
   'sex-toys/anal-beads': [
     'body-safe-materials-guide',
-    'ultimate-cleaning-routine',
+    'ultimate-cleaning-routine-toy-care',
   ],
 
   // ── Lingerie ──
   lingerie: [
     'bridal-shower-gift-guide-classy-toys',
     'anniversary-gift-guide-luxury-intimacy',
-    'gifts-for-him',
+    'gifts-for-him-upgrading-his-nightstand',
   ],
   'lingerie/bodystockings': [
     'bridal-shower-gift-guide-classy-toys',

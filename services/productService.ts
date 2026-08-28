@@ -2,19 +2,9 @@
 
 import axiosClient from '@/lib/axios-client';
 import { ProductListResponse } from '@/types/product';
-import { ADMIN_CONFIG, SERVER_CONFIG, BACKEND_CONFIG } from '@/lib/api-config';
-import {AdminProductResponse, ReleaseProductRequest} from "@/types/admin/adminProduct";
+import {AdminProductResponse} from "@/types/admin/adminProduct";
 import {ProductResponse} from "@/types/product";
-import { apiGet, apiPost } from '@/lib/api-utils';
-import { getToken, ensureFreshToken } from '@/lib/token-utils';
-
-export interface UploadResult {
-    url: string;
-    fileName: string;
-    originalName: string;
-    size: number;
-    finalSlug: string;
-}
+import { ensureFreshToken } from '@/lib/token-utils';
 
 class ProductService {
 
@@ -62,16 +52,6 @@ class ProductService {
         }
     }
 
-    async adminRelease(request: ReleaseProductRequest): Promise<ProductListResponse> {
-        const result = await apiPost<ProductListResponse>(`${BACKEND_CONFIG.baseURL}/api/admin/product/release`, request);
-
-        if (!result.success) {
-            throw new Error(result.message || `Failed to release product`);
-        }
-
-        return result.data as ProductListResponse;
-    }
-
     async adminGetById(id: string): Promise<AdminProductResponse> {
         try {
             const url = `/api/admin/V1/product/${id}`;
@@ -85,59 +65,6 @@ class ProductService {
             console.error('❌ [ProductService] Get product failed:', error);
             throw error;
         }
-    }
-
-    async uploadImage(
-        file: File,
-        type: 'main' | 'gallery',
-        slug: string,
-        index?: number
-    ): Promise<UploadResult> {
-        try {
-            const formData = new FormData();
-            formData.append('file', file);
-            formData.append('type', type);
-            formData.append('slug', slug);
-            formData.append('fileName', file.name);
-            if (index !== undefined) {
-                formData.append('index', index.toString());
-            }
-
-            // 文件上传需要特殊处理，继续使用原生 fetch
-            const url = `${BACKEND_CONFIG.baseURL}/api/admin/product/upload`;
-            const token = await getToken();
-            
-            const headers: Record<string, string> = {};
-            if (token) {
-                headers['Authorization'] = `Bearer ${token}`;
-            }
-            
-            const response = await fetch(url, {
-                method: 'POST',
-                headers,
-                body: formData,
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => null);
-                throw new Error(errorData?.error || `上传失败: ${response.status}`);
-            }
-
-            const apiResponse = await response.json();
-            return apiResponse.data;
-
-        } catch (error) {
-            console.error('Upload image failed:', error);
-            throw error;
-        }
-    }
-
-    async uploadMainImage(file: File, slug: string): Promise<UploadResult> {
-        return this.uploadImage(file, 'main', slug);
-    }
-
-    async uploadGalleryImage(file: File, slug: string, index: number): Promise<UploadResult> {
-        return this.uploadImage(file, 'gallery', slug, index);
     }
 
     async getRelatedProducts(slug: string): Promise<ProductResponse[]> {

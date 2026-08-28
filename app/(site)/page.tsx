@@ -1,7 +1,9 @@
 // app/(site)/page.tsx - SSR 服务端组件
 // 产品数据在服务端获取，Google 爬虫可直接看到产品内容
 import { productService } from '@/services/productService';
+import { collectionService } from '@/services/collectionService';
 import { ProductResponse } from '@/types/product';
+import { CollectionCardResponse } from '@/types/collection';
 import { getProductImageUrl } from '@/lib/image-utils';
 export const revalidate = 3600;
 
@@ -14,16 +16,39 @@ import FAQSection from '@/components/common/faq-section';
 
 export default async function HomePage() {
     let bestSellers: ProductResponse[] = [];
+    let homeCollections: CollectionCardResponse[] = [];
     let fetchError: string | null = null;
 
     try {
-        const products = await productService.getHeroProducts();
-        if (Array.isArray(products)) {
-            bestSellers = products;
+        // 首页聚合 /api/V1/home：show_on_home 集合卡片（含预览商品，人工序）。
+        // 首页商品区 = 集合预览商品拼接去重；isFeatured 已退役（无 admin 设置入口）。
+        const home = await collectionService.getHome();
+        if (home?.collections?.length) {
+            const seen = new Set<number>();
+            for (const product of home.collections.flatMap(c => c.products)) {
+                if (!seen.has(product.id)) {
+                    seen.add(product.id);
+                    bestSellers.push(product);
+                }
+            }
         }
+        homeCollections = home?.collections || [];
     } catch (err) {
-        console.error('Error fetching hero products:', err);
+        console.error('Error fetching home aggregate:', err);
         fetchError = 'Failed to load products';
+    }
+
+    // 无集合（/api/V1/home 为空/失败）时回退到原 /product/hero 数据，保证首页有真实数据展示
+    if (bestSellers.length === 0) {
+        try {
+            const products = await productService.getHeroProducts();
+            if (Array.isArray(products)) {
+                bestSellers = products;
+            }
+        } catch (err) {
+            console.error('Error fetching hero products:', err);
+            fetchError = 'Failed to load products';
+        }
     }
 
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.mythtoy.com';
@@ -128,7 +153,7 @@ export default async function HomePage() {
 
             <div className="w-full max-w-full overflow-x-hidden">
                 <HeroSection />
-                <CategoriesSection />
+                <CategoriesSection collections={homeCollections} />
                 <BestSellersSection bestSellers={bestSellers} error={fetchError} loading={false} />
                 <TrustSignals />
                 <section className="w-full bg-white py-24">

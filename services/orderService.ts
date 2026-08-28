@@ -1,9 +1,7 @@
 // services/orderService.ts
 import axiosClient from '@/lib/axios-client';
 import { OrderCreateRequest, OrderResponse, OrderListResponse, OrderPaymentResult } from '@/types/order';
-import { SERVER_CONFIG, ADMIN_CONFIG, BACKEND_CONFIG } from '@/lib/api-config';
 import { PaymentRequest } from '@/types/payment';
-import { apiGet, apiPost } from '@/lib/api-utils';
 
 export interface OrderStatusLog {
     id: number
@@ -173,20 +171,6 @@ class OrderService {
             console.error('❌ [OrderService] Error fetching orders:', error);
             throw error;
         }
-    }
-
-    // ✅ 新增：管理员发货
-    async updateStatus(orderId: number, trackingNumber: string): Promise<OrderResponse> {
-        const result = await apiPost<OrderResponse>(
-            `${BACKEND_CONFIG.baseURL}${ADMIN_CONFIG.apiRoutes.order}/updateStatus`,
-            { orderId, trackingNumber }
-        );
-
-        if (!result.success) {
-            throw new Error(result.message || 'Shipping failed');
-        }
-
-        return result.data as OrderResponse;
     }
 
     // ✅ 用户取消订单

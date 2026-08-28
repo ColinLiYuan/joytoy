@@ -1,7 +1,7 @@
 // app/sitemap-products.xml
 
 import { NextResponse } from 'next/server'
-import { BACKEND_CONFIG } from '@/lib/api-config'
+import { BACKEND_CONFIG, SITE_HEADERS } from '@/lib/api-config'
 
 export async function GET() {
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.mythtoy.com'
@@ -14,6 +14,7 @@ export async function GET() {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
+                ...SITE_HEADERS,
             },
             cache: 'no-store'
         })

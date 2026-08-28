@@ -44,9 +44,9 @@ export const getToken = async (): Promise<string | undefined> => {
         if (!isTokenExpired(cookieToken, 30)) {
             return cookieToken;
         }
-        // Token即将过期，尝试刷新
+        // Token即将过期，尝试刷新；刷新失败回退使用旧 token（仍在 30 秒有效窗口内）
         const refreshedToken = await refreshTokenIfNeeded();
-        return refreshedToken;
+        return refreshedToken || cookieToken;
     }
     // 2. 如果是客户端，尝试从 LocalStorage 兜底
     if (isBrowser) {

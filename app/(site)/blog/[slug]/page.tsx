@@ -1,7 +1,7 @@
 // app/blog/[slug]/page.tsx
 import { Metadata } from 'next';
 import BlogDetailClient from './BlogDetailClient';
-import { BACKEND_CONFIG } from '@/lib/api-config';
+import { BACKEND_CONFIG, SITE_HEADERS } from '@/lib/api-config';
 import { getAuthor } from '@/lib/constants/authors';
 import type { ProductResponse } from '@/types/product';
 
@@ -43,6 +43,7 @@ async function getBlogData(slug: string) {
         const url = `${BACKEND_CONFIG.baseURL}/api/V1/blog?slug=${encodeURIComponent(slug)}`;
         const response = await fetch(url, {
             next: { revalidate: 3600 }, // 缓存1小时
+            headers: SITE_HEADERS,
         });
 
         if (!response.ok) {
@@ -87,7 +88,7 @@ async function getProductsFromContent(content: string): Promise<ProductResponse[
         [...slugs].map(async (slug) => {
             try {
                 const url = `${BACKEND_CONFIG.baseURL}/api/V1/product?slug=${encodeURIComponent(slug)}`;
-                const resp = await fetch(url, { next: { revalidate: 3600 } });
+                const resp = await fetch(url, { next: { revalidate: 3600 }, headers: SITE_HEADERS });
                 if (!resp.ok) return null;
                 const json = await resp.json();
                 return json?.data ?? null;

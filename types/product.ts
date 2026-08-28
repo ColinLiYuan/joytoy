@@ -14,6 +14,8 @@ export interface ProductResponse {
     minOrder: string;
     description: string;
     image: string;
+    /** 第二主图（悬停图）：卡片 hover 交叉淡入显示，可空 */
+    image2?: string;
     galleries?: Array<{
         url: string;
         alt?: string;
@@ -62,6 +64,13 @@ export interface ProductSku {
     price?: number;
     stock: number;
     lockedStock: number;
+    // SKU 图库（后端 product_sku_image，按 displayOrder 升序返回）
+    images?: Array<{
+        id?: number;
+        url: string;
+        alt?: string;
+        displayOrder?: number;
+    }>;
 }
 
 export interface HighlightData {

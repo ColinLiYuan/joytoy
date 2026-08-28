@@ -200,13 +200,15 @@ function PaymentContent() {
             const body: any = {};
             if (!token) {
                 // 游客模式：尝试从多个位置获取邮箱
-                const guestEmail = orderData?.guestEmail 
-                    || orderData?.shippingAddress?.email 
+                const guestEmail = orderData?.guestEmail
+                    || orderData?.shippingAddress?.email
                     || orderData?.billingAddress?.email;
-                
+
                 if (guestEmail) {
                     body.guestEmail = guestEmail;
                 } else {
+                    // 注册用户订单但本地无登录态：提前拦截，避免请求撞后端 401
+                    throw new Error('Please log in to complete payment');
                 }
             }
             
@@ -216,7 +218,12 @@ function PaymentContent() {
                 headers,
                 body: JSON.stringify(body),
             });
-            
+
+            // 401：登录态在后端校验失败（如 token 过期且刷新失败），给出明确提示
+            if (response.status === 401) {
+                throw new Error('Please log in to complete payment');
+            }
+
             const result = await response.json();
 
             if (!result.success) {

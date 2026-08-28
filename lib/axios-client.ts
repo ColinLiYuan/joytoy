@@ -21,6 +21,12 @@ const axiosClient = axios.create({
 // 请求拦截器
 axiosClient.interceptors.request.use(
     (config) => {
+        // 显式声明站点（后端按 X-Site-Id 隔离多站数据；不传时后端才按默认站点兜底）
+        const siteId = process.env.NEXT_PUBLIC_SITE_ID;
+        if (siteId) {
+            config.headers['X-Site-Id'] = siteId;
+        }
+
         // 从 Cookie 读取 Token 并添加到请求头
         if (typeof window !== 'undefined') {
             const token = getAccessToken();
@@ -28,7 +34,7 @@ axiosClient.interceptors.request.use(
                 config.headers.Authorization = `Bearer ${token}`;
             }
         }
-        
+
         return config;
     },
     (error) => {
@@ -221,15 +227,20 @@ axiosClient.interceptors.response.use(
             } catch (refreshError: any) {
                 // 区分“没有 Refresh Token”和“刷新失败”两种情况
                 // ✅ 静默处理，不打印日志（这是正常的用户未登录状态）
-                                        
+
                 processQueue(refreshError, null);
-                                        
+
                 // 清除本地 Token（不触发登录框，让 AuthGuard 统一处理）
                 if (typeof window !== 'undefined') {
                     removeCookie('accessToken');
                     removeCookie('refreshToken');
                     localStorage.removeItem('accessToken');
                     localStorage.removeItem('refreshToken');
+
+                    // ✅ 通知 AuthContext 弹出“会话已过期，请重新登录”（与 api-utils 旧链路行为一致）
+                    window.dispatchEvent(new CustomEvent('auth:tokenExpired', {
+                        detail: { message: 'Your session has expired. Please login again.' }
+                    }));
                 }
             } finally {
                 isRefreshing = false;

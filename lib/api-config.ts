@@ -7,6 +7,11 @@ console.log('  process.env.BACKEND_BASE_URL:', process.env.BACKEND_BASE_URL);
 console.log('  Final baseURL:', process.env.NEXT_PUBLIC_BACKEND_BASE_URL || process.env.BACKEND_BASE_URL || 'http://localhost:9356');
 console.log('');
 
+/** 站点请求头（后端按 X-Site-Id 隔离多站数据；未配置 NEXT_PUBLIC_SITE_ID 时不发送，由后端按默认站点兜底） */
+export const SITE_HEADERS: Record<string, string> = process.env.NEXT_PUBLIC_SITE_ID
+    ? { 'X-Site-Id': process.env.NEXT_PUBLIC_SITE_ID }
+    : {};
+
 export const BACKEND_CONFIG = {
     // 客户端必须使用 NEXT_PUBLIC_ 前缀才能读取
     baseURL: process.env.NEXT_PUBLIC_BACKEND_BASE_URL || process.env.BACKEND_BASE_URL || 'http://localhost:9356',
