@@ -145,4 +145,4 @@ export default function AgeVerification() {
             </div>
         </div>
     );
-}export const dynamic = 'force-dynamic'; 
+} 

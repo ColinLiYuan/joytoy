@@ -10,8 +10,6 @@ import AffiliateTracker from '@/components/common/AffiliateTracker';
 import PageViewTracker from '@/components/common/PageViewTracker';
 import DiscountPopup from '@/components/common/discount-popup';
 
-export const dynamic = 'force-dynamic';
-
 export default async function SiteLayout({
                                              children,
                                          }: {

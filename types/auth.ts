@@ -26,8 +26,9 @@ export interface LoginResponse {
     lastLoginAt?: string;
     
     // ✅ 新增权限字段
-    role?: 'CUSTOMER' | 'ADMIN' | 'SUPER_ADMIN';
+    role?: 'CUSTOMER' | 'OPERATOR' | 'ADMIN' | 'SUPER_ADMIN';
     isAdmin?: boolean;
+    isSuperAdmin?: boolean;
     isAffiliate?: boolean;
 
     // 用户消费数据 (用于复购优惠)

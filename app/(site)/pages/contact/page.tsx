@@ -190,4 +190,4 @@ export default function Contact() {
             </div>
         </div>
     );
-}export const dynamic = 'force-dynamic'; 
+} 
