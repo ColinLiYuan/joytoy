@@ -43,7 +43,6 @@ const processMarkdownImages = (content: string): string => {
 const MDViewer = dynamic(
     () => import('@uiw/react-md-editor').then((mod) => mod.default.Markdown),
     {
-        ssr: false,
         loading: () => <div className="h-96 bg-gray-50 animate-pulse rounded-xl"></div>
     }
 );

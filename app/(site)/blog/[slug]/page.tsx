@@ -42,7 +42,7 @@ async function getBlogData(slug: string) {
     try {
         const url = `${BACKEND_CONFIG.baseURL}/api/V1/blog?slug=${encodeURIComponent(slug)}`;
         const response = await fetch(url, {
-            next: { revalidate: 86400 }, // 缓存1天
+            next: { revalidate: 604800 }, // 缓存7天
             headers: SITE_HEADERS,
         });
 
@@ -88,7 +88,7 @@ async function getProductsFromContent(content: string): Promise<ProductResponse[
         [...slugs].map(async (slug) => {
             try {
                 const url = `${BACKEND_CONFIG.baseURL}/api/V1/product?slug=${encodeURIComponent(slug)}`;
-                const resp = await fetch(url, { next: { revalidate: 86400 }, headers: SITE_HEADERS });
+                const resp = await fetch(url, { next: { revalidate: 604800 }, headers: SITE_HEADERS });
                 if (!resp.ok) return null;
                 const json = await resp.json();
                 return json?.data ?? null;

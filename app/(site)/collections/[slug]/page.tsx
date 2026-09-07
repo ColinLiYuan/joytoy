@@ -13,7 +13,7 @@ import CollectionPageClient from '@/components/collection/collection-page-client
 
 const ITEMS_PER_PAGE = 12;
 
-export const revalidate = 3600;
+export const revalidate = 86400;
 
 function titleFromSlug(slug: string): string {
     return slug.split('-').map((s: string) => s.charAt(0).toUpperCase() + s.slice(1)).join(' ');

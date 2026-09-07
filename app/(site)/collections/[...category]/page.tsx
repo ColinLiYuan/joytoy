@@ -5,7 +5,7 @@ import type { Metadata } from 'next';
 import { categoryService } from '@/services/categoryService';
 import CategoryLanding from '@/components/category/category-landing';
 
-export const revalidate = 3600;
+export const revalidate = 86400;
 
 function titleFromSlug(slug: string): string {
     return slug.split('-').map((s: string) => s.charAt(0).toUpperCase() + s.slice(1)).join(' ');
