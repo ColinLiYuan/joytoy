@@ -13,6 +13,8 @@ import CollectionPageClient from '@/components/collection/collection-page-client
 
 const ITEMS_PER_PAGE = 12;
 
+export const revalidate = 3600;
+
 function titleFromSlug(slug: string): string {
     return slug.split('-').map((s: string) => s.charAt(0).toUpperCase() + s.slice(1)).join(' ');
 }
@@ -31,8 +33,11 @@ export async function generateMetadata({
             alternates: { canonical: `/collections/${slug}` },
         };
     }
-    // 回退分类：沿用旧 [...category] 行为（无独立 metadata，layout 模板兜底），仅给标题
-    return { title: titleFromSlug(slug) };
+    // 回退分类：沿用旧 [...category] 行为，canonical 指向分类页本身（避免继承全局 canonical 指向首页）
+    return {
+        title: titleFromSlug(slug),
+        alternates: { canonical: `/collections/${slug}` },
+    };
 }
 
 export default async function CollectionLandingPage({

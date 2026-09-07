@@ -5,7 +5,18 @@ import { collectionService } from '@/services/collectionService';
 import { ProductResponse } from '@/types/product';
 import { CollectionCardResponse } from '@/types/collection';
 import { getProductImageUrl } from '@/lib/image-utils';
+import type { Metadata } from 'next';
 export const revalidate = 3600;
+
+// 首页显式 canonical（根布局不再设全局 canonical，各页面自行声明，避免分类页误继承首页 canonical）
+export function generateMetadata(): Metadata {
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.mythtoy.com';
+    return {
+        title: 'MythToy — Premium Adult Lifestyle Products',
+        description: 'Discover premium body-safe devices for wellness and intimacy. MythToy blends elegance with technology. Discreet shipping and secure checkout.',
+        alternates: { canonical: baseUrl },
+    };
+}
 
 import ClientAgeVerification from '@/components/common/client-age-verification';
 import HeroSection from '@/components/home/hero-section';

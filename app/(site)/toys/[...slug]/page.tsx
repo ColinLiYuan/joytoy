@@ -33,8 +33,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
         const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.mythtoy.com';
         const canonicalUrl = `${baseUrl}/toys${slug}`;
         const imageUrl = getProductImageUrl(undefined, product.image);
-        // 去除 Markdown 符号，只取纯文本作为描述，避免 Schema 报错
-        const cleanDescription = product.description?.replace(/[#*`]/g, '').substring(0, 160) || `Buy ${product.title}`;
+        // 去除 Markdown 符号并压缩空白，只取纯文本作为描述，避免 Schema 报错与噪声字符
+        const cleanDescription = (product.description || '').replace(/[#*`]/g, '').replace(/\s+/g, ' ').trim().substring(0, 160) || `Buy ${product.title}`;
 
         return {
             title: product.title,

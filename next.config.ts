@@ -45,6 +45,8 @@ const nextConfig: NextConfig = {
         imageSizes: [16, 32, 48, 64, 96, 128],
         
         // ✅ 允许的域名
+        // 多站点每站一个 R2 桶（pub-xxx.r2.dev 域名各不相同），通配放行所有 r2.dev 桶；
+        // 站点若换成自定义图片域名，需在此追加对应 hostname
         remotePatterns: [
             {
                 protocol: 'https',
@@ -53,12 +55,7 @@ const nextConfig: NextConfig = {
             },
             {
                 protocol: 'https',
-                hostname: 'pub-c128c2f5caa744afbeb49b9904451478.r2.dev',
-                pathname: '/**',
-            },
-            {
-                protocol: 'https',
-                hostname: 'pub-e5d14c6d386c4d90979458082617517a.r2.dev',
+                hostname: '**.r2.dev',
                 pathname: '/**',
             },
         ],

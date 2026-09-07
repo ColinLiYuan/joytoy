@@ -78,9 +78,6 @@ export const metadata: Metadata = {
         images: ['/opengraph-image'],
         creator: '@mythtoy',
     },
-    alternates: {
-        canonical: process.env.NEXT_PUBLIC_SITE_URL || 'https://www.mythtoy.com',
-    },
     robots: {
         index: true,
         follow: true,

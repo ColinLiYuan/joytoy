@@ -177,6 +177,11 @@ export default async function CategoryLanding({ urlSegments }: { urlSegments: st
                     "mainEntity": { "@id": `${canonicalUrl}#products` }
                 } : {})
             },
+            {
+                "@type": "BreadcrumbList",
+                "@id": `${canonicalUrl}#breadcrumb`,
+                "itemListElement": breadcrumbItems
+            },
             ...(productsData.content.length > 0 ? [{
                 "@type": "ItemList",
                 "@id": `${canonicalUrl}#products`,
