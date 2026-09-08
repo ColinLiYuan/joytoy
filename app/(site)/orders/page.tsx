@@ -14,6 +14,7 @@ import {
     ArrowRight, AlertCircle, ShoppingBag, XCircle, CreditCard, ChevronRight, RefreshCw, Archive
 } from 'lucide-react';
 import { SITE_CONFIG } from '@/lib/constants/site-config';
+import { paymentMethodLabel } from '@/lib/constants/payment-methods';
 import { useAuth } from '@/contexts/authContext';
 
 // ✅ 严格按照后端枚举映射状态
@@ -245,7 +246,7 @@ export default function OrdersPage() {
                                                 </p>
                                                 <div className="flex items-center gap-1.5 mt-2 text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded w-fit">
                                                     <CreditCard size={12} />
-                                                    <span className="capitalize">{order.paymentMethod?.replace(/_/g, ' ').toLowerCase() || 'Card'}</span>
+                                                    <span>{paymentMethodLabel(order.paymentMethod)}</span>
                                                 </div>
                                             </div>
                                         </div>

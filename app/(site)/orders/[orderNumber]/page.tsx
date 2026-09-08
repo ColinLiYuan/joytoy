@@ -10,6 +10,7 @@ import { orderService } from '@/services/orderService';
 import { OrderResponse } from '@/types/order';
 import { getProductImageUrl } from '@/lib/image-utils';
 import { getUserId } from '@/lib/user-utils';
+import { paymentMethodLabel } from '@/lib/constants/payment-methods';
 import Image from 'next/image';
 import {
     Loader2,
@@ -331,7 +332,7 @@ function OrderDetailsContent({ params }: { params: Promise<{ orderNumber: string
                                     <div className="flex items-center gap-2 mb-2">
                                         <CreditCard size={16} className="text-blue-900" />
                                         <span className="font-bold text-blue-900 text-sm">
-                                            Paid via {order.paymentMethod === 'PAYPAL' ? 'PayPal' : 'Credit Card'}
+                                            Paid via {paymentMethodLabel(order.paymentMethod)}
                                         </span>
                                     </div>
 

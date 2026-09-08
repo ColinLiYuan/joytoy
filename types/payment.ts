@@ -1,7 +1,9 @@
 // types/payment.ts
 export interface PaymentRequest {
     transactionId: string;
-    paymentMethod: 'PAYPAL' | 'CREDIT_CARD' | 'DEBIT_CARD' | 'BANK_TRANSFER' | 'STRIPE';
+    // PAYPAL_APPLE_PAY / PAYPAL_GOOGLE_PAY：钱包渠道经 PayPal 收款，
+    // 后端按 startsWith("PAYPAL") 路由到 PayPal capture，订单记录里区分具体渠道
+    paymentMethod: 'PAYPAL' | 'PAYPAL_APPLE_PAY' | 'PAYPAL_GOOGLE_PAY' | 'CREDIT_CARD' | 'DEBIT_CARD' | 'BANK_TRANSFER' | 'STRIPE';
     currency?: string;
     cardNumber?: string;
     expiryDate?: string;

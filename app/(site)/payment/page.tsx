@@ -184,11 +184,12 @@ function PaymentContent() {
         try {
 
             // ✅ 调用前检查并刷新 Token（提前 5 分钟）
-            const { ensureFreshToken, getToken } = await import('@/lib/token-utils');
-            await ensureFreshToken(300);
-            
-            // ✅ 获取 Token（游客模式可能为 null）
-            const token = await getToken();
+            const { ensureFreshToken } = await import('@/lib/token-utils');
+
+            // ✅ 获取 Token（游客模式可能为 undefined）：
+            // 直接采用刷新后的结果——刷新失败返回 undefined，走游客分支，
+            // 由后端 401 + 页面提示/登录框引导重新登录，不再拿失效的旧 token 发请求
+            const token = await ensureFreshToken(300);
             
             // ✅ 构建请求头（游客模式下不添加 Authorization）
             const headers: Record<string, string> = {
@@ -236,13 +237,26 @@ function PaymentContent() {
 
             // ✅ 返回后端生成的 PayPal Order ID
             return paypalOrderId;
-        } catch (error) {
+        } catch (error: any) {
+            // PayPal SDK 会吞掉 createOrder 抛出的异常（弹框里只显示通用错误），
+            // 页面必须自己提示真实原因；登录态失效走全局 401 拦截器同款流程（toast + 登录框）
+            const isAuthError = error?.message === 'Please log in to complete payment';
+            setErrorMessage(isAuthError
+                ? 'Your session has expired. Please log in again to complete payment.'
+                : (error?.message || 'Failed to create PayPal order. Please try again.'));
+            if (isAuthError) {
+                window.dispatchEvent(new CustomEvent('auth:tokenExpired', {
+                    detail: { message: 'Your session has expired. Please login again.' }
+                }));
+            }
             throw error;
         }
     };
 
     // ✅ 统一的订单 capture + 状态更新（PayPal / Apple Pay / Google Pay 三个渠道共用）
-    const captureOrder = async (orderId: string) => {
+    // paymentMethod 按渠道区分：PAYPAL / PAYPAL_APPLE_PAY / PAYPAL_GOOGLE_PAY
+    // （后两者经 PayPal 收款，后端按 startsWith("PAYPAL") 路由，订单记录保留渠道）
+    const captureOrder = async (orderId: string, paymentMethod: 'PAYPAL' | 'PAYPAL_APPLE_PAY' | 'PAYPAL_GOOGLE_PAY' = 'PAYPAL') => {
         // ✅ 创建 AbortController 用于超时控制（60秒）
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 60000);
@@ -261,7 +275,7 @@ function PaymentContent() {
             // 1. 调用后端支付接口（后端会同步验证并更新状态）
             const paymentResult: OrderPaymentResult = await orderService.payOrder(orderNumber!, {
                 transactionId: orderId,
-                paymentMethod: 'PAYPAL',
+                paymentMethod,
                 currency: 'USD'
             }, controller.signal); // ✅ 传递 AbortSignal
 
@@ -452,14 +466,14 @@ function PaymentContent() {
                                                         amount={Number(orderData.finalAmount).toFixed(2)}
                                                         disabled={(paymentStatus as string) === 'processing'}
                                                         createOrder={() => createPayPalOrder({}, {})}
-                                                        captureOrder={captureOrder}
+                                                        captureOrder={(orderId) => captureOrder(orderId, 'PAYPAL_APPLE_PAY')}
                                                         onPaymentError={setErrorMessage}
                                                     />
                                                     <GooglePayButton
                                                         amount={Number(orderData.finalAmount).toFixed(2)}
                                                         disabled={(paymentStatus as string) === 'processing'}
                                                         createOrder={() => createPayPalOrder({}, {})}
-                                                        captureOrder={captureOrder}
+                                                        captureOrder={(orderId) => captureOrder(orderId, 'PAYPAL_GOOGLE_PAY')}
                                                         onPaymentError={setErrorMessage}
                                                     />
                                                 </div>
