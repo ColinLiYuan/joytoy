@@ -220,7 +220,7 @@ export default function Footer() {
                     </div>
 
                     {/* Payment Icons (Grayscale style for dark mode) */}
-                    <div className="flex gap-4 opacity-50 grayscale hover:grayscale-0 transition-all duration-300">
+                    <div className="flex flex-wrap justify-center gap-4 opacity-50 grayscale hover:grayscale-0 transition-all duration-300">
                         <CreditCard size={24} className="text-white" />
                         <span className="text-xs font-bold text-gray-400 tracking-widest border border-white/20 px-2 py-1 rounded">VISA</span>
                         <span className="text-xs font-bold text-gray-400 tracking-widest border border-white/20 px-2 py-1 rounded">MASTERCARD</span>
@@ -228,6 +228,9 @@ export default function Footer() {
                         <span className="text-[10px] font-bold text-gray-400 tracking-widest border border-white/20 px-2 py-1 rounded">DISCOVER</span>
                         {/* PayPal text needs to be light in dark mode */}
                         <span className="border border-white/20 px-2 py-1 rounded font-bold italic text-white/80">PayPal</span>
+                        {/* 数字钱包（经 PayPal 收款） */}
+                        <span className="text-xs font-bold text-gray-400 tracking-widest border border-white/20 px-2 py-1 rounded">Apple Pay</span>
+                        <span className="text-xs font-bold text-gray-400 tracking-widest border border-white/20 px-2 py-1 rounded">G Pay</span>
                     </div>
                 </div>
             </div>

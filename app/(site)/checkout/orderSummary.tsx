@@ -142,7 +142,7 @@ export default function OrderSummary({
                     <div className="bg-gray-50/50 p-3 rounded-2xl border border-gray-100 flex flex-col items-center text-center">
                         <CreditCard size={18} className="text-gray-700 mb-2" />
                         <span className="text-[11px] font-bold text-gray-900 uppercase tracking-tight">Global Checkout</span>
-                        <p className="text-[10px] text-gray-500 mt-1 leading-tight">PayPal, AMEX, Discover, Visa & Mastercard supported.</p>
+                        <p className="text-[10px] text-gray-500 mt-1 leading-tight">PayPal, Apple Pay, Google Pay, Visa, Mastercard, AMEX & Discover supported.</p>
                     </div>
                 </div>
 
