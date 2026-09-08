@@ -8,6 +8,8 @@ import { orderService } from '@/services/orderService';
 import { useAuth } from '@/contexts/authContext';
 import { useCartStore } from '@/stores/useCartStore';
 import type { OrderPaymentResult } from '@/types/order';
+import ApplePayButton from './apple-pay-button';
+import GooglePayButton from './google-pay-button';
 
 export const dynamic = 'force-dynamic';
 
@@ -239,31 +241,32 @@ function PaymentContent() {
         }
     };
 
-    const onPayPalApprove = async (data: any) => {
+    // ✅ 统一的订单 capture + 状态更新（PayPal / Apple Pay / Google Pay 三个渠道共用）
+    const captureOrder = async (orderId: string) => {
         // ✅ 创建 AbortController 用于超时控制（60秒）
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 60000);
-        
+
         // ✅ 记录支付尝试时间
         if (orderNumber) {
             const storageKey = `recent_payment_attempt_${orderNumber}`;
             localStorage.setItem(storageKey, Date.now().toString());
         }
-        
+
         try {
             setPaymentStatus('processing');
             setErrorMessage('');
             setRecentPaymentAttempt(false); // ✅ 支付开始后隐藏提示
-            
+
             // 1. 调用后端支付接口（后端会同步验证并更新状态）
             const paymentResult: OrderPaymentResult = await orderService.payOrder(orderNumber!, {
-                transactionId: data.orderID,
+                transactionId: orderId,
                 paymentMethod: 'PAYPAL',
                 currency: 'USD'
             }, controller.signal); // ✅ 传递 AbortSignal
-            
+
             clearTimeout(timeoutId);
-            
+
             // 2. 检查支付结果（OrderPaymentResult 返回的是 { success, message, orderNumber }）
             if (paymentResult?.success === true) {
                 await handlePaymentSuccess();
@@ -284,6 +287,10 @@ function PaymentContent() {
             }
             setPaymentStatus('error');
         }
+    };
+
+    const onPayPalApprove = async (data: any) => {
+        await captureOrder(data.orderID);
     };
 
     // ✅ 新增：检查订单状态（用于超时或错误后确认是否已支付成功）
@@ -428,7 +435,7 @@ function PaymentContent() {
                                                 clientId: paypalClientId,
                                                 currency: "USD",
                                                 intent: "capture",
-                                                components: "buttons",
+                                                components: "buttons,applepay,googlepay",
                                                 "disable-funding": "paylater,credit"
                                             }}>
                                                 <PayPalButtons
@@ -438,6 +445,24 @@ function PaymentContent() {
                                                     onApprove={onPayPalApprove}
                                                     disabled={(paymentStatus as string) === 'processing'} // ✅ 禁用按钮
                                                 />
+
+                                                {/* --- Apple Pay / Google Pay（PayPal 渠道，设备/账户不满足条件时自动隐藏） --- */}
+                                                <div className="mt-3 space-y-3">
+                                                    <ApplePayButton
+                                                        amount={Number(orderData.finalAmount).toFixed(2)}
+                                                        disabled={(paymentStatus as string) === 'processing'}
+                                                        createOrder={() => createPayPalOrder({}, {})}
+                                                        captureOrder={captureOrder}
+                                                        onPaymentError={setErrorMessage}
+                                                    />
+                                                    <GooglePayButton
+                                                        amount={Number(orderData.finalAmount).toFixed(2)}
+                                                        disabled={(paymentStatus as string) === 'processing'}
+                                                        createOrder={() => createPayPalOrder({}, {})}
+                                                        captureOrder={captureOrder}
+                                                        onPaymentError={setErrorMessage}
+                                                    />
+                                                </div>
                                             </PayPalScriptProvider>
                                         </div>
                                     ) : (

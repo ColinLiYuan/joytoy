@@ -211,3 +211,12 @@ body {
     max-height: 100%;
     object-fit: contain;
 }
+
+/* ========== Apple Pay 按钮（支付页，Apple 官方 CSS 变量） ========== */
+apple-pay-button {
+    --apple-pay-button-width: 100%;
+    --apple-pay-button-height: 48px;
+    --apple-pay-button-border-radius: 12px;
+    display: block;
+    cursor: pointer;
+}
