@@ -10,6 +10,7 @@ import { getProductImageUrl } from '@/lib/image-utils';
 import { colorMap } from '@/lib/constants/color-map';
 import { BACKEND_CONFIG } from '@/lib/api-config';
 import { getRelatedBlogSlugs } from '@/lib/constants/related-guides';
+import { isHiddenCategory } from '@/lib/constants/hidden-categories';
 
 interface PageProps {
     params: Promise<{
@@ -40,6 +41,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
             title: product.title,
             description: cleanDescription,
             alternates: { canonical: canonicalUrl },
+            // 隐藏分类商品（realistic / torso）：站外直链可买，但不让 Google 收录
+            robots: isHiddenCategory(product.categories) ? { index: false } : undefined,
             openGraph: {
                 title: product.title,
                 description: cleanDescription,

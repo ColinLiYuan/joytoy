@@ -3,6 +3,7 @@
 import { NextResponse } from 'next/server'
 import { BACKEND_CONFIG, SITE_HEADERS } from '@/lib/api-config'
 import { getProductImageUrl } from '@/lib/image-utils'
+import { isHiddenCategory } from '@/lib/constants/hidden-categories'
 
 export async function GET() {
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.mythtoy.com'
@@ -47,6 +48,10 @@ export async function GET() {
         console.error('[Google Merchant Feed] ❌ products is not an array:', products)
         products = []
     }
+
+    // 剔除隐藏分类商品（realistic / torso），不进 Google Merchant Center
+    products = products.filter(product => !isHiddenCategory(product.categories))
+    console.log(`[Google Merchant Feed] Products after hidden filter: ${products.length}`)
 
     // 生成 Google Merchant Center XML Feed
     const xml = `<?xml version="1.0" encoding="UTF-8"?>

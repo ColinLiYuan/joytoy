@@ -4,6 +4,7 @@
 import type { Metadata } from 'next';
 import { categoryService } from '@/services/categoryService';
 import CategoryLanding from '@/components/category/category-landing';
+import { isHiddenCategory } from '@/lib/constants/hidden-categories';
 
 export const revalidate = 86400;
 
@@ -40,6 +41,8 @@ export async function generateMetadata({
         title: fullSlug === 'all' ? 'All Products' : name,
         description: description || `Shop premium ${fullSlug === 'all' ? 'adult toys' : name.toLowerCase()} at MythToy. Body-safe materials, discreet shipping, 1-year warranty.`,
         alternates: { canonical: `${baseUrl}/collections/${fullSlug}` },
+        // 隐藏分类（realistic / torso，含子分类路径）：不让 Google 收录
+        robots: isHiddenCategory([fullSlug]) ? { index: false } : undefined,
     };
 }
 

@@ -10,6 +10,7 @@ import { Suspense } from 'react';
 import { collectionService } from '@/services/collectionService';
 import CategoryLanding from '@/components/category/category-landing';
 import CollectionPageClient from '@/components/collection/collection-page-client';
+import { isHiddenCategory } from '@/lib/constants/hidden-categories';
 
 const ITEMS_PER_PAGE = 12;
 
@@ -26,17 +27,21 @@ export async function generateMetadata({
 }): Promise<Metadata> {
     const { slug } = await params;
     const collection = await collectionService.getBySlug(slug, 0, 1);
+    // 隐藏分类（realistic / torso）的集合页或分类回退页都不让 Google 收录
+    const hiddenRobots = isHiddenCategory([slug]) ? { robots: { index: false } } : {};
     if (collection) {
         return {
             title: collection.metaTitle || collection.name,
             description: collection.metaDescription || collection.description || undefined,
             alternates: { canonical: `/collections/${slug}` },
+            ...hiddenRobots,
         };
     }
     // 回退分类：沿用旧 [...category] 行为，canonical 指向分类页本身（避免继承全局 canonical 指向首页）
     return {
         title: titleFromSlug(slug),
         alternates: { canonical: `/collections/${slug}` },
+        ...hiddenRobots,
     };
 }
 
