@@ -200,7 +200,7 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
                         alt={product.title || 'Product image'}
                         width={400}
                         height={400}
-                        className={`${isFullBackgroundImage ? 'object-cover' : 'p-6 object-contain mix-blend-multiply'} w-full h-full group-hover:scale-105 transition-transform duration-500`}
+                        className={`${isFullBackgroundImage ? 'object-cover' : 'p-6 object-contain mix-blend-multiply'} w-full h-full group-hover:scale-105 transition-all duration-300 ${hoverImage ? 'group-hover:opacity-0' : ''}`}
                         placeholder="blur"
                         blurDataURL={BLUR_DATA_URL}
                     />
