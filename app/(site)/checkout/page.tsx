@@ -73,7 +73,8 @@ function CheckoutContent() {
                 productSku: item.productSku,  // ✅ SKU Code,后端会通过它查询完整的SKU信息
                 productImage: item.productImage,
                 color: item.color || 'Default',
-                bundleId: item.bundleId || undefined  // ✅ 传递套装ID
+                bundleId: item.bundleId || undefined,  // ✅ 传递套装ID
+                customization: item.customization || undefined  // 尺寸等定制快照随订单冻结
             })));
         }
     }, [cart?.items]);

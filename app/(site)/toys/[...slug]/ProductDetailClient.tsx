@@ -15,6 +15,7 @@ import { bundleService } from '@/services/bundleService';
 import { ProductBundle } from '@/types/bundle';
 import { joinWaitlist } from '@/app/actions/waitlist'; // ✅ Import the new action
 import { getProductImageUrl } from '@/lib/image-utils';
+import { getSizeOptions } from '@/lib/product-utils';
 import { Z_INDEX } from '@/lib/constants/z-index';
 import ProductCard from '@/components/product/product-card';
 import ProductGallery from '@/components/product/product-gallery';
@@ -202,6 +203,8 @@ export default function ProductDetailClient({
     const [addingToCart, setAddingToCart] = useState(false);
     const [buyingNow, setBuyingNow] = useState(false);
     const [selectedSku, setSelectedSku] = useState<ProductSku | null>(null);
+    const [selectedSize, setSelectedSize] = useState<string | null>(null);
+    const [sizeGuideOpen, setSizeGuideOpen] = useState(false);
     const [isFavorited, setIsFavorited] = useState(false);
     const [isWishlistLoading, setIsWishlistLoading] = useState(false);
     const [activeAccordion, setActiveAccordion] = useState<string | null>('details');
@@ -220,8 +223,14 @@ export default function ProductDetailClient({
     const isOutOfStock = isProductActive && selectedSku && currentStock <= 0;
 
     const isLowStock = isProductActive && selectedSku && currentStock > 0 && currentStock < 5;
-    // Logic: Can purchase only if active AND has stock
-    const canPurchase = isProductActive && selectedSku && currentStock > 0;
+    // 尺寸选项（每尺寸一行规格 S/M/L/...；无尺寸行时为空，不显示尺寸选择区）
+    const sizeOptions = useMemo(() => getSizeOptions(product.specifications), [product.specifications]);
+    const selectedSizeValue = useMemo(
+        () => sizeOptions.find(s => s.size === selectedSize)?.value ?? '',
+        [sizeOptions, selectedSize]
+    );
+    // Logic: Can purchase only if active AND has stock AND size selected (when product has sizes)
+    const canPurchase = isProductActive && selectedSku && currentStock > 0 && (sizeOptions.length === 0 || !!selectedSize);
 
     // ✅ 初始化时从后端数据或主动查询获取收藏状态
     useEffect(() => {
@@ -278,6 +287,14 @@ export default function ProductDetailClient({
             setSelectedSku(product.productSkus[0]);
         }
     }, [product.productSkus, defaultColor]);
+
+    // 有尺寸选项时默认选中第一个；选项变化（切商品）后若当前选中已不存在则重置
+    useEffect(() => {
+        if (sizeOptions.length === 0) { setSelectedSize(null); return; }
+        if (!sizeOptions.some(s => s.size === selectedSize)) {
+            setSelectedSize(sizeOptions[0].size);
+        }
+    }, [sizeOptions, selectedSize]);
 
     useEffect(() => {
         const fetchRelated = async () => {
@@ -392,6 +409,10 @@ export default function ProductDetailClient({
             return false;
         }
         if (!product || !selectedSku || getAvailableStock(selectedSku) <= 0) return false;
+        if (sizeOptions.length > 0 && !selectedSize) {
+            showToast('error', 'Size Required', 'Please select a size.');
+            return false;
+        }
         try {
             await addItemToCart({
                 productId: product.id,
@@ -403,7 +424,11 @@ export default function ProductDetailClient({
                 unitPrice: product.currentPrice,
                 quantity: 1,
                 color: selectedSku.color,
-                skuId: selectedSku.id
+                skuId: selectedSku.id,
+                // 尺寸随定制快照入订单（后端原样存储，管理端订单详情可见）
+                customization: selectedSize
+                    ? JSON.stringify({ version: 1, optionSnapshot: { size: selectedSize, color: selectedSku.color } })
+                    : undefined
             });
             return true;
         } catch (error) { console.error(error); showToast('error', 'Error', 'Failed to add product.'); return false; }
@@ -564,6 +589,60 @@ export default function ProductDetailClient({
                                         );
                                     })}
                                 </div>
+                            </div>
+                        )}
+
+                        {/* 尺寸选择（每尺寸一行规格 S/M/L/...；无尺寸行的商品不显示） */}
+                        {sizeOptions.length > 0 && (
+                            <div className="mb-10">
+                                <h3 className="text-sm font-bold text-gray-900 uppercase tracking-widest mb-4">
+                                    Select Size: <span className="text-gray-500 font-normal ml-2">{selectedSize || 'Select'}</span>
+                                </h3>
+                                <div className="flex flex-wrap gap-3">
+                                    {sizeOptions.map(({ size }) => (
+                                        <button
+                                            key={size}
+                                            onClick={() => setSelectedSize(size)}
+                                            className={`min-w-14 h-12 px-5 rounded-full border-2 text-sm font-bold transition-all ${selectedSize === size ? 'border-black bg-black text-white' : 'border-gray-200 text-gray-700 hover:border-gray-400'}`}
+                                        >
+                                            {size}
+                                        </button>
+                                    ))}
+                                </div>
+                                {/* 选中尺寸对应的实测数据（「S 对应多少」的直接答案） */}
+                                {selectedSizeValue && (
+                                    <p className="mt-3 text-sm text-gray-600">
+                                        {selectedSize} — <span className="text-gray-900 font-medium">{selectedSizeValue}</span>
+                                    </p>
+                                )}
+                                <button
+                                    type="button"
+                                    onClick={() => setSizeGuideOpen(v => !v)}
+                                    className="mt-2 text-xs font-medium text-gray-500 underline underline-offset-4 hover:text-gray-900 flex items-center gap-1"
+                                >
+                                    {sizeGuideOpen ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                                    Size guide
+                                </button>
+                                {sizeGuideOpen && (
+                                    <div className="mt-3 rounded-xl border border-gray-100 overflow-hidden">
+                                        <table className="w-full text-sm">
+                                            <thead className="bg-gray-50">
+                                                <tr>
+                                                    <th className="text-left px-4 py-2 text-xs font-bold uppercase tracking-wider text-gray-500">Size</th>
+                                                    <th className="text-left px-4 py-2 text-xs font-bold uppercase tracking-wider text-gray-500">Measurements</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-gray-100">
+                                                {sizeOptions.map(({ size, value }) => (
+                                                    <tr key={size} className={selectedSize === size ? 'bg-gray-50' : ''}>
+                                                        <td className="px-4 py-2.5 font-bold text-gray-900">{size}</td>
+                                                        <td className="px-4 py-2.5 text-gray-600">{value}</td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                )}
                             </div>
                         )}
 

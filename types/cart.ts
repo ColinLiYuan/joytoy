@@ -12,6 +12,8 @@ export interface AddToCartRequest {
     length?: string;           // 新增可选字段
     width?: string;
     weight?: string;         // 新增可选字段
+    /** 定制参数 JSON 快照（{version, optionSnapshot:{size,color}}），后端原样存储 */
+    customization?: string;
 }
 
 export interface CartResponse {
@@ -53,6 +55,8 @@ export interface CartItem {
     width?: string;
     weight?: string;
     color?: string;
+    /** 定制参数 JSON 快照（含所选尺寸），后端原样返回 */
+    customization?: string;
     addedAt?: string;
     
     // ✅ 新增：商品类型标识（用于判断是套装还是单品）

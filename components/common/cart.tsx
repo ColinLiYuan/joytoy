@@ -12,6 +12,7 @@ import { Z_INDEX } from '@/lib/constants/z-index';
 import { colorMap } from '@/lib/constants/color-map';
 import Image from 'next/image';
 import { getProductImageUrl } from '@/lib/image-utils';
+import { getSizeFromCustomization } from '@/lib/product-utils';
 import { X, ShoppingBag, Plus, Minus, Loader2, Trash2, ArrowRight, Sparkles, Truck, Package } from 'lucide-react';
 
 interface CartProps {
@@ -372,6 +373,11 @@ export default function Cart({ isOpen, onClose }: CartProps) {
                                                 )}
                                                 
                                                 {item.color && formatColorDisplay(item.color)}
+                                                {getSizeFromCustomization(item.customization) && (
+                                                    <div className="text-xs text-gray-500">
+                                                        Size: <span className="font-medium text-gray-700">{getSizeFromCustomization(item.customization)}</span>
+                                                    </div>
+                                                )}
                                             </div>
                                             
                                             {/* Quantity & Price */}

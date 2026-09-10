@@ -112,6 +112,8 @@ export interface OrderItemRequest {
     unitPrice: number;
     color: string;
     bundleId?: number;  // 套装ID，用于标记该商品属于哪个套装
+    /** 定制参数 JSON 快照（含所选尺寸），后端原样冻结到订单 */
+    customization?: string;
 }
 
 export interface LogisticsCheckpoint {

@@ -6,12 +6,13 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import Image from 'next/image';
 import { ProductResponse, ProductSku } from '@/types/product';
 import { getProductImageUrl } from '@/lib/image-utils';
+import { getSizeOptions } from '@/lib/product-utils';
 import { addToWishlist, removeFromWishlist } from '@/app/actions/wishlist';
 import { useAuth } from '@/contexts/authContext';
 import { useToast } from '@/contexts/toastContext';
 import { useCartStore } from '@/stores/useCartStore';
 import { getMappedColor } from '@/lib/constants/color-map';
-import { Heart, ShoppingBag, Loader2 } from 'lucide-react';
+import { Heart, ShoppingBag, Loader2, SlidersHorizontal } from 'lucide-react';
 import ProductBadge from './product-badge';
 
 interface ProductCardProps {
@@ -55,6 +56,9 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
     const hasAvailableStock = useMemo(() => {
         return (product.productSkus || []).some(sku => getAvailableStock(sku) > 0);
     }, [product.productSkus, getAvailableStock]);
+
+    // 有尺寸选项的商品卡片不直接加购（需先选尺寸），改为跳详情页
+    const hasSizeOptions = useMemo(() => getSizeOptions(product.specifications).length > 0, [product.specifications]);
 
     const handleAddToCart = async (e: React.MouseEvent) => {
         e.preventDefault();
@@ -281,24 +285,35 @@ export default function ProductCard({ product, onWishlistUpdate }: ProductCardPr
                         )}
                     </div>
 
-                    <button
-                        onClick={handleAddToCart}
-                        disabled={!hasAvailableStock || addingToCart}
-                        className={`
-                            w-12 h-12 rounded-full flex items-center justify-center transition-all
-                            ${!hasAvailableStock
-                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                            : 'bg-black text-white hover:bg-gray-800 hover:scale-105 shadow-md'
-                        }
-                        `}
-                        aria-label="Add to cart"
-                    >
-                        {addingToCart ? (
-                            <Loader2 size={20} className="animate-spin" />
-                        ) : (
-                            <ShoppingBag size={20} strokeWidth={1.5} />
-                        )}
-                    </button>
+                    {hasSizeOptions ? (
+                        <Link
+                            href={productDetailPath}
+                            className="w-12 h-12 rounded-full flex items-center justify-center bg-white text-gray-900 border border-gray-300 hover:border-gray-600 hover:scale-105 transition-all"
+                            aria-label="Select size"
+                            title="Select size"
+                        >
+                            <SlidersHorizontal size={20} strokeWidth={1.5} />
+                        </Link>
+                    ) : (
+                        <button
+                            onClick={handleAddToCart}
+                            disabled={!hasAvailableStock || addingToCart}
+                            className={`
+                                w-12 h-12 rounded-full flex items-center justify-center transition-all
+                                ${!hasAvailableStock
+                                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                : 'bg-black text-white hover:bg-gray-800 hover:scale-105 shadow-md'
+                            }
+                            `}
+                            aria-label="Add to cart"
+                        >
+                            {addingToCart ? (
+                                <Loader2 size={20} className="animate-spin" />
+                            ) : (
+                                <ShoppingBag size={20} strokeWidth={1.5} />
+                            )}
+                        </button>
+                    )}
                 </div>
             </div>
         </div>

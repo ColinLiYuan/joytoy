@@ -3,6 +3,7 @@ import { ShieldCheck, Lock, Package, CreditCard, Award, EyeOff, Info } from 'luc
 import { OrderItemRequest } from '@/types/order';
 import Image from 'next/image';
 import { getProductImageUrl } from '@/lib/image-utils';
+import { getSizeFromCustomization } from '@/lib/product-utils';
 import { colorMap } from '@/lib/constants/color-map';
 import { CouponResponse } from '@/types/checkout';
 
@@ -56,6 +57,11 @@ export default function OrderSummary({
                                 <span className="w-2 h-2 rounded-full inline-block border border-gray-200" style={{backgroundColor: getColorValue(item.color)}}></span>
                                 {item.color}
                             </p>
+                            {getSizeFromCustomization(item.customization) && (
+                                <p className="text-xs text-gray-500 mt-0.5">
+                                    Size: <span className="font-medium text-gray-700">{getSizeFromCustomization(item.customization)}</span>
+                                </p>
+                            )}
                         </div>
                         <div className="font-bold text-gray-900 text-sm">${(item.unitPrice * item.quantity).toFixed(2)}</div>
                     </div>
