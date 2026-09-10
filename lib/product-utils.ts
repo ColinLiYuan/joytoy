@@ -4,6 +4,48 @@ import { ProductResponse } from '@/types/product';
 /** 尺码规格行识别的固定顺序（specKey 为 S/M/L/XL/XXL/XXXL 的规格行视为尺寸选项） */
 export const SIZE_ORDER = ['S', 'M', 'L', 'XL', 'XXL', 'XXXL'];
 
+/** 某个规格键是否为尺寸行（大小写不敏感） */
+export const isSizeKey = (key: string | null | undefined): boolean =>
+    SIZE_ORDER.includes(String(key || '').trim().toUpperCase());
+
+/** 物理测量类规格键关键词（长/宽/直径/周长等；大小写不敏感，中英文键都识别） */
+const MEASURE_KEYWORDS = [
+    'length', 'width', 'diameter', 'circumference', 'girth', 'height', 'depth', 'insertable',
+    '长', '宽', '直径', '周长', '插入', '高', '深',
+];
+
+/** 某个规格键是否为物理测量行（长/宽/周长等） */
+export const isMeasureKey = (key: string | null | undefined): boolean => {
+    const k = String(key || '').trim().toLowerCase();
+    if (!k) return false;
+    return MEASURE_KEYWORDS.some(w => k.includes(w));
+};
+
+export interface MeasureSpec {
+    key: string;
+    label: string;
+    value: string;
+}
+
+/**
+ * 提取物理测量规格（长/宽/周长/直径等），供购买区显眼展示。
+ * 空值行剔除；标签 = 规格键美化（下划线/连字符转空格并首字母大写，中文原样）。
+ */
+export function getMeasureSpecs(specifications: Array<{ specKey: string; specValue: string }> | null | undefined): MeasureSpec[] {
+    if (!specifications || specifications.length === 0) return [];
+    return specifications
+        .filter(s => isMeasureKey(s.specKey) && !isSizeKey(s.specKey))
+        .filter(s => String(s.specValue || '').trim() !== '')
+        .map(s => {
+            const key = String(s.specKey).trim();
+            const label = key
+                .split(/[\s_-]+/)
+                .map(w => (w ? w.charAt(0).toUpperCase() + w.slice(1) : w))
+                .join(' ');
+            return { key, label, value: String(s.specValue).trim() };
+        });
+}
+
 export interface SizeOption {
     size: string;
     value: string;

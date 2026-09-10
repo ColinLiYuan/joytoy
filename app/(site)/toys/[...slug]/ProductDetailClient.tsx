@@ -15,7 +15,7 @@ import { bundleService } from '@/services/bundleService';
 import { ProductBundle } from '@/types/bundle';
 import { joinWaitlist } from '@/app/actions/waitlist'; // ✅ Import the new action
 import { getProductImageUrl } from '@/lib/image-utils';
-import { getSizeOptions } from '@/lib/product-utils';
+import { getSizeOptions, isSizeKey, getMeasureSpecs, isMeasureKey } from '@/lib/product-utils';
 import { Z_INDEX } from '@/lib/constants/z-index';
 import ProductCard from '@/components/product/product-card';
 import ProductGallery from '@/components/product/product-gallery';
@@ -64,7 +64,7 @@ const getSpecIcon = (key: string) => {
     if (k.includes('material')) return <Feather size={18} strokeWidth={1.5} />;
     if (k.includes('discreet')) return <EyeOff size={18} strokeWidth={1.5} />;
     if (k.includes('vibration') || k.includes('mode')) return <Waves size={18} strokeWidth={1.5} />;
-    if (k.includes('size') || k.includes('dimension')) return <Ruler size={18} strokeWidth={1.5} />;
+    if (k.includes('size') || k.includes('dimension') || k.includes('length') || k.includes('width') || k.includes('diameter') || k.includes('circumference') || k.includes('girth') || k.includes('insertable') || k.includes('height') || k.includes('depth')) return <Ruler size={18} strokeWidth={1.5} />;
     if (k.includes('weight')) return <Scale size={18} strokeWidth={1.5} />;
     if (k.includes('noise')) return <Volume2 size={18} strokeWidth={1.5} />;
     if (k.includes('charg')) return <BatteryCharging size={18} strokeWidth={1.5} />;
@@ -228,6 +228,13 @@ export default function ProductDetailClient({
     const selectedSizeValue = useMemo(
         () => sizeOptions.find(s => s.size === selectedSize)?.value ?? '',
         [sizeOptions, selectedSize]
+    );
+    // 物理测量规格（长/宽/周长等）：购买区显眼展示
+    const measureSpecs = useMemo(() => getMeasureSpecs(specifications), [specifications]);
+    // 技术规格表：剔除尺寸行与测量行（已分别在尺寸选择器/购买区展示，避免重复）
+    const displaySpecs = useMemo(
+        () => specifications.filter(s => !isSizeKey(s.specKey) && !isMeasureKey(s.specKey)),
+        [specifications]
     );
     // Logic: Can purchase only if active AND has stock AND size selected (when product has sizes)
     const canPurchase = isProductActive && selectedSku && currentStock > 0 && (sizeOptions.length === 0 || !!selectedSize);
@@ -543,6 +550,19 @@ export default function ProductDetailClient({
                             </div>
                         </div>
 
+                        {/* 物理测量规格胶囊（长/宽/周长等）：价格下方显眼展示 */}
+                        {measureSpecs.length > 0 && (
+                            <div className="flex flex-wrap gap-2 mt-5 mb-6">
+                                {measureSpecs.map(m => (
+                                    <div key={m.key} className="inline-flex items-center gap-2 px-3.5 py-2 bg-white border border-gray-200 rounded-full shadow-sm">
+                                        {getSpecIcon(m.label)}
+                                        <span className="text-xs text-gray-500">{m.label}</span>
+                                        <span className="text-sm font-bold text-gray-900">{m.value}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
                         {features.length > 0 && (
                             <div className="flex flex-wrap gap-2 mb-8">
                                 {features.slice(0, 4).map((feature, idx) => {
@@ -839,7 +859,7 @@ export default function ProductDetailClient({
                         </div>
                     )}
 
-                    {specifications.length > 0 && (
+                    {displaySpecs.length > 0 && (
                         <div className="border-b border-gray-100">
                             <button onClick={() => toggleAccordion('specs')} className="w-full flex justify-between items-center py-6 text-left">
                                 <span className="text-xl font-bold text-gray-900 font-['Playfair_Display']">Technical Specifications</span>
@@ -848,7 +868,7 @@ export default function ProductDetailClient({
                             {activeAccordion === 'specs' && (
                                 <div id="accordion-specs" className="pb-8 animate-fadeIn">
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-12">
-                                        {specifications.map((spec, idx) => {
+                                        {displaySpecs.map((spec, idx) => {
                                             const displayLabel = SPEC_LABEL_MAP[spec.specKey] || spec.specKey.replace(/_/g, ' ');
                                             const Icon = getSpecIcon(displayLabel);
                                             return (
