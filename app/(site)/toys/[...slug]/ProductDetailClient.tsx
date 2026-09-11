@@ -231,6 +231,20 @@ export default function ProductDetailClient({
     );
     // 物理测量规格（长/宽/周长等）：购买区显眼展示
     const measureSpecs = useMemo(() => getMeasureSpecs(specifications), [specifications]);
+    // 画廊：选中 SKU 的专属图排在最前（按 URL 去重），商品级相册补后；SKU 无图时原样
+    const effectiveGalleryItems = useMemo(() => {
+        const skuImages = (selectedSku?.images || [])
+            .filter(i => i?.url)
+            .map(i => ({
+                url: getProductImageUrl('', i.url),
+                alt: i.alt || product.title,
+                type: 'image' as const,
+                poster: ''
+            }));
+        if (skuImages.length === 0) return galleryItems;
+        const seen = new Set(skuImages.map(i => i.url));
+        return [...skuImages, ...galleryItems.filter(g => !seen.has(g.url))];
+    }, [selectedSku, galleryItems, product.title]);
     // 技术规格表：剔除尺寸行与测量行（已分别在尺寸选择器/购买区展示，避免重复）
     const displaySpecs = useMemo(
         () => specifications.filter(s => !isSizeKey(s.specKey) && !isMeasureKey(s.specKey)),
@@ -493,7 +507,8 @@ export default function ProductDetailClient({
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20">
                     <div className="w-full">
                         <ProductGallery
-                            images={galleryItems}
+                            key={selectedSku?.id ?? 'default'}
+                            images={effectiveGalleryItems}
                             productTitle={product.title}
                         />
                     </div>
