@@ -30,9 +30,19 @@ export default function Navigation({ minimal = false, rootsData = [] }: Navigati
 
     const isCheckoutPage = pathname === '/checkout';
     const getCart = useCartStore(state => state.getCart);
+    const cartOpenRequest = useCartStore(state => state.cartOpenRequest);
+    const clearCartOpenRequest = useCartStore(state => state.clearCartOpenRequest);
     const { isLoggedIn, userInfo, openAuthModal, logout } = useAuth();
 
     useEffect(() => setIsMounted(true), []);
+
+    // ✅ 加购成功后自动弹出购物车抽屉（一次性事件，消费后立即清除，避免路由切换时再次弹出）
+    useEffect(() => {
+        if (cartOpenRequest) {
+            setIsCartOpen(true);
+            clearCartOpenRequest();
+        }
+    }, [cartOpenRequest, clearCartOpenRequest]);
 
     // ✅ 购物车获取由 cart-sync.tsx 统一管理，这里不再重复调用
     // useEffect(() => {
