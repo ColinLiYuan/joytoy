@@ -14,6 +14,8 @@ const redirectMap: Record<string, string> = {
     '/female-sex-toys/bullet-vibrators/the-rouge-ii': 'https://www.mythtoy.com/toys/female-sex-toys/bullet-vibrators/the-rouge-ii',
     '/contact': '/pages/contact',
     '/about': '/pages/about',
+    // 博客文章下线 301 (主题最接近的存活文章)
+    '/blog/the-autonomy-of-desire-reclaiming-self-care': '/blog/the-loneliness-epidemic-and-sensory-connection',
 };
 
 // 2. 定义 410 删除规则 (Gone)
