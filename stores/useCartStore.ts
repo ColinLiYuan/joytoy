@@ -14,6 +14,8 @@ interface CartStore {
     totalPrice: number;
     // 加购成功后请求打开购物车抽屉（一次性事件，由 navigation 消费后清除）
     cartOpenRequest: boolean;
+    // 加购成功后请求弹出优惠码弹窗（一次性事件，由 AddToCartDiscountPopup 消费后清除）
+    discountPopupRequest: boolean;
 
     // Actions
     getCart: () => Promise<CartResponse | undefined>;
@@ -21,6 +23,7 @@ interface CartStore {
     updateItemQuantity: (itemId: number, quantity: number) => Promise<void>;
     removeItemFromCart: (itemId: number) => Promise<void>;
     clearCartOpenRequest: () => void;
+    clearDiscountPopupRequest: () => void;
     clearError: () => void;
     clearCart: () => void;
 }
@@ -53,6 +56,7 @@ export const useCartStore = create<CartStore>()(
             totalItems: 0,
             totalPrice: 0,
             cartOpenRequest: false,
+            discountPopupRequest: false,
 
             getCart: async () => {
                 set({ loading: true, error: null });
@@ -73,7 +77,7 @@ export const useCartStore = create<CartStore>()(
                     set({
                         cart: cartResponse,
                         loading: false,
-                        ...totals
+                        ...totals,
                     });
                     console.log('[Cart Store] State updated, cart items:', cartResponse.items?.length)
                     return cartResponse;
@@ -105,7 +109,8 @@ export const useCartStore = create<CartStore>()(
                     console.log('[Cart Store] getCart completed')
                     globalToast.success('Added to Bag', `${request.productTitle} is in your bag.`);
                     // ✅ 加购成功后自动弹出购物车抽屉，游客能马上看到商品和去结算按钮
-                    set({ cartOpenRequest: true });
+                    // ✅ 同时请求弹出优惠码弹窗（由 AddToCartDiscountPopup 消费，自行判断是否展示）
+                    set({ cartOpenRequest: true, discountPopupRequest: true });
                 } catch (err) {
                     const message = err instanceof Error ? err.message : 'Failed to add item';
                     console.error('[Cart Store] Add item failed:', err)
@@ -163,6 +168,8 @@ export const useCartStore = create<CartStore>()(
 
             clearCartOpenRequest: () => set({ cartOpenRequest: false }),
 
+            clearDiscountPopupRequest: () => set({ discountPopupRequest: false }),
+
             clearError: () => set({ error: null }),
 
             clearCart: () => {
@@ -174,7 +181,7 @@ export const useCartStore = create<CartStore>()(
             partialize: (state) => ({
                 cart: state.cart,
                 totalItems: state.totalItems,
-                totalPrice: state.totalPrice
+                totalPrice: state.totalPrice,
             }),
         }
     )

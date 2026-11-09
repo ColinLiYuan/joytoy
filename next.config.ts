@@ -38,6 +38,14 @@ const nextConfig: NextConfig = {
         },
     },
 
+    // ✅ Next 16 Cache Components：自定义 cacheLife 档位（供 'use cache' 函数使用）
+    // stale = 缓存有效期（秒），过期后下一次请求触发重新获取，语义与旧 fetch revalidate 一致
+    cacheLife: {
+        hour: { stale: 3600, revalidate: 3600, expire: 86400 },
+        day: { stale: 86400, revalidate: 86400, expire: 2592000 },
+        week: { stale: 604800, revalidate: 604800, expire: 2419200 },
+    },
+
     // ✅ 图片优化策略
     images: {
         minimumCacheTTL: 31536000,

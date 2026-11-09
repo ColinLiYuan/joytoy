@@ -83,6 +83,15 @@ export default function DiscountPopup() {
         console.log('[DiscountPopup] Will show popup in 5 seconds...');
         // 延迟5秒后显示弹窗，提升用户体验
         const timer = setTimeout(() => {
+            // ✅ 触发时再次检查：若这5秒内已有其它优惠码弹窗展示（如加购后弹窗），跳过避免双弹
+            const recentShown = localStorage.getItem(POPUP_COOKIE_NAME);
+            if (recentShown) {
+                const diff = Date.now() - parseInt(recentShown, 10);
+                if (!isNaN(diff) && diff < 60 * 1000) {
+                    console.log('[DiscountPopup] Skipped at fire time: another popup shown recently');
+                    return;
+                }
+            }
             console.log('[DiscountPopup] Showing popup now!');
             setIsOpen(true);
             // 记录显示时间

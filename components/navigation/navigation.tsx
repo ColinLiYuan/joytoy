@@ -5,6 +5,7 @@ import Image from 'next/image'; // ✅ 引入 Image
 import MainCategory from '@/components/navigation/main-category';
 import UserActions from '@/components/common/user-actions';
 import Cart from '@/components/common/cart';
+import AddToCartDiscountPopup from '@/components/common/add-to-cart-discount-popup';
 import MinimalNavigation from '@/components/navigation/minimal-navigation';
 import MobileNavigation from '@/components/navigation/mobile-navigation';
 import { useState, useEffect } from 'react';
@@ -157,6 +158,9 @@ export default function Navigation({ minimal = false, rootsData = [] }: Navigati
                 )}
 
                 <Cart isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
+
+                {/* ✅ 加购成功后弹出的优惠码弹窗（订阅后直接应用到购物车） */}
+                <AddToCartDiscountPopup />
             </div>
         </>
     );

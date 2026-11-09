@@ -477,6 +477,7 @@ export default function Cart({ isOpen, onClose }: CartProps) {
                                 <span>Subtotal</span>
                                 <span>${subtotal.toFixed(2)}</span>
                             </div>
+
                             <p className="text-[10px] text-gray-400 mb-5 text-center">Shipping & taxes calculated at checkout.</p>
 
                             <button

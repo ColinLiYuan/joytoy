@@ -3,6 +3,12 @@
 
 import { Resend } from 'resend';
 import nodemailer from 'nodemailer';
+import { cookies } from 'next/headers';
+import { fetchWithAuth } from '@/lib/server-token-utils';
+import { SITE_HEADERS } from '@/lib/api-config';
+
+const GUEST_EMAIL_COOKIE = 'guestEmail';
+const GUEST_EMAIL_MAX_AGE = 60 * 60 * 24 * 30; // 30天，与购物车 sessionId cookie 一致
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -139,8 +145,10 @@ export async function submitPioneerApplication(formData: FormData) {
 
 /**
  * 邮件订阅
+ * 后端登记（newsletter_subscriber 表，供邮件营销；同站同邮箱幂等去重），
+ * 再走邮件通知（管理员 + 客户欢迎邮件）。source: FOOTER / ADD_TO_CART_POPUP / CHECKOUT
  */
-export async function subscribeToNewsletter(formData: FormData) {
+export async function subscribeToNewsletter(formData: FormData, source: string = 'FOOTER') {
     const email = formData.get('email') as string;
 
     if (!email || !email.includes('@')) {
@@ -148,6 +156,49 @@ export async function subscribeToNewsletter(formData: FormData) {
     }
 
     try {
+        // ✅ 登记到后端（失败不阻塞邮件流程，仅告警）
+        // 带上 X-Session-Id：后端会把邮箱反填到该会话已有的购物车；
+        // 同时种 guestEmail cookie（30天），之后该访客加购时由 cart action 反填。
+        let backendRegistered = false;
+        try {
+            const cookieStore = await cookies()
+            const sessionId = cookieStore.get('sessionId')?.value
+            const headers: Record<string, string> = { ...SITE_HEADERS }
+            if (sessionId) {
+                headers['X-Session-Id'] = sessionId
+            }
+            const response = await fetchWithAuth('/api/V1/newsletter/subscribe', {
+                method: 'POST',
+                headers,
+                body: JSON.stringify({ email: email.trim(), source }),
+            });
+            if (!response.ok) {
+                console.warn('[Subscribe] Backend registration failed:', response.status);
+            } else {
+                const apiResponse = await response.json();
+                if (!apiResponse?.success) {
+                    console.warn('[Subscribe] Backend registration rejected:', apiResponse?.message);
+                } else {
+                    backendRegistered = true;
+                }
+            }
+        } catch (backendError) {
+            console.warn('[Subscribe] Backend registration error (ignored):', backendError);
+        }
+
+        // 种 guestEmail cookie：覆盖最近一次订阅的邮箱（与后端 newsletter_subscriber.session_id 对应）
+        if (backendRegistered) {
+            try {
+                const cookieStore = await cookies()
+                cookieStore.set(GUEST_EMAIL_COOKIE, email.trim(), {
+                    path: '/',
+                    maxAge: GUEST_EMAIL_MAX_AGE,
+                })
+            } catch (cookieError) {
+                console.warn('[Subscribe] Set guestEmail cookie failed (ignored):', cookieError);
+            }
+        }
+
         await transporter.sendMail({
             from: '"MythToy System" <system@mythtoy.com>',
             to: "support@mythtoy.com",

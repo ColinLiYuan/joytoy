@@ -2,7 +2,7 @@
 
 import { BACKEND_CONFIG } from '@/lib/api-config'
 import { fetchWithAuth } from '@/lib/server-token-utils'
-import { AddToCartRequest } from '@/types/cart'
+import { AddToCartRequest, CartResponse } from '@/types/cart'
 import { cookies } from 'next/headers'
 
 /**
@@ -95,7 +95,8 @@ const API_PATHS = {
   // 用户端购物车操作
   CART_GET: `/api/V1/cart`,
   CART_ADD: `/api/V1/cart`,
-  CART_UPDATE: (itemId: number, quantity: number) => 
+  CART_SAVE_EMAIL: `/api/V1/cart/customer-email`,
+  CART_UPDATE: (itemId: number, quantity: number) =>
     `/api/V1/cart?itemId=${itemId}&quantity=${quantity}`,
   CART_REMOVE: (itemId: number) => `/api/V1/cart/${itemId}`,
   
@@ -141,6 +142,58 @@ export async function addToCart(request: AddToCartRequest) {
 
     if (!apiResponse.success) {
         throw new Error(apiResponse.message || 'Failed to add item')
+    }
+
+    // ✅ 先订阅后加购场景：若该访客此前订阅过（guestEmail cookie），
+    //    加购成功后把邮箱补写到购物车（best-effort，失败不影响加购）。
+    try {
+        const cookieStore = await cookies()
+        const guestEmail = cookieStore.get('guestEmail')?.value
+        if (guestEmail) {
+            await saveCustomerEmailToCart(guestEmail)
+            console.log('[Cart Action] Backfilled guest email to cart:', guestEmail)
+        }
+    } catch (backfillError) {
+        console.warn('[Cart Action] Backfill guest email failed (ignored):', backfillError)
+    }
+
+    return apiResponse.data
+}
+
+/**
+ * 保存客户邮箱到购物车（加购弹窗订阅后调用）。
+ * 只落 cart.customer_email，与优惠券无关（优惠码由用户结算时手动使用）。
+ */
+export async function saveCustomerEmailToCart(email: string): Promise<CartResponse> {
+    const sessionId = await getSessionId()
+
+    const response = await fetchWithAuth(API_PATHS.CART_SAVE_EMAIL, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Session-Id': sessionId,
+        },
+        body: JSON.stringify({ email: email?.trim() }),
+    })
+
+    if (!response.ok) {
+        const errorText = await response.text()
+        console.error('[Cart Action] Save customer email failed:', {
+            status: response.status,
+            body: errorText
+        })
+        let message = `Failed to save email: ${response.status}`
+        try {
+            const parsed = JSON.parse(errorText)
+            if (parsed?.message) message = parsed.message
+        } catch { /* ignore */ }
+        throw new Error(message)
+    }
+
+    const apiResponse = await response.json()
+
+    if (!apiResponse.success) {
+        throw new Error(apiResponse.message || 'Failed to save email')
     }
 
     return apiResponse.data

@@ -22,6 +22,8 @@ export interface CartResponse {
     userId?: number | null;
     userName?: string;  // 新增：用户名
     userEmail?: string;  // 新增：用户邮箱
+    customerEmail?: string | null;  // 新增：游客采集邮箱（加购弹窗）
+    couponCode?: string | null;  // 新增：已应用到购物车的优惠券代码
     itemCount?: number;  // 新增：商品数量（去重后的SKU数）
     sessionId?: string | null;
     status?: string;
