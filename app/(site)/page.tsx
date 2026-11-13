@@ -164,8 +164,8 @@ export default async function HomePage() {
 
             <div className="w-full max-w-full overflow-x-hidden">
                 <HeroSection />
-                <CategoriesSection collections={homeCollections} />
                 <BestSellersSection bestSellers={bestSellers} error={fetchError} loading={false} />
+                <CategoriesSection collections={homeCollections} />
                 <TrustSignals />
                 <section className="w-full bg-white py-24">
                     <div className="container max-w-4xl mx-auto px-6">
