@@ -119,6 +119,20 @@ class OrderService {
         throw new Error(response.data?.message || 'order creation failed, please contact support@mythtoy.com');
     }
 
+    // ✅ 支付弹窗内事件上报（onError/onCancel）：后端落支付流水，管理端可查未支付原因
+    // best-effort：失败静默，绝不影响用户支付流程
+    async reportPaymentEvent(
+        orderNumber: string,
+        event: { type: 'CANCEL' | 'ERROR'; message?: string; provider?: string; guestEmail?: string }
+    ): Promise<void> {
+        const url = `/api/V1/order/${orderNumber}/payment-event`;
+        try {
+            await axiosClient.post(url, event);
+        } catch (error) {
+            console.warn('[OrderService] Payment event report failed (ignored):', error);
+        }
+    }
+
     async trackOrder(orderNumber: string, email: string) {
         const url = `/api/V1/order/track`;
         const response = await axiosClient.post(url, { orderNumber, email });

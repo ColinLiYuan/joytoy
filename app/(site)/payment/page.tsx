@@ -458,6 +458,26 @@ function PaymentContent() {
                                                     createOrder={createPayPalOrder}
                                                     onApprove={onPayPalApprove}
                                                     disabled={(paymentStatus as string) === 'processing'} // ✅ 禁用按钮
+                                                    // ✅ 弹窗内取消/报错上报后端（落支付流水，管理端可查"未支付原因"）
+                                                    onCancel={() => {
+                                                        orderService.reportPaymentEvent(orderNumber!, {
+                                                            type: 'CANCEL',
+                                                            guestEmail: guestEmail || undefined,
+                                                        });
+                                                    }}
+                                                    onError={(err: any) => {
+                                                        let message = 'Unknown PayPal error';
+                                                        try {
+                                                            message = JSON.stringify(err).substring(0, 400);
+                                                        } catch {
+                                                            message = String(err);
+                                                        }
+                                                        orderService.reportPaymentEvent(orderNumber!, {
+                                                            type: 'ERROR',
+                                                            message,
+                                                            guestEmail: guestEmail || undefined,
+                                                        });
+                                                    }}
                                                 />
 
                                                 {/* --- Apple Pay / Google Pay（PayPal 渠道，设备/账户不满足条件时自动隐藏） --- */}
