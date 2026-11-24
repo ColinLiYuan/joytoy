@@ -25,12 +25,15 @@ export async function generateMetadata({
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.mythtoy.com';
 
     let name = titleFromSlug(urlSegments[urlSegments.length - 1]);
+    let categoryTitle = '';
     let description = '';
     try {
         const allCategories = await categoryService.getCategories();
         const found = allCategories.find(cat => cat.slug === fullSlug);
         if (found) {
             name = found.name || name;
+            // <title> 用 title 字段；为空回退 name + " | MythToy"
+            categoryTitle = found.title || `${name} | MythToy`;
             description = found.description || '';
         }
     } catch {
@@ -38,8 +41,10 @@ export async function generateMetadata({
     }
 
     return {
-        title: fullSlug === 'all' ? 'All Products' : name,
-        description: description || `Shop premium ${fullSlug === 'all' ? 'adult toys' : name.toLowerCase()} at MythToy. Body-safe materials, discreet shipping, 1-year warranty.`,
+        // <title>：用 title 字段；为空回退 name + " | MythToy"（H1 继续用 name，保持不变）
+        title: fullSlug === 'all' ? 'All Products' : (categoryTitle || `${name} | MythToy`),
+        // meta description：用 description 字段（无值时不输出）
+        description: description || undefined,
         alternates: { canonical: `${baseUrl}/collections/${fullSlug}` },
         // 隐藏分类（realistic / torso，含子分类路径）：不让 Google 收录
         robots: isHiddenCategory([fullSlug]) ? { index: false } : undefined,
