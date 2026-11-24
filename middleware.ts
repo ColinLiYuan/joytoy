@@ -11,6 +11,9 @@ const redirectMap: Record<string, string> = {
     '/toys/sex-toys/butt-plugs/medal-butt-plug-ht019': '/toys/sex-toys/butt-plugs/gem-remote-metal-plug',
     // the-pen 分类调整：wand-vibrators → g-spot-vibrators
     '/toys/female-sex-toys/wand-vibrators/the-pen': '/toys/female-sex-toys/g-spot-vibrators/the-pen',
+    // 分类 slug 升级为全路径（后端为准）：旧短链接跳转
+    '/collections/new-arrivals': '/collections/all/new-arrivals',
+    '/collections/best-sellers': '/collections/all/best-sellers',
     '/collections/pussy-masturbators': '/male-sex-toys/manual-strokers',
     '/female-sex-toys/bullet-vibrators/the-brush': 'https://www.mythtoy.com/toys/female-sex-toys/bullet-vibrators/the-brush',
     '/female-sex-toys/bullet-vibrators/the-rouge-ii': 'https://www.mythtoy.com/toys/female-sex-toys/bullet-vibrators/the-rouge-ii',

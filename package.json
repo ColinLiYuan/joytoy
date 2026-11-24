@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
+    "prebuild": "node scripts/generate-category-data.mjs",
     "build": "next build",
     "sitemap": "next-sitemap",
     "start": "next start",
