@@ -9,6 +9,8 @@ const redirectMap: Record<string, string> = {
     '/toys/male-sex-toys/male-masturbators/auto-suction-masturbator-fire': '/toys/male-sex-toys/masturbators/titan-electric-cup',
     '/toys/female-sex-toys/clit-vibrators/rose-vibes-tongue': '/toys/female-sex-toys/clit-vibrators/rose-licking-vibrator',
     '/toys/sex-toys/butt-plugs/medal-butt-plug-ht019': '/toys/sex-toys/butt-plugs/gem-remote-metal-plug',
+    // the-pen 分类调整：wand-vibrators → g-spot-vibrators
+    '/toys/female-sex-toys/wand-vibrators/the-pen': '/toys/female-sex-toys/g-spot-vibrators/the-pen',
     '/collections/pussy-masturbators': '/male-sex-toys/manual-strokers',
     '/female-sex-toys/bullet-vibrators/the-brush': 'https://www.mythtoy.com/toys/female-sex-toys/bullet-vibrators/the-brush',
     '/female-sex-toys/bullet-vibrators/the-rouge-ii': 'https://www.mythtoy.com/toys/female-sex-toys/bullet-vibrators/the-rouge-ii',
