@@ -103,10 +103,10 @@ export default async function CollectionPage() {
                                 {rootCategory.categories.map((subcategory, subIndex) => {
                                     const gradientClass = GRADIENTS[(rootIndex + subIndex) % GRADIENTS.length];
 
-                                    // ✅ 处理图片逻辑
-                                    // 假设字段名为 subcategory.image
-                                    const hasImage = !!subcategory.image;
-                                    const imageUrl = getProductImageUrl(undefined, subcategory.image);
+                                    // ✅ 处理图片逻辑（与集合统一：图标优先，无图标回退封面图）
+                                    const cardImage = subcategory.icon || subcategory.image || '';
+                                    const hasImage = !!cardImage;
+                                    const imageUrl = getProductImageUrl(undefined, cardImage);
 
                                     return (
                                         <Link

@@ -59,6 +59,7 @@ function toItem(node, isRoot) {
     title: node.title ?? '',
   };
   if (node.image) item.image = node.image;
+  if (node.icon) item.icon = node.icon;
   item.description = node.description ?? '';
   item.priority = node.priority ?? 0.7;
   item.changefreq = node.changefreq ?? 'weekly';
