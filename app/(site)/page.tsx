@@ -178,8 +178,8 @@ export default async function HomePage() {
 
             <div className="w-full max-w-full overflow-x-hidden">
                 <HeroSection />
-                <ShopByNeed collections={needCollections} />
                 <BestSellersSection bestSellers={bestSellers} error={fetchError} loading={false} />
+                <ShopByNeed collections={needCollections} />
                 <CategoriesSection collections={homeCollections} />
                 <TrustSignals />
                 <section className="w-full bg-white py-24">
