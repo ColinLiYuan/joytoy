@@ -51,14 +51,11 @@ export default async function HomePage() {
         fetchError = 'Failed to load products';
     }
 
-    // 「Shop by need」图标模块：上架集合（admin sortOrder 序），
-    // 排除已勾选「首页展示」的集合（它们以 Curated Collections 大图卡片展示，避免重复）
+    // 「Shop by need」图标模块：全部上架集合（admin sortOrder 序，取前 6 个）。
+    // 勾了「首页展示」的集合同时也会以 Curated Collections 大图卡片展示，两处都出现。
     try {
         const active = await collectionService.listActive(20);
-        const shownOnHome = new Set(homeCollections.map(c => c.slug));
-        needCollections = active
-            .filter(c => !shownOnHome.has(c.slug))
-            .slice(0, 6);
+        needCollections = active.slice(0, 6);
     } catch (err) {
         console.error('Error fetching active collections:', err);
     }

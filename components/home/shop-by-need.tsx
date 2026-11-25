@@ -1,8 +1,8 @@
 // components/home/shop-by-need.tsx
 // 首页「Shop by need」模块：按需求场景的集合入口（4–6 个图标卡片，横向一行展示）。
 // 位置：精选产品（Editor's Choice）下方。集合 icon 在 admin「集合管理」中配置
-// （lucide 图标名）；未配置用默认图标。已在「Curated Collections」大图区块展示的
-// 集合（show_on_home）不在此重复出现。
+// （lucide 图标名）；未配置用默认图标。勾了「首页展示」的集合会同时出现在
+// Curated Collections 大图区块，两处展示。
 import Link from 'next/link';
 import {
     Sparkles,
