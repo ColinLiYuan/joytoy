@@ -7,6 +7,7 @@ export async function GET() {
     const sitemaps = [
         'sitemap-pages.xml',
         'sitemap-categories.xml',
+        'sitemap-collections.xml',
         'sitemap-products.xml',
         'sitemap-blogs.xml'
     ]

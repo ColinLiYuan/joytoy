@@ -12,6 +12,8 @@ export interface CollectionResponse {
     slug: string;
     description?: string | null;
     image?: string | null;
+    /** 首页「Shop by need」图标（lucide 图标名，空 = 前端默认图标） */
+    icon?: string | null;
     isActive: boolean;
     showOnHome: boolean;
     sortOrder: number;

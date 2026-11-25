@@ -3,7 +3,7 @@
 import { productService } from '@/services/productService';
 import { collectionService } from '@/services/collectionService';
 import { ProductResponse } from '@/types/product';
-import { CollectionCardResponse } from '@/types/collection';
+import { CollectionCardResponse, CollectionResponse } from '@/types/collection';
 import { getProductImageUrl } from '@/lib/image-utils';
 import type { Metadata } from 'next';
 export const revalidate = 3600;
@@ -22,12 +22,14 @@ import ClientAgeVerification from '@/components/common/client-age-verification';
 import HeroSection from '@/components/home/hero-section';
 import BestSellersSection from '@/components/home/best-sellers-section';
 import CategoriesSection from '@/components/home/categories-section';
+import ShopByNeed from '@/components/home/shop-by-need';
 import TrustSignals from '@/components/home/trust-signals';
 import FAQSection from '@/components/common/faq-section';
 
 export default async function HomePage() {
     let bestSellers: ProductResponse[] = [];
     let homeCollections: CollectionCardResponse[] = [];
+    let needCollections: CollectionResponse[] = [];
     let fetchError: string | null = null;
 
     try {
@@ -47,6 +49,18 @@ export default async function HomePage() {
     } catch (err) {
         console.error('Error fetching home aggregate:', err);
         fetchError = 'Failed to load products';
+    }
+
+    // 「Shop by need」图标模块：上架集合（admin sortOrder 序），
+    // 排除已勾选「首页展示」的集合（它们以 Curated Collections 大图卡片展示，避免重复）
+    try {
+        const active = await collectionService.listActive(20);
+        const shownOnHome = new Set(homeCollections.map(c => c.slug));
+        needCollections = active
+            .filter(c => !shownOnHome.has(c.slug))
+            .slice(0, 6);
+    } catch (err) {
+        console.error('Error fetching active collections:', err);
     }
 
     // 无集合（/api/V1/home 为空/失败）时回退到原 /product/hero 数据，保证首页有真实数据展示
@@ -164,6 +178,7 @@ export default async function HomePage() {
 
             <div className="w-full max-w-full overflow-x-hidden">
                 <HeroSection />
+                <ShopByNeed collections={needCollections} />
                 <BestSellersSection bestSellers={bestSellers} error={fetchError} loading={false} />
                 <CategoriesSection collections={homeCollections} />
                 <TrustSignals />

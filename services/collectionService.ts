@@ -2,7 +2,7 @@
 // 商品集合前台服务（GET /api/V1/collections/{slug} 落地页 + GET /api/V1/home 首页聚合）。
 // 客户端相对路径经 next.config rewrites 代理；SSR 时 axiosClient 直连后端。
 import axiosClient from '@/lib/axios-client';
-import { CollectionDetailResponse, HomeResponse } from '@/types/collection';
+import { CollectionDetailResponse, CollectionResponse, HomeResponse } from '@/types/collection';
 
 class CollectionService {
 
@@ -21,6 +21,20 @@ class CollectionService {
         } catch (error) {
             console.error('❌ [CollectionService] getBySlug error:', error);
             return null;
+        }
+    }
+
+    /** 上架集合列表（后台 sortOrder 序；首页「Shop by need」图标模块用） */
+    async listActive(size: number = 6): Promise<CollectionResponse[]> {
+        try {
+            const response = await axiosClient.get(`/api/V1/collections?page=0&size=${size}`);
+            if (response.data?.success) {
+                return response.data.data?.content || [];
+            }
+            return [];
+        } catch (error) {
+            console.error('❌ [CollectionService] listActive error:', error);
+            return [];
         }
     }
 
