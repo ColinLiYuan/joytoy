@@ -3,7 +3,7 @@
 import { productService } from '@/services/productService';
 import { collectionService } from '@/services/collectionService';
 import { ProductResponse } from '@/types/product';
-import { CollectionCardResponse, CollectionResponse } from '@/types/collection';
+import { CollectionResponse } from '@/types/collection';
 import { getProductImageUrl } from '@/lib/image-utils';
 import type { Metadata } from 'next';
 export const revalidate = 3600;
@@ -28,31 +28,22 @@ import FAQSection from '@/components/common/faq-section';
 
 export default async function HomePage() {
     let bestSellers: ProductResponse[] = [];
-    let homeCollections: CollectionCardResponse[] = [];
     let needCollections: CollectionResponse[] = [];
     let fetchError: string | null = null;
 
+    // Editor's Choice：固定用 /api/V1/product/hero（首页推荐商品），不受集合影响
     try {
-        // 首页聚合 /api/V1/home：show_on_home 集合卡片（含预览商品，人工序）。
-        // 首页商品区 = 集合预览商品拼接去重；isFeatured 已退役（无 admin 设置入口）。
-        const home = await collectionService.getHome();
-        if (home?.collections?.length) {
-            const seen = new Set<number>();
-            for (const product of home.collections.flatMap(c => c.products)) {
-                if (!seen.has(product.id)) {
-                    seen.add(product.id);
-                    bestSellers.push(product);
-                }
-            }
+        const products = await productService.getHeroProducts();
+        if (Array.isArray(products)) {
+            bestSellers = products;
         }
-        homeCollections = home?.collections || [];
     } catch (err) {
-        console.error('Error fetching home aggregate:', err);
+        console.error('Error fetching hero products:', err);
         fetchError = 'Failed to load products';
     }
 
     // 「Shop by need」图标模块：全部上架集合（admin sortOrder 序，取前 6 个）。
-    // 勾了「首页展示」的集合同时也会以 Curated Collections 大图卡片展示，两处都出现。
+    // 首页其他区块（Editor's Choice / Curated Categories）保持原有行为，不受集合影响。
     try {
         const active = await collectionService.listActive(20);
         needCollections = active.slice(0, 6);
@@ -177,7 +168,7 @@ export default async function HomePage() {
                 <HeroSection />
                 <BestSellersSection bestSellers={bestSellers} error={fetchError} loading={false} />
                 <ShopByNeed collections={needCollections} />
-                <CategoriesSection collections={homeCollections} />
+                <CategoriesSection collections={[]} />
                 <TrustSignals />
                 <section className="w-full bg-white py-24">
                     <div className="container max-w-4xl mx-auto px-6">

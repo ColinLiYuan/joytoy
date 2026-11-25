@@ -1,48 +1,11 @@
 // components/home/shop-by-need.tsx
 // 首页「Shop by need」模块：按需求场景的集合入口（4–6 个图标卡片，横向一行展示）。
-// 位置：精选产品（Editor's Choice）下方。集合 icon 在 admin「集合管理」中配置
-// （lucide 图标名）；未配置用默认图标。勾了「首页展示」的集合会同时出现在
-// Curated Collections 大图区块，两处展示。
+// 位置：精选产品（Editor's Choice）下方。
+// 图标优先级：集合 icon 图片 → 集合主图（封面图）→ 默认 ✨ 图标。
 import Link from 'next/link';
-import {
-    Sparkles,
-    VolumeX,
-    Heart,
-    Users,
-    Plane,
-    Gift,
-    Flame,
-    Moon,
-    Leaf,
-    Zap,
-    Crown,
-    Gem,
-    Droplets,
-    Wand2,
-    Feather,
-    type LucideIcon
-} from 'lucide-react';
+import { Sparkles } from 'lucide-react';
+import { getProductImageUrl } from '@/lib/image-utils';
 import { CollectionResponse } from '@/types/collection';
-
-const ICON_MAP: Record<string, LucideIcon> = {
-    sparkles: Sparkles,
-    'volume-x': VolumeX,
-    heart: Heart,
-    users: Users,
-    plane: Plane,
-    gift: Gift,
-    flame: Flame,
-    moon: Moon,
-    leaf: Leaf,
-    zap: Zap,
-    crown: Crown,
-    gem: Gem,
-    droplet: Droplets,
-    wand: Wand2,
-    feather: Feather
-};
-
-const DEFAULT_ICON = Sparkles;
 
 interface ShopByNeedProps {
     collections: CollectionResponse[];
@@ -69,7 +32,7 @@ export default function ShopByNeed({ collections }: ShopByNeedProps) {
                 {/* 横向一行卡片（窄屏可横向滑动） */}
                 <div className="flex gap-4 overflow-x-auto pb-3 snap-x snap-mandatory scrollbar-thin">
                     {collections.map(collection => {
-                        const Icon = ICON_MAP[collection.icon || ''] || DEFAULT_ICON;
+                        const iconSrc = collection.icon || collection.image || '';
                         return (
                             <Link
                                 key={collection.id}
@@ -78,10 +41,18 @@ export default function ShopByNeed({ collections }: ShopByNeedProps) {
                                            border border-gray-100 px-3 py-6 text-center
                                            transition-all duration-300 hover:border-[#C5A059]/60 hover:shadow-lg hover:-translate-y-0.5"
                             >
-                                <span className="w-12 h-12 rounded-full bg-[#FAF8F5] flex items-center justify-center
-                                                 text-[#1A1A1A] transition-colors duration-300 group-hover:bg-[#C5A059] group-hover:text-white">
-                                    <Icon className="h-5 w-5" strokeWidth={1.5} />
-                                </span>
+                                {iconSrc ? (
+                                    <img
+                                        src={getProductImageUrl(undefined, iconSrc)}
+                                        alt={collection.name}
+                                        className="w-14 h-14 rounded-full object-cover border border-gray-100"
+                                    />
+                                ) : (
+                                    <span className="w-14 h-14 rounded-full bg-[#FAF8F5] flex items-center justify-center
+                                                     text-[#1A1A1A] transition-colors duration-300 group-hover:bg-[#C5A059] group-hover:text-white">
+                                        <Sparkles className="h-6 w-6" strokeWidth={1.5} />
+                                    </span>
+                                )}
                                 <span className="text-sm font-medium text-[#1A1A1A] leading-snug group-hover:text-[#C5A059] transition-colors duration-300">
                                     {collection.name}
                                 </span>
