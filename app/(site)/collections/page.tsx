@@ -2,9 +2,7 @@
 import Link from 'next/link';
 import Image from 'next/image'; // ✅ 恢复引用
 import { RootResponse } from '@/types/category';
-import { CollectionResponse } from '@/types/collection';
 import { categoryService } from '@/services/categoryService';
-import { collectionService } from '@/services/collectionService';
 import { ArrowRight, Sparkles } from 'lucide-react';
 import { Metadata } from 'next';
 import { getProductImageUrl } from '@/lib/image-utils'; // ✅ 引入工具函数
@@ -36,15 +34,10 @@ const GRADIENTS = [
 
 export default async function CollectionPage() {
     let rootsData: RootResponse[] = [];
-    let collections: CollectionResponse[] = [];
 
     try {
-        const [roots, cols] = await Promise.all([
-            categoryService.getRoots(),
-            collectionService.listActive(20)
-        ]);
+        const roots = await categoryService.getRoots();
         rootsData = Array.isArray(roots) ? roots : [];
-        collections = Array.isArray(cols) ? cols : [];
     } catch (error) {
         console.error('Failed to load categories:', error);
         rootsData = [];
@@ -80,71 +73,6 @@ export default async function CollectionPage() {
 
             {/* Categories Sections */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-                {/* Curated Collections（集合与分类统一展示：卡片图 = icon，无 icon 回退封面图） */}
-                {collections.length > 0 && (
-                    <section className="mb-24">
-                        <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4 border-b border-gray-100 pb-4">
-                            <div>
-                                <h2 className="text-3xl md:text-4xl font-bold text-gray-900 font-['Playfair_Display'] mb-2">
-                                    Curated Collections
-                                </h2>
-                                <p className="text-gray-500 max-w-xl">
-                                    Hand-picked edits for every mood and need.
-                                </p>
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                            {collections.map((collection, subIndex) => {
-                                const gradientClass = GRADIENTS[subIndex % GRADIENTS.length];
-                                const cardImage = collection.icon || collection.image || '';
-                                const hasImage = !!cardImage;
-                                const imageUrl = getProductImageUrl(undefined, cardImage);
-
-                                return (
-                                    <Link
-                                        key={collection.id}
-                                        href={`/collections/${collection.slug}`}
-                                        className="group flex flex-col h-full bg-white rounded-2xl overflow-hidden border border-gray-100 hover:border-pink-200 hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
-                                    >
-                                        {/* Image Container */}
-                                        <div className={`relative h-48 overflow-hidden bg-gradient-to-br ${gradientClass} flex items-center justify-center group-hover:opacity-90 transition-opacity`}>
-                                            {hasImage ? (
-                                                <Image
-                                                    src={imageUrl}
-                                                    alt={collection.name}
-                                                    fill
-                                                    sizes="(max-width: 768px) 100vw, 25vw"
-                                                    className="object-contain p-4 transition-transform duration-700 group-hover:scale-105"
-                                                />
-                                            ) : (
-                                                <span className="text-6xl font-['Playfair_Display'] text-gray-900/10 font-bold select-none group-hover:scale-110 transition-transform duration-500">
-                                                    {collection.name.charAt(0)}
-                                                </span>
-                                            )}
-                                        </div>
-
-                                        {/* Content */}
-                                        <div className="p-6 flex flex-col flex-grow">
-                                            <h3 className="font-bold text-gray-900 text-lg mb-2 group-hover:text-pink-600 transition-colors font-['Playfair_Display']">
-                                                {collection.name}
-                                            </h3>
-                                            <p className="text-gray-500 text-sm line-clamp-2 mb-4 flex-grow">
-                                                {collection.description || `Explore our ${collection.name} collection.`}
-                                            </p>
-
-                                            <div className="flex items-center text-xs font-bold uppercase tracking-wider text-gray-900 group-hover:text-pink-600 transition-colors mt-auto">
-                                                Shop Now
-                                                <ArrowRight className="w-3 h-3 ml-2" />
-                                            </div>
-                                        </div>
-                                    </Link>
-                                );
-                            })}
-                        </div>
-                    </section>
-                )}
-
                 {filteredRoots.map((rootCategory, rootIndex) => (
                     <section
                         key={rootCategory.slug}
