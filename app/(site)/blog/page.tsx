@@ -31,7 +31,7 @@ async function getBlogData(page: number, topic?: string) {
         const params = new URLSearchParams({ page: String(page), size: '12' });
         if (topic) params.set('topic', topic);
         const url = `${BACKEND_CONFIG.baseURL}/api/V1/blog/list?${params.toString()}`;
-        const response = await fetch(url, { next: { revalidate: 3600 }, headers: SITE_HEADERS });
+        const response = await fetch(url, { next: { revalidate: 86400 }, headers: SITE_HEADERS });
         if (!response.ok) return { content: [], totalElements: 0, totalPages: 0 };
         const result = await response.json();
         if (!result?.success) return { content: [], totalElements: 0, totalPages: 0 };

@@ -23,9 +23,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     const slug = Array.isArray(resolvedParams.slug) ? `/${resolvedParams.slug.join('/')}` : `/${resolvedParams.slug}`;
     try {
         const url = `${BACKEND_CONFIG.baseURL}/api/V1/product?slug=${encodeURIComponent(slug)}`;
-        const response = await fetch(url, { next: { revalidate: 86400 } });
+        const response = await fetch(url, { next: { revalidate: 1296000 } });
         const result = await response.json();
-        
+
         if (!result?.success) {
             return { title: 'Product Not Found', description: 'The product does not exist.' };
         }
@@ -84,7 +84,7 @@ function formatDisplayName(slug: string): string {
     return slug.replace(/-/g, ' ').split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
 }
 
-export const revalidate = 86400;
+export const revalidate = 1296000;
 
 export default async function ProductDetail({ params }: PageProps) {
     const resolvedParams = await params;
@@ -93,9 +93,9 @@ export default async function ProductDetail({ params }: PageProps) {
 
     try {
         const url = `${BACKEND_CONFIG.baseURL}/api/V1/product?slug=${encodeURIComponent(slug)}`;
-        const response = await fetch(url, { next: { revalidate: 86400 } });
+        const response = await fetch(url, { next: { revalidate: 1296000 } });
         const result = await response.json();
-        
+
         if (result?.success) {
             product = result.data;
         }
