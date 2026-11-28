@@ -6,7 +6,7 @@ import { ProductResponse } from '@/types/product';
 import { CollectionResponse } from '@/types/collection';
 import { getProductImageUrl } from '@/lib/image-utils';
 import type { Metadata } from 'next';
-export const revalidate = 3600;
+export const revalidate = 1296000; // 缓存半个月（需要时经 GET /api/revalidate?path=/ 手动刷新）
 
 // 首页显式 canonical（根布局不再设全局 canonical，各页面自行声明，避免分类页误继承首页 canonical）
 export function generateMetadata(): Metadata {
